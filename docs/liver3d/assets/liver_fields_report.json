@@ -1,0 +1,155 @@
+{
+ "couinaud": {
+  "method": "portal-territory Voronoi (Selle et al. 2002) named by the standard geometric planes (Soyer 1995 / Fasel 1998)",
+  "is_approximation": true,
+  "planes_measured_from": {
+   "cantlie": "retrohepatic IVC axis + gallbladder fossa (both real labels)",
+   "transverse_portal": "real portal bifurcation node of the skeletonised portal-vein label",
+   "umbilical_fissure": "umbilical portion of the real left portal branch",
+   "right_intersectoral": "constructed RHV trunk course (no hepatic-vein label exists in the source)",
+   "left_intersectoral": "constructed LHV trunk course (same caveat)"
+  },
+  "segment_volume_mL_portal_territory": {
+   "I caudate": 63.0,
+   "II": 106.1,
+   "III": 179.9,
+   "IV": 194.0,
+   "V": 221.4,
+   "VI": 273.9,
+   "VII": 174.1,
+   "VIII": 242.9
+  },
+  "segment_volume_mL_geometric": {
+   "I caudate": 60.0,
+   "II": 147.3,
+   "III": 137.9,
+   "IV": 186.2,
+   "V": 201.1,
+   "VI": 194.4,
+   "VII": 288.7,
+   "VIII": 239.7
+  },
+  "agreement_between_the_two_methods": 0.809,
+  "total_mL": 1455.3,
+  "segment_fraction_vs_published_range": {
+   "I caudate": {
+    "measured_fraction": 0.043,
+    "published_range": [
+     0.01,
+     0.04
+    ],
+    "inside_range": false
+   },
+   "II": {
+    "measured_fraction": 0.073,
+    "published_range": [
+     0.04,
+     0.1
+    ],
+    "inside_range": true
+   },
+   "III": {
+    "measured_fraction": 0.124,
+    "published_range": [
+     0.04,
+     0.1
+    ],
+    "inside_range": false
+   },
+   "IV": {
+    "measured_fraction": 0.133,
+    "published_range": [
+     0.12,
+     0.22
+    ],
+    "inside_range": true
+   },
+   "V": {
+    "measured_fraction": 0.152,
+    "published_range": [
+     0.08,
+     0.15
+    ],
+    "inside_range": false
+   },
+   "VI": {
+    "measured_fraction": 0.188,
+    "published_range": [
+     0.07,
+     0.15
+    ],
+    "inside_range": false
+   },
+   "VII": {
+    "measured_fraction": 0.12,
+    "published_range": [
+     0.1,
+     0.18
+    ],
+    "inside_range": true
+   },
+   "VIII": {
+    "measured_fraction": 0.167,
+    "published_range": [
+     0.12,
+     0.2
+    ],
+    "inside_range": true
+   }
+  },
+  "segment_reference_note": "reference fractions are CT-volumetry population ranges; the measured values are reported as they came out and were NOT tuned to fall inside them"
+ },
+ "zone_field": {
+  "definition": "d_portal_terminal / (d_portal_terminal + d_hepatic_terminal)",
+  "periportal_fraction_below_0.33": 0.448,
+  "midzonal_fraction": 0.234,
+  "pericentral_fraction_above_0.67": 0.318,
+  "median_portal_terminal_distance_mm": 9.6,
+  "median_hepatic_terminal_distance_mm": 12.09
+ },
+ "surfaces": {
+  "falciform_groove_vertices": 256,
+  "concavity_mm_range": [
+   -2.068,
+   1.712
+  ],
+  "parenchyma": {
+   "vertices": 39002,
+   "faces": 78000,
+   "zone_01_range": [
+    0.004,
+    0.99
+   ],
+   "capsule_depth_mm_max": 3.0
+  },
+  "portal_vein": {
+   "vertices": 3592,
+   "faces": 7180,
+   "zone_01_range": [
+    0.039,
+    0.35
+   ],
+   "capsule_depth_mm_max": 25.0
+  },
+  "ivc": {
+   "vertices": 3502,
+   "faces": 7000,
+   "zone_01_range": [
+    0.028,
+    0.866
+   ],
+   "capsule_depth_mm_max": 6.4
+  },
+  "gallbladder": {
+   "vertices": 2002,
+   "faces": 4000,
+   "zone_01_range": [
+    0.014,
+    0.46
+   ],
+   "capsule_depth_mm_max": 2.6
+  }
+ },
+ "glb_bytes": 3851696,
+ "glb_total_faces": 96180
+}

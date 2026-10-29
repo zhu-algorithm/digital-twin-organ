@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维解剖学数字肝脏</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,320px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  label{font-size:11.5px;color:#b8c4d6}
+  select{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:3px 5px;font-size:12px;font-family:inherit}
+  input[type=range]{width:104px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  /* The scene HUD here is laid out from the viewport width and reports its own
+     element boxes, so unlike the heart page it does NOT have to be hidden on a
+     phone — it switches to a stacked single-column layout instead. */
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:12px;padding:9px 10px;max-width:calc(100vw - 24px);left:12px;right:12px;
+        top:auto;bottom:12px;max-height:44vh;overflow:auto}
+    #ui.collapsed{display:none}
+    #panelbtn{display:block}
+    input[type=range]{width:88px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./liver3d/vendor/three/three.module.js",
+  "three/webgpu": "./liver3d/vendor/three/three.module.js",
+  "three/tsl": "./liver3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=liver">细胞与分子层 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="heart3d.html">三维心脏 →</a>
+  <h1>三维解剖学数字肝脏</h1>
+  <div class="sub">真实 CT 分割几何 · 门静脉树轮廓锚定 · 肝静脉树构建 · v = Q/A 血流 · 三维肝小叶</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <button id="panelbtn">控制面板</button>
+  <div id="ui">
+    <div class="row">
+      <label>视图</label>
+      <button id="v-organ" class="on">器官</button>
+      <button id="v-lob">肝小叶</button>
+    </div>
+    <div class="row">
+      <button id="b-portal" class="on">门静脉</button>
+      <button id="b-artery">肝动脉</button>
+      <button id="b-hv" class="on">肝静脉</button>
+      <button id="b-bile">胆管</button>
+    </div>
+    <div class="row">
+      <button id="b-paren" class="on">肝实质</button>
+      <button id="b-seg">Couinaud 分段</button>
+      <button id="b-zone">分区梯度</button>
+    </div>
+    <div class="row">
+      <label>分区基因</label>
+      <select id="gene"></select>
+    </div>
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+      <label>粒子</label>
+      <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1">
+      <span id="dens-v"><code>100%</code></span>
+    </div>
+    <div class="note" id="prov">加载中…</div>
+  </div>
+</div>
+
+<main>
+  <div class="warnbox">
+    <b>这个页面能做什么、不能做什么。</b>
+    几何、门静脉主干、血管口径与分区表达量都是实测的。<b>肝清除率模型尚不存在</b>——
+    把表达量换算成清除能力需要绝对丰度标定与 IVIVE 外推，这一层本项目还没有建立，
+    所以这里<b>没有</b>任何药物浓度展示，也不得把分区着色读作代谢速率。
+    呼吸频率来自 PhysioNet nsrdb/16265 公开数据，<b>不是任何特定个体</b>，
+    所有文件中 <code>is_user_personal_data = false</code>。本页为研究用模拟器，<b>不可用于临床给药决策</b>。
+  </div>
+
+  <h2>几何来源与许可</h2>
+  <p>TotalSegmentator 数据集 v2.0.1（117 种解剖结构 / 1228 例 CT），
+     DOI <a class="lk" href="https://doi.org/10.5281/zenodo.10047292">10.5281/zenodo.10047292</a>，
+     <b>CC-BY-4.0</b>，署名类许可、可在公开仓再分发。使用受试者 <code>s0236</code>（腹部 CT，1.5 mm 各向同性），
+     结构：<code>liver</code>、<code>portal_vein_and_splenic_vein</code>、<code>inferior_vena_cava</code>、
+     <code>gallbladder</code>、<code>aorta</code>。
+     受试者是从 60 例腹部 CT 中按四条实测标准筛出来的：肝脏完整落在视野内、包膜体积接近成人均值、
+     肝内门静脉标注的最大连通分量最大、右半肝体积占比落在已发表区间内。
+     实测包膜体积 <b>1455.3 mL</b>，右半肝占比 <b>0.653</b>，Cantlie 平面相对矢状面倾斜 <b>48.8°</b>。
+     只用 HTTP Range 请求从 23.5 GB 的 Zenodo 压缩包里取出这 5 个掩膜（约 1 MB），不下载整包。</p>
+  <p><b>源数据中缺失的部件</b>（会传导到血管树与分段，因此必须说明）：
+     没有肝静脉标注、没有肝动脉标注、没有胆管标注、没有 Couinaud 分段标注、没有镰状韧带标注。
+     候选来源 Medical Segmentation Decathlon Task08_HepaticVessel（含肝血管标注）
+     其 S3 主机不在本环境的网络白名单内且为无随机访问的顺序 tar，<b>未能取得</b>——
+     这正是肝静脉主干只能构建而非轮廓锚定的原因。
+     Gibson 等多器官腹部 CT 分割（Zenodo 记录标为 CC-BY-4.0，含肝/胆囊/下腔静脉/门脾静脉）
+     已下载但<b>被弃用</b>：其自带条款叠加了 TCIA 与 BTCV 挑战赛条款，再分发许可存疑。
+     详见 <code>GEOMETRY_PROVENANCE.md</code>。</p>
+
+  <h2>肝内血管树</h2>
+  <p>肝脏是<b>双入一出</b>：门静脉与肝动脉入肝，肝静脉出肝入下腔静脉。两棵静脉树在实质内互相穿插但不相交，
+     这是肝脏血管解剖的基本事实，所以两棵树<b>分别生长</b>，并由一条硬性净空约束保证不相交。
+     Murray 定律按 <code>r = r_term · n_downstream^(1/3)</code> 结构性强制，
+     四棵树的分叉处<b>最大相对残差均为 0</b>。
+     门静脉主干半径不是自由参数：它由该受试者自己的门静脉标注量出来
+     （最大内切球，实测半径 4.74 mm / 直径 9.49 mm，成人参考 9–13 mm），
+     再反过来定住整棵树的终末半径。</p>
+
+  <h2>血流</h2>
+  <p>粒子速度是真实流速 <code>v = Q/A</code>，逐采样点计算：
+     <code>Q(s)</code> = 每终末流量 × 下游终末数，<code>A(s) = πr(s)²</code>。
+     流量取自 <code>liver_model.json</code>（门静脉 970.7、肝动脉 323.6、总肝血流 1294.3 mL/min；
+     其中肝占心输出量的比例与门静脉分流比在该文件里已逐项标为<b>教科书量级值而非本项目实测</b>，此处原样传递）。
+     <b>胆汁沿胆管反向流出</b>，方向与它并行的门静脉血流相反；胆汁真实流速约 0.07 cm/s，
+     约为门静脉血的三百分之一，场景中按一个<b>声明过的显示增益</b>加速以便看清方向，增益值在 HUD 与验收记录里都写明。</p>
+
+  <h2>肝小叶</h2>
+  <p>六角小叶按真实尺寸建模后放大显示（放大倍数在 HUD 中标明，几何本身不为屏幕而改）：
+     六个角是门管区三联（门静脉小支・肝动脉小支・胆管），中心是中央静脉，
+     血液由门管区经血窦流向中心，<b>胆汁在毛细胆管内反向流回门管区</b>。
+     切掉一个 60° 扇区（一个经典"门脉单位"）以便从外面看到中央静脉、血窦和一整条门管区。
+     分区着色由本项目实测的单细胞表达量驱动：三群按小叶位置注释的肝细胞，
+     103 402 个细胞 / 24 位 donor。</p>
+  <p><b>分区梯度并非对所有基因一致，这一点必须保留：</b>
+     CYP1A2 中央/门脉 <b>2.21×</b>、CYP3A4 <b>1.37×</b>、CYP2C9 <b>1.04×（持平）</b>、
+     CYP2D6 <b>0.74×（方向相反）</b>、CYP2C19 0.67×（相反）、SLCO1B1 1.46×、ABCB11 2.16×、UGT2B7 0.98×。
+     所以颜色带是<b>逐基因重新绑定</b>的，斜率与方向都跟着实测比值走——
+     不能笼统地说"复现了分区梯度"。</p>
+
+  <h2>Couinaud 分段</h2>
+  <p>做了，但<b>是近似</b>，并且如实报告偏差。方法：按门静脉终末做 Voronoi 划分（Selle 等 2002），
+     再用标准几何平面命名（Soyer 1995 / Fasel 1998）。
+     Cantlie 平面、经门静脉分叉的横断平面、脐裂平面都由实测标志物定出；
+     左右肝段间平面只能由构建的肝静脉主干走向定出（源数据没有肝静脉标注）。
+     两种方法的一致率 <b>80.9%</b>。
+     八段体积中 <b>4 段落在已发表人群区间内、4 段在区间外</b>（S1 4.3% / 参考 1–4%，
+     S3 12.4% / 4–10%，S5 15.2% / 8–15%，S6 18.8% / 7–15%）。
+     这些数字是算出来什么就报什么，<b>没有为了落进参考区间而调参</b>。</p>
+
+  <h2>器官运动</h2>
+  <p>肝脏不是收缩性器官：平静呼吸时它被膈肌<b>整体推移</b>，以头尾向为主，伴轻微前后旋转，
+     实质本身几乎不形变。所以这里是<b>刚体变换</b>，场景中<b>没有任何逐顶点形变</b>——
+     你在呼吸周期任一时刻看到的形状，都是分割出来的那个形状。
+     频率 <code>0.18323 Hz（10.99 次/分）</code> 沿用本项目心脏模型拟合的呼吸性窦性心律不齐频率；
+     头尾向位移幅度 1–3 cm 是平静呼吸的<b>教科书范围而非本受试者实测</b>，默认取中点并在场景中标明。
+     吸呼时相比按 1:1.5 设置，所以波形不是纯正弦。</p>
+</main>
+
+<script type="module">
+import { createLiverScene } from './liver3d/js/main.js';
+
+const errEl = document.getElementById('err');
+function fail(e){
+  const txt = (e && e.stack) ? e.stack : String(e);
+  errEl.style.display='block';
+  errEl.textContent = '三维场景启动失败\n\n' + txt;
+  window.__liver3dError = txt;
+  console.error('[liver3d:fatal] ' + txt);
+}
+window.addEventListener('error', ev => fail(ev.error || ev.message));
+window.addEventListener('unhandledrejection', ev => fail(ev.reason));
+
+const narrow = Math.min(window.innerWidth, window.innerHeight) < 520;
+
+try{
+  const api = await createLiverScene({
+    container: document.getElementById('app'),
+    assetBase: './liver3d/assets/',
+    particlesPerPath: narrow ? 140 : 320
+  });
+  const $ = id => document.getElementById(id);
+
+  const sel = $('gene');
+  for (const g of api.genes){
+    const o = document.createElement('option');
+    o.value = g;
+    o.textContent = `${g} (${api.diag.zonalRatios[g].toFixed(2)}×)`;
+    sel.appendChild(o);
+  }
+  sel.value = api.gene;
+  sel.onchange = () => { api.setGene(sel.value); prov(); };
+
+  const toggle = (el, fn) => { el.onclick = () => {
+    el.classList.toggle('on'); fn(el.classList.contains('on')); }; };
+  toggle($('b-portal'), on => { api.setPartVisible('portal_vein', on);
+    api.flow.setTreeEnabled('portal_vein', on); });
+  toggle($('b-artery'), on => { api.setPartVisible('hepatic_artery', on);
+    api.flow.setTreeEnabled('hepatic_artery', on); });
+  toggle($('b-hv'), on => { api.setPartVisible('hepatic_vein', on);
+    api.flow.setTreeEnabled('hepatic_vein', on); });
+  toggle($('b-bile'), on => { api.setPartVisible('bile_duct', on);
+    api.flow.setTreeEnabled('bile_duct', on); });
+  toggle($('b-paren'), on => api.setPartVisible('parenchyma', on));
+  toggle($('b-seg'), on => api.setOverlay('segments', on));
+  toggle($('b-zone'), on => api.setOverlay('zones', on));
+
+  $('v-organ').onclick = () => { api.setView('organ');
+    $('v-organ').classList.add('on'); $('v-lob').classList.remove('on'); prov(); };
+  $('v-lob').onclick = () => { api.setView('lobule');
+    $('v-lob').classList.add('on'); $('v-organ').classList.remove('on'); prov(); };
+
+  $('rate').oninput = e => { const x = parseFloat(e.target.value);
+    api.setPlaybackRate(x); $('rate-v').innerHTML = `<code>${x.toFixed(2)}×</code>`; };
+  $('dens').oninput = e => { const f = parseFloat(e.target.value);
+    api.setParticleDensity(f); $('dens-v').innerHTML = `<code>${Math.round(f*100)}%</code>`; };
+
+  $('panelbtn').onclick = () => $('ui').classList.toggle('collapsed');
+  if (narrow) $('ui').classList.add('collapsed');
+
+  function prov(){
+    const d = api.diag;
+    const r = d.zonalRatios[api.gene];
+    $('prov').innerHTML =
+      `几何 TotalSegmentator v2 · CC-BY-4.0 · s0236 · <code>${(d.triangles/1000).toFixed(0)}k</code> 面<br>` +
+      `门静脉 <code>311 分叉 / 313 终末</code>（轮廓锚定）· ` +
+      `肝静脉 <code>261 分叉 / 263 终末</code>（构建）<br>` +
+      `呼吸 <code>${d.respiration.breaths_per_min.toFixed(2)}/min</code>，` +
+      `<code>${d.respiration.excursion_cm.toFixed(1)} cm</code> 刚体位移，无形变<br>` +
+      `<b>${api.gene}</b> 中央/门脉 <b>${r.toFixed(2)}×</b>（实测）· ` +
+      `<code>is_user_personal_data = ${d.respiration.is_user_personal_data}</code>` +
+      (narrow ? '<br><code>窄屏：粒子数与像素比已降档</code>' : '');
+  }
+  prov();
+}catch(e){ fail(e); }
+</script>
+</body>
+</html>

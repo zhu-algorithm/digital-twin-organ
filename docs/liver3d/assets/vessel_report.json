@@ -1,0 +1,157 @@
+{
+ "frame": {
+  "axes": "scene = (patient-left, superior, anterior), mm",
+  "ras_to_scene": [
+   [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   [
+    0.0,
+    0.0,
+    1.0
+   ],
+   [
+    0.0,
+    1.0,
+    0.0
+   ]
+  ]
+ },
+ "subject": "s0236",
+ "portal": {
+  "segments": 1188,
+  "bifurcations": 311,
+  "terminals": 313,
+  "nodes": 1189,
+  "radius_mm": [
+   0.699,
+   4.743
+  ],
+  "diameter_mm": [
+   1.4,
+   9.49
+  ],
+  "r_terminal_mm": 0.6986,
+  "total_length_mm": 5705.1,
+  "murray_max_relative_residual": 0.0,
+  "murray_bifurcations_checked": 310,
+  "contour_anchored": "yes \u2014 trunks skeletonised from the subject's own portal_vein_and_splenic_vein label",
+  "anchored_nodes": 59,
+  "measured_trunk_radius_mm": 4.74,
+  "measured_trunk_diameter_mm": 9.49,
+  "trunk_diameter_reference_mm": "9-13 mm adult main portal vein",
+  "cco_stats": {
+   "candidates": 7503,
+   "rejected_angle": 473,
+   "rejected_outside": 1137,
+   "rejected_clearance": 0,
+   "unattached": 12
+  }
+ },
+ "hepatic_venous": {
+  "segments": 973,
+  "bifurcations": 261,
+  "terminals": 263,
+  "nodes": 975,
+  "radius_mm": [
+   0.906,
+   4.75
+  ],
+  "diameter_mm": [
+   1.81,
+   9.5
+  ],
+  "r_terminal_mm": 0.9062,
+  "total_length_mm": 4610.3,
+  "murray_max_relative_residual": 0.0,
+  "murray_bifurcations_checked": 261,
+  "contour_anchored": "no \u2014 the source release has no hepatic-vein label; only the caval ostium is anchored on the real IVC, the three trunk courses are constructed from measured landmark planes",
+  "anchored_nodes": 46,
+  "caval_radius_at_confluence_mm": 13.5,
+  "ostia": {
+   "RHV": [
+    -43.52509767703444,
+    530.6389473994748,
+    189.79542598109595
+   ],
+   "MHV_LHV_common": [
+    -40.18074238632098,
+    530.0669629345733,
+    198.88627491118456
+   ]
+  },
+  "common_trunk_assumption": "MHV and LHV share a common caval trunk (majority anatomical variant, ~60-80 %); assumption, not measured on this subject",
+  "trunk_planes": {
+   "azimuth_frame": "azimuth 0 deg = Cantlie-plane normal (patient left), +90 deg along e2 = cross(caval axis, e1), measured about the caval axis from the hepatocaval confluence",
+   "right_hemiliver_median_azimuth_deg": -132.1,
+   "left_lateral_median_azimuth_deg": -34.2,
+   "umbilical_fissure_offset_from_cantlie_mm": 31.75
+  },
+  "trunk_calibration": "r_term set from the published 8-11 mm right-hepatic-vein ostium diameter, not measured",
+  "cco_stats": {
+   "candidates": 6376,
+   "rejected_angle": 401,
+   "rejected_outside": 644,
+   "rejected_clearance": 0,
+   "unattached": 0
+  }
+ },
+ "hepatic_arterial": {
+  "segments": 372,
+  "bifurcations": 48,
+  "terminals": 50,
+  "nodes": 373,
+  "radius_mm": [
+   0.611,
+   2.25
+  ],
+  "diameter_mm": [
+   1.22,
+   4.5
+  ],
+  "r_terminal_mm": 0.6107,
+  "total_length_mm": 1551.0,
+  "murray_max_relative_residual": 0.0,
+  "murray_bifurcations_checked": 47,
+  "contour_anchored": "no \u2014 synthetic, generated as a portal-triad companion of the portal tree"
+ },
+ "biliary": {
+  "segments": 370,
+  "bifurcations": 48,
+  "terminals": 50,
+  "nodes": 371,
+  "radius_mm": [
+   0.543,
+   2.0
+  ],
+  "diameter_mm": [
+   1.09,
+   4.0
+  ],
+  "r_terminal_mm": 0.5429,
+  "total_length_mm": 1535.2,
+  "murray_max_relative_residual": 0.0,
+  "murray_bifurcations_checked": 47,
+  "contour_anchored": "no \u2014 synthetic, portal-triad companion; flow is retrograde"
+ },
+ "segment_subdivision": {
+  "nodes_inserted": {
+   "portal": 514,
+   "hepatic_venous": 409,
+   "arterial": 6,
+   "biliary": 4
+  },
+  "max_segment_length_mm": 7.0,
+  "lateral_bow_fraction_of_length": 0.12,
+  "note": "cosmetic curvature only \u2014 intermediate nodes, no new terminals or bifurcations, no radius change; bifurcation counts, downstream terminal counts and Murray residuals are unaffected. The clearance audit below runs on the SUBDIVIDED geometry."
+ },
+ "cross_tree_clearance": {
+  "portal_vs_hepatic_min_surface_gap_mm": 6.378,
+  "segment_pairs_overlapping": 0,
+  "portal_vs_hepatic_min_centreline_distance_mm": 8.265,
+  "required_gap_mm": 1.0,
+  "trees_non_intersecting": true
+ }
+}

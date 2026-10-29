@@ -1,0 +1,108 @@
+{
+ "flow_sources": {
+  "portal_mL_min": 970.7,
+  "arterial_mL_min": 323.6,
+  "total_hepatic_mL_min": 1294.3,
+  "bile_mL_min": [
+   0.4,
+   0.6
+  ],
+  "provenance": {
+   "cardiac_output": "\u672c\u9879\u76ee\u5fc3\u810f\u6a21\u578b\u5b9e\u7b97\uff08\u56db\u8154\u65f6\u53d8\u5f39\u6027\u8154 + Windkessel\uff0c60.5 s \u9759\u606f\u7a97\uff09",
+   "hepatic_fraction": "\u6559\u79d1\u4e66\u91cf\u7ea7\uff08\u809d\u63a5\u53d7\u5fc3\u8f93\u51fa\u91cf\u7ea6 20\u201325%\uff09\uff0c\u975e\u672c\u9879\u76ee\u5b9e\u6d4b",
+   "portal_share": "\u6559\u79d1\u4e66\u91cf\u7ea7\uff08\u95e8\u9759\u8109\u7ea6\u5360\u809d\u8840\u6d41 70\u201380%\uff09\uff0c\u975e\u672c\u9879\u76ee\u5b9e\u6d4b"
+  }
+ },
+ "trees": {
+  "portal_vein": {
+   "paths": 26,
+   "terminals_in_tree": 313,
+   "per_terminal_flow_mm3_s": 51.688,
+   "velocity_cm_s": {
+    "proximal": 22.89,
+    "median_over_all_samples": 7.5,
+    "max": 22.89
+   },
+   "published_reference_cm_s": [
+    15.0,
+    25.0,
+    "main portal vein, time-averaged"
+   ],
+   "proximal_within_reference": true,
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "hilum -> terminal (inflow)"
+  },
+  "hepatic_vein": {
+   "paths": 22,
+   "terminals_in_tree": 263,
+   "per_terminal_flow_mm3_s": 82.0215,
+   "velocity_cm_s": {
+    "proximal": 16.66,
+    "median_over_all_samples": 11.22,
+    "max": 27.61
+   },
+   "published_reference_cm_s": [
+    16.0,
+    40.0,
+    "hepatic vein, phasic peak"
+   ],
+   "proximal_within_reference": true,
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "terminal -> caval ostium (outflow)"
+  },
+  "hepatic_artery": {
+   "paths": 14,
+   "terminals_in_tree": 50,
+   "per_terminal_flow_mm3_s": 107.8667,
+   "velocity_cm_s": {
+    "proximal": 33.91,
+    "median_over_all_samples": 13.28,
+    "max": 33.91
+   },
+   "published_reference_cm_s": [
+    30.0,
+    70.0,
+    "proper hepatic artery, peak systolic"
+   ],
+   "proximal_within_reference": true,
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "hilum -> terminal (inflow)"
+  },
+  "bile_duct": {
+   "paths": 12,
+   "terminals_in_tree": 50,
+   "per_terminal_flow_mm3_s": 0.1667,
+   "velocity_cm_s": {
+    "proximal": 0.07,
+    "median_over_all_samples": 0.03,
+    "max": 0.07
+   },
+   "published_reference_cm_s": [
+    0.03,
+    0.2,
+    "common hepatic duct, computed from bile output; no Doppler reference exists"
+   ],
+   "proximal_within_reference": true,
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "terminal -> hilum (retrograde relative to portal inflow)"
+  }
+ },
+ "audit": {
+  "total_paths": 74,
+  "samples_per_path": 64,
+  "retrograde_samples_total": 0,
+  "path_points_inside_liver_bounding_box": "4736 / 4736",
+  "mass_balance_mL_min": {
+   "inflow_portal_plus_arterial": 1294.3,
+   "outflow_hepatic_venous": 1294.3,
+   "residual": -0.0
+  },
+  "bile_display_gain": 120.0,
+  "bile_true_velocity_cm_s": 0.07,
+  "flow_direction_check": "portal and arterial advance hilum -> parenchyma, hepatic venous parenchyma -> caval ostium, bile parenchyma -> hilum; every path is traversed in one direction only, so no path can produce a retrograde sample"
+ }
+}

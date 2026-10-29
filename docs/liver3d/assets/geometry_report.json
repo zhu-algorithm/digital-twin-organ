@@ -1,0 +1,70 @@
+{
+ "source": {
+  "dataset": "TotalSegmentator dataset v2.0.1 (Wasserthal et al.)",
+  "doi": "10.5281/zenodo.10047292",
+  "licence": "CC-BY-4.0",
+  "subject": "s0236",
+  "voxel_mm": [
+   1.5,
+   1.4999998807907104,
+   1.5
+  ],
+  "access": "HTTP range extraction of 5 mask members from the Zenodo zip",
+  "structures_used": [
+   "liver",
+   "portal_vein_and_splenic_vein",
+   "inferior_vena_cava",
+   "gallbladder",
+   "aorta"
+  ]
+ },
+ "parenchyma": {
+  "liver_mask_mL": 1434.1,
+  "capsule_volume_mL": 1455.3,
+  "envelope_minus_label_voxels": 6287,
+  "note": "capsule volume = liver label + the vessel channels the mutually exclusive labelling carved out of it"
+ },
+ "surfaces": {
+  "parenchyma": {
+   "faces": 78000,
+   "vertices": 39002,
+   "watertight": true,
+   "volume_mL": 1443.44
+  },
+  "portal_vein": {
+   "faces": 7180,
+   "vertices": 3592,
+   "watertight": true,
+   "volume_mL": 12.97
+  },
+  "ivc": {
+   "faces": 7000,
+   "vertices": 3502,
+   "watertight": true,
+   "volume_mL": 20.1
+  },
+  "gallbladder": {
+   "faces": 4000,
+   "vertices": 2002,
+   "watertight": true,
+   "volume_mL": 17.51
+  },
+  "total_faces": 96180
+ },
+ "landmarks": {
+  "ivc_retrohepatic_axis_points": 99,
+  "ivc_retrohepatic_axis_deviation_from_straight_line_mm": {
+   "median": 2.63,
+   "p90": 3.83,
+   "note": "the real caval groove is curved; this is its curvature, not an error"
+  },
+  "cantlie_plane_tilt_from_sagittal_deg": 48.8,
+  "left_hemiliver_volume_fraction": 0.347,
+  "right_hemiliver_volume_fraction": 0.653,
+  "right_hemiliver_reference_range": "0.55-0.70 of total liver volume (CT volumetry literature); measured value is reported, not tuned",
+  "portal_skeleton_points": 182,
+  "portal_skeleton_intrahepatic_points": 46,
+  "portal_vein_voxels_inside_envelope": 1923,
+  "ivc_voxels_inside_envelope": 580
+ }
+}

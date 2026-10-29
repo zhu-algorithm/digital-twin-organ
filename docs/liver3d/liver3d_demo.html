@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Digital Twin — 3-D Anatomical Liver</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #070a10; color: #e9eef6;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-text-size-adjust: 100%; }
+  #app { position: absolute; inset: 0; }
+  #ui { position: absolute; right: 12px; bottom: 12px; z-index: 10;
+    background: rgba(8,11,18,0.72); border: 1px solid rgba(120,140,170,0.25);
+    border-radius: 10px; padding: 10px 12px; width: min(330px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px); overflow: auto;
+    backdrop-filter: blur(6px); font-size: 12.5px; line-height: 1.45;
+    box-sizing: border-box; }
+  #ui h1 { font-size: 13.5px; margin: 0 0 7px; letter-spacing: .01em; }
+  #ui .row { display: flex; gap: 5px; align-items: center; margin: 5px 0; flex-wrap: wrap; }
+  button { background: #16202f; color: #e9eef6; border: 1px solid rgba(130,150,180,.35);
+    border-radius: 6px; padding: 4px 8px; font-size: 11.5px; cursor: pointer;
+    min-height: 28px; }
+  button.on { background: #27405f; border-color: #6aa0e0; }
+  label { font-size: 11px; color: #b8c4d6; }
+  select { background: #16202f; color: #e9eef6; font-size: 11.5px;
+    border: 1px solid rgba(130,150,180,.35); border-radius: 6px; padding: 3px 5px; }
+  input[type=range] { width: 108px; }
+  .note { font-size: 10.5px; color: #93a3ba; margin-top: 7px;
+    border-top: 1px solid rgba(120,140,170,.2); padding-top: 6px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; }
+  #toggle { position: absolute; right: 12px; top: 12px; z-index: 11; display: none; }
+  #err { position:absolute; inset:0; display:none; padding:20px; overflow:auto;
+    background:#160b0b; color:#ffb4a8; font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px; white-space: pre-wrap; z-index: 50; }
+  @media (max-width: 520px) {
+    #ui { right: 8px; bottom: 8px; left: 8px; width: auto;
+          max-height: 46vh; font-size: 12px; padding: 9px 10px; }
+    #ui.collapsed { display: none; }
+    #toggle { display: block; }
+    input[type=range] { width: 92px; }
+  }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js",
+               "three/webgpu": "./vendor/three/three.module.js",
+               "three/tsl": "./vendor/three/three.module.js" } }
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="err"></div>
+<button id="toggle">panel</button>
+
+<div id="ui">
+  <h1>3-D anatomical liver</h1>
+  <div class="row">
+    <label>View</label>
+    <button id="v-organ" class="on">organ</button>
+    <button id="v-lob">lobule</button>
+  </div>
+  <div class="row">
+    <button id="b-portal" class="on">portal</button>
+    <button id="b-artery">artery</button>
+    <button id="b-hv" class="on">hep. veins</button>
+    <button id="b-bile">bile</button>
+  </div>
+  <div class="row">
+    <button id="b-paren" class="on">parenchyma</button>
+    <button id="b-seg">Couinaud</button>
+    <button id="b-zone">zones</button>
+  </div>
+  <div class="row">
+    <label>Zonal gene</label>
+    <select id="gene"></select>
+  </div>
+  <div class="row">
+    <label>Speed</label>
+    <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1" />
+    <span id="rate-v"><code>1.00x</code></span>
+  </div>
+  <div class="row">
+    <label>Particles</label>
+    <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1" />
+    <span id="dens-v"><code>100%</code></span>
+  </div>
+  <div class="note" id="prov">loading…</div>
+</div>
+
+<script type="module">
+import { createLiverScene } from './js/main.js';
+
+const errEl = document.getElementById('err');
+function fail (e) {
+  const txt = (e && e.stack) ? e.stack : String(e);
+  errEl.style.display = 'block';
+  errEl.textContent = 'liver3d failed to start\n\n' + txt;
+  window.__liver3dError = txt;
+  console.error('[liver3d:fatal] ' + txt);
+}
+window.addEventListener('error', (e) => fail(e.error || e.message));
+window.addEventListener('unhandledrejection', (e) => fail(e.reason));
+
+try {
+  const api = await createLiverScene({ container: document.getElementById('app') });
+  const $ = (id) => document.getElementById(id);
+
+  const sel = $('gene');
+  for (const g of api.genes) {
+    const o = document.createElement('option');
+    o.value = g; o.textContent = `${g}  (${api.diag.zonalRatios[g].toFixed(2)}x)`;
+    sel.appendChild(o);
+  }
+  sel.value = api.gene;
+  sel.onchange = () => { api.setGene(sel.value); updateProv(); };
+
+  const toggleBtn = (el, fn) => {
+    el.onclick = () => { el.classList.toggle('on'); fn(el.classList.contains('on')); };
+  };
+  toggleBtn($('b-portal'), (on) => {
+    api.setPartVisible('portal_vein', on); api.flow.setTreeEnabled('portal_vein', on);
+  });
+  toggleBtn($('b-artery'), (on) => {
+    api.setPartVisible('hepatic_artery', on); api.flow.setTreeEnabled('hepatic_artery', on);
+  });
+  toggleBtn($('b-hv'), (on) => {
+    api.setPartVisible('hepatic_vein', on); api.flow.setTreeEnabled('hepatic_vein', on);
+  });
+  toggleBtn($('b-bile'), (on) => {
+    api.setPartVisible('bile_duct', on); api.flow.setTreeEnabled('bile_duct', on);
+  });
+  toggleBtn($('b-paren'), (on) => api.setPartVisible('parenchyma', on));
+  toggleBtn($('b-seg'), (on) => api.setOverlay('segments', on));
+  toggleBtn($('b-zone'), (on) => api.setOverlay('zones', on));
+
+  $('v-organ').onclick = () => {
+    api.setView('organ'); $('v-organ').classList.add('on'); $('v-lob').classList.remove('on');
+  };
+  $('v-lob').onclick = () => {
+    api.setView('lobule'); $('v-lob').classList.add('on'); $('v-organ').classList.remove('on');
+  };
+
+  $('rate').oninput = (e) => {
+    const x = parseFloat(e.target.value);
+    api.setPlaybackRate(x); $('rate-v').innerHTML = `<code>${x.toFixed(2)}x</code>`;
+  };
+  $('dens').oninput = (e) => {
+    const f = parseFloat(e.target.value);
+    api.setParticleDensity(f); $('dens-v').innerHTML = `<code>${Math.round(f * 100)}%</code>`;
+  };
+
+  $('toggle').onclick = () => $('ui').classList.toggle('collapsed');
+  // On a narrow viewport the control panel would cover half the organ, so it
+  // starts collapsed behind the "panel" button.
+  if (window.innerWidth < 520) $('ui').classList.add('collapsed');
+
+  function updateProv () {
+    const d = api.diag;
+    const r = d.zonalRatios[api.gene];
+    $('prov').innerHTML =
+      `geometry: TotalSegmentator v2 (CC-BY-4.0), subject s0236 · `
+      + `${(d.triangles / 1000).toFixed(0)}k triangles<br>`
+      + `portal 311 bifurcations / 313 terminals (contour-anchored) · `
+      + `hepatic 261 / 263 (constructed)<br>`
+      + `respiration ${d.respiration.breaths_per_min.toFixed(2)}/min, `
+      + `${d.respiration.excursion_cm.toFixed(1)} cm — rigid displacement, no deformation<br>`
+      + `<b>${api.gene}</b> central/periportal <b>${r.toFixed(2)}x</b> (measured, 103 402 cells / 24 donors). `
+      + `The zonal gradient differs per gene: CYP1A2 2.21x, CYP3A4 1.37x, CYP2C9 1.04x (flat), `
+      + `CYP2D6 0.74x (reversed).<br>`
+      + `Bile shown at ${d.flow.bileDisplayGain.toFixed(0)}x real speed (true ~0.07 cm/s).`;
+  }
+  updateProv();
+} catch (e) { fail(e); }
+</script>
+</body>
+</html>

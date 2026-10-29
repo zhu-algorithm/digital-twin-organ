@@ -1,0 +1,818 @@
+{
+ "engine": "chromium",
+ "root": "/work/web",
+ "viewports": {
+  "desktop": {
+   "viewport": [
+    1440,
+    900
+   ],
+   "ready_ms": 2475.7000000000007,
+   "frame_stats": {
+    "frames": 601,
+    "meanFrameMs": 16.665890183028274,
+    "medianFrameMs": 16.69999999999891,
+    "p95FrameMs": 16.700000000000728,
+    "fpsMean": 60.002795471336476,
+    "fpsMedian": 59.880239520962
+   },
+   "probe": {
+    "webgl2": true,
+    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
+    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "programs": 17,
+    "programsNotLinked": [],
+    "triangles": 137256,
+    "lobuleTriangles": 17072,
+    "particles": 23680,
+    "particlesDrawn": 23680,
+    "trees": {
+     "portal_vein": {
+      "name": "portal_vein",
+      "segments_rendered": 1188,
+      "segments_in_tree": 1188,
+      "triangles": 16024,
+      "vertices": 16024,
+      "radius_mm": [
+       0.6986,
+       4.7434
+      ],
+      "radius_scale_applied": 1
+     },
+     "hepatic_vein": {
+      "name": "hepatic_vein",
+      "segments_rendered": 973,
+      "segments_in_tree": 973,
+      "triangles": 16596,
+      "vertices": 16596,
+      "radius_mm": [
+       0.9062,
+       4.75
+      ],
+      "radius_scale_applied": 1
+     },
+     "hepatic_artery": {
+      "name": "hepatic_artery",
+      "segments_rendered": 372,
+      "segments_in_tree": 372,
+      "triangles": 4386,
+      "vertices": 4386,
+      "radius_mm": [
+       0.6107,
+       2.25
+      ],
+      "radius_scale_applied": 1
+     },
+     "bile_duct": {
+      "name": "bile_duct",
+      "segments_rendered": 370,
+      "segments_in_tree": 370,
+      "triangles": 4070,
+      "vertices": 4070,
+      "radius_mm": [
+       0.5429,
+       2
+      ],
+      "radius_scale_applied": 1
+     }
+    },
+    "flowDiag": {
+     "paths": 74,
+     "particles": 23680,
+     "drawn": 23680,
+     "bileDisplayGain": 120,
+     "byTree": {
+      "portal_vein": {
+       "paths": 26,
+       "meanV_cm_s": 8.777320040189304
+      },
+      "hepatic_vein": {
+       "paths": 22,
+       "meanV_cm_s": 10.256229365955699
+      },
+      "hepatic_artery": {
+       "paths": 14,
+       "meanV_cm_s": 15.556766510009762
+      },
+      "bile_duct": {
+       "paths": 12,
+       "meanV_cm_s": 0.030761067569255826
+      }
+     }
+    },
+    "lobule": {
+     "magnification": 60,
+     "lobule_diameter_mm": 1,
+     "lobule_height_mm": 1.6,
+     "portal_tracts": 6,
+     "triad_members_per_tract": [
+      "portal venule",
+      "hepatic arteriole",
+      "bile ductule"
+     ],
+     "sinusoids_rendered": 90,
+     "canaliculi_rendered": 30,
+     "sinusoid_transit_s": [
+      1,
+      2
+     ],
+     "sinusoid_transit_source": "\u6559\u79d1\u4e66\u91cf\u7ea7\uff0c\u975e\u672c\u9879\u76ee\u8ba1\u7b97",
+     "sinusoid_velocity_mm_s": 0.33333,
+     "bile_velocity_mm_s": 0.03295,
+     "bile_display_gain": 5.6,
+     "estimated_lobules_in_liver": 1466329,
+     "blood_direction": "portal tract -> sinusoid -> central vein (inward)",
+     "bile_direction": "canaliculus -> bile ductule at the portal tract (outward, counter-current to the blood)"
+    },
+    "respiration": {
+     "f_hz": 0.18323,
+     "breaths_per_min": 10.99,
+     "excursion_cm": 2,
+     "excursion_reference_range_cm": [
+      1,
+      3
+     ],
+     "rotation_deg": 2.2,
+     "rigid_body": true,
+     "parenchymal_deformation": "none \u2014 the liver is displaced, not deformed",
+     "source": "\u7531\u672c\u9879\u76ee\u5fc3\u7387\u6a21\u578b\u62df\u5408\u7684\u547c\u5438\u6027\u7aa6\u6027\u5fc3\u5f8b\u4e0d\u9f50\u9891\u7387\u5bfc\u51fa\uff08PhysioNet nsrdb/16265 \u516c\u5f00\u6570\u636e\uff09",
+     "is_user_personal_data": false,
+     "measured_craniocaudal_excursion_mm": 19.13303179599484,
+     "max_interpoint_distance_drift_mm": 2.842170943040401e-14
+    },
+    "flowProbe": {
+     "paths": 74,
+     "retrogradePaths": 0,
+     "movingPaths": 74,
+     "direction": {
+      "portal_vein|antegrade": 26,
+      "hepatic_vein|antegrade": 22,
+      "hepatic_artery|antegrade": 14,
+      "bile_duct|retrograde": 12
+     }
+    },
+    "hudBoxes": 18,
+    "hudOverflow": [],
+    "view": "organ",
+    "gene": "CYP1A2",
+    "zonalRatios": {
+     "CYP3A4": 1.368,
+     "CYP1A2": 2.212,
+     "CYP2C9": 1.036,
+     "CYP2D6": 0.742,
+     "CYP2C19": 0.667,
+     "UGT2B7": 0.982,
+     "SLCO1B1": 1.461,
+     "ABCB11": 2.162
+    },
+    "couinaud": {
+     "I caudate": 63,
+     "II": 106.1,
+     "III": 179.9,
+     "IV": 194,
+     "V": 221.4,
+     "VI": 273.9,
+     "VII": 174.1,
+     "VIII": 242.9
+    }
+   },
+   "hud_overflow_after_toggles": [],
+   "screenshots": {
+    "organ": "out/bench/liver3d_desktop_organ.png",
+    "lobule": "out/bench/liver3d_desktop_lobule.png",
+    "vessels": "out/bench/liver3d_desktop_vessels.png",
+    "couinaud": "out/bench/liver3d_desktop_couinaud.png",
+    "zones": "out/bench/liver3d_desktop_zones.png"
+   },
+   "console": [],
+   "assets_served": [
+    [
+     "liver3d/assets/couinaud.json",
+     1561
+    ],
+    [
+     "liver3d/assets/liver.glb",
+     3851696
+    ],
+    [
+     "liver3d/assets/liver_expression.json",
+     10415
+    ],
+    [
+     "liver3d/assets/liver_flow.json",
+     202903
+    ],
+    [
+     "liver3d/assets/liver_model.json",
+     2476
+    ],
+    [
+     "liver3d/assets/liver_vessels.json",
+     186513
+    ],
+    [
+     "liver3d/js/flow.js",
+     10524
+    ],
+    [
+     "liver3d/js/hud.js",
+     6260
+    ],
+    [
+     "liver3d/js/lobule.js",
+     14341
+    ],
+    [
+     "liver3d/js/main.js",
+     18432
+    ],
+    [
+     "liver3d/js/materials.js",
+     9726
+    ],
+    [
+     "liver3d/js/respiration.js",
+     4864
+    ],
+    [
+     "liver3d/js/vessels.js",
+     4143
+    ],
+    [
+     "liver3d/liver3d_demo.html",
+     7308
+    ],
+    [
+     "liver3d/vendor/jsm/controls/OrbitControls.js",
+     40755
+    ],
+    [
+     "liver3d/vendor/jsm/environments/RoomEnvironment.js",
+     4960
+    ],
+    [
+     "liver3d/vendor/jsm/loaders/GLTFLoader.js",
+     117570
+    ],
+    [
+     "liver3d/vendor/jsm/utils/BufferGeometryUtils.js",
+     37712
+    ],
+    [
+     "liver3d/vendor/jsm/utils/SkeletonUtils.js",
+     11535
+    ],
+    [
+     "liver3d/vendor/three/three.core.js",
+     1458113
+    ],
+    [
+     "liver3d/vendor/three/three.module.js",
+     662772
+    ]
+   ]
+  },
+  "phone390": {
+   "viewport": [
+    390,
+    844
+   ],
+   "ready_ms": 839.3000000000029,
+   "frame_stats": {
+    "frames": 600,
+    "meanFrameMs": 16.666,
+    "medianFrameMs": 16.699999999999818,
+    "p95FrameMs": 16.700000000000728,
+    "fpsMean": 60.00240009600384,
+    "fpsMedian": 59.88023952095874
+   },
+   "probe": {
+    "webgl2": true,
+    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
+    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "programs": 17,
+    "programsNotLinked": [],
+    "triangles": 137256,
+    "lobuleTriangles": 17072,
+    "particles": 10360,
+    "particlesDrawn": 4662,
+    "trees": {
+     "portal_vein": {
+      "name": "portal_vein",
+      "segments_rendered": 1188,
+      "segments_in_tree": 1188,
+      "triangles": 16024,
+      "vertices": 16024,
+      "radius_mm": [
+       0.6986,
+       4.7434
+      ],
+      "radius_scale_applied": 1
+     },
+     "hepatic_vein": {
+      "name": "hepatic_vein",
+      "segments_rendered": 973,
+      "segments_in_tree": 973,
+      "triangles": 16596,
+      "vertices": 16596,
+      "radius_mm": [
+       0.9062,
+       4.75
+      ],
+      "radius_scale_applied": 1
+     },
+     "hepatic_artery": {
+      "name": "hepatic_artery",
+      "segments_rendered": 372,
+      "segments_in_tree": 372,
+      "triangles": 4386,
+      "vertices": 4386,
+      "radius_mm": [
+       0.6107,
+       2.25
+      ],
+      "radius_scale_applied": 1
+     },
+     "bile_duct": {
+      "name": "bile_duct",
+      "segments_rendered": 370,
+      "segments_in_tree": 370,
+      "triangles": 4070,
+      "vertices": 4070,
+      "radius_mm": [
+       0.5429,
+       2
+      ],
+      "radius_scale_applied": 1
+     }
+    },
+    "flowDiag": {
+     "paths": 74,
+     "particles": 10360,
+     "drawn": 4662,
+     "bileDisplayGain": 120,
+     "byTree": {
+      "portal_vein": {
+       "paths": 26,
+       "meanV_cm_s": 8.777320040189304
+      },
+      "hepatic_vein": {
+       "paths": 22,
+       "meanV_cm_s": 10.256229365955699
+      },
+      "hepatic_artery": {
+       "paths": 14,
+       "meanV_cm_s": 15.556766510009762
+      },
+      "bile_duct": {
+       "paths": 12,
+       "meanV_cm_s": 0.030761067569255826
+      }
+     }
+    },
+    "lobule": {
+     "magnification": 60,
+     "lobule_diameter_mm": 1,
+     "lobule_height_mm": 1.6,
+     "portal_tracts": 6,
+     "triad_members_per_tract": [
+      "portal venule",
+      "hepatic arteriole",
+      "bile ductule"
+     ],
+     "sinusoids_rendered": 90,
+     "canaliculi_rendered": 30,
+     "sinusoid_transit_s": [
+      1,
+      2
+     ],
+     "sinusoid_transit_source": "\u6559\u79d1\u4e66\u91cf\u7ea7\uff0c\u975e\u672c\u9879\u76ee\u8ba1\u7b97",
+     "sinusoid_velocity_mm_s": 0.33333,
+     "bile_velocity_mm_s": 0.03295,
+     "bile_display_gain": 5.6,
+     "estimated_lobules_in_liver": 1466329,
+     "blood_direction": "portal tract -> sinusoid -> central vein (inward)",
+     "bile_direction": "canaliculus -> bile ductule at the portal tract (outward, counter-current to the blood)"
+    },
+    "respiration": {
+     "f_hz": 0.18323,
+     "breaths_per_min": 10.99,
+     "excursion_cm": 2,
+     "excursion_reference_range_cm": [
+      1,
+      3
+     ],
+     "rotation_deg": 2.2,
+     "rigid_body": true,
+     "parenchymal_deformation": "none \u2014 the liver is displaced, not deformed",
+     "source": "\u7531\u672c\u9879\u76ee\u5fc3\u7387\u6a21\u578b\u62df\u5408\u7684\u547c\u5438\u6027\u7aa6\u6027\u5fc3\u5f8b\u4e0d\u9f50\u9891\u7387\u5bfc\u51fa\uff08PhysioNet nsrdb/16265 \u516c\u5f00\u6570\u636e\uff09",
+     "is_user_personal_data": false,
+     "measured_craniocaudal_excursion_mm": 19.13303179599484,
+     "max_interpoint_distance_drift_mm": 2.842170943040401e-14
+    },
+    "flowProbe": {
+     "paths": 74,
+     "retrogradePaths": 0,
+     "movingPaths": 74,
+     "direction": {
+      "portal_vein|antegrade": 26,
+      "hepatic_vein|antegrade": 22,
+      "hepatic_artery|antegrade": 14,
+      "bile_duct|retrograde": 12
+     }
+    },
+    "hudBoxes": 11,
+    "hudOverflow": [],
+    "view": "organ",
+    "gene": "CYP1A2",
+    "zonalRatios": {
+     "CYP3A4": 1.368,
+     "CYP1A2": 2.212,
+     "CYP2C9": 1.036,
+     "CYP2D6": 0.742,
+     "CYP2C19": 0.667,
+     "UGT2B7": 0.982,
+     "SLCO1B1": 1.461,
+     "ABCB11": 2.162
+    },
+    "couinaud": {
+     "I caudate": 63,
+     "II": 106.1,
+     "III": 179.9,
+     "IV": 194,
+     "V": 221.4,
+     "VI": 273.9,
+     "VII": 174.1,
+     "VIII": 242.9
+    }
+   },
+   "hud_overflow_after_toggles": [],
+   "screenshots": {
+    "organ": "out/bench/liver3d_phone390_organ.png",
+    "lobule": "out/bench/liver3d_phone390_lobule.png",
+    "vessels": "out/bench/liver3d_phone390_vessels.png",
+    "couinaud": "out/bench/liver3d_phone390_couinaud.png",
+    "zones": "out/bench/liver3d_phone390_zones.png"
+   },
+   "console": [],
+   "assets_served": [
+    [
+     "liver3d/assets/couinaud.json",
+     1561
+    ],
+    [
+     "liver3d/assets/liver.glb",
+     3851696
+    ],
+    [
+     "liver3d/assets/liver_expression.json",
+     10415
+    ],
+    [
+     "liver3d/assets/liver_flow.json",
+     202903
+    ],
+    [
+     "liver3d/assets/liver_model.json",
+     2476
+    ],
+    [
+     "liver3d/assets/liver_vessels.json",
+     186513
+    ],
+    [
+     "liver3d/js/flow.js",
+     10524
+    ],
+    [
+     "liver3d/js/hud.js",
+     6260
+    ],
+    [
+     "liver3d/js/lobule.js",
+     14341
+    ],
+    [
+     "liver3d/js/main.js",
+     18432
+    ],
+    [
+     "liver3d/js/materials.js",
+     9726
+    ],
+    [
+     "liver3d/js/respiration.js",
+     4864
+    ],
+    [
+     "liver3d/js/vessels.js",
+     4143
+    ],
+    [
+     "liver3d/liver3d_demo.html",
+     7308
+    ],
+    [
+     "liver3d/vendor/jsm/controls/OrbitControls.js",
+     40755
+    ],
+    [
+     "liver3d/vendor/jsm/environments/RoomEnvironment.js",
+     4960
+    ],
+    [
+     "liver3d/vendor/jsm/loaders/GLTFLoader.js",
+     117570
+    ],
+    [
+     "liver3d/vendor/jsm/utils/BufferGeometryUtils.js",
+     37712
+    ],
+    [
+     "liver3d/vendor/jsm/utils/SkeletonUtils.js",
+     11535
+    ],
+    [
+     "liver3d/vendor/three/three.core.js",
+     1458113
+    ],
+    [
+     "liver3d/vendor/three/three.module.js",
+     662772
+    ]
+   ]
+  },
+  "phone360": {
+   "viewport": [
+    360,
+    800
+   ],
+   "ready_ms": 697.1999999999971,
+   "frame_stats": {
+    "frames": 600,
+    "meanFrameMs": 16.66600000000001,
+    "medianFrameMs": 16.699999999999818,
+    "p95FrameMs": 16.700000000000728,
+    "fpsMean": 60.002400096003804,
+    "fpsMedian": 59.88023952095874
+   },
+   "probe": {
+    "webgl2": true,
+    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
+    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "programs": 17,
+    "programsNotLinked": [],
+    "triangles": 137256,
+    "lobuleTriangles": 17072,
+    "particles": 10360,
+    "particlesDrawn": 4662,
+    "trees": {
+     "portal_vein": {
+      "name": "portal_vein",
+      "segments_rendered": 1188,
+      "segments_in_tree": 1188,
+      "triangles": 16024,
+      "vertices": 16024,
+      "radius_mm": [
+       0.6986,
+       4.7434
+      ],
+      "radius_scale_applied": 1
+     },
+     "hepatic_vein": {
+      "name": "hepatic_vein",
+      "segments_rendered": 973,
+      "segments_in_tree": 973,
+      "triangles": 16596,
+      "vertices": 16596,
+      "radius_mm": [
+       0.9062,
+       4.75
+      ],
+      "radius_scale_applied": 1
+     },
+     "hepatic_artery": {
+      "name": "hepatic_artery",
+      "segments_rendered": 372,
+      "segments_in_tree": 372,
+      "triangles": 4386,
+      "vertices": 4386,
+      "radius_mm": [
+       0.6107,
+       2.25
+      ],
+      "radius_scale_applied": 1
+     },
+     "bile_duct": {
+      "name": "bile_duct",
+      "segments_rendered": 370,
+      "segments_in_tree": 370,
+      "triangles": 4070,
+      "vertices": 4070,
+      "radius_mm": [
+       0.5429,
+       2
+      ],
+      "radius_scale_applied": 1
+     }
+    },
+    "flowDiag": {
+     "paths": 74,
+     "particles": 10360,
+     "drawn": 4662,
+     "bileDisplayGain": 120,
+     "byTree": {
+      "portal_vein": {
+       "paths": 26,
+       "meanV_cm_s": 8.777320040189304
+      },
+      "hepatic_vein": {
+       "paths": 22,
+       "meanV_cm_s": 10.256229365955699
+      },
+      "hepatic_artery": {
+       "paths": 14,
+       "meanV_cm_s": 15.556766510009762
+      },
+      "bile_duct": {
+       "paths": 12,
+       "meanV_cm_s": 0.030761067569255826
+      }
+     }
+    },
+    "lobule": {
+     "magnification": 60,
+     "lobule_diameter_mm": 1,
+     "lobule_height_mm": 1.6,
+     "portal_tracts": 6,
+     "triad_members_per_tract": [
+      "portal venule",
+      "hepatic arteriole",
+      "bile ductule"
+     ],
+     "sinusoids_rendered": 90,
+     "canaliculi_rendered": 30,
+     "sinusoid_transit_s": [
+      1,
+      2
+     ],
+     "sinusoid_transit_source": "\u6559\u79d1\u4e66\u91cf\u7ea7\uff0c\u975e\u672c\u9879\u76ee\u8ba1\u7b97",
+     "sinusoid_velocity_mm_s": 0.33333,
+     "bile_velocity_mm_s": 0.03295,
+     "bile_display_gain": 5.6,
+     "estimated_lobules_in_liver": 1466329,
+     "blood_direction": "portal tract -> sinusoid -> central vein (inward)",
+     "bile_direction": "canaliculus -> bile ductule at the portal tract (outward, counter-current to the blood)"
+    },
+    "respiration": {
+     "f_hz": 0.18323,
+     "breaths_per_min": 10.99,
+     "excursion_cm": 2,
+     "excursion_reference_range_cm": [
+      1,
+      3
+     ],
+     "rotation_deg": 2.2,
+     "rigid_body": true,
+     "parenchymal_deformation": "none \u2014 the liver is displaced, not deformed",
+     "source": "\u7531\u672c\u9879\u76ee\u5fc3\u7387\u6a21\u578b\u62df\u5408\u7684\u547c\u5438\u6027\u7aa6\u6027\u5fc3\u5f8b\u4e0d\u9f50\u9891\u7387\u5bfc\u51fa\uff08PhysioNet nsrdb/16265 \u516c\u5f00\u6570\u636e\uff09",
+     "is_user_personal_data": false,
+     "measured_craniocaudal_excursion_mm": 19.13303179599484,
+     "max_interpoint_distance_drift_mm": 2.842170943040401e-14
+    },
+    "flowProbe": {
+     "paths": 74,
+     "retrogradePaths": 0,
+     "movingPaths": 74,
+     "direction": {
+      "portal_vein|antegrade": 26,
+      "hepatic_vein|antegrade": 22,
+      "hepatic_artery|antegrade": 14,
+      "bile_duct|retrograde": 12
+     }
+    },
+    "hudBoxes": 11,
+    "hudOverflow": [],
+    "view": "organ",
+    "gene": "CYP1A2",
+    "zonalRatios": {
+     "CYP3A4": 1.368,
+     "CYP1A2": 2.212,
+     "CYP2C9": 1.036,
+     "CYP2D6": 0.742,
+     "CYP2C19": 0.667,
+     "UGT2B7": 0.982,
+     "SLCO1B1": 1.461,
+     "ABCB11": 2.162
+    },
+    "couinaud": {
+     "I caudate": 63,
+     "II": 106.1,
+     "III": 179.9,
+     "IV": 194,
+     "V": 221.4,
+     "VI": 273.9,
+     "VII": 174.1,
+     "VIII": 242.9
+    }
+   },
+   "hud_overflow_after_toggles": [],
+   "screenshots": {
+    "organ": "out/bench/liver3d_phone360_organ.png",
+    "lobule": "out/bench/liver3d_phone360_lobule.png",
+    "vessels": "out/bench/liver3d_phone360_vessels.png",
+    "couinaud": "out/bench/liver3d_phone360_couinaud.png",
+    "zones": "out/bench/liver3d_phone360_zones.png"
+   },
+   "console": [],
+   "assets_served": [
+    [
+     "liver3d/assets/couinaud.json",
+     1561
+    ],
+    [
+     "liver3d/assets/liver.glb",
+     3851696
+    ],
+    [
+     "liver3d/assets/liver_expression.json",
+     10415
+    ],
+    [
+     "liver3d/assets/liver_flow.json",
+     202903
+    ],
+    [
+     "liver3d/assets/liver_model.json",
+     2476
+    ],
+    [
+     "liver3d/assets/liver_vessels.json",
+     186513
+    ],
+    [
+     "liver3d/js/flow.js",
+     10524
+    ],
+    [
+     "liver3d/js/hud.js",
+     6260
+    ],
+    [
+     "liver3d/js/lobule.js",
+     14341
+    ],
+    [
+     "liver3d/js/main.js",
+     18432
+    ],
+    [
+     "liver3d/js/materials.js",
+     9726
+    ],
+    [
+     "liver3d/js/respiration.js",
+     4864
+    ],
+    [
+     "liver3d/js/vessels.js",
+     4143
+    ],
+    [
+     "liver3d/liver3d_demo.html",
+     7308
+    ],
+    [
+     "liver3d/vendor/jsm/controls/OrbitControls.js",
+     40755
+    ],
+    [
+     "liver3d/vendor/jsm/environments/RoomEnvironment.js",
+     4960
+    ],
+    [
+     "liver3d/vendor/jsm/loaders/GLTFLoader.js",
+     117570
+    ],
+    [
+     "liver3d/vendor/jsm/utils/BufferGeometryUtils.js",
+     37712
+    ],
+    [
+     "liver3d/vendor/jsm/utils/SkeletonUtils.js",
+     11535
+    ],
+    [
+     "liver3d/vendor/three/three.core.js",
+     1458113
+    ],
+    [
+     "liver3d/vendor/three/three.module.js",
+     662772
+    ]
+   ]
+  }
+ },
+ "problems": [],
+ "frame_rate_is_trustworthy": true
+}
