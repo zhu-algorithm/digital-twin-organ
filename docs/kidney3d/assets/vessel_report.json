@@ -1,0 +1,1005 @@
+{
+ "frame": {
+  "axes": "scene = (patient-left, superior, anterior), mm",
+  "ras_to_scene": [
+   [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   [
+    0.0,
+    0.0,
+    1.0
+   ],
+   [
+    0.0,
+    1.0,
+    0.0
+   ]
+  ]
+ },
+ "published_calibres_mm": {
+  "renal_artery_diameter_mm": [
+   5.0,
+   6.0
+  ],
+  "renal_vein_diameter_mm": [
+   10.0,
+   12.0
+  ],
+  "arcuate_artery_diameter_mm": [
+   0.3,
+   0.6
+  ],
+  "cortical_radiate_artery_diameter_mm": [
+   0.15,
+   0.3
+  ],
+  "afferent_arteriole_diameter_mm": [
+   0.015,
+   0.025
+  ],
+  "efferent_arteriole_diameter_mm": [
+   0.01,
+   0.015
+  ],
+  "glomerular_capillary_diameter_mm": [
+   0.005,
+   0.01
+  ],
+  "peritubular_capillary_diameter_mm": [
+   0.008,
+   0.012
+  ],
+  "vasa_recta_diameter_mm": [
+   0.012,
+   0.025
+  ],
+  "glomerulus_diameter_mm": [
+   0.15,
+   0.25
+  ],
+  "ureter_diameter_mm": [
+   3.0,
+   4.0
+  ],
+  "renal_pelvis_capacity_mL": [
+   5.0,
+   10.0
+  ]
+ },
+ "calibre_provenance": "every calibre above is a published adult value. The source release has no renal vascular, pelvic or ureteric label, so NONE of them is measured on this subject.",
+ "sides": {
+  "left": {
+   "clearance_aware_placement": {
+    "renal_vein_anterior_offset_mm": 14.0,
+    "renal_vein_anatomical_default_mm": 14.0,
+    "renal_vein_offset_gap_mm": 7.371,
+    "renal_vein_requirement_met": true,
+    "method": "every venous and collecting course is CHOSEN at construction time from a candidate set by maximising the minimum surface gap to the trees already built, instead of being placed at a fixed offset and repaired afterwards"
+   },
+   "declared_offsets_mm": {
+    "renal_vein_anterior_to_artery": 14.0,
+    "segmental_vein_anterior": 13.0,
+    "arcuate_vein_peripheral_to_artery": 8.0,
+    "pelvis_posterior_to_artery": 15.0,
+    "hilar_order": "vein (anterior) - artery - pelvis (posterior), the human arrangement"
+   },
+   "pyramids": 10,
+   "segmental_arteries": 5,
+   "segmental_artery_names": [
+    "apical",
+    "anterior_superior",
+    "anterior_inferior",
+    "inferior",
+    "posterior"
+   ],
+   "interlobar_segments": 37,
+   "interlobar_samples_inside_a_pyramid": 1,
+   "interlobar_course_note": "interlobar arteries are required to run in the columns of Bertin; the count above is the number of sampled course points that fell inside a pyramid instead, and is reported as measured",
+   "arcuate_arcs": 19,
+   "arcuate_arc_span_deg": [
+    84.0,
+    154.0
+   ],
+   "arcuate_construction": "explicit circular arcs in the plane of each pyramid base, i.e. lying in the corticomedullary junction \u2014 built, not optimised, because the arc IS the anatomy",
+   "cco_arterial": {
+    "candidates": 7899,
+    "rejected_angle": 392,
+    "rejected_outside": 201,
+    "rejected_clearance": 0,
+    "unattached": 1
+   },
+   "cco_venous": {
+    "candidates": 7583,
+    "rejected_angle": 444,
+    "rejected_outside": 517,
+    "rejected_clearance": 808,
+    "unattached": 17
+   },
+   "cortical_target_points": 22696
+  },
+  "right": {
+   "clearance_aware_placement": {
+    "renal_vein_anterior_offset_mm": 14.0,
+    "renal_vein_anatomical_default_mm": 14.0,
+    "renal_vein_offset_gap_mm": 4.249,
+    "renal_vein_requirement_met": true,
+    "method": "every venous and collecting course is CHOSEN at construction time from a candidate set by maximising the minimum surface gap to the trees already built, instead of being placed at a fixed offset and repaired afterwards"
+   },
+   "declared_offsets_mm": {
+    "renal_vein_anterior_to_artery": 14.0,
+    "segmental_vein_anterior": 13.0,
+    "arcuate_vein_peripheral_to_artery": 8.0,
+    "pelvis_posterior_to_artery": 15.0,
+    "hilar_order": "vein (anterior) - artery - pelvis (posterior), the human arrangement"
+   },
+   "pyramids": 10,
+   "segmental_arteries": 5,
+   "segmental_artery_names": [
+    "apical",
+    "anterior_superior",
+    "anterior_inferior",
+    "inferior",
+    "posterior"
+   ],
+   "interlobar_segments": 54,
+   "interlobar_samples_inside_a_pyramid": 0,
+   "interlobar_course_note": "interlobar arteries are required to run in the columns of Bertin; the count above is the number of sampled course points that fell inside a pyramid instead, and is reported as measured",
+   "arcuate_arcs": 20,
+   "arcuate_arc_span_deg": [
+    56.0,
+    154.0
+   ],
+   "arcuate_construction": "explicit circular arcs in the plane of each pyramid base, i.e. lying in the corticomedullary junction \u2014 built, not optimised, because the arc IS the anatomy",
+   "cco_arterial": {
+    "candidates": 7495,
+    "rejected_angle": 450,
+    "rejected_outside": 605,
+    "rejected_clearance": 12,
+    "unattached": 1
+   },
+   "cco_venous": {
+    "candidates": 7588,
+    "rejected_angle": 393,
+    "rejected_outside": 512,
+    "rejected_clearance": 465,
+    "unattached": 11
+   },
+   "cortical_target_points": 25424
+  }
+ },
+ "trees": {
+  "renal_artery": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 1895,
+   "bifurcations": 623,
+   "terminals": 639,
+   "nodes": 1897,
+   "roots": 2,
+   "radius_mm": [
+    0.4108,
+    2.8098
+   ],
+   "diameter_mm": [
+    0.8216,
+    5.6196
+   ],
+   "r_terminal_mm": 0.4108,
+   "total_length_mm": 5469.9,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 623,
+   "by_level": {
+    "renal_artery_left": {
+     "segments": 15,
+     "diameter_mm": [
+      5.6137,
+      5.6137
+     ]
+    },
+    "segmental_apical_left": {
+     "segments": 9,
+     "diameter_mm": [
+      4.4133,
+      4.488
+     ]
+    },
+    "segmental_anterior_superior_left": {
+     "segments": 6,
+     "diameter_mm": [
+      3.5694,
+      3.5694
+     ]
+    },
+    "segmental_anterior_inferior_left": {
+     "segments": 5,
+     "diameter_mm": [
+      2.1923,
+      2.1923
+     ]
+    },
+    "segmental_inferior_left": {
+     "segments": 8,
+     "diameter_mm": [
+      3.1054,
+      3.1054
+     ]
+    },
+    "segmental_posterior_left": {
+     "segments": 1,
+     "diameter_mm": [
+      0.8216,
+      0.8216
+     ]
+    },
+    "interlobar_left": {
+     "segments": 48,
+     "diameter_mm": [
+      0.8216,
+      3.9721
+     ]
+    },
+    "arcuate_left": {
+     "segments": 297,
+     "diameter_mm": [
+      0.8216,
+      3.4953
+     ]
+    },
+    "cortical_radiate_left": {
+     "segments": 540,
+     "diameter_mm": [
+      0.8216,
+      2.3021
+     ]
+    },
+    "renal_artery_right": {
+     "segments": 11,
+     "diameter_mm": [
+      5.6196,
+      5.6196
+     ]
+    },
+    "segmental_apical_right": {
+     "segments": 14,
+     "diameter_mm": [
+      2.9859,
+      3.3698
+     ]
+    },
+    "segmental_anterior_superior_right": {
+     "segments": 7,
+     "diameter_mm": [
+      1.0351,
+      1.0351
+     ]
+    },
+    "segmental_anterior_inferior_right": {
+     "segments": 12,
+     "diameter_mm": [
+      0.8216,
+      2.8098
+     ]
+    },
+    "segmental_inferior_right": {
+     "segments": 8,
+     "diameter_mm": [
+      4.4322,
+      4.4322
+     ]
+    },
+    "segmental_posterior_right": {
+     "segments": 2,
+     "diameter_mm": [
+      3.0666,
+      3.0666
+     ]
+    },
+    "interlobar_right": {
+     "segments": 75,
+     "diameter_mm": [
+      1.0351,
+      3.5548
+     ]
+    },
+    "arcuate_right": {
+     "segments": 287,
+     "diameter_mm": [
+      0.8216,
+      3.5253
+     ]
+    },
+    "cortical_radiate_right": {
+     "segments": 550,
+     "diameter_mm": [
+      0.8216,
+      2.6353
+     ]
+    }
+   },
+   "contour_anchored": "ostium only \u2014 placed on the subject's real aortic surface; the trunk, segmental, interlobar, arcuate and cortical radiate courses are CONSTRUCTED from the measured kidney, sinus and pyramid geometry",
+   "trunk_diameter_mm": 5.61,
+   "trunk_calibration": "r_term fixed once from the published renal-artery calibre and the per-kidney terminal count; the trunk diameter above is what the finished tree came out at and was not rescaled afterwards",
+   "trunk_reference_mm": [
+    5.0,
+    6.0
+   ],
+   "trunk_within_reference": true
+  },
+  "renal_vein": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 1625,
+   "bifurcations": 581,
+   "terminals": 598,
+   "nodes": 1627,
+   "roots": 2,
+   "radius_mm": [
+    0.5135,
+    3.4527
+   ],
+   "diameter_mm": [
+    1.027,
+    6.9054
+   ],
+   "r_terminal_mm": 0.51349,
+   "total_length_mm": 5134.1,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 581,
+   "by_level": {
+    "renal_vein_left": {
+     "segments": 23,
+     "diameter_mm": [
+      6.8289,
+      6.8289
+     ]
+    },
+    "segmental_vein_apical_left": {
+     "segments": 1,
+     "diameter_mm": [
+      1.027,
+      1.027
+     ]
+    },
+    "segmental_vein_anterior_superior_left": {
+     "segments": 1,
+     "diameter_mm": [
+      1.027,
+      1.027
+     ]
+    },
+    "segmental_vein_anterior_inferior_left": {
+     "segments": 1,
+     "diameter_mm": [
+      1.027,
+      1.027
+     ]
+    },
+    "segmental_vein_inferior_left": {
+     "segments": 1,
+     "diameter_mm": [
+      1.027,
+      1.027
+     ]
+    },
+    "segmental_vein_posterior_left": {
+     "segments": 1,
+     "diameter_mm": [
+      6.7977,
+      6.7977
+     ]
+    },
+    "interlobar_vein_left": {
+     "segments": 127,
+     "diameter_mm": [
+      1.027,
+      5.0372
+     ]
+    },
+    "arcuate_vein_left": {
+     "segments": 42,
+     "diameter_mm": [
+      1.027,
+      3.081
+     ]
+    },
+    "cortical_radiate_vein_left": {
+     "segments": 563,
+     "diameter_mm": [
+      1.027,
+      4.7669
+     ]
+    },
+    "renal_vein_right": {
+     "segments": 9,
+     "diameter_mm": [
+      6.9054,
+      6.9054
+     ]
+    },
+    "segmental_vein_apical_right": {
+     "segments": 1,
+     "diameter_mm": [
+      1.2939,
+      1.2939
+     ]
+    },
+    "segmental_vein_anterior_superior_right": {
+     "segments": 1,
+     "diameter_mm": [
+      1.027,
+      1.027
+     ]
+    },
+    "segmental_vein_anterior_inferior_right": {
+     "segments": 1,
+     "diameter_mm": [
+      1.027,
+      1.027
+     ]
+    },
+    "segmental_vein_inferior_right": {
+     "segments": 1,
+     "diameter_mm": [
+      1.027,
+      1.027
+     ]
+    },
+    "segmental_vein_posterior_right": {
+     "segments": 1,
+     "diameter_mm": [
+      6.8674,
+      6.8674
+     ]
+    },
+    "interlobar_vein_right": {
+     "segments": 151,
+     "diameter_mm": [
+      1.027,
+      4.7349
+     ]
+    },
+    "arcuate_vein_right": {
+     "segments": 101,
+     "diameter_mm": [
+      1.027,
+      3.9524
+     ]
+    },
+    "cortical_radiate_vein_right": {
+     "segments": 599,
+     "diameter_mm": [
+      1.027,
+      3.1911
+     ]
+    }
+   },
+   "contour_anchored": "ostium only \u2014 placed on the subject's real caval surface; the rest is CONSTRUCTED",
+   "trunk_diameter_mm": 6.83,
+   "trunk_reference_mm": [
+    10.0,
+    12.0
+   ],
+   "trunk_within_reference": false,
+   "trunk_calibration": "the venous cascade is scaled from the arterial one by the published intrarenal vein/artery diameter ratio 1.25, NOT anchored on the hilar renal-vein calibre. Anchoring on the hilum would double every intrarenal vein relative to its artery, which is not anatomical. The rendered hilar diameter above is reported as it came out."
+  },
+  "glomerular": {
+   "radii_from": "published per-level calibres (NOT Murray-derived; Murray residual is not applicable to this tree)",
+   "segments": 2304,
+   "bifurcations": 128,
+   "terminals": 768,
+   "nodes": 2432,
+   "roots": 128,
+   "radius_mm": [
+    0.0037,
+    0.01
+   ],
+   "diameter_mm": [
+    0.0074,
+    0.02
+   ],
+   "r_terminal_mm": 0.005,
+   "total_length_mm": 411.8,
+   "murray_max_relative_residual": null,
+   "murray_bifurcations_checked": 128,
+   "by_level": {
+    "afferent_left": {
+     "segments": 64,
+     "diameter_mm": [
+      0.02,
+      0.02
+     ]
+    },
+    "glomerulus_left": {
+     "segments": 960,
+     "diameter_mm": [
+      0.0074,
+      0.0074
+     ]
+    },
+    "efferent_left": {
+     "segments": 128,
+     "diameter_mm": [
+      0.013,
+      0.013
+     ]
+    },
+    "afferent_right": {
+     "segments": 64,
+     "diameter_mm": [
+      0.02,
+      0.02
+     ]
+    },
+    "glomerulus_right": {
+     "segments": 960,
+     "diameter_mm": [
+      0.0074,
+      0.0074
+     ]
+    },
+    "efferent_right": {
+     "segments": 128,
+     "diameter_mm": [
+      0.013,
+      0.013
+     ]
+    }
+   },
+   "contour_anchored": "no \u2014 representative glomerular / post-glomerular units drawn at published arteriolar and capillary calibres"
+  },
+  "collecting_system": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 213,
+   "bifurcations": 8,
+   "terminals": 20,
+   "nodes": 215,
+   "roots": 2,
+   "radius_mm": [
+    0.8123,
+    1.75
+   ],
+   "diameter_mm": [
+    1.6246,
+    3.5
+   ],
+   "r_terminal_mm": 0.81228,
+   "total_length_mm": 873.7,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 8,
+   "by_level": {
+    "ureter_left": {
+     "segments": 28,
+     "diameter_mm": [
+      3.5,
+      3.5
+     ]
+    },
+    "major_calyx_inferior_left": {
+     "segments": 2,
+     "diameter_mm": [
+      2.5788,
+      2.5788
+     ]
+    },
+    "minor_calyx_left": {
+     "segments": 76,
+     "diameter_mm": [
+      1.6246,
+      1.6246
+     ]
+    },
+    "major_calyx_middle_left": {
+     "segments": 1,
+     "diameter_mm": [
+      2.343,
+      2.343
+     ]
+    },
+    "major_calyx_superior_left": {
+     "segments": 2,
+     "diameter_mm": [
+      2.343,
+      2.343
+     ]
+    },
+    "ureter_right": {
+     "segments": 25,
+     "diameter_mm": [
+      3.5,
+      3.5
+     ]
+    },
+    "major_calyx_inferior_right": {
+     "segments": 2,
+     "diameter_mm": [
+      2.5788,
+      2.5788
+     ]
+    },
+    "minor_calyx_right": {
+     "segments": 72,
+     "diameter_mm": [
+      1.6246,
+      1.6246
+     ]
+    },
+    "major_calyx_middle_right": {
+     "segments": 2,
+     "diameter_mm": [
+      2.343,
+      2.343
+     ]
+    },
+    "major_calyx_superior_right": {
+     "segments": 3,
+     "diameter_mm": [
+      2.343,
+      2.343
+     ]
+    }
+   },
+   "contour_anchored": "papillae and the distal bladder target are derived from real labels; the calyces, pelvis and ureteric course are CONSTRUCTED"
+  }
+ },
+ "scale_honesty": {
+  "rendered_arterial_terminals": 639,
+  "real_nephrons_per_kidney": 1000000.0,
+  "nephrons_represented_per_rendered_terminal": 3130,
+  "rendered_terminal_diameter_mm": 0.8216,
+  "terminal_level": "the Murray-scaled terminal of the macroscopic tree sits at the CORTICAL RADIATE (interlobular) artery level, not at an afferent arteriole. With a trunk fixed at the published renal artery calibre, a cube-law cascade cannot also reach arteriolar calibre at a few hundred terminals, and no coefficient has been invented to force it to.",
+  "glomerular_units_rendered": 128,
+  "glomerular_unit_calibres": "published, listed under published_calibres_mm; the join between a rendered cortical radiate terminal and a published-calibre afferent arteriole is a declared scale discontinuity",
+  "murray_note": "Murray's law is a hydrodynamic optimality principle for blood vessels. It is applied to the urinary collecting system here as a branching convention so the calibre cascade is reproducible; that is a modelling choice, NOT a physiological claim about urine flow."
+ },
+ "micro_units": [
+  {
+   "side": "left",
+   "units": 64,
+   "cortical": 54,
+   "juxtamedullary": 10,
+   "vasa_recta_loops": 20,
+   "peritubular_loops": 216,
+   "afferent_diameter_mm": 0.02,
+   "efferent_diameter_mm": 0.013,
+   "efferent_is_narrower_than_afferent": true,
+   "glomerular_capillary_diameter_mm": 0.0074,
+   "peritubular_capillary_diameter_mm": 0.01,
+   "vasa_recta_diameter_mm": 0.017,
+   "resistance_ratio_poiseuille_efferent_over_afferent": 5.6,
+   "two_capillary_beds_in_series": true,
+   "series_note": "afferent arteriole -> glomerular capillary bed -> EFFERENT ARTERIOLE -> peritubular capillaries (cortical nephrons) or vasa recta (juxtamedullary nephrons). The efferent arteriole between two capillary beds is unique to the kidney.",
+   "note": "the efferent arteriole is drawn narrower than the afferent because published calibres make it so; the Poiseuille resistance ratio above follows from those two published diameters and is NOT a fitted parameter. It is the structural reason glomerular capillary pressure sits far above that of an ordinary capillary bed."
+  },
+  {
+   "side": "right",
+   "units": 64,
+   "cortical": 54,
+   "juxtamedullary": 10,
+   "vasa_recta_loops": 20,
+   "peritubular_loops": 216,
+   "afferent_diameter_mm": 0.02,
+   "efferent_diameter_mm": 0.013,
+   "efferent_is_narrower_than_afferent": true,
+   "glomerular_capillary_diameter_mm": 0.0074,
+   "peritubular_capillary_diameter_mm": 0.01,
+   "vasa_recta_diameter_mm": 0.017,
+   "resistance_ratio_poiseuille_efferent_over_afferent": 5.6,
+   "two_capillary_beds_in_series": true,
+   "series_note": "afferent arteriole -> glomerular capillary bed -> EFFERENT ARTERIOLE -> peritubular capillaries (cortical nephrons) or vasa recta (juxtamedullary nephrons). The efferent arteriole between two capillary beds is unique to the kidney.",
+   "note": "the efferent arteriole is drawn narrower than the afferent because published calibres make it so; the Poiseuille resistance ratio above follows from those two published diameters and is NOT a fitted parameter. It is the structural reason glomerular capillary pressure sits far above that of an ordinary capillary bed."
+  }
+ ],
+ "segment_subdivision": {
+  "nodes_inserted": {
+   "artery": 101,
+   "vein": 137,
+   "collecting_system": 1
+  },
+  "max_segment_length_mm": 7.0,
+  "lateral_bow_fraction_of_length": 0.045,
+  "note": "cosmetic curvature only \u2014 intermediate nodes, no new terminals or bifurcations, no radius change; Murray residuals are unaffected. The clearance audit runs on the SUBDIVIDED geometry."
+ },
+ "clearance_solve": {
+  "rounds": [
+   {
+    "round": 0,
+    "step_cap_mm": 0.5,
+    "collecting_system": {
+     "iterations_run": 260,
+     "nodes_moved": 25,
+     "max_displacement_from_original_mm": 6.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 33.93,
+     "mean_node_displacement_mm": 3.59,
+     "frozen_nodes": 22
+    },
+    "renal_vein": {
+     "iterations_run": 260,
+     "nodes_moved": 81,
+     "max_displacement_from_original_mm": 6.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 58.32,
+     "mean_node_displacement_mm": 3.1,
+     "frozen_nodes": 2
+    },
+    "collecting_final": {
+     "iteration": 259,
+     "violating_segments": 10,
+     "min_gap_mm": -1.134
+    },
+    "vein_final": {
+     "iteration": 259,
+     "violating_segments": 22,
+     "min_gap_mm": -0.672
+    }
+   },
+   {
+    "round": 1,
+    "step_cap_mm": 0.5,
+    "collecting_system": {
+     "iterations_run": 260,
+     "nodes_moved": 0,
+     "max_displacement_from_original_mm": 0.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 0.0,
+     "mean_node_displacement_mm": 0.0,
+     "frozen_nodes": 22
+    },
+    "renal_vein": {
+     "iterations_run": 260,
+     "nodes_moved": 3,
+     "max_displacement_from_original_mm": 6.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 35.78,
+     "mean_node_displacement_mm": 20.65,
+     "frozen_nodes": 2
+    },
+    "collecting_final": {
+     "iteration": 259,
+     "violating_segments": 10,
+     "min_gap_mm": 0.25
+    },
+    "vein_final": {
+     "iteration": 259,
+     "violating_segments": 22,
+     "min_gap_mm": -0.667
+    }
+   },
+   {
+    "round": 2,
+    "step_cap_mm": 0.5,
+    "collecting_system": {
+     "iterations_run": 260,
+     "nodes_moved": 0,
+     "max_displacement_from_original_mm": 0.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 0.0,
+     "mean_node_displacement_mm": 0.0,
+     "frozen_nodes": 22
+    },
+    "renal_vein": {
+     "iterations_run": 260,
+     "nodes_moved": 5,
+     "max_displacement_from_original_mm": 6.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 8.42,
+     "mean_node_displacement_mm": 5.56,
+     "frozen_nodes": 2
+    },
+    "collecting_final": {
+     "iteration": 259,
+     "violating_segments": 10,
+     "min_gap_mm": 0.25
+    },
+    "vein_final": {
+     "iteration": 259,
+     "violating_segments": 26,
+     "min_gap_mm": -0.757
+    }
+   },
+   {
+    "round": 3,
+    "step_cap_mm": 0.2,
+    "collecting_system": {
+     "iterations_run": 260,
+     "nodes_moved": 1,
+     "max_displacement_from_original_mm": 0.81,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 0.81,
+     "mean_node_displacement_mm": 0.81,
+     "frozen_nodes": 22
+    },
+    "renal_vein": {
+     "iterations_run": 260,
+     "nodes_moved": 4,
+     "max_displacement_from_original_mm": 6.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 6.12,
+     "mean_node_displacement_mm": 2.7,
+     "frozen_nodes": 2
+    },
+    "collecting_final": {
+     "iteration": 259,
+     "violating_segments": 11,
+     "min_gap_mm": 0.25
+    },
+    "vein_final": {
+     "iteration": 259,
+     "violating_segments": 23,
+     "min_gap_mm": -0.89
+    }
+   },
+   {
+    "round": 4,
+    "step_cap_mm": 0.2,
+    "collecting_system": {
+     "iterations_run": 260,
+     "nodes_moved": 0,
+     "max_displacement_from_original_mm": 0.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 0.0,
+     "mean_node_displacement_mm": 0.0,
+     "frozen_nodes": 22
+    },
+    "renal_vein": {
+     "iterations_run": 260,
+     "nodes_moved": 4,
+     "max_displacement_from_original_mm": 6.0,
+     "displacement_cap_mm": 6.0,
+     "max_node_displacement_mm": 7.28,
+     "mean_node_displacement_mm": 4.08,
+     "frozen_nodes": 2
+    },
+    "collecting_final": {
+     "iteration": 259,
+     "violating_segments": 10,
+     "min_gap_mm": 0.25
+    },
+    "vein_final": {
+     "iteration": 259,
+     "violating_segments": 24,
+     "min_gap_mm": -0.753
+    }
+   }
+  ],
+  "solve_target_mm": 0.25,
+  "audit_requirement_mm": 1.0,
+  "method": "short damped polish after a clearance-aware construction; the arterial tree is held fixed as the reference anatomy and only the residual conflicts left by the cosmetic segment bow are repaired. Anchors stay frozen: the aortic and caval ostia (which sit on real vessel surfaces), the calyceal tips that cup the real papillae, and the distal ureteric anchor at the bladder. Every moved node is re-checked so it cannot be pushed into parenchyma where it does not belong."
+ },
+ "cross_tree_clearance": {
+  "artery_vs_vein": {
+   "min_surface_gap_mm": -0.729,
+   "segment_pairs_overlapping": 15,
+   "fraction_of_compared_pairs_interpenetrating": 4.871e-06,
+   "non_intersecting": false,
+   "nearest_gap_percentiles_mm": {
+    "p01": 0.25,
+    "p05": 1.368,
+    "p50": 7.745,
+    "p95": 23.122
+   },
+   "segments_with_a_neighbour_closer_than_target": 69,
+   "segments_total": 1895,
+   "at_solver_target": false,
+   "pairs_below_target": 208,
+   "segment_pairs_compared": 3079375,
+   "where": {
+    "tree_a": "renal_artery",
+    "level_a": "interlobar_right",
+    "radius_a_mm": 1.1682,
+    "tree_b": "renal_vein",
+    "level_b": "interlobar_vein_right",
+    "radius_b_mm": 2.3674,
+    "midpoint_scene_mm": [
+     -91.1,
+     409.3,
+     158.8
+    ]
+   }
+  },
+  "artery_vs_collecting_system": {
+   "min_surface_gap_mm": 0.25,
+   "segment_pairs_overlapping": 0,
+   "fraction_of_compared_pairs_interpenetrating": 0.0,
+   "non_intersecting": true,
+   "nearest_gap_percentiles_mm": {
+    "p01": 0.923,
+    "p05": 2.521,
+    "p50": 12.45,
+    "p95": 22.492
+   },
+   "segments_with_a_neighbour_closer_than_target": 20,
+   "segments_total": 1895,
+   "at_solver_target": true,
+   "pairs_below_target": 37,
+   "segment_pairs_compared": 403635,
+   "where": {
+    "tree_a": "renal_artery",
+    "level_a": "segmental_inferior_right",
+    "radius_a_mm": 2.2161,
+    "tree_b": "collecting_system",
+    "level_b": "minor_calyx_right",
+    "radius_b_mm": 0.8123,
+    "midpoint_scene_mm": [
+     -61.9,
+     361.7,
+     164.6
+    ]
+   }
+  },
+  "vein_vs_collecting_system": {
+   "min_surface_gap_mm": 0.25,
+   "segment_pairs_overlapping": 0,
+   "fraction_of_compared_pairs_interpenetrating": 0.0,
+   "non_intersecting": true,
+   "nearest_gap_percentiles_mm": {
+    "p01": 0.465,
+    "p05": 2.479,
+    "p50": 11.325,
+    "p95": 23.793
+   },
+   "segments_with_a_neighbour_closer_than_target": 39,
+   "segments_total": 1625,
+   "at_solver_target": true,
+   "pairs_below_target": 66,
+   "segment_pairs_compared": 346125,
+   "where": {
+    "tree_a": "renal_vein",
+    "level_a": "interlobar_vein_left",
+    "radius_a_mm": 0.5135,
+    "tree_b": "collecting_system",
+    "level_b": "major_calyx_middle_left",
+    "radius_b_mm": 1.1715,
+    "midpoint_scene_mm": [
+     75.1,
+     409.0,
+     139.8
+    ]
+   }
+  },
+  "target_gap_mm": 1.0,
+  "priority": "ANATOMICAL FIDELITY OUTRANKS THE GAP TARGET. In a real kidney an interlobar artery and its vein run side by side a few hundred micrometres apart, so a 1.0 mm wall-to-wall separation is a MODELLING convenience, not an anatomical constraint. No vessel was moved out of the parenchyma, off its anatomical course, or deleted in order to reach it: each course was chosen from candidates inside a declared anatomical envelope ({'renal_vein_trunk_mm': 7.0, 'segmental_vein_mm': 7.0, 'venous_arcade_mm': 8.0, 'pelvis_mm': 9.0, 'major_calyx_mm': 6.0, 'minor_calyx_mm': 7.0}), and where the target could not be met inside that envelope the SMALLER REAL GAP is reported here.",
+  "anatomical_envelope_mm": {
+   "renal_vein_trunk_mm": 7.0,
+   "segmental_vein_mm": 7.0,
+   "venous_arcade_mm": 8.0,
+   "pelvis_mm": 9.0,
+   "major_calyx_mm": 6.0,
+   "minor_calyx_mm": 7.0
+  },
+  "reading_these_numbers": "a pair whose at_solver_target flag is true sits exactly at the polish target (0.25 mm) because the solver drove it there \u2014 that value is a property of the solver, NOT an independent measurement, and is flagged so it cannot be read as one. A pair with the flag false was never reached by the solver and its minimum is a real measurement of the geometry.",
+  "residual_interpenetration_cause": "the few remaining interpenetrating pairs are interlobar artery / interlobar vein companions sharing one column of Bertin. With the terminal count this scene renders, a strict cube-law cascade anchored on the published renal-artery calibre inflates interlobar calibres several-fold above their published values, so two companion vessels that really do run side by side no longer fit in one column. Nothing was deleted, no vessel was moved off its anatomical course and none was pushed out of the parenchyma to hide this; it is listed as a failed item instead.",
+  "segments_discarded_to_satisfy_clearance": 0,
+  "discard_policy": "no segment, bifurcation or terminal was removed to satisfy the clearance. Deleting them would change the segment, bifurcation and terminal counts reported elsewhere in this file, so the policy is to report an unmet gap instead. If a future run ever does discard, this field records how many and the counts before and after.",
+  "worst_min_surface_gap_mm": -0.729,
+  "worst_pair": "artery_vs_vein",
+  "worst_location": {
+   "tree_a": "renal_artery",
+   "level_a": "interlobar_right",
+   "radius_a_mm": 1.1682,
+   "tree_b": "renal_vein",
+   "level_b": "interlobar_vein_right",
+   "radius_b_mm": 2.3674,
+   "midpoint_scene_mm": [
+    -91.1,
+    409.3,
+    158.8
+   ]
+  },
+  "all_trees_non_intersecting": false,
+  "target_met": false
+ },
+ "node_displacement": {
+  "declared_limit_mm": 6.0,
+  "max_displacement_from_construction_position_mm": 6.0,
+  "within_declared_limit": true,
+  "note": "displacement of any node away from the position the anatomical construction gave it, during the bounded clearance polish. The limit is declared, hard-clamped in the solver, and exceeding it would be reported as a failed item.",
+  "anchors_never_moved": [
+   "aortic ostium",
+   "caval ostium",
+   "calyceal tips on the real papillae",
+   "distal ureteric anchor at the bladder"
+  ]
+ }
+}

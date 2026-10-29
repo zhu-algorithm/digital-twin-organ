@@ -1,0 +1,254 @@
+{
+ "source": {
+  "dataset": "TotalSegmentator dataset v2.0.1 (Wasserthal et al.)",
+  "doi": "10.5281/zenodo.10047292",
+  "licence": "CC-BY-4.0",
+  "subject": "s0236",
+  "voxel_mm": [
+   1.5,
+   1.4999998807907104,
+   1.5
+  ],
+  "access": "HTTP range extraction of 7 mask members from the Zenodo zip; no CT image volume downloaded, nothing derived from greyscale",
+  "structures_used": [
+   "kidney_left",
+   "kidney_right",
+   "aorta",
+   "inferior_vena_cava",
+   "urinary_bladder",
+   "kidney_cyst_left",
+   "kidney_cyst_right"
+  ],
+  "labels_absent_from_source": [
+   "renal_artery",
+   "renal_vein",
+   "renal_cortex",
+   "renal_medulla",
+   "renal_pelvis",
+   "calyx",
+   "ureter"
+  ],
+  "consequence": "the vascular cascade, the collecting system and the corticomedullary architecture are CONSTRUCTED, not contour-anchored; only the capsule, the hilar notch, the renal sinus and the aortic/caval/bladder anchors are measured",
+  "kidney_cyst_mL": {
+   "left": 0.0,
+   "right": 0.0
+  },
+  "perirenal_vessel_crop_mm": 96.2
+ },
+ "references": {
+  "length_cm": [
+   9.0,
+   13.0,
+   "adult renal pole-to-pole length, ultrasound/CT"
+  ],
+  "width_cm": [
+   4.0,
+   7.0,
+   "adult renal transverse width"
+  ],
+  "volume_mL": [
+   110.0,
+   200.0,
+   "adult single-kidney parenchymal volume, CT volumetry"
+  ],
+  "cortical_thickness_mm": [
+   6.0,
+   10.0,
+   "adult renal cortical thickness, CT/US"
+  ],
+  "pyramids": [
+   8,
+   18,
+   "number of human renal pyramids (Medulla: 8-18 per kidney)"
+  ],
+  "cortex_volume_fraction": [
+   0.6,
+   0.8,
+   "cortex as a fraction of renal parenchyma, stereology/MRI volumetry"
+  ]
+ },
+ "kidneys": {
+  "left": {
+   "label_volume_mL": 174.8,
+   "volume_reference_mL": [
+    110.0,
+    200.0
+   ],
+   "volume_within_reference": true,
+   "length_cm": 11.8,
+   "width_cm": 6.91,
+   "thickness_cm": 5.39,
+   "length_within_reference": true,
+   "width_within_reference": true,
+   "connected_components": 1,
+   "touches_field_of_view_edge": false,
+   "hilar_notch_depth_mm": 49.86,
+   "renal_sinus_mL": 37.89,
+   "sinus_measurement": "per-slice convex-hull deficit of the kidney label (measured on the label, not assumed)",
+   "distance_hilum_to_aorta_mm": 51.2,
+   "distance_hilum_to_ivc_mm": 76.84,
+   "cortex_volume_mL": 135.7,
+   "medulla_volume_mL": 39.1,
+   "columns_of_bertin_mL": 14.1,
+   "cortex_volume_fraction": 0.776,
+   "cortex_fraction_reference": [
+    0.6,
+    0.8
+   ],
+   "cortex_fraction_within_reference": true,
+   "pyramids": 10,
+   "pyramid_height_mm": [
+    14.1,
+    23.4
+   ],
+   "pyramid_base_radius_mm": [
+    9.1,
+    16.2
+   ],
+   "cortical_thickness_mm_used": 8.0,
+   "septum_half_width_mm_used": 1.6,
+   "deep_parenchyma_mL": 53.2,
+   "papillae_anterior_row": 3,
+   "papillae_posterior_row": 7,
+   "papilla_row_split": "measured, not imposed: papillae are a farthest-point sample of the sinus-facing deep parenchyma and fall into the two rows on their own",
+   "papilla_spacing_mm": [
+    20.5,
+    26.5
+   ],
+   "pyramids_within_reference": true,
+   "construction": "pyramids = Voronoi territories of the papillae inside the deep parenchyma (depth > cortical thickness), separated by septa of the declared half-width which become the columns of Bertin; CONSTRUCTED, not contour-anchored",
+   "cortical_thickness_provenance": "midpoint of the published adult 6-10 mm range; NOT measurable from a single-label segmentation and NOT measured on this subject"
+  },
+  "right": {
+   "label_volume_mL": 194.1,
+   "volume_reference_mL": [
+    110.0,
+    200.0
+   ],
+   "volume_within_reference": true,
+   "length_cm": 12.59,
+   "width_cm": 7.12,
+   "thickness_cm": 5.74,
+   "length_within_reference": true,
+   "width_within_reference": false,
+   "connected_components": 1,
+   "touches_field_of_view_edge": false,
+   "hilar_notch_depth_mm": 45.79,
+   "renal_sinus_mL": 43.07,
+   "sinus_measurement": "per-slice convex-hull deficit of the kidney label (measured on the label, not assumed)",
+   "distance_hilum_to_aorta_mm": 34.21,
+   "distance_hilum_to_ivc_mm": 19.71,
+   "cortex_volume_mL": 148.7,
+   "medulla_volume_mL": 45.4,
+   "columns_of_bertin_mL": 14.0,
+   "cortex_volume_fraction": 0.766,
+   "cortex_fraction_reference": [
+    0.6,
+    0.8
+   ],
+   "cortex_fraction_within_reference": true,
+   "pyramids": 10,
+   "pyramid_height_mm": [
+    12.9,
+    26.1
+   ],
+   "pyramid_base_radius_mm": [
+    9.5,
+    14.8
+   ],
+   "cortical_thickness_mm_used": 8.0,
+   "septum_half_width_mm_used": 1.6,
+   "deep_parenchyma_mL": 59.4,
+   "papillae_anterior_row": 3,
+   "papillae_posterior_row": 7,
+   "papilla_row_split": "measured, not imposed: papillae are a farthest-point sample of the sinus-facing deep parenchyma and fall into the two rows on their own",
+   "papilla_spacing_mm": [
+    22.4,
+    25.4
+   ],
+   "pyramids_within_reference": true,
+   "construction": "pyramids = Voronoi territories of the papillae inside the deep parenchyma (depth > cortical thickness), separated by septa of the declared half-width which become the columns of Bertin; CONSTRUCTED, not contour-anchored",
+   "cortical_thickness_provenance": "midpoint of the published adult 6-10 mm range; NOT measurable from a single-label segmentation and NOT measured on this subject"
+  }
+ },
+ "constructed": {},
+ "depth_field": {
+  "left": {
+   "definition": "distance from the OUTER renal capsule only \u2014 the boundary voxels of the kidney label that do not face the measured renal sinus. Distance to the whole boundary would classify the papilla, the deepest structure in the organ, as cortex.",
+   "outer_capsule_voxels": 6262,
+   "sinus_facing_voxels": 2554,
+   "max_depth_mm": 24.4,
+   "median_depth_mm": 5.0
+  },
+  "right": {
+   "definition": "distance from the OUTER renal capsule only \u2014 the boundary voxels of the kidney label that do not face the measured renal sinus. Distance to the whole boundary would classify the papilla, the deepest structure in the organ, as cortex.",
+   "outer_capsule_voxels": 6915,
+   "sinus_facing_voxels": 2645,
+   "max_depth_mm": 25.0,
+   "median_depth_mm": 5.0
+  }
+ },
+ "surfaces": {
+  "capsule_left": {
+   "faces": 31608,
+   "vertices": 15806,
+   "watertight": true,
+   "volume_mL": 171.21
+  },
+  "medulla_left": {
+   "faces": 11000,
+   "vertices": 5520,
+   "watertight": true,
+   "volume_mL": 32.0
+  },
+  "capsule_right": {
+   "faces": 34972,
+   "vertices": 17488,
+   "watertight": true,
+   "volume_mL": 190.28
+  },
+  "medulla_right": {
+   "faces": 11000,
+   "vertices": 5520,
+   "watertight": true,
+   "volume_mL": 37.78
+  },
+  "cut_left": {
+   "faces": 20000,
+   "vertices": 10002,
+   "watertight": true,
+   "volume_mL": 93.43
+  },
+  "cut_medulla_left": {
+   "faces": 7000,
+   "vertices": 3514,
+   "watertight": true,
+   "volume_mL": 19.39
+  },
+  "cut_right": {
+   "faces": 20000,
+   "vertices": 10002,
+   "watertight": true,
+   "volume_mL": 99.15
+  },
+  "cut_medulla_right": {
+   "faces": 7000,
+   "vertices": 3514,
+   "watertight": true,
+   "volume_mL": 22.97
+  },
+  "aorta": {
+   "faces": 6000,
+   "vertices": 3002,
+   "watertight": true,
+   "volume_mL": 101.69
+  },
+  "ivc": {
+   "faces": 5000,
+   "vertices": 2502,
+   "watertight": true,
+   "volume_mL": 66.5
+  },
+  "total_faces": 153580
+ }
+}

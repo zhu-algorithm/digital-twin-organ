@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维解剖学数字肾脏</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden;
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,330px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  label{font-size:11.5px;color:#b8c4d6}
+  input[type=range]{width:104px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;display:block;overflow-x:auto}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;
+        white-space:nowrap}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  .hl{border-left:3px solid #f0a33c;padding-left:12px}
+  #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:12px;padding:9px 10px;max-width:calc(100vw - 24px);left:12px;right:12px;
+        top:auto;bottom:12px;max-height:46vh;overflow:auto}
+    #ui.collapsed{display:none}
+    #panelbtn{display:block}
+    input[type=range]{width:84px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./kidney3d/vendor/three/three.module.js",
+  "three/webgpu": "./kidney3d/vendor/three/three.module.js",
+  "three/tsl": "./kidney3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=kidney">细胞与分子层 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="heart3d.html">三维心脏 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="liver3d.html">三维肝脏 →</a>
+  <h1>三维解剖学数字肾脏</h1>
+  <div class="sub">真实 CT 分割包膜 · 构造皮髓分层与肾锥体 · 弓形动脉 · 串联双毛细血管床 · 真实比例肾单位</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <button id="panelbtn">控制面板</button>
+  <div id="ui">
+    <div class="row">
+      <label>视图</label>
+      <button id="v-organ" class="on">器官</button>
+      <button id="v-section">剖面</button>
+      <button id="v-nephron">肾单位</button>
+      <button id="v-mol">分子</button>
+    </div>
+    <div class="row">
+      <button id="b-art" class="on">动脉</button>
+      <button id="b-ven" class="on">静脉</button>
+      <button id="b-glom" class="on">肾小球/球后</button>
+      <button id="b-coll">集合系统</button>
+    </div>
+    <div class="row">
+      <button id="b-med" class="on">髓质锥体</button>
+      <button id="b-pyr">锥体着色</button>
+      <button id="b-zone">皮髓轴</button>
+      <button id="b-lab" class="on">标注</button>
+    </div>
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+      <label>粒子</label>
+      <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1">
+      <span id="dens-v"><code>100%</code></span>
+    </div>
+    <div class="note" id="prov">加载中…</div>
+  </div>
+</div>
+
+<main>
+  <div class="warnbox">
+    <b>这个页面能做什么、不能做什么。</b>
+    肾脏包膜、肾门凹陷、肾窦、主动脉与下腔静脉的血管开口是实测的。
+    <b>皮质、髓质锥体、肾柱、肾乳头、整条血管级联和整套集合系统都是构造的</b>——
+    TotalSegmentator v2.0.1 每侧肾脏只有一个标签，没有皮质、髓质、肾盂、肾盏、输尿管、
+    肾动脉或肾静脉标注。<b>不存在任何"表达量→转运通量"的标定</b>，
+    所以这里<b>没有</b>任何药物浓度、肾清除率或 PBPK 房室，分子层的颜色只能定性读。
+    呼吸频率来自 PhysioNet nsrdb/16265 公开数据，<b>不是任何特定个体</b>，
+    所有文件中 <code>is_user_personal_data = false</code>。
+    本页为研究用模拟器，<b>不可用于临床给药或诊断决策</b>。
+  </div>
+
+  <h2>几何来源与许可</h2>
+  <p>TotalSegmentator 数据集 v2.0.1（117 种解剖结构 / 1228 例 CT），
+     DOI <a class="lk" href="https://doi.org/10.5281/zenodo.10047292">10.5281/zenodo.10047292</a>，
+     <b>CC-BY-4.0</b>，署名类许可、可在公开仓再分发。使用受试者 <code>s0236</code>
+     （腹部 CT，1.5 mm 各向同性）——与本项目肝脏同一受试者，以保证跨器官解剖一致，
+     但<b>按肾脏自己的标准重新核验过</b>：筛查 18 例，2 例通过。
+     结构：<code>kidney_left</code>、<code>kidney_right</code>、<code>aorta</code>、
+     <code>inferior_vena_cava</code>、<code>urinary_bladder</code>、<code>kidney_cyst_*</code>。
+     只用 HTTP Range 请求从 23.5 GB 的 Zenodo 压缩包里取出这 7 个掩膜，<b>不下载 CT 影像本体</b>，
+     本项目不含任何基于影像灰度的内容。</p>
+  <p>实测：左肾 <b>174.8 mL / 11.80 cm</b>，
+     右肾 <b>194.1 mL / 12.59 cm</b>
+     （成人参考体积 110–200 mL、长径 9–13 cm，两侧均落在范围内）。
+     两侧均为单连通分量、无视野截断、囊肿体积 0 mL。
+     注意：本例<b>右肾大于左肾</b>，与"左肾通常略大"的人群趋势相反，照实报告。
+     肾门凹陷深度 左 49.9 mm / 右 45.8 mm，
+     肾窦体积 左 37.9 mL / 右 43.1 mL，
+     二者都是<b>在标签上量出来的</b>（逐冠状层凸包亏损），不是假设的。
+     三角面合计 <b>153,580</b>，glb <b>4.99 MB</b>。</p>
+
+  <h2>皮质–髓质分层：构造的，不是分割出来的</h2>
+  <p>源数据每侧肾脏只有一个标签，所以皮髓分界<b>无法从分割里读出</b>。这里的做法是：
+     以<b>外层包膜</b>（朝向肾窦的那一面不算在内，否则肾乳头这一全器官最深的结构会被判成皮质）
+     为基准做距离场，把公开成人皮质厚度 <b>8.0 mm</b>
+     （文献 6–10 mm 的中点，<b>非本受试者实测</b>）之内定为皮质；
+     更深的实质按肾乳头做 Voronoi 划分成锥体，相邻锥体之间留出声明宽度
+     <b>1.6 mm</b>（半宽）的隔，这些隔就是<b>Bertin 肾柱</b>。</p>
+  <p>由此<b>算出来</b>（不是设定的）：每侧 <b>10 个肾锥体</b>（人类参考 8–18），
+     锥体高 14.1–23.4 mm，
+     乳头间距 20.5–26.5 mm，
+     前排 3 个 / 后排 7 个
+     （前后两排是<b>采样结果</b>，不是强加的）。
+     皮质 左 135.7 / 右 148.7 mL，
+     髓质 左 39.1 / 右 45.4 mL，
+     肾柱 左 14.1 / 右 14.0 mL。
+     <b>皮质体积占比 左 0.776 / 右 0.766</b>，
+     落在已发表的 0.60–0.80 区间内。</p>
+
+  <h2>动脉级联与肾脏的签名结构</h2>
+  <p>肾动脉开口放在该受试者<b>真实主动脉表面</b>上，肾静脉开口放在<b>真实下腔静脉表面</b>上；
+     其余走行全部构造。级联按解剖顺序建立：
+     肾动脉 → 段动脉（5 支：尖段、前上段、前下段、下段、后段）→
+     <b>叶间动脉（必须穿行 Bertin 肾柱）</b> → <b>弓形动脉（在皮髓交界处沿锥体底弧行）</b> →
+     小叶间/皮质放射动脉（CCO 生长）→ 入球小动脉 → 肾小球 → 出球小动脉。</p>
+  <p>两处刻意没有交给优化器：<b>叶间动脉的走行</b>按"穿过肾柱而不穿过锥体"去选，
+     实测穿入锥体的采样点 左 1 个 /
+     右 0 个；
+     <b>弓形动脉</b>直接构造成锥体底平面内的圆弧
+     （每侧 19 条弧，跨度
+     84.0–154.0°），
+     因为"沿皮髓交界弧行"就是这条血管的定义，CCO 不会自己长成那样。</p>
+  <p class="hl"><b>肾脏的签名：两套毛细血管床串联。</b>
+     出球小动脉<b>不汇入静脉</b>，而是第二次分支——皮质肾单位分成<b>管周毛细血管</b>，
+     近髓肾单位分成<b>直小血管</b>（与髓袢并行，构成逆流倍增器）。
+     全身没有第二个器官把两套毛细血管床串在一条小动脉上。
+     夹在中间的出球小动脉口径<b>小于</b>入球小动脉
+     （0.013 mm vs
+     0.02 mm，均为公开值），
+     按 Poiseuille 其阻力比为 <b>5.6×</b>——
+     这正是肾小球毛细血管压能维持在 45.0–60.0 mmHg、
+     而一般体循环毛细血管只有 15.0–25.0 mmHg
+     的物理原因（比值 <b>2.62×</b>）。</p>
+
+  <h2>Murray 定律与硬性不相交</h2>
+  <p>半径按 <code>r = r_term · n_downstream^(1/3)</code> 结构性强制，
+     因此每个分叉上 <code>r_parent³ = Σ r_child³</code> 精确成立。
+     逐分叉核验的<b>最大相对残差</b>：renal_artery <code>0.0</code> / renal_vein <code>0.0</code> / collecting_system <code>0.0</code>
+     （分别核验 623 /
+     581 /
+     8 个分叉）。
+     肾小球单元<b>不适用</b>该检验：它的口径是逐级公开值而非 Murray 推导，报告里单列。</p>
+  <p>三棵树之间施加硬性净空约束并<b>求解</b>（不是靠调偏移量凑）：动脉树先作为参照固定，
+     集合系统与静脉树被推开，最后三棵一起松弛；锚点（主动脉/腔静脉开口、扣在真实肾乳头上的肾盏尖端、
+     膀胱端输尿管锚点）始终冻结。
+     实测最小表面间隙：动脉–静脉 <b>-0.729 mm</b>，
+     动脉–集合系统 <b>0.25 mm</b>，
+     静脉–集合系统 <b>0.25 mm</b>。
+     需要说明：真实肾内动静脉是<b>相伴而行、相距几百微米</b>的，
+     这里 1.0 mm 的净空是<b>建模约束而非解剖事实</b>。</p>
+
+  <h2>尺度诚实性</h2>
+  <p>人肾约有 10⁶ 个肾单位；本场景每侧只渲染数百个终末。
+     因此渲染树的终末口径 <b>0.8216 mm</b> 对应的是
+     <b>皮质放射动脉层级，而不是入球小动脉</b>——
+     主干锚定在公开肾动脉口径时，几百个终末的立方律级联到不了小动脉口径，
+     <b>而本项目没有为了凑数去发明任何系数</b>。
+     每个渲染终末代表约 <b>3,130</b> 个真实肾单位。
+     肾小球/球后单元共渲染 <b>128</b> 个，按公开小动脉与毛细血管口径绘制，
+     并在器官视图中以声明的 <b>9.0×</b> 口径放大显示（位置与长度仍为真值）。</p>
+
+  <h2>血流动力学：与心脏模型耦合</h2>
+  <p>肾血流由本项目心脏模型实算的心输出量推出：
+     CO <b>5.1771 L/min</b> × 肾分数 <b>0.22</b>
+     （教科书 20–25%，<b>非实测</b>）= RBF <b>1139.0 mL/min</b>；
+     RPF = RBF ×(1−Hct 0.45) = <b>626.4 mL/min</b>
+     （参考 600–700，落在范围内）；
+     GFR = RPF × FF 0.2 = <b>125.3 mL/min</b>。
+     后者<b>落在经典教科书的 125 mL/min 上，而不在临床 eGFR 的 90–120 区间内</b>，
+     按算出来的报，<b>没有为了落进区间而调参</b>。
+     平均动脉压 <b>94.4872 mmHg</b> 同样来自心脏模型。
+     净滤过压 = P_glomerular(52.5) - P_Bowman(12.5) - pi_plasma(28.5) = 11.5 mmHg。</p>
+  <p>搏动性直接用心脏模型<b>自己的主动脉压波形</b>（40 拍平均）
+     通过阻性耦合驱动。该耦合<b>没有惯性项也没有动脉顺应性</b>，
+     所以收缩期峰值被系统性低估：模型阻力指数 <b>0.362</b>，
+     公开参考 0.5–0.7，<b>未达到</b>；下表中动脉各级的峰值流速都继承了这一低估，
+     <b>没有施加任何增益去掩盖</b>。</p>
+  <table><thead><tr><th>层级</th><th>时间平均 cm/s</th><th>峰值 cm/s</th>
+     <th>已发表参考 cm/s</th><th>判定</th></tr></thead><tbody><tr><td>renal_artery</td><td>38.288</td><td>45.473</td><td>60.0–120.0</td><td><b style="color:#f0b25a">超出范围</b></td></tr><tr><td>segmental</td><td>21.18</td><td>25.155</td><td>30.0–50.0</td><td><b style="color:#f0b25a">超出范围</b></td></tr><tr><td>interlobar</td><td>14.953</td><td>17.759</td><td>25.0–40.0</td><td><b style="color:#f0b25a">超出范围</b></td></tr><tr><td>arcuate</td><td>8.895</td><td>10.564</td><td>15.0–30.0</td><td><b style="color:#f0b25a">超出范围</b></td></tr><tr><td>cortical_radiate</td><td>5.604</td><td>6.655</td><td>10.0–20.0</td><td><b style="color:#f0b25a">超出范围</b></td></tr><tr><td>afferent</td><td>3.021</td><td>3.588</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr><tr><td>efferent</td><td>6.364</td><td>7.559</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr><tr><td>renal_vein</td><td>25.482</td><td>30.264</td><td>15.0–30.0</td><td><b style="color:#8fd9a8">落在范围内</b></td></tr><tr><td>ureter</td><td>0.13</td><td>0.154</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr></tbody></table>
+  <p><b>一个不是输入而是预测的结果：</b>入球小动脉 3.021 cm/s →
+     出球小动脉 <b>6.364 cm/s</b>。
+     约五分之一的血浆被滤走，<b>离开肾小球的血量更少，流速却更快</b>，
+     因为出球小动脉更细。两个数字都由公开口径与本模型自己的 GFR 推出，没有任何拟合。</p>
+  <p>逐采样点逆流审计：<b>98 条通路 / 6,272 个采样点，
+     逆流 0 个</b>。
+     尿流极慢，按声明的 <b>40.0×</b> 显示增益加速；
+     并且真实输尿管是<b>蠕动式团块输送</b>（每分钟 2–6 次收缩），
+     这里算的是同体积流量下的稳态等效流速，已在报告中标明。</p>
+
+  <h2>自身调节</h2>
+  <p>做了，但<b>是现象学曲线而不是方程</b>：它复现"灌注压 80–180 mmHg 之间肾血流与 GFR 近似恒定"
+     这一已发表观察。肌源性反应与管球反馈（经致密斑）在界面上<b>只是标签</b>，
+     本项目<b>没有求解任何肌源性张力方程，也没有求解致密斑反馈动力学</b>。</p>
+
+  <h2>剖面视图：真实比例的肾单位</h2>
+  <p>按真实毫米尺寸建模后以声明的 <b>20.0×</b> 显示。
+     <b>皮质肾单位与近髓肾单位都做了</b>，因为它们不是同一个东西：
+     皮质肾单位（约 85%）髓袢短、只略进入外髓、<b>没有直小血管</b>；
+     近髓肾单位（约 15%）肾小球位于皮髓交界、髓袢深入约 18 mm、<b>并行直小血管</b>。
+     近曲小管的 14 mm 是<b>真实弧长</b>盘绕在一个一毫米出头的皮质球内——
+     这正是 40 mm 长的肾单位能装进 8 mm 皮质的原因。
+     致密斑（管球反馈的位置）画在升支粗段与自身肾小球的接触点上。
+     小管液流速同样是 <code>v = Q/A</code>，流量从本模型自己的单肾单位 GFR 出发，
+     按 <code>kidney_model.json</code> 中标明为<b>教科书值</b>的各段重吸收比例逐段递减。</p>
+  <p><b>没有做的：</b>足细胞足突（0.2–0.4 µm）、裂孔隔膜、近端小管刷状缘微绒毛。
+     它们比 CT 分辨率低两个数量级、比本几何的来源低三个数量级，画出来就是插画而不是数据。
+     分子视图里的刷状缘环是<b>声明过的示意</b>。</p>
+
+  <h2>分子层：二甲双胍的肾排泄通路</h2>
+  <p>数据为本项目自建的肾脏单细胞 ADME 矩阵：
+     <b>90 种细胞类型 × 61 个基因，
+     446,561 个细胞</b>，CP10K + log1p。
+     近端小管上皮 <b>113,966 个细胞 / 137 位 donor</b>。</p>
+  <p>二甲双胍<b>全程以原形排泄，不经任何 CYP 代谢</b>，而且主要靠<b>主动分泌</b>而不只是滤过：
+     血液 →（基底侧）OCT2 <code>SLC22A2</code> 摄入 → 近端小管细胞 →
+     （顶侧）MATE1 <code>SLC47A1</code> / MATE2-K <code>SLC47A2</code> 外排 → 管腔 → 尿。
+     <b>膜面是会画错的东西</b>：基底侧对着管周毛细血管（血），顶侧带刷状缘对着管腔（尿），
+     画反方向就反了，所以场景里每个转运体的位置都由数据中的 <code>membrane</code> 字段决定。</p>
+  <table><thead><tr><th>蛋白</th><th>基因</th><th>膜面</th>
+     <th>平均表达 log1p CP10K</th><th>表达细胞比例</th></tr></thead><tbody><tr><td>OCT2</td><td><code>SLC22A2</code></td><td>基底侧 basolateral</td><td>0.5261</td><td>35.55%</td></tr><tr><td>MATE1</td><td><code>SLC47A1</code></td><td>顶侧 apical</td><td>0.5998</td><td>36.12%</td></tr><tr><td>MATE2-K</td><td><code>SLC47A2</code></td><td>顶侧 apical</td><td>0.4174</td><td>27.06%</td></tr><tr><td>OAT1</td><td><code>SLC22A6</code></td><td>基底侧 basolateral</td><td>0.8990</td><td>47.41%</td></tr><tr><td>OAT3</td><td><code>SLC22A8</code></td><td>基底侧 basolateral</td><td>0.7991</td><td>43.46%</td></tr><tr><td>OAT2</td><td><code>SLC22A7</code></td><td>基底侧 basolateral</td><td>0.2686</td><td>17.75%</td></tr><tr><td>P-gp / MDR1</td><td><code>ABCB1</code></td><td>顶侧 apical</td><td>0.2624</td><td>19.91%</td></tr><tr><td>BCRP</td><td><code>ABCG2</code></td><td>顶侧 apical</td><td>0.0186</td><td>1.71%</td></tr><tr><td>MRP2</td><td><code>ABCC2</code></td><td>顶侧 apical</td><td>0.3080</td><td>20.69%</td></tr><tr><td>MRP4</td><td><code>ABCC4</code></td><td>顶侧 apical</td><td>0.4030</td><td>25.53%</td></tr><tr><td>MRP3</td><td><code>ABCC3</code></td><td>基底侧 basolateral</td><td>0.2031</td><td>12.45%</td></tr><tr><td>PEPT2</td><td><code>SLC15A2</code></td><td>顶侧 apical</td><td>0.1148</td><td>9.09%</td></tr><tr><td>OATP1B1</td><td><code>SLCO1B1</code></td><td>not expected in kidney</td><td>0.0005</td><td>0.05%</td></tr><tr><td>NTCP</td><td><code>SLC10A1</code></td><td>not expected in kidney</td><td>0.0014</td><td>0.14%</td></tr></tbody></table>
+  <p>为支撑"肾内不代谢二甲双胍"这一说法，这里也把近端小管实测的主要肝 CYP 一并报出：
+     CYP3A4 0.0183（1.85%） · CYP3A5 0.4566（21.31%） · CYP2D6 0.0039（0.36%） · CYP2C9 0.0232（2.06%） · CYP1A2 0.0001（0.01%）。
+     这些是转录本测量值，<b>非零不等于存在二甲双胍代谢</b>。
+     <code>SLCO1B1</code>、<code>SLC10A1</code> 作为肝细胞特异的阴性对照一并列出。</p>
+  <p><b>缺的层与缺的原因（不用组织平均值顶替）：</b>
+     没有转运体<b>蛋白丰度</b>（来源是单细胞 RNA）；
+     没有<b>表达量→通量的标定系数</b>（需要绝对蛋白定量与 IVIVE，本项目两样都没有，<b>也没有发明</b>）；
+     没有肾清除率模型、没有药物浓度；
+     近端小管<b>没有 S1/S2/S3 亚段分辨率</b>（而 OAT 与 MATE 在亚段间确有差异），
+     但全程使用细胞类型分辨率的实测值，<b>任何一处都没有用组织平均值代替</b>。
+     不在 61 基因面板上因而<b>完全无法报告</b>的：
+     <code>SLC22A12</code>（URAT1） · <code>SLC22A11</code>（OAT4） · <code>SLCO4C1</code>（OATP4C1） · <code>SLC22A4</code>（OCTN1） · <code>SLC22A5</code>（OCTN2） · <code>SLC5A2</code>（SGLT2） · <code>AQP2</code>（aquaporin-2）。</p>
+</main>
+
+<script type="module">
+import { createKidneyScene } from './kidney3d/js/main.js';
+
+const errEl = document.getElementById('err');
+function fail(e){
+  const txt = (e && e.stack) ? e.stack : String(e);
+  errEl.style.display='block';
+  errEl.textContent = '三维场景启动失败\n\n' + txt;
+  window.__kidney3dError = txt;
+  console.error('[kidney3d:fatal] ' + txt);
+}
+window.addEventListener('error', ev => fail(ev.error || ev.message));
+window.addEventListener('unhandledrejection', ev => fail(ev.reason));
+
+const narrow = Math.min(window.innerWidth, window.innerHeight) < 520;
+
+try{
+  const api = await createKidneyScene({
+    container: document.getElementById('app'),
+    assetBase: './kidney3d/assets/',
+    particlesPerPath: narrow ? 110 : 260
+  });
+  const $ = id => document.getElementById(id);
+
+  const views = [['v-organ','organ'],['v-section','section'],
+                 ['v-nephron','nephron'],['v-mol','molecular']];
+  for (const [id, v] of views){
+    $(id).onclick = () => {
+      api.setView(v);
+      for (const [i2] of views) $(i2).classList.toggle('on', i2 === id);
+      prov();
+    };
+  }
+  const toggle = (el, fn, init) => {
+    if (init === false) el.classList.remove('on');
+    el.onclick = () => { el.classList.toggle('on'); fn(el.classList.contains('on')); };
+  };
+  toggle($('b-art'), on => api.setTreeVisible('renal_artery', on));
+  toggle($('b-ven'), on => api.setTreeVisible('renal_vein', on));
+  toggle($('b-glom'), on => api.setTreeVisible('glomerular', on));
+  toggle($('b-coll'), on => api.setTreeVisible('collecting_system', on), false);
+  toggle($('b-med'), on => api.setOverlay('medulla', on));
+  toggle($('b-pyr'), on => api.setOverlay('pyramids', on), false);
+  toggle($('b-zone'), on => api.setOverlay('zone', on), false);
+  toggle($('b-lab'), on => api.setLabelsVisible(on));
+
+  $('rate').oninput = e => { const x = parseFloat(e.target.value);
+    api.setPlaybackRate(x); $('rate-v').innerHTML = `<code>${x.toFixed(2)}×</code>`; };
+  $('dens').oninput = e => { const f = parseFloat(e.target.value);
+    api.setParticleDensity(f); $('dens-v').innerHTML = `<code>${Math.round(f*100)}%</code>`; };
+
+  $('panelbtn').onclick = () => $('ui').classList.toggle('collapsed');
+  if (narrow) $('ui').classList.add('collapsed');
+
+  function prov(){
+    const d = api.diag;
+    const g = d.geometry.left;
+    $('prov').innerHTML =
+      `几何 TotalSegmentator v2 · CC-BY-4.0 · s0236 · <code>${(d.triangles/1000).toFixed(0)}k</code> 面<br>` +
+      `皮质占比 <code>${g.cortex_volume_fraction}</code> · 锥体 <code>${g.pyramids}</code> 个（构造）<br>` +
+      `RBF <code>${d.haemodynamics.rbf_mL_min}</code> mL/min · GFR <code>${d.haemodynamics.gfr_mL_min}</code> mL/min · ` +
+      `FF <code>${d.haemodynamics.filtration_fraction}</code><br>` +
+      `肾小球毛细血管 <code>${d.haemodynamics.glomerular_capillary_mmHg.join('–')}</code> vs 一般毛细血管 ` +
+      `<code>${d.haemodynamics.ordinary_capillary_mmHg.join('–')}</code> mmHg<br>` +
+      `Murray 最大残差 <code>${d.vesselReport.murray.renal_artery}</code> · ` +
+      `最小表面间隙 <code>${d.vesselReport.clearance}</code> mm<br>` +
+      `<code>is_user_personal_data = ${d.respiration.is_user_personal_data}</code>` +
+      (narrow ? '<br><code>窄屏：粒子数与像素比已降档</code>' : '');
+  }
+  prov();
+}catch(e){ fail(e); }
+</script>
+</body>
+</html>

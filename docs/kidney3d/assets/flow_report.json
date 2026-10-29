@@ -1,0 +1,276 @@
+{
+ "flow_sources": {
+  "renal_blood_flow_mL_min": 1139.0,
+  "gfr_mL_min": 125.3,
+  "urine_mL_min": 1.5,
+  "provenance": {
+   "cardiac_output": "this project's cardiac model (four-chamber time-varying elastance + Windkessel, 60.5 s resting window)",
+   "renal_fraction": "textbook magnitude (the kidneys receive about 20-25 % of cardiac output); NOT measured in this project",
+   "filtration_fraction": "textbook 0.16-0.22, not measured",
+   "urine_flow": "textbook resting range, not measured"
+  }
+ },
+ "single_nephron": {
+  "nephrons_both_kidneys": 2000000.0,
+  "nephron_count_source": "published order of magnitude (~1e6 per kidney); NOT measured here",
+  "single_nephron_blood_flow_mL_min": 0.0005695,
+  "single_nephron_gfr_nL_min": 62.7,
+  "single_nephron_gfr_reference_nL_min": [
+   40.0,
+   80.0
+  ],
+  "sngfr_within_reference": true,
+  "efferent_blood_flow_mL_min": 0.0005068,
+  "derivation": "SNBF = RBF / nephron count; SNGFR = GFR / nephron count; efferent blood flow = SNBF - SNGFR (the filtered plasma has left the capillary). No coefficient is fitted anywhere in this chain."
+ },
+ "emergent_result": {
+  "afferent_velocity_cm_s": 3.021,
+  "efferent_velocity_cm_s": 6.364,
+  "efferent_faster_than_afferent": true,
+  "why": "about a fifth of the plasma entering the glomerulus is filtered off, so LESS blood leaves than enters \u2014 yet it leaves FASTER, because the efferent arteriole is the narrower vessel. Both numbers fall out of the published calibres and the model's own GFR; neither was fitted."
+ },
+ "pulsatility": {
+  "waveform": "this project's cardiac model, mean aortic pressure beat over 40 beats",
+  "peak_over_mean_flow": 1.1876,
+  "trough_over_mean_flow": 0.7583,
+  "model_resistive_index": 0.362,
+  "published_renal_resistive_index": [
+   0.5,
+   0.7
+  ],
+  "resistive_index_within_reference": false,
+  "limitation": "the coupling is purely resistive \u2014 no inertance, no arterial compliance \u2014 so the modelled pulse is flatter than a real renal Doppler trace and the resistive index comes out below the published 0.5-0.7. The peak systolic velocities reported per level inherit that under-prediction. No gain has been applied to hide it."
+ },
+ "levels": {
+  "afferent": {
+   "segments": 128,
+   "time_averaged_velocity_cm_s": 3.021,
+   "peak_systolic_velocity_cm_s": 3.588,
+   "max_sample_cm_s": 3.021,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "arcuate": {
+   "segments": 584,
+   "time_averaged_velocity_cm_s": 8.895,
+   "peak_systolic_velocity_cm_s": 10.564,
+   "max_sample_cm_s": 24.044,
+   "published_reference_cm_s": [
+    15.0,
+    30.0
+   ],
+   "reference_note": "arcuate artery, peak systolic velocity",
+   "compared_value_cm_s": 10.564,
+   "within_reference": false
+  },
+  "arcuate_vein": {
+   "segments": 143,
+   "time_averaged_velocity_cm_s": 5.527,
+   "peak_systolic_velocity_cm_s": 6.564,
+   "max_sample_cm_s": 14.748,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "cortical_radiate": {
+   "segments": 1090,
+   "time_averaged_velocity_cm_s": 5.604,
+   "peak_systolic_velocity_cm_s": 6.655,
+   "max_sample_cm_s": 17.974,
+   "published_reference_cm_s": [
+    10.0,
+    20.0
+   ],
+   "reference_note": "interlobular / cortical radiate artery, peak systolic velocity",
+   "compared_value_cm_s": 6.655,
+   "within_reference": false
+  },
+  "cortical_radiate_vein": {
+   "segments": 1162,
+   "time_averaged_velocity_cm_s": 3.832,
+   "peak_systolic_velocity_cm_s": 4.551,
+   "max_sample_cm_s": 17.788,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "efferent": {
+   "segments": 256,
+   "time_averaged_velocity_cm_s": 6.364,
+   "peak_systolic_velocity_cm_s": 7.559,
+   "max_sample_cm_s": 6.364,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "glomerulus": {
+   "segments": 1920,
+   "time_averaged_velocity_cm_s": 4.414,
+   "peak_systolic_velocity_cm_s": 5.242,
+   "max_sample_cm_s": 4.414,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "interlobar": {
+   "segments": 123,
+   "time_averaged_velocity_cm_s": 14.953,
+   "peak_systolic_velocity_cm_s": 17.759,
+   "max_sample_cm_s": 27.091,
+   "published_reference_cm_s": [
+    25.0,
+    40.0
+   ],
+   "reference_note": "interlobar artery, peak systolic velocity",
+   "compared_value_cm_s": 17.759,
+   "within_reference": false
+  },
+  "interlobar_vein": {
+   "segments": 278,
+   "time_averaged_velocity_cm_s": 12.475,
+   "peak_systolic_velocity_cm_s": 14.816,
+   "max_sample_cm_s": 18.797,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "major_calyx": {
+   "segments": 12,
+   "time_averaged_velocity_cm_s": 0.087,
+   "peak_systolic_velocity_cm_s": 0.103,
+   "max_sample_cm_s": 0.096,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "minor_calyx": {
+   "segments": 148,
+   "time_averaged_velocity_cm_s": 0.06,
+   "peak_systolic_velocity_cm_s": 0.072,
+   "max_sample_cm_s": 0.06,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "renal_artery": {
+   "segments": 26,
+   "time_averaged_velocity_cm_s": 38.288,
+   "peak_systolic_velocity_cm_s": 45.473,
+   "max_sample_cm_s": 38.328,
+   "published_reference_cm_s": [
+    60.0,
+    120.0
+   ],
+   "reference_note": "main renal artery, peak systolic velocity (duplex Doppler reference)",
+   "compared_value_cm_s": 45.473,
+   "within_reference": false
+  },
+  "renal_vein": {
+   "segments": 32,
+   "time_averaged_velocity_cm_s": 25.482,
+   "peak_systolic_velocity_cm_s": 30.264,
+   "max_sample_cm_s": 25.768,
+   "published_reference_cm_s": [
+    15.0,
+    30.0
+   ],
+   "reference_note": "main renal vein, time-averaged velocity",
+   "compared_value_cm_s": 25.482,
+   "within_reference": true
+  },
+  "segmental": {
+   "segments": 72,
+   "time_averaged_velocity_cm_s": 21.18,
+   "peak_systolic_velocity_cm_s": 25.155,
+   "max_sample_cm_s": 30.61,
+   "published_reference_cm_s": [
+    30.0,
+    50.0
+   ],
+   "reference_note": "segmental artery, peak systolic velocity",
+   "compared_value_cm_s": 25.155,
+   "within_reference": false
+  },
+  "segmental_vein": {
+   "segments": 10,
+   "time_averaged_velocity_cm_s": 3.832,
+   "peak_systolic_velocity_cm_s": 4.551,
+   "max_sample_cm_s": 25.626,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  },
+  "ureter": {
+   "segments": 53,
+   "time_averaged_velocity_cm_s": 0.13,
+   "peak_systolic_velocity_cm_s": 0.154,
+   "max_sample_cm_s": 0.13,
+   "published_reference_cm_s": null,
+   "reference_note": "no routinely published human in-vivo velocity reference for this level; the computed value is reported without a range rather than checked against an invented one"
+  }
+ },
+ "trees": {
+  "renal_artery": {
+   "paths": 30,
+   "terminals_in_tree": 639,
+   "tree_flow_mL_min": 1139.0,
+   "velocity_mm_s": {
+    "median_over_samples": 302.3,
+    "max": 383.284,
+    "min": 56.0352
+   },
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "root -> terminal"
+  },
+  "renal_vein": {
+   "paths": 26,
+   "terminals_in_tree": 598,
+   "tree_flow_mL_min": 1139.0,
+   "velocity_mm_s": {
+    "median_over_samples": 176.682,
+    "max": 257.676,
+    "min": 38.3228
+   },
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "terminal -> root"
+  },
+  "glomerular": {
+   "paths": 26,
+   "terminals_in_tree": 768,
+   "tree_flow_mL_min": "per-nephron, see single_nephron",
+   "velocity_mm_s": {
+    "median_over_samples": 31.705,
+    "max": 63.643,
+    "min": 30.2129
+   },
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "root -> terminal"
+  },
+  "collecting_system": {
+   "paths": 16,
+   "terminals_in_tree": 20,
+   "tree_flow_mL_min": 1.5,
+   "velocity_mm_s": {
+    "median_over_samples": 1.299,
+    "max": 1.299,
+    "min": 0.603
+   },
+   "retrograde_samples": 0,
+   "zero_or_negative_samples": 0,
+   "direction": "terminal -> root"
+  }
+ },
+ "audit": {
+  "total_paths": 98,
+  "samples_per_path": 64,
+  "total_samples": 6272,
+  "retrograde_samples_total": 0,
+  "zero_or_negative_samples_total": 0,
+  "all_paths_strictly_forward": true,
+  "direction_check": "arterial and glomerular paths are stored hilum -> terminal, venous paths terminal -> caval ostium, urine papilla -> bladder. Each path is traversed in one direction only and the renderer advances phase monotonically, so no path can produce a retrograde sample.",
+  "mass_balance_mL_min": {
+   "arterial_inflow": 1139.0,
+   "venous_outflow": 1139.0,
+   "residual": 0.0,
+   "note": "venous return is set equal to arterial inflow. The filtered load that leaves as urine (1.5 mL/min of 1139) is 0.13 % and is carried by the collecting system, not subtracted from the venous return."
+  },
+  "urine_display_gain": 40.0,
+  "urine_true_velocity_cm_s": 0.1299,
+  "urine_transport_caveat": "real ureteric urine transport is PERISTALTIC \u2014 boluses propelled by 2-6 contractions per minute, not steady flow. What is computed here is the steady-flow equivalent velocity of the same volume rate, shown at a declared display gain so its direction is visible at all."
+ }
+}

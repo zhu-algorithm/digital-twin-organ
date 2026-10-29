@@ -65,10 +65,10 @@
         <span style="color:#58a6ff">细胞与分子 →</span> <span style="text-decoration:underline">cells.html?organ=heart</span>
       </div>
     </a>
-    <a class="organ" href="cells.html?organ=kidney">
+    <a class="organ" href="kidney3d.html">
       <div class="nm"><span class="dot" style="background:var(--acc)"></span>数字孪生肾脏</div>
-      <div class="ds">446,561 细胞 · 90 种细胞类型<br>三层下钻完整：器官→细胞→分子<br>90 种细胞类型 × 61 个 ADME 基因</div>
-      <span class="st live">三层完整</span>
+      <div class="ds">446,561 细胞 · 90 种细胞类型<br>真实 CT 分割网格 + 动脉级联至弓形动脉 + 串联双毛细血管床<br>皮质–髓质分层与肾单位 · 二甲双胍 OCT2→MATE 原形排泄通路</div>
+      <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">三层完整</span>
     </a>
     <a class="organ" href="liver3d.html">
       <div class="nm"><span class="dot" style="background:#b5651d"></span>数字孪生肝脏</div>
@@ -96,7 +96,9 @@
 
   <h2>当前状态与缺口</h2>
   <div class="note">
-    <b>肾脏</b>三层完整：90 种细胞类型 × 61 个 ADME 基因，可以从器官一路点到分子。
+    <b>肾脏</b>三层完整：90 种细胞类型 × 61 个 ADME 基因，可以从器官一路点到分子，分子层画的是二甲双胍 OCT2→MATE1/MATE2-K 的原形排泄主线（转运体按基底侧／顶侧正确膜面标注）。
+    肾脏有两处必须讲明：一是源数据每侧只有<b>一个肾脏整体标签</b>，所以皮质、髓质、皮髓分界、肾锥体、肾柱、肾乳头<b>全部是构造量而非分割结果</b>；
+    二是搏动耦合为纯阻性（无惯性与顺应性），<b>系统性低估收缩期峰值</b>——5 个动脉层级的峰值流速都低于公开区间（主肾动脉 45.5 对 60–120 cm/s），照算出的报、未施加任何增益。
     <b>肝脏</b>分子层已接入：11 种细胞类型 × 60 个基因，并且因为图谱把肝细胞按小叶位置注释成三种独立细胞类型，
     小叶分区梯度可以直接读出——但梯度<b>并非对所有基因一致</b>（CYP3A4、CYP1A2 中央静脉周围偏高，CYP2D6 方向相反，
     CYP2C9 无明显梯度），页面逐基因给出比值与方向，不作全局性断言。

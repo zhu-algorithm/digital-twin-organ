@@ -1,0 +1,146 @@
+{
+ "fields": {
+  "capsule_left": {
+   "vertices": 15806,
+   "faces": 31608,
+   "capsule_depth_mm_max": 24.4,
+   "pyramid_ids_present": 10,
+   "column_of_bertin_vertices": 381,
+   "concavity_mm_range": [
+    -1.909,
+    1.315
+   ]
+  },
+  "capsule_right": {
+   "vertices": 17488,
+   "faces": 34972,
+   "capsule_depth_mm_max": 25.0,
+   "pyramid_ids_present": 10,
+   "column_of_bertin_vertices": 379,
+   "concavity_mm_range": [
+    -2.235,
+    1.199
+   ]
+  },
+  "medulla_left": {
+   "vertices": 5520,
+   "faces": 11000,
+   "capsule_depth_mm_max": 24.4,
+   "pyramid_ids_present": 10,
+   "column_of_bertin_vertices": 260,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  },
+  "medulla_right": {
+   "vertices": 5520,
+   "faces": 11000,
+   "capsule_depth_mm_max": 23.5,
+   "pyramid_ids_present": 10,
+   "column_of_bertin_vertices": 239,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  },
+  "cut_left": {
+   "vertices": 10002,
+   "faces": 20000,
+   "capsule_depth_mm_max": 23.3,
+   "pyramid_ids_present": 8,
+   "column_of_bertin_vertices": 433,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  },
+  "cut_right": {
+   "vertices": 10002,
+   "faces": 20000,
+   "capsule_depth_mm_max": 23.9,
+   "pyramid_ids_present": 7,
+   "column_of_bertin_vertices": 357,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  },
+  "cut_medulla_left": {
+   "vertices": 3514,
+   "faces": 7000,
+   "capsule_depth_mm_max": 23.3,
+   "pyramid_ids_present": 8,
+   "column_of_bertin_vertices": 208,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  },
+  "cut_medulla_right": {
+   "vertices": 3514,
+   "faces": 7000,
+   "capsule_depth_mm_max": 23.5,
+   "pyramid_ids_present": 7,
+   "column_of_bertin_vertices": 157,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  },
+  "aorta": {
+   "vertices": 3002,
+   "faces": 6000,
+   "capsule_depth_mm_max": 0.0,
+   "pyramid_ids_present": 0,
+   "column_of_bertin_vertices": 0,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  },
+  "ivc": {
+   "vertices": 2502,
+   "faces": 5000,
+   "capsule_depth_mm_max": 0.0,
+   "pyramid_ids_present": 0,
+   "column_of_bertin_vertices": 0,
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "glb_bytes": 5236072,
+ "glb_mb": 4.99,
+ "glb_total_faces": 153580,
+ "glb_total_vertices": 76870,
+ "field_layout": {
+  "_FIELD0": [
+   "capsule_depth_01",
+   "pyramid_id",
+   "medulla_01",
+   "concavity"
+  ],
+  "_FIELD1": [
+   "column_of_bertin",
+   "cmj_distance_norm",
+   "corticomedullary_zone",
+   "side"
+  ]
+ },
+ "constructed_vs_measured": {
+  "measured_on_the_label": [
+   "capsule_depth_01",
+   "concavity"
+  ],
+  "constructed": [
+   "pyramid_id",
+   "medulla_01",
+   "column_of_bertin",
+   "cmj_distance_norm",
+   "corticomedullary_zone"
+  ],
+  "why": "the source release has one label per kidney and no cortex, medulla, pyramid or pelvis label, so every corticomedullary field is derived from the measured capsule geometry plus a published cortical thickness"
+ }
+}
