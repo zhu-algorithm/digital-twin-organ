@@ -48,18 +48,18 @@
 
   <h2>已纳入的单细胞数据</h2>
   <div class="nums">
-    <div class="num"><div class="v">3,915,921</div><div class="k">通过质控的细胞总数</div></div>
-    <div class="num"><div class="v">407</div><div class="k">细胞类型（四器官合计）</div></div>
+    <div class="num"><div class="v">5,230,197</div><div class="k">通过质控的细胞总数</div></div>
+    <div class="num"><div class="v">427</div><div class="k">细胞类型（四器官合计）</div></div>
     <div class="num"><div class="v">65</div><div class="k">CELLxGENE 数据集</div></div>
-    <div class="num"><div class="v">61</div><div class="k">ADME 基因面板</div></div>
+    <div class="num"><div class="v">61 + 51</div><div class="k">ADME 基因 + 离子通道基因</div></div>
   </div>
 
   <h2>器官</h2>
   <div class="organs">
     <a class="organ" href="heart3d.html">
       <div class="nm"><span class="dot" style="background:var(--art)"></span>数字孪生心脏</div>
-      <div class="ds">1,790,545 细胞 · 64 种细胞类型<br>动作电位、四腔搏动、冠脉灌注、脉搏波</div>
-      <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">细胞层</span>
+      <div class="ds">3,104,821 细胞 · 84 种细胞类型 · 167 位 donor<br>真实解剖网格 + 冠脉树 + 血流粒子<br>51 个离子通道／钙循环基因 → ORd 模型参数</div>
+      <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">三层完整</span>
       <div class="ds" style="margin-top:9px">
         <span style="color:#58a6ff">三维心脏 →</span> 本页 · <span style="text-decoration:underline">二维剖面</span> ·
         <span style="color:#58a6ff">细胞与分子 →</span> <span style="text-decoration:underline">cells.html?organ=heart</span>
@@ -100,7 +100,7 @@
     <b>肝脏</b>分子层已接入：11 种细胞类型 × 60 个基因，并且因为图谱把肝细胞按小叶位置注释成三种独立细胞类型，
     小叶分区梯度可以直接读出——但梯度<b>并非对所有基因一致</b>（CYP3A4、CYP1A2 中央静脉周围偏高，CYP2D6 方向相反，
     CYP2C9 无明显梯度），页面逐基因给出比值与方向，不作全局性断言。
-    <b>心脏</b>器官层（搏动、冠脉、脉搏波）与细胞层（64 种细胞类型）均可用，分子层是离子通道与钙循环基因，正在单独采集。
+    <b>心脏</b>三层完整：三维解剖几何、84 种细胞类型、51 个离子通道与钙循环基因。其分子层有一个必须讲明的发现——<b>三层证据并不对等</b>：遗传层最丰富（7 个基因 25,193 条 ClinVar 记录），RNA 层完整，而蛋白层恰好在模型最需要处缺失（映射到模型参数的 24 个基因里有 11 个无蛋白证据，含 IKr／IK1／Ito 的全部亚基）。详见心脏的分子层页面。
     <b>小肠</b>只有细胞层，酶表达谱采集未成功。
     缺失的分子层一律如实显示缺失原因，<b>不会用组织平均值冒充细胞类型分辨的表达</b>。血管视图尚未开始。
   </div>

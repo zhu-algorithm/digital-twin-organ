@@ -100,10 +100,13 @@ const EXPR_STATE = {};           // organ -> 'loading' | 'ready' | 'absent'
 /* Which organs have a cell-type-resolved ADME/ion-channel expression layer, and
    for those that do not, the reason — shown verbatim instead of a blank panel. */
 const MOL_PENDING = {
-  heart: '心脏的分子层是<b>离子通道与钙循环基因</b>（KCNH2→IKr、SCN5A→INa、CACNA1C→ICaL、ATP2A2→SERCA2a 等），'
-       + '与其他器官的药物代谢酶面板不同，正在单独采集中。采集完成后点开心室肌细胞即可看到这些基因的表达，'
-       + '并可经电导映射驱动动作电位模型。',
   small_intestine: '小肠的 ADME 表达谱采集未成功：源数据集整包下载过程中最后一步请求失败，因此没有细胞类型分辨的酶表达数据。'
+};
+let GEVID = null;                 // heart only: per-gene gene/RNA/protein evidence
+const CONF_LABEL = {
+  one_to_one_pore_forming:'一对一·成孔亚基', multi_subunit_obligate:'多亚基·必需',
+  principal_subunit_heteromeric:'主亚基·异聚体', regulatory_one_to_one:'调控·一对一',
+  modulatory_not_represented:'调制·模型中无对应项', modulatory_disputed:'调制·有争议'
 };
 function molUnavailableNote(o){
   return MOL_PENDING[o] || '该器官的细胞类型分辨表达谱尚未取得。';
@@ -154,6 +157,9 @@ async function ensureExpr(o){
     const r = await fetch(`data/${o}_expression.json`);
     if(!r.ok) throw new Error('absent');
     EXPR[o] = await r.json();
+    if(o==='heart' && !GEVID){
+      try{ GEVID = await (await fetch('data/heart_gene_evidence.json')).json(); }catch(e){ GEVID = null; }
+    }
     EXPR_STATE[o]='ready';
   }catch(e){ EXPR_STATE[o]='absent'; }
   renderMolecular();
@@ -191,14 +197,55 @@ function renderMolecular(){
   el.innerHTML =
     `<div class="hint"><b>${selCT}</b> — ${fmt(X.n_cells[i])} 个细胞（统计用 ${fmt(X.n_cells_used[i])} 个）、
      ${X.n_donors[i]} 位 donor。表达量为 ${X.normalization}，按表达量降序。</div>
-     <table><thead><tr><th>基因</th><th>分类</th><th>平均表达</th><th>表达细胞比例</th></tr></thead><tbody>`+
-    rows.map(r=>`<tr>
+     <table><thead><tr><th>基因</th><th>分类</th><th>平均表达</th><th>表达细胞比例</th>`+
+     (organ==='heart' && GEVID ? `<th>ORd 电流·参数</th><th>蛋白证据</th><th>致病变异</th>` : '') +
+     `</tr></thead><tbody>`+
+    rows.map(r=>{
+      const ev = (organ==='heart' && GEVID) ? GEVID[r.gene] : null;
+      let extra = '';
+      if(ev){
+        const cur = ev.ord_parameter && ev.maps
+          ? `<span style="color:#f0b429">${ev.ord_current} · ${ev.ord_parameter}</span>` : '<span style="color:#8b97a8">—</span>';
+        const pr = ev.protein==='detected'
+          ? `<span style="color:#3fb950">检出${ev.protein_peptides?` ${ev.protein_peptides} 肽`:''}</span>`
+          : '<span style="color:#f0883e">未检出</span>';
+        const pl = ev.plp ? `<span style="color:#bc8cff">${ev.plp.toLocaleString('en-US')}</span>` : '<span style="color:#8b97a8">—</span>';
+        extra = `<td>${cur}</td><td>${pr}</td><td>${pl}</td>`;
+      }
+      return `<tr>
       <td><b>${r.gene}</b></td>
       <td><span class="gclass" style="color:${GC_COLOR[r.cls]||'#8b97a8'};border-color:${GC_COLOR[r.cls]||'#2a3340'}">${GC_LABEL[r.cls]||r.cls}</span></td>
       <td><span class="ebar" style="width:${Math.max(2,r.e/mx*72)}px;background:${GC_COLOR[r.cls]||'#58a6ff'}"></span>
           <span style="color:var(--dim);font-size:12px;margin-left:7px">${r.e.toFixed(3)}</span></td>
-      <td>${r.p.toFixed(1)}%</td></tr>`).join('')+
-    `</tbody></table>` + zonationPanel();
+      <td>${r.p.toFixed(1)}%</td>${extra}</tr>`;}).join('')+
+    `</tbody></table>` + evidenceNote() + zonationPanel();
+}
+
+/* Heart only: the asymmetry between the three evidence layers is the finding, so it is
+   stated on the page rather than left for the reader to infer from blank cells. */
+function evidenceNote(){
+  if(organ!=='heart' || !GEVID) return '';
+  const mapped = Object.values(GEVID).filter(v=>v.maps);
+  const noProt = mapped.filter(v=>v.protein!=='detected');
+  return `<div class="miss" style="margin-top:14px">
+    <b>三层证据并不对等，而且缺口恰好落在模型最需要的地方。</b>
+    51 个基因中 <b>${mapped.length}</b> 个映射到 O'Hara-Rudy 动作电位模型的某个参数，
+    其中 <b>${noProt.length}</b> 个在最深的人类心脏蛋白组中<b>完全没有蛋白证据</b>：
+    ${Object.entries(GEVID).filter(([g,v])=>v.maps&&v.protein!=='detected').map(([g])=>g).join('、')}。
+    这包含 IKr 的全部亚基（KCNH2、KCNE2）、IK1（KCNJ2、KCNJ12）、Ito（KCND3、KCNIP2）与 IKs 的 β 亚基（KCNE1）——
+    <b>模型的四条钾电流没有任何实测蛋白锚点</b>。
+    <br><br>
+    <b>离子通道没有任何绝对定量。</b>PRIDE 以「absolute quantification heart」检索人类样本返回 0 项。
+    最深的心脏蛋白组确实报告了每二倍体核拷贝数，但那是用组蛋白蛋白组标尺推算的、明示「无加标标准品」，
+    属于由 LFQ 强度算出的估计而非标定测量。本站所有蛋白数值一律标为<b>相对 LFQ</b>。
+    <br><br>
+    <b>因此闭环只能走遗传这一层。</b>KCNH2 功能丧失与药物阻断 hERG 作用于同一个可调参数 GKr，
+    该通路已验证（50% 阻断使 APD90 由 266.1 ms 延长至 382.7 ms），<b>且不需要任何蛋白丰度</b>。
+    而「表达量 → 电导」的丰度驱动闭环<b>不被支持</b>：既无绝对定量，也无任何把丰度标定到电导的依据。
+    <br><br>
+    <b>跨壁（心内膜／中层／心外膜）数据不存在。</b>Census 的心脏组织轴共 19 个术语，没有一个编码心室壁分层，
+    所以 ORd 的 Ito 跨壁梯度在本项目中<b>没有分子层依据</b>，全心室的 KCND3／KCNIP2 值不得当作分层数据使用。
+  </div>`;
 }
 
 /* Liver only: the three hepatocyte zones are separate cell types in the atlas, so the
