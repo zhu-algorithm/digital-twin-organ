@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ · 数字孪生器官</title>
+<meta name="description" content="基于单细胞与多组学数据构建的数字孪生器官：肝脏、肠道、肾脏、血管的药物代谢模型，以及会跳动的数字孪生心脏。器官→细胞→分子三层可视化。">
+<style>
+  :root{--bg:#0b0e13;--panel:#141922;--line:#2a3340;--ink:#e6edf3;--dim:#8b97a8;
+        --art:#e5484d;--ven:#4a7fd4;--acc:#f0b429;--ok:#3fb950}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif;
+       padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 18px 60px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:.01em}
+  .tag{color:var(--dim);font-size:14px;margin-bottom:22px}
+  h2{font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.09em;
+     margin:34px 0 12px;font-weight:600}
+  .nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .num{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:13px 15px}
+  .num .v{font-size:25px;font-variant-numeric:tabular-nums;line-height:1.2}
+  .num .k{color:var(--dim);font-size:11.5px;margin-top:3px}
+  .organs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  a.organ{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+          padding:17px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+  a.organ:active{transform:scale(.985)}
+  a.organ:hover{border-color:#3a4555}
+  a.organ.wip{opacity:.56}
+  .organ .nm{font-size:18px;font-weight:600;display:flex;align-items:center;gap:9px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .organ .ds{color:var(--dim);font-size:13px;margin-top:7px}
+  .organ .st{margin-top:11px;font-size:11.5px;display:inline-block;padding:3px 9px;border-radius:5px;
+             border:1px solid var(--line)}
+  .st.live{background:#14301f;border-color:#2f6b43;color:#9fe0b4}
+  .st.wip{background:#2a1f0a;border-color:#6b4a12;color:#f5d9a0}
+  p{color:#c3ccd8;font-size:14.5px}
+  code{background:#0f141c;padding:1px 6px;border-radius:4px;font-size:13px}
+  .note{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:15px 17px;font-size:14px;color:#c3ccd8}
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+  a.lk{color:#58a6ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>数字孪生器官</h1>
+  <div class="tag">Digital Twin Organ — 基于单细胞与多组学数据构建的器官→细胞→分子三层模型</div>
+
+  <h2>已纳入的单细胞数据</h2>
+  <div class="nums">
+    <div class="num"><div class="v">3,915,921</div><div class="k">通过质控的细胞总数</div></div>
+    <div class="num"><div class="v">407</div><div class="k">细胞类型（四器官合计）</div></div>
+    <div class="num"><div class="v">65</div><div class="k">CELLxGENE 数据集</div></div>
+    <div class="num"><div class="v">61</div><div class="k">ADME 基因面板</div></div>
+  </div>
+
+  <h2>器官</h2>
+  <div class="organs">
+    <a class="organ" href="heart.html">
+      <div class="nm"><span class="dot" style="background:var(--art)"></span>数字孪生心脏</div>
+      <div class="ds">1,790,545 细胞 · 64 种细胞类型<br>动作电位、四腔搏动、冠脉灌注、脉搏波</div>
+      <span class="st live">可交互</span>
+    </a>
+    <a class="organ" href="cells.html?organ=kidney">
+      <div class="nm"><span class="dot" style="background:var(--acc)"></span>数字孪生肾脏</div>
+      <div class="ds">446,561 细胞 · 90 种细胞类型<br>三层下钻完整：器官→细胞→分子</div>
+      <span class="st live">可交互</span>
+    </a>
+    <a class="organ" href="cells.html?organ=liver">
+      <div class="nm"><span class="dot" style="background:#b5651d"></span>数字孪生肝脏</div>
+      <div class="ds">678,856 细胞 · 107 种细胞类型<br>细胞层已就绪，酶表达谱补采中</div>
+      <span class="st wip">细胞层可用</span>
+    </a>
+    <a class="organ" href="cells.html?organ=small_intestine">
+      <div class="nm"><span class="dot" style="background:#d4a04a"></span>数字孪生肠道</div>
+      <div class="ds">999,959 细胞 · 146 种细胞类型<br>细胞层已就绪，酶表达谱补采中</div>
+      <span class="st wip">细胞层可用</span>
+    </a>
+    <a class="organ wip" href="#vessel">
+      <div class="nm"><span class="dot" style="background:var(--ven)"></span>数字孪生血管</div>
+      <div class="ds">全身循环导航视图<br>脉搏波传播与五器官药物分布</div>
+      <span class="st wip">构建中</span>
+    </a>
+  </div>
+
+  <h2>这个项目在做什么</h2>
+  <p>把公开的单细胞转录组与多组学数据变成<b>可运行的器官模型</b>，而不是停在图表上。
+  每个器官有三层：<b>器官层</b>是该器官的生理动态（心脏搏动、肾小球滤过、肝小叶灌流、肠道蠕动）；
+  <b>细胞层</b>是构成该器官的细胞类型及其比例，来自真实的单细胞测序数据；
+  <b>分子层</b>是这些细胞里药物代谢酶与转运体的表达量。三层之间不是并列展示，而是<b>有因果连接</b>——
+  分子层的表达量经标度换算成器官的清除能力，直接决定器官层的药物浓度曲线。</p>
+
+  <h2>当前状态与缺口</h2>
+  <div class="note">
+    肾脏的三层是<b>完整的</b>：90 种细胞类型 × 61 个 ADME 基因的表达谱已就绪，可以从器官一路点到分子。
+    肝脏与肠道目前<b>只有细胞层</b>——它们的酶表达谱仍在从 CELLxGENE 补采（Census 的 TileDB 查询经代理访问异常慢，
+    每次查询约有 700 秒固定开销）。在补齐之前，这两个器官的分子层显示缺失状态，
+    <b>不会用组织平均值冒充细胞类型分辨的表达</b>。心脏的离子通道基因谱与血管视图尚未开始。
+  </div>
+
+  <footer>
+    数据来源：CELLxGENE Census 2025-11-08（人类正常组织，10x 系列，<code>is_primary_data=True</code>）、
+    Human Protein Atlas v25.1、PhysioNet MIT-BIH Normal Sinus Rhythm Database。
+    心率节律为公开数据占位，<b>不代表任何特定个体</b>。
+    本项目为机制可解释的研究用模拟器，<b>不可用于任何临床给药决策</b>。
+    <br><br>
+    代码与数据溯源：<a class="lk" href="https://github.com/zhu-algorithm/digital-twin-organ">github.com/zhu-algorithm/digital-twin-organ</a>
+    · MIT License
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>细胞与分子层 · 数字孪生器官</title>
+<style>
+  :root{--bg:#0b0e13;--panel:#141922;--line:#2a3340;--ink:#e6edf3;--dim:#8b97a8;--acc:#f0b429}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif;
+       padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .wrap{max-width:1060px;margin:0 auto;padding:18px 16px 60px}
+  a.back{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{font-size:22px;margin:12px 0 4px}
+  .tag{color:var(--dim);font-size:13.5px;margin-bottom:18px}
+  .tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+  .tab{padding:8px 14px;border:1px solid var(--line);border-radius:7px;background:var(--panel);
+       cursor:pointer;font-size:14px;white-space:nowrap}
+  .tab.on{background:#1f3a29;border-color:#2f6b43;color:#9fe0b4}
+  .crumb{color:var(--dim);font-size:13px;margin-bottom:14px}
+  .crumb b{color:var(--ink)}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:26px 0 10px;font-weight:600}
+  .nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:6px}
+  .num{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+  .num .v{font-size:21px;font-variant-numeric:tabular-nums}
+  .num .k{color:var(--dim);font-size:11px;margin-top:2px}
+  .ct{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 12px;
+      margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:11px}
+  .ct:hover{border-color:#3a4555}
+  .ct.sel{border-color:#2f6b43;background:#15251c}
+  .ct .bar{flex:0 0 76px;height:7px;background:#0f141c;border-radius:4px;overflow:hidden}
+  .ct .bar i{display:block;height:100%;background:var(--acc)}
+  .ct .nm{flex:1 1 auto;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ct .pc{flex:0 0 auto;color:var(--dim);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .hint{color:var(--dim);font-size:12.5px;margin:-2px 0 10px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--dim);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .gclass{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10.5px;border:1px solid var(--line)}
+  .ebar{display:inline-block;height:7px;background:#58a6ff;border-radius:3px;vertical-align:middle}
+  .miss{background:#2a1f0a;border:1px solid #6b4a12;border-radius:8px;padding:14px 16px;
+        font-size:13.5px;color:#f5d9a0}
+  .scroll{max-height:460px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
+  code{background:#0f141c;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← 返回器官总览</a>
+  <h1 id="title">细胞与分子层</h1>
+  <div class="tag">数据来自 CELLxGENE Census 单细胞转录组。点击细胞类型可下钻到该细胞的药物代谢基因表达。</div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="crumb" id="crumb"></div>
+
+  <h2>器官层</h2>
+  <div class="nums" id="nums"></div>
+
+  <h2>细胞层 — 细胞类型组成</h2>
+  <div class="hint">按占器官细胞的比例降序。括号内为检出该类型的 donor 数；donor 间变异反映个体差异。</div>
+  <div class="scroll" id="ctlist"></div>
+
+  <h2>分子层 — ADME 基因表达</h2>
+  <div id="mol"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const GC_COLOR = {
+  phase_I:'#e5484d', phase_II:'#f0b429', uptake_transporter:'#4a7fd4',
+  efflux_transporter:'#bc8cff', nuclear_receptor:'#3fb950', housekeeping_reference:'#8b97a8'
+};
+const GC_LABEL = {
+  phase_I:'I 相酶', phase_II:'II 相酶', uptake_transporter:'摄取转运体',
+  efflux_transporter:'外排转运体', nuclear_receptor:'核受体', housekeeping_reference:'管家基因参考'
+};
+const ORGAN_LABEL = {kidney:'肾脏', liver:'肝脏', small_intestine:'小肠', heart:'心脏'};
+const ORDER = ['kidney','liver','small_intestine','heart'];
+
+let COMP=null, KEXPR=null, organ='kidney', selCT=null;
+
+function fmt(n){return n.toLocaleString('en-US');}
+
+function renderTabs(){
+  document.getElementById('tabs').innerHTML = ORDER.map(o=>
+    `<div class="tab ${o===organ?'on':''}" data-o="${o}">${ORGAN_LABEL[o]}</div>`).join('');
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+    organ=t.dataset.o; selCT=null; render();
+    history.replaceState(null,'','?organ='+organ);
+  });
+}
+
+function renderNums(){
+  const c=COMP[organ];
+  document.getElementById('nums').innerHTML =
+    `<div class="num"><div class="v">${fmt(c.n_cells)}</div><div class="k">细胞数</div></div>`+
+    `<div class="num"><div class="v">${c.n_cell_types}</div><div class="k">细胞类型</div></div>`+
+    `<div class="num"><div class="v">${c.n_donors_total}</div><div class="k">donor 数</div></div>`+
+    `<div class="num"><div class="v">${c.n_datasets}</div><div class="k">数据集</div></div>`;
+}
+
+function renderCellTypes(){
+  const c=COMP[organ], mx=c.cell_types[0].pct;
+  document.getElementById('ctlist').innerHTML = c.cell_types.map(ct=>{
+    const w=(ct.pct/mx*100).toFixed(1);
+    const sd = ct.donor_pct_sd==null?'':` ±${ct.donor_pct_sd.toFixed(1)}`;
+    return `<div class="ct ${ct.name===selCT?'sel':''}" data-ct="${ct.name.replace(/"/g,'&quot;')}">
+      <div class="bar"><i style="width:${w}%"></i></div>
+      <div class="nm" title="${ct.clid}">${ct.name}</div>
+      <div class="pc">${ct.pct.toFixed(2)}%${sd} · ${fmt(ct.n)} 细胞 · ${ct.donors} donor</div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.ct').forEach(e=>e.onclick=()=>{
+    selCT = (selCT===e.dataset.ct)?null:e.dataset.ct; render();
+  });
+}
+
+function renderMolecular(){
+  const el=document.getElementById('mol');
+  if(organ!=='kidney'){
+    el.innerHTML = `<div class="miss"><b>该器官的分子层尚未就绪。</b>
+      ${ORGAN_LABEL[organ]}的细胞类型组成（上方）已经来自真实单细胞数据，
+      但细胞类型分辨的 ADME 酶／转运体表达谱仍在从 CELLxGENE 补采中——
+      Census 的 TileDB 矩阵查询经网络代理访问时每次约有 700 秒固定开销，
+      ${ORGAN_LABEL[organ]}的查询尚未完成。<br><br>
+      此处<b>不会用 Human Protein Atlas 的组织平均值替代</b>：组织平均值无法分辨细胞类型，
+      而区分肝细胞与胆管细胞、吸收细胞与杯状细胞正是本模型的关键。缺失就如实显示缺失。</div>`;
+    return;
+  }
+  if(!selCT){
+    el.innerHTML = `<div class="hint">在上方细胞层点选一种细胞类型，查看它的 61 个 ADME 基因表达。</div>`;
+    return;
+  }
+  const i = KEXPR.cell_types.indexOf(selCT);
+  if(i<0){ el.innerHTML=`<div class="miss">该细胞类型未通过表达谱的最小细胞数阈值（≥50 细胞），无分子层数据。</div>`; return; }
+  const rows = KEXPR.genes.map((g,j)=>({
+      gene:g, cls:KEXPR.gene_class[j], e:KEXPR.expr[i][j], p:KEXPR.pct[i][j]
+  })).filter(r=>r.e!=null).sort((a,b)=>b.e-a.e);
+  const mx = rows.length?rows[0].e:1;
+  el.innerHTML =
+    `<div class="hint"><b>${selCT}</b> — ${fmt(KEXPR.n_cells[i])} 个细胞。
+     表达量为 ${KEXPR.normalization}，按表达量降序。</div>
+     <table><thead><tr><th>基因</th><th>分类</th><th>平均表达</th><th>表达细胞比例</th></tr></thead><tbody>`+
+    rows.map(r=>`<tr>
+      <td><b>${r.gene}</b></td>
+      <td><span class="gclass" style="color:${GC_COLOR[r.cls]||'#8b97a8'};border-color:${GC_COLOR[r.cls]||'#2a3340'}">${GC_LABEL[r.cls]||r.cls}</span></td>
+      <td><span class="ebar" style="width:${Math.max(2,r.e/mx*72)}px;background:${GC_COLOR[r.cls]||'#58a6ff'}"></span>
+          <span style="color:var(--dim);font-size:12px;margin-left:7px">${r.e.toFixed(3)}</span></td>
+      <td>${r.p.toFixed(1)}%</td></tr>`).join('')+
+    `</tbody></table>`;
+}
+
+function renderCrumb(){
+  const parts = [`<b>${ORGAN_LABEL[organ]}</b>`, selCT?`<b>${selCT}</b>`:'细胞类型', (organ==='kidney'&&selCT)?'<b>ADME 基因</b>':'分子层'];
+  document.getElementById('crumb').innerHTML = '器官 › 细胞 › 分子　—　' + parts.join(' › ');
+}
+
+function renderFoot(){
+  document.getElementById('foot').innerHTML =
+   `数据来源：CELLxGENE Census ${KEXPR?KEXPR.census_version:'2025-11-08'}，人类正常组织、10x 系列测序、
+    <code>is_primary_data=True</code>。细胞过滤：检出基因数 ≥200、总 counts ≥500；
+    细胞类型需 ≥50 个细胞方纳入表达谱统计。细胞类型标签取自 Census 的 Cell Ontology 注释，未重新聚类。
+    质控未做 doublet 检测与线粒体比例过滤（Census 的 obs 不提供线粒体字段，计算需读取表达矩阵，成本不可接受）。
+    <br><br>本项目为研究用模拟器，<b>不可用于任何临床给药决策</b>。`;
+}
+
+function render(){ renderTabs(); renderNums(); renderCellTypes(); renderMolecular(); renderCrumb(); }
+
+Promise.all([
+  fetch('data/cell_composition.json').then(r=>r.json()),
+  fetch('data/kidney_expression.json').then(r=>r.json())
+]).then(([c,k])=>{
+  COMP=c; KEXPR=k;
+  const q=new URLSearchParams(location.search).get('organ');
+  if(q && COMP[q]) organ=q;
+  document.getElementById('title').textContent = ORGAN_LABEL[organ]+' · 细胞与分子层';
+  render(); renderFoot();
+}).catch(e=>{
+  document.getElementById('nums').innerHTML =
+    `<div class="miss">数据加载失败：${e}。若在本地直接双击打开此文件，浏览器会阻止读取 data/ 目录；
+     请通过线上地址访问，或在目录下启动 <code>python3 -m http.server</code>。</div>`;
+});
+</script>
+</body>
+</html>
