@@ -73,18 +73,17 @@
     </a>
     <a class="organ" href="si3d.html">
       <div class="nm"><span class="dot" style="background:#d4a04a"></span>数字孪生小肠</div>
-      <div class="ds">1,434,955 细胞 · 195 种细胞类型 · 244 位 donor<br>真实分割占位包络 + 肠系膜动静脉／淋巴三树 + 蠕动波<br>绒毛–隐窝单元与四层肠壁（参数化）· 195 × 61 个 ADME 基因</div>
+      <div class="ds">细胞层 999,959 细胞 · 146 种细胞类型<br>真实分割占位包络 + 肠系膜动静脉／淋巴三树 + 蠕动波<br>绒毛–隐窝单元与四层肠壁（参数化）· 分子层 1,434,955 细胞 · 195 种细胞类型 × 61 个 ADME 基因</div>
       <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">三层完整</span>
     </a>
-    <a class="organ wip" href="#colon">
+    <a class="organ" href="colon3d.html">
       <div class="nm"><span class="dot" style="background:#b8863f"></span>数字孪生结肠</div>
-      <div class="ds">三条结肠带与结肠袋 · 集团蠕动<br>菌群介导的药物代谢与肠肝循环再激活</div>
-      
-      <span class="st wip">构建中</span>
+      <div class="ds">真实 CT 分割 143,056 面 + 八段实测长度 + SMA／IMA 双供区与直肠三重血供<br>三条结肠带与由其解出的结肠袋 · 三种结肠运动浏览器内实测<br><b>分子层仅 11% 覆盖，为暂定值</b></div>
+      <span class="st live">三维可交互</span><span class="st wip" style="margin-left:6px">分子层暂定</span>
     </a>
     <a class="organ" href="liver3d.html">
       <div class="nm"><span class="dot" style="background:#b5651d"></span>数字孪生肝脏</div>
-      <div class="ds">678,856 细胞 · 107 种细胞类型<br>真实 CT 分割网格 + 门静脉／肝静脉双树 + 三维肝小叶<br>11 种细胞类型 × 60 个 ADME 基因（含小叶分区梯度）</div>
+      <div class="ds">细胞层 678,856 细胞 · 107 种细胞类型<br>真实 CT 分割网格 + 门静脉／肝静脉双树 + 三维肝小叶<br>分子层 126,244 细胞 · 11 种细胞类型 × 60 个 ADME 基因（含小叶分区梯度）</div>
       <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">三层完整</span>
     </a>
     <a class="organ" href="kidney3d.html">
@@ -94,7 +93,7 @@
     </a>
     <a class="organ" href="heart3d.html">
       <div class="nm"><span class="dot" style="background:var(--art)"></span>数字孪生心脏</div>
-      <div class="ds">3,104,821 细胞 · 84 种细胞类型 · 167 位 donor<br>真实解剖网格 + 冠脉树 + 血流粒子<br>51 个离子通道／钙循环基因 → ORd 模型参数</div>
+      <div class="ds">细胞层 1,790,545 细胞 · 64 种细胞类型<br>真实解剖网格 + 冠脉树 + 血流粒子<br>分子层 3,104,821 细胞 · 84 种细胞类型 × 51 个离子通道／钙循环基因 → ORd 模型参数</div>
       <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">三层完整</span>
       <div class="ds" style="margin-top:9px">
         <span style="color:#58a6ff">三维心脏 →</span> 本页 · <span style="text-decoration:underline">二维剖面</span> ·
@@ -144,6 +143,7 @@
     另外复层鳞状上皮只有基底层能从本体标签分出（`basal cell` 7,239 + `cycling basal cell` 12 = 7,251 细胞），
     Census 没有棘层与表层的 cell_type 标签，占主体的 `stratified epithelial cell`（51,307 细胞）同时涵盖两层而不加区分，
     <b>报为独立的"未分层"行，不归并进任何一层</b>。
+    <b>结肠</b>的器官层与细胞形态层已完整，但<b>分子层只有 11% 覆盖、全部为暂定值</b>：61 基因 ADME 谱只跑完 10 个连续区块中的 1 个，覆盖 150,000/1,365,592 个细胞、95/311 位 donor、7/25 个数据集、49 种细胞类型。原因是本环境的 Census 读取全部经单一本地代理，TileDB 默认 S3 并发下约 10 秒即超时，降并发后单区块耗时 67 分钟。每一个细胞数与表达值都只由该子集算出，<b>未用组织平均值、其它器官值或任何代理值填补</b>，页面以暂定横幅标出。结肠的跨树间隙也未达标：5 组伴行动静脉仍有管段穿插，最深 −1.88 mm（直肠动脉对直肠静脉），未删段、未把血管移出系膜。
     缺失的分子层一律如实显示缺失原因，<b>不会用组织平均值冒充细胞类型分辨的表达</b>。血管视图尚未开始。
   </div>
 

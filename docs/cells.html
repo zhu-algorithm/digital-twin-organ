@@ -93,8 +93,8 @@ const GC_LABEL = {
 };
 /* 消化道按解剖顺序排，其后是肝肾心 */
 const ORGAN_LABEL = {oral_cavity:'口腔', esophagus:'食管', stomach:'胃', small_intestine:'小肠',
-                     liver:'肝脏', kidney:'肾脏', heart:'心脏'};
-const ORDER = ['oral_cavity','esophagus','stomach','small_intestine','liver','kidney','heart'];
+                     colon:'结肠', liver:'肝脏', kidney:'肾脏', heart:'心脏'};
+const ORDER = ['oral_cavity','esophagus','stomach','small_intestine','colon','liver','kidney','heart'];
 
 let COMP=null, organ='kidney', selCT=null;
 const EXPR = {};                 // organ -> parsed <organ>_expression.json (lazy)
@@ -127,8 +127,14 @@ function renderTabs(){
 
 function renderNums(){
   const c=COMP[organ];
-  document.getElementById('nums').innerHTML =
-    `<div class="num"><div class="v">${fmt(c.n_cells)}</div><div class="k">细胞数</div></div>`+
+  /* A partially-covered Census pull must never be read as a finished one: the banner
+     carries the organ's own provisional_note verbatim, above the numbers it qualifies. */
+  const prov = c.provisional
+    ? `<div class="note" style="grid-column:1/-1;border-color:#9e6a00;background:#2a1f00;margin:0 0 10px">
+         <b>暂定值</b> — ${c.provisional_note}</div>`
+    : '';
+  document.getElementById('nums').innerHTML = prov +
+    `<div class="num"><div class="v">${fmt(c.n_cells)}${c.provisional?'<span style="font-size:.6em;color:#d9a441"> 暂定</span>':''}</div><div class="k">细胞数</div></div>`+
     `<div class="num"><div class="v">${c.n_cell_types}</div><div class="k">细胞类型</div></div>`+
     `<div class="num"><div class="v">${c.n_donors_total}</div><div class="k">donor 数</div></div>`+
     `<div class="num"><div class="v">${c.n_datasets}</div><div class="k">数据集</div></div>`;
@@ -198,9 +204,17 @@ function renderMolecular(){
   const rows = X.genes.map((g,j)=>({gene:g, cls:X.gene_class[j], e:X.expr[i][j], p:X.pct[i][j]}))
                       .filter(r=>r.e!=null).sort((a,b)=>b.e-a.e);
   const mx = rows.length?rows[0].e:1;
+  /* n_cells_used / n_donors are per-cell-type ARRAYS in the earlier pulls (heart, liver,
+     kidney) but organ-level SCALARS in the later ones. Indexing a scalar yields undefined,
+     so each is resolved by shape and an organ-level figure is labelled as such rather than
+     being shown as if it belonged to the selected cell type. */
+  const perCT = (v) => Array.isArray(v) ? v[i] : null;
+  const used = perCT(X.n_cells_used), dnr = perCT(X.n_donors);
+  const usedTxt = used==null ? '' : `（统计用 ${fmt(used)} 个）`;
+  const dnrTxt  = dnr!=null ? `、${dnr} 位 donor`
+                : (typeof X.n_donors === 'number' ? `、本器官共 ${X.n_donors} 位 donor（非该细胞类型的计数）` : '');
   el.innerHTML =
-    `<div class="hint"><b>${selCT}</b> — ${fmt(X.n_cells[i])} 个细胞（统计用 ${fmt(X.n_cells_used[i])} 个）、
-     ${X.n_donors[i]} 位 donor。表达量为 ${X.normalization}，按表达量降序。</div>
+    `<div class="hint"><b>${selCT}</b> — ${fmt(X.n_cells[i])} 个细胞${usedTxt}${dnrTxt}。表达量为 ${X.normalization}，按表达量降序。</div>
      <table><thead><tr><th>基因</th><th>分类</th><th>平均表达</th><th>表达细胞比例</th>`+
      (organ==='heart' && GEVID ? `<th>ORd 电流·参数</th><th>蛋白证据</th><th>致病变异</th>` : '') +
      `</tr></thead><tbody>`+
@@ -287,6 +301,13 @@ function renderCrumb(){
 function renderFoot(){
   document.getElementById('foot').innerHTML =
    `数据来源：CELLxGENE Census 2025-11-08，人类正常组织、10x 系列测序、
+    <b>两次采集的口径不同，数字因此可能不一致。</b>上方的细胞层数字来自<b>细胞组成采集</b>，
+    下方的分子层数字来自<b>表达谱采集</b>——两者是对 Census 的两次独立查询，纳入阈值与组织词范围不同。
+    心脏（细胞层 1,790,545 / 64 型，分子层 3,104,821 / 84 型）、小肠（999,959 / 146 与 1,434,955 / 195）、
+    肝脏（678,856 / 107 与 126,244 / 11）三者差异最大，肝脏的分子层只覆盖 11 种细胞类型是因为其 ADME 谱走的是源 H5AD 区间读取路线。
+    这些数字一律按各自采集的实际结果显示，<b>不做统一化处理</b>。
+    另外心、肝、肾的表达谱带有逐细胞类型的 donor 计数，口腔／食管／胃／小肠／结肠只带器官级总数——
+    点开细胞类型时后者会标明"本器官共 N 位 donor（非该细胞类型的计数）"，不会把器官级数字冒充为该细胞类型的。<br><br>
     <code>is_primary_data=True</code>。细胞过滤：检出基因数 ≥200、总 counts ≥500；
     细胞类型需 ≥50 个细胞方纳入表达谱统计。细胞类型标签取自 Census 的 Cell Ontology 注释，未重新聚类。
     质控未做 doublet 检测与线粒体比例过滤（Census 的 obs 不提供线粒体字段，计算需读取表达矩阵，成本不可接受）。

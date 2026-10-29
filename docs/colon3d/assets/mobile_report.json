@@ -1,0 +1,698 @@
+{
+ "console_errors": [],
+ "page_errors": [],
+ "headless_vsync": false,
+ "hardware_note": "measured on a data-centre NVIDIA A10G container, NOT on a laptop and NOT on a real phone",
+ "angle_backend": "vulkan (pinned; GL/EGL paths fall back to SwiftShader on this image)",
+ "unmasked_renderers": [
+  "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+  "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)"
+ ],
+ "software_rasteriser_fallback": false,
+ "gpu_frame_rate_measured": true,
+ "verdict": "hardware GPU renderer confirmed from the page's own unmasked renderer string",
+ "scope": {
+  "viewports": [
+   "desktop",
+   "phone390",
+   "phone360"
+  ],
+  "views": [
+   "organ",
+   "haustra",
+   "motility",
+   "crypt",
+   "mol"
+  ],
+  "jobs": {
+   "desktop": "7f675876-0020-4fc7-8360-8bfba592da28",
+   "phone390": "891c8ebe-0f09-4f7d-aaf2-9f4db32f41ce",
+   "phone360": "624b3482-3e5f-490d-a131-c66171508c12"
+  }
+ },
+ "viewports": {
+  "desktop": {
+   "size": [
+    1440,
+    900
+   ],
+   "dpr": 1,
+   "views": {
+    "organ": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 76,
+      "render_cost_ms_median": 1.6,
+      "render_cost_ms_p95": 5.1,
+      "frame_gap_ms_median": 16.6,
+      "frame_gap_ms_p95": 22.2,
+      "budget_60fps_ms": 16.67,
+      "programs": 7,
+      "draw_calls": 145,
+      "triangles": 306036,
+      "view": "organ",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_desktop_organ.jpg",
+     "flow_audit": {
+      "samples": 111028,
+      "nonpositive": 0,
+      "nonfinite": 0,
+      "paths_rendered": 1354,
+      "reflux_audit_python": {
+       "paths": 1354,
+       "samples": 26972,
+       "reflux_samples": 0,
+       "nonfinite": 0,
+       "zero_area": 0
+      }
+     }
+    },
+    "haustra": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 153,
+      "render_cost_ms_median": 1.4,
+      "render_cost_ms_p95": 2.8,
+      "frame_gap_ms_median": 16.6,
+      "frame_gap_ms_p95": 17.5,
+      "budget_60fps_ms": 16.67,
+      "programs": 9,
+      "draw_calls": 78,
+      "triangles": 83532,
+      "view": "haustra",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_desktop_haustra.jpg"
+    },
+    "motility": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 231,
+      "render_cost_ms_median": 1.5,
+      "render_cost_ms_p95": 2.6,
+      "frame_gap_ms_median": 16.6,
+      "frame_gap_ms_p95": 17.5,
+      "budget_60fps_ms": 16.67,
+      "programs": 10,
+      "draw_calls": 17,
+      "triangles": 57888,
+      "view": "motility",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_desktop_motility.jpg",
+     "motion_audit": {
+      "haustral": {
+       "mode": "haustral",
+       "frames": 360,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 67,
+       "rings_undisplaced_fraction": 0.1595,
+       "rings_undisplaced_mid_frame": 78,
+       "rings_displaced_mid_frame": 342,
+       "rings_undisplaced_mid_fraction": 0.1857,
+       "radial_scale_min": 0.7,
+       "radial_scale_max": 1,
+       "max_within_frame_radial_spread": 0.3,
+       "is_global_scale": false,
+       "dt_s": 0.2,
+       "measured_frequency_hz": 0.0557,
+       "measured_frequency_cycles_per_min": 3.343,
+       "declared_frequency_cycles_per_min": 3,
+       "contraction_centre_drift_mm_s": -0.2338,
+       "contraction_centre_drift_r2": 0.00074,
+       "contraction_centre_excursion_mm": 520.26,
+       "is_propulsive": false,
+       "verdict": "standing segmentation: the narrowest ring hops between haustra but shows no directed drift (slope near zero, no linear fit), so the pattern mixes without transporting",
+       "capture_rate_multiplier": 12.0
+      },
+      "mass": {
+       "mode": "mass",
+       "frames": 360,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 420,
+       "rings_undisplaced_fraction": 1,
+       "rings_undisplaced_mid_frame": 368,
+       "rings_displaced_mid_frame": 52,
+       "rings_undisplaced_mid_fraction": 0.8762,
+       "radial_scale_min": 0.45,
+       "radial_scale_max": 1,
+       "max_within_frame_radial_spread": 0.55,
+       "is_global_scale": false,
+       "dt_s": 0.19998,
+       "measured_front_velocity_mm_s": 6.8577,
+       "front_fit_r2": 0.99587,
+       "front_samples": 358,
+       "declared_front_velocity_mm_s": 7.1,
+       "front_travel_mm": 451.6,
+       "declared_minimum_propagated_mm": 300,
+       "verdict": "travelling wave: a single constriction marches distally; rings ahead of and behind it are at their resting radius in the same frame",
+       "capture_rate_multiplier": 12.0
+      },
+      "defecation": {
+       "mode": "defecation",
+       "frames": 360,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 382,
+       "rings_undisplaced_fraction": 0.9095,
+       "rings_undisplaced_mid_frame": 382,
+       "rings_displaced_mid_frame": 38,
+       "rings_undisplaced_mid_fraction": 0.9095,
+       "radial_scale_min": 1,
+       "radial_scale_max": 1.35,
+       "max_within_frame_radial_spread": 0.35,
+       "is_global_scale": false,
+       "dt_s": 0.20001,
+       "max_rectal_distension_factor": 1.35,
+       "distension_located_in_rectum": true,
+       "rings_in_rectum": 53,
+       "verdict": "the distension is confined to the rectal segment; the rest of the colon is untouched in the same frame",
+       "capture_rate_multiplier": 12.0
+      }
+     }
+    },
+    "crypt": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 600,
+      "render_cost_ms_median": 1.9,
+      "render_cost_ms_p95": 7,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.3,
+      "budget_60fps_ms": 16.67,
+      "programs": 11,
+      "draw_calls": 1596,
+      "triangles": 101422,
+      "view": "crypt",
+      "mode": "defecation"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_desktop_crypt.jpg"
+    },
+    "mol": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 600,
+      "render_cost_ms_median": 1.9,
+      "render_cost_ms_p95": 7,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.3,
+      "budget_60fps_ms": 16.67,
+      "programs": 11,
+      "draw_calls": 105,
+      "triangles": 6118,
+      "view": "mol",
+      "mode": "defecation"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_desktop_mol.jpg"
+    }
+   }
+  },
+  "phone390": {
+   "size": [
+    390,
+    844
+   ],
+   "dpr": 2,
+   "views": {
+    "organ": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 71,
+      "render_cost_ms_median": 1.4,
+      "render_cost_ms_p95": 4.1,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 18,
+      "budget_60fps_ms": 16.67,
+      "programs": 7,
+      "draw_calls": 145,
+      "triangles": 306036,
+      "view": "organ",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone390_organ.jpg",
+     "flow_audit": {
+      "samples": 105612,
+      "nonpositive": 0,
+      "nonfinite": 0,
+      "paths_rendered": 1354,
+      "reflux_audit_python": {
+       "paths": 1354,
+       "samples": 26972,
+       "reflux_samples": 0,
+       "nonfinite": 0,
+       "zero_area": 0
+      }
+     }
+    },
+    "haustra": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 144,
+      "render_cost_ms_median": 1.2,
+      "render_cost_ms_p95": 2.3,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.7,
+      "budget_60fps_ms": 16.67,
+      "programs": 9,
+      "draw_calls": 78,
+      "triangles": 83532,
+      "view": "haustra",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone390_haustra.jpg"
+    },
+    "motility": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 214,
+      "render_cost_ms_median": 1.4,
+      "render_cost_ms_p95": 2.5,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.5,
+      "budget_60fps_ms": 16.67,
+      "programs": 10,
+      "draw_calls": 17,
+      "triangles": 57888,
+      "view": "motility",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone390_motility.jpg",
+     "motion_audit": {
+      "haustral": {
+       "mode": "haustral",
+       "frames": 360,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 67,
+       "rings_undisplaced_fraction": 0.1595,
+       "rings_undisplaced_mid_frame": 78,
+       "rings_displaced_mid_frame": 342,
+       "rings_undisplaced_mid_fraction": 0.1857,
+       "radial_scale_min": 0.7,
+       "radial_scale_max": 1,
+       "max_within_frame_radial_spread": 0.3,
+       "is_global_scale": false,
+       "dt_s": 0.2,
+       "measured_frequency_hz": 0.0557,
+       "measured_frequency_cycles_per_min": 3.343,
+       "declared_frequency_cycles_per_min": 3,
+       "contraction_centre_drift_mm_s": -0.1323,
+       "contraction_centre_drift_r2": 0.00024,
+       "contraction_centre_excursion_mm": 520.26,
+       "is_propulsive": false,
+       "verdict": "standing segmentation: the narrowest ring hops between haustra but shows no directed drift (slope near zero, no linear fit), so the pattern mixes without transporting",
+       "capture_rate_multiplier": 12.0
+      },
+      "mass": {
+       "mode": "mass",
+       "frames": 361,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 420,
+       "rings_undisplaced_fraction": 1,
+       "rings_undisplaced_mid_frame": 368,
+       "rings_displaced_mid_frame": 52,
+       "rings_undisplaced_mid_fraction": 0.8762,
+       "radial_scale_min": 0.45,
+       "radial_scale_max": 1,
+       "max_within_frame_radial_spread": 0.55,
+       "is_global_scale": false,
+       "dt_s": 0.20001,
+       "measured_front_velocity_mm_s": 6.8546,
+       "front_fit_r2": 0.99583,
+       "front_samples": 359,
+       "declared_front_velocity_mm_s": 7.1,
+       "front_travel_mm": 451.6,
+       "declared_minimum_propagated_mm": 300,
+       "verdict": "travelling wave: a single constriction marches distally; rings ahead of and behind it are at their resting radius in the same frame",
+       "capture_rate_multiplier": 12.0
+      },
+      "defecation": {
+       "mode": "defecation",
+       "frames": 361,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 420,
+       "rings_undisplaced_fraction": 1,
+       "rings_undisplaced_mid_frame": 420,
+       "rings_displaced_mid_frame": 0,
+       "rings_undisplaced_mid_fraction": 1,
+       "radial_scale_min": 1,
+       "radial_scale_max": 1.35,
+       "max_within_frame_radial_spread": 0.35,
+       "is_global_scale": false,
+       "dt_s": 0.19999,
+       "max_rectal_distension_factor": 1.35,
+       "distension_located_in_rectum": true,
+       "rings_in_rectum": 53,
+       "verdict": "the distension is confined to the rectal segment; the rest of the colon is untouched in the same frame",
+       "capture_rate_multiplier": 12.0
+      }
+     }
+    },
+    "crypt": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 600,
+      "render_cost_ms_median": 1.8,
+      "render_cost_ms_p95": 2.2,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.4,
+      "budget_60fps_ms": 16.67,
+      "programs": 11,
+      "draw_calls": 15,
+      "triangles": 1082,
+      "view": "crypt",
+      "mode": "defecation"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone390_crypt.jpg"
+    },
+    "mol": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 600,
+      "render_cost_ms_median": 1.8,
+      "render_cost_ms_p95": 2.1,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.4,
+      "budget_60fps_ms": 16.67,
+      "programs": 11,
+      "draw_calls": 105,
+      "triangles": 6118,
+      "view": "mol",
+      "mode": "defecation"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone390_mol.jpg"
+    }
+   }
+  },
+  "phone360": {
+   "size": [
+    360,
+    800
+   ],
+   "dpr": 2,
+   "views": {
+    "organ": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 72,
+      "render_cost_ms_median": 2.4,
+      "render_cost_ms_p95": 6.3,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.8,
+      "budget_60fps_ms": 16.67,
+      "programs": 7,
+      "draw_calls": 145,
+      "triangles": 306036,
+      "view": "organ",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone360_organ.jpg",
+     "flow_audit": {
+      "samples": 109674,
+      "nonpositive": 0,
+      "nonfinite": 0,
+      "paths_rendered": 1354,
+      "reflux_audit_python": {
+       "paths": 1354,
+       "samples": 26972,
+       "reflux_samples": 0,
+       "nonfinite": 0,
+       "zero_area": 0
+      }
+     }
+    },
+    "haustra": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 145,
+      "render_cost_ms_median": 2.1,
+      "render_cost_ms_p95": 3.4,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.7,
+      "budget_60fps_ms": 16.67,
+      "programs": 9,
+      "draw_calls": 78,
+      "triangles": 83532,
+      "view": "haustra",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone360_haustra.jpg"
+    },
+    "motility": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 216,
+      "render_cost_ms_median": 2.2,
+      "render_cost_ms_p95": 3.2,
+      "frame_gap_ms_median": 16.7,
+      "frame_gap_ms_p95": 17.6,
+      "budget_60fps_ms": 16.67,
+      "programs": 10,
+      "draw_calls": 17,
+      "triangles": 57888,
+      "view": "motility",
+      "mode": "haustral"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone360_motility.jpg",
+     "motion_audit": {
+      "haustral": {
+       "mode": "haustral",
+       "frames": 360,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 67,
+       "rings_undisplaced_fraction": 0.1595,
+       "rings_undisplaced_mid_frame": 78,
+       "rings_displaced_mid_frame": 342,
+       "rings_undisplaced_mid_fraction": 0.1857,
+       "radial_scale_min": 0.7,
+       "radial_scale_max": 1,
+       "max_within_frame_radial_spread": 0.3,
+       "is_global_scale": false,
+       "dt_s": 0.20001,
+       "measured_frequency_hz": 0.0557,
+       "measured_frequency_cycles_per_min": 3.342,
+       "declared_frequency_cycles_per_min": 3,
+       "contraction_centre_drift_mm_s": -0.266,
+       "contraction_centre_drift_r2": 0.00096,
+       "contraction_centre_excursion_mm": 520.26,
+       "is_propulsive": false,
+       "verdict": "standing segmentation: the narrowest ring hops between haustra but shows no directed drift (slope near zero, no linear fit), so the pattern mixes without transporting",
+       "capture_rate_multiplier": 12.0
+      },
+      "mass": {
+       "mode": "mass",
+       "frames": 361,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 420,
+       "rings_undisplaced_fraction": 1,
+       "rings_undisplaced_mid_frame": 368,
+       "rings_displaced_mid_frame": 52,
+       "rings_undisplaced_mid_fraction": 0.8762,
+       "radial_scale_min": 0.45,
+       "radial_scale_max": 1,
+       "max_within_frame_radial_spread": 0.55,
+       "is_global_scale": false,
+       "dt_s": 0.19999,
+       "measured_front_velocity_mm_s": 6.858,
+       "front_fit_r2": 0.99589,
+       "front_samples": 359,
+       "declared_front_velocity_mm_s": 7.1,
+       "front_travel_mm": 451.6,
+       "declared_minimum_propagated_mm": 300,
+       "verdict": "travelling wave: a single constriction marches distally; rings ahead of and behind it are at their resting radius in the same frame",
+       "capture_rate_multiplier": 12.0
+      },
+      "defecation": {
+       "mode": "defecation",
+       "frames": 361,
+       "rings": 420,
+       "rings_undisplaced_at_t0": 382,
+       "rings_undisplaced_fraction": 0.9095,
+       "rings_undisplaced_mid_frame": 382,
+       "rings_displaced_mid_frame": 38,
+       "rings_undisplaced_mid_fraction": 0.9095,
+       "radial_scale_min": 1,
+       "radial_scale_max": 1.35,
+       "max_within_frame_radial_spread": 0.35,
+       "is_global_scale": false,
+       "dt_s": 0.19998,
+       "max_rectal_distension_factor": 1.35,
+       "distension_located_in_rectum": true,
+       "rings_in_rectum": 53,
+       "verdict": "the distension is confined to the rectal segment; the rest of the colon is untouched in the same frame",
+       "capture_rate_multiplier": 12.0
+      }
+     }
+    },
+    "crypt": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 600,
+      "render_cost_ms_median": 2.2,
+      "render_cost_ms_p95": 2.6,
+      "frame_gap_ms_median": 16.8,
+      "frame_gap_ms_p95": 17.3,
+      "budget_60fps_ms": 16.67,
+      "programs": 11,
+      "draw_calls": 11,
+      "triangles": 938,
+      "view": "crypt",
+      "mode": "defecation"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone360_crypt.jpg"
+    },
+    "mol": {
+     "render": {
+      "unmasked_renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+      "unmasked_vendor": "Google Inc. (NVIDIA)",
+      "frames": 600,
+      "render_cost_ms_median": 2.1,
+      "render_cost_ms_p95": 2.6,
+      "frame_gap_ms_median": 16.8,
+      "frame_gap_ms_p95": 17.2,
+      "budget_60fps_ms": 16.67,
+      "programs": 11,
+      "draw_calls": 105,
+      "triangles": 6118,
+      "view": "mol",
+      "mode": "defecation"
+     },
+     "layout": {
+      "horizontal_overflow_px": 0,
+      "hud_out_of_bounds": 0,
+      "dom_out_of_bounds": 0,
+      "offenders": []
+     },
+     "screenshot": "shot_phone360_mol.jpg"
+    }
+   }
+  }
+ },
+ "motion_capture": {
+  "source": "separate short job on the same image and the same GPU, model clock driven at 12x",
+  "job": "095c68dc-e129-475f-b15f-0d604259dbd8",
+  "scope": {
+   "viewports": [
+    "desktop",
+    "phone390",
+    "phone360"
+   ],
+   "views": [
+    "motility"
+   ],
+   "modes": [
+    "haustral",
+    "mass",
+    "defecation"
+   ],
+   "motion_rate": 12.0,
+   "motion_ms": 6000
+  },
+  "unmasked_renderers": [
+   "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)"
+  ],
+  "page_errors": [],
+  "why_second_pass": "at 1x a 4 s capture window spans only 0.2 of a 3 cycles/min period, so the haustral frequency came out as 0 zero-crossings and the mass-movement front advanced too few ring spacings for a slope fit. Both were re-measured with the model clock at 12x; the audit measures against MODEL time so the multiplier cancels out of every frequency and velocity it reports. Nothing else about the scene was changed.",
+  "jobs": {
+   "desktop+phone390": "095c68dc-e129-475f-b15f-0d604259dbd8",
+   "phone360": "7d0a8ebf-e95a-4e53-867a-9a1d9b3516ff"
+  }
+ }
+}

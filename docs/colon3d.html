@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维解剖学数字结肠</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden;
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,340px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  label{font-size:11.5px;color:#b8c4d6}
+  input[type=range]{width:104px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;display:block;overflow-x:auto}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;
+        white-space:nowrap}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  .hl{border-left:3px solid #f0a33c;padding-left:12px}
+  .bad{color:#ff9a8a}
+  .ok{color:#8fd39a}
+  #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:12px;padding:9px 10px;max-width:calc(100vw - 24px);left:12px;right:12px;
+        top:auto;bottom:12px;max-height:46vh;overflow:auto}
+    #ui.collapsed{display:none}
+    #panelbtn{display:block}
+    input[type=range]{width:84px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./colon3d/vendor/three/three.module.js",
+  "three/webgpu": "./colon3d/vendor/three/three.module.js",
+  "three/tsl": "./colon3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=colon">细胞与分子层 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="si3d.html">三维小肠 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="liver3d.html">三维肝脏 →</a>
+  <h1>三维解剖学数字结肠</h1>
+  <div class="sub">真实 CT 分割结肠 · 三条结肠带与由"带比管短"导出的结肠袋 · 边缘动脉与脾曲分水岭 · 三种结肠运动 · 无绒毛的隐窝</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <button id="panelbtn">控制面板</button>
+  <div id="ui">
+    <div class="row">
+      <label>视图</label>
+      <button id="v-organ" class="on">器官</button>
+      <button id="v-haustra">结肠带/袋</button>
+      <button id="v-motility">运动</button>
+      <button id="v-crypt">隐窝</button>
+      <button id="v-mol">分子</button>
+    </div>
+    <div class="row" id="r-organ">
+      <button id="b-art" class="on">动脉</button>
+      <button id="b-ven" class="on">静脉</button>
+      <button id="b-arc" class="on">边缘动脉</button>
+      <button id="b-seg">分段着色</button>
+      <button id="b-lab" class="on">标注</button>
+    </div>
+    <div class="row" id="r-haustra" style="display:none">
+      <button id="b-taenia" class="on">三条带</button>
+      <button id="b-haust" class="on">结肠袋</button>
+      <button id="b-epi" class="on">肠脂垂</button>
+      <button id="b-fold" class="on">半月襞</button>
+    </div>
+    <div class="row" id="r-motility" style="display:none">
+      <button id="m-haustral" class="on">结肠袋收缩</button>
+      <button id="m-mass">集团蠕动</button>
+      <button id="m-defec">直肠充盈/排便反射</button>
+    </div>
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+      <label>粒子</label>
+      <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1">
+      <span id="dens-v"><code>100%</code></span>
+    </div>
+    <div class="note" id="prov">加载中…</div>
+  </div>
+</div>
+
+<main>
+  <div class="warnbox">
+    <b>这个页面能做什么、不能做什么。</b>
+    结肠外形、走行、分段长度、管腔半径都是从同一位受试者 (s0236) 的真实 CT 分割<b>实测</b>的。
+    <b>三条结肠带、结肠袋、半月襞、肠脂垂、阑尾、整套血管树和全部微观结构都是构造的</b>——
+    TotalSegmentator v2.0.1 只有一个 <code>colon</code> 标签，没有结肠带、结肠袋、阑尾、
+    肠系膜上/下动脉、边缘动脉或直肠血管的标注。结肠袋是由"结肠带比肠壁短约六分之一"这一几何关系
+    <b>解出来的</b>（不是随手画的凹凸），解出的袋深与实测的带长/壁长比都在下表逐项报出。
+    <b>菌群与短链脂肪酸全部是文献描述</b>，本项目<b>没有做过任何宏基因组或 16S 测序</b>。
+    <b>不存在任何"表达量→通量"的标定</b>，所以这里没有药物浓度、没有清除率、没有 PBPK 房室。
+    心搏耦合来自本项目心脏模型，其心率源自 PhysioNet nsrdb/16265 公开数据，
+    <b>不是任何特定个体的记录</b>，所有文件中 <code>is_user_personal_data = false</code>。
+    本页为研究用模拟器，<b>不可用于临床给药或诊断决策</b>。
+  </div>
+
+  <h2>几何（实测）</h2>
+  <table id="t-geom"></table>
+
+  <h2>三条结肠带与结肠袋的推导</h2>
+  <p class="hl">结肠带比肠壁短约六分之一（ρ = 5/6）。于是相邻两条半月襞之间、沿结肠带量得 λ 的一段壁，
+  必须容纳 λ/ρ 的弧长。把这段多余的长度建成一段弦长 λ、矢高 h 的圆弧，则
+  φ/sin φ = 1/ρ 唯一确定 φ，h = (λ/2)(1−cos φ)/sin φ 也就唯一确定了。<b>袋深不是可调参数。</b>
+  下表的"实测"列是从生成出来的曲面上<b>量回来</b>的。</p>
+  <table id="t-taenia"></table>
+
+  <h2>血供与分水岭</h2>
+  <table id="t-vessel"></table>
+
+  <h2>血流（v = Q/A，逐采样点逆流审计）</h2>
+  <table id="t-flow"></table>
+
+  <h2>运动学（浏览器内实测 vs 声明值）</h2>
+  <p>点开"运动"视图后，页面会在浏览器里实际测量每一种运动的频率、传播速度和
+  位移环比例，并与上面声明的文献值对照。这些数字由 <code>window.__motionAudit()</code> 产出。</p>
+  <table id="t-motion"></table>
+
+  <h2>隐窝（无绒毛）与吸收面积</h2>
+  <table id="t-micro"></table>
+
+  <h2>三条给药路径的首过差别</h2>
+  <table id="t-route"></table>
+
+  <h2>分子层</h2>
+  <div id="d-mol"><p>加载中…</p></div>
+
+  <h2>来源与许可</h2>
+  <p id="p-prov"></p>
+</main>
+
+<script type="module" src="./colon3d/js/main.js"></script>
+</body>
+</html>
