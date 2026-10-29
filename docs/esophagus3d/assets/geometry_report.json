@@ -1,0 +1,1288 @@
+{
+ "source": {
+  "dataset": "TotalSegmentator dataset v2.0.1 (Wasserthal J. et al.)",
+  "doi": "10.5281/zenodo.10047292",
+  "licence": "CC-BY-4.0",
+  "subject": "s0688",
+  "voxel_mm": [
+   1.5,
+   1.5,
+   1.5
+  ],
+  "grid": [
+   241,
+   241,
+   234
+  ],
+  "access": "HTTP range extraction of 24 mask members from the Zenodo zip; no CT image volume downloaded, nothing derived from greyscale",
+  "label_count_in_release": 117,
+  "structures_used": [
+   "esophagus",
+   "trachea",
+   "aorta",
+   "stomach",
+   "thyroid_gland",
+   "spinal_cord",
+   "vertebrae",
+   "heart",
+   "portal_vein_and_splenic_vein",
+   "brachiocephalic_vein_left",
+   "liver",
+   "lung_lower_lobe_left",
+   "lung_upper_lobe_right",
+   "subclavian_artery_left",
+   "common_carotid_artery_left",
+   "brachiocephalic_trunk",
+   "atrial_appendage_left",
+   "spleen"
+  ],
+  "labels_absent_from_source": [
+   "diaphragm",
+   "diaphragmatic crus",
+   "oesophageal hiatus",
+   "azygos vein",
+   "hemiazygos vein",
+   "bronchial artery",
+   "inferior thyroid artery",
+   "left gastric artery",
+   "left gastric vein",
+   "coeliac trunk",
+   "submucosal venous plexus",
+   "muscularis propria",
+   "mucosa",
+   "oesophageal glands"
+  ],
+  "consequence": "the oesophageal outer surface, its centreline, the inscribed-radius profile, the vertebral levels and every neighbour distance are MEASURED. Every vessel, the wall layering, the muscle-type transition, both sphincter locations/pressures and the palisade zone are CONSTRUCTED from published anatomy and are individually flagged contour_anchored = false."
+ },
+ "subject_selection": {
+  "criteria_declared_before_measurement": {
+   "S1": "largest connected component (26-connectivity) holds >= 95% of labelled voxels",
+   "S2": "per-slice centre-of-mass centreline length >= 200 mm",
+   "S3": "trachea label top no more than 5 mm below the oesophagus label top (cervical oesophagus inside the FOV)",
+   "S4": "minimum surface gap from the distal 25 mm of the oesophagus label to the stomach label <= 10 mm",
+   "S5": "aorta label spans the whole oesophageal cranio-caudal range",
+   "S6": "maximum inscribed diameter <= 25 mm (exclude disease-driven dilatation)"
+  },
+  "criterion_corrections": [
+   {
+    "criterion": "S5",
+    "problem": "as written, S5 is anatomically impossible - the aorta begins at the arch (~T4) and can never span the CERVICAL oesophagus, so all 22 measured subjects failed it.",
+    "correction": "S5 restated as: the aortic arch apex must lie above the oesophageal mid-point (arch inside the FOV) AND the aorta must extend to within 5 mm of the oesophagus label's caudal end (hiatus reached).",
+    "when": "after round 1, before any subject was selected"
+   },
+   {
+    "criterion": "S3",
+    "problem": "S3 is one-sided: it rejects a subject whose trachea stops below the oesophagus top but not one whose oesophagus label is truncated far BELOW the larynx. s0556 passed S3 with the trachea top 118.5 mm ABOVE the oesophagus top, which means its cervical oesophagus is unlabelled.",
+    "correction": "NOT corrected - s0556 was not selected, so the outcome is unaffected. Recorded here rather than silently fixed.",
+    "when": "noticed after round 2"
+   }
+  ],
+  "round_2_criteria_added_post_hoc": {
+   "trigger": "the round-1 winner s0692 has a 920.96 mL aorta (an ectatic/aneurysmal thoracoabdominal aorta) and an oesophageal tortuosity of 1.200 - the aneurysm displaces the oesophagus. The declared screen tested the oesophagus but never tested whether its NEIGHBOURS were normal. These two criteria were added AFTER seeing that result and are flagged as post hoc.",
+   "S7": "aorta label volume between 90 and 350 mL (declared band for a non-ectatic thoracoabdominal aorta; not a single published figure)",
+   "S8": "oesophageal centreline tortuosity (path / straight-line end-to-end) <= 1.12"
+  },
+  "tiebreaker": "largest labelled voxel count among passing subjects (most surface support for meshing)",
+  "n_subjects_in_release": 1228,
+  "prefilter": "compressed size of esophagus.nii.gz > 3x the s0236 value AND trachea.nii.gz > 2000 B AND stomach.nii.gz > 2000 B (free: read from the zip central directory, no download)",
+  "n_prefiltered": 62,
+  "n_measured": 22,
+  "n_passing_round_1": 14,
+  "n_passing_round_2": 9,
+  "selected": "s0688",
+  "selected_values": {
+   "esophagus_voxels": 17497,
+   "esophagus_mL": 59.05,
+   "centreline_mm": 305.5,
+   "tortuosity": 1.043,
+   "aorta_mL": 309.8,
+   "max_inscribed_diameter_mm": 18.5,
+   "gap_to_stomach_mm": 1.5,
+   "cranial_level": "C6",
+   "caudal_level": "T12",
+   "connected_components": 1
+  },
+  "s0236_rejected": {
+   "note": "s0236 is the subject used by the heart, liver, kidney and small-intestine pages. Cross-organ anatomical consistency was the stated preference, so it was tested FIRST and against this organ's own criteria.",
+   "reason": "abdominal field of view. The trachea, thyroid_gland and every cervical / upper-thoracic vertebra label is EMPTY, and the esophagus label holds only 4443 voxels (15.00 mL) covering the distal segment. It fails S2, S3 and S5 outright.",
+   "esophagus_voxels": 4443,
+   "esophagus_mL": 15.0,
+   "trachea_voxels": 0,
+   "thyroid_gland_voxels": 0,
+   "vertebrae_C1_to_T9_voxels": 0,
+   "consequence": "this page uses s0688. The oesophagus is therefore NOT from the same subject as the other four organ pages, and the cross-organ anatomical continuity claimed elsewhere in the project does not hold for the oesophagus-stomach boundary rendered here. The s0236 distal-oesophagus overlap is reported separately below for reference."
+  },
+  "s0236_overlap_for_reference": {
+   "esophagus_label_mL": 15.0,
+   "esophagus_label_voxels": 4443,
+   "usable_for_this_page": false
+  },
+  "round_1_table": [
+   {
+    "subject": "s1161",
+    "vox": 29499,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 248.5,
+    "eso_z": [
+     577.0,
+     811.0
+    ],
+    "trachea_top_minus_eso_top": -1.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 27.82,
+    "shape": [
+     313,
+     313,
+     544
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": false,
+    "PASS": false,
+    "aorta_z": [
+     395.5,
+     751.0
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0650",
+    "vox": 18704,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 289.5,
+    "eso_z": [
+     362.2,
+     626.2
+    ],
+    "trachea_top_minus_eso_top": -6.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 17.75,
+    "shape": [
+     333,
+     333,
+     462
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": false,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": false,
+    "aorta_z": [
+     171.7,
+     554.2
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0692",
+    "vox": 22015,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 311.5,
+    "eso_z": [
+     380.4,
+     630.9
+    ],
+    "trachea_top_minus_eso_top": 4.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 3.0,
+    "max_inscribed_diam_mm": 19.21,
+    "shape": [
+     333,
+     333,
+     449
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     225.9,
+     597.9
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1397",
+    "vox": 17336,
+    "n_comp": 2,
+    "largest_frac": 0.9997,
+    "centreline_mm": 274.9,
+    "eso_z": [
+     99.6,
+     332.1
+    ],
+    "trachea_top_minus_eso_top": -6.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 19.21,
+    "shape": [
+     320,
+     320,
+     547
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": false,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": false,
+    "aorta_z": [
+     -20.4,
+     287.1
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1082",
+    "vox": 13192,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 336.4,
+    "eso_z": [
+     -184.8,
+     101.7
+    ],
+    "trachea_top_minus_eso_top": 4.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 16.43,
+    "shape": [
+     333,
+     333,
+     542
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     -337.8,
+     29.7
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0556",
+    "vox": 14645,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 280.2,
+    "eso_z": [
+     263.0,
+     521.0
+    ],
+    "trachea_top_minus_eso_top": 118.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 17.75,
+    "shape": [
+     333,
+     333,
+     484
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     87.5,
+     456.5
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0688",
+    "vox": 17497,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 310.5,
+    "eso_z": [
+     -461.0,
+     -168.5
+    ],
+    "trachea_top_minus_eso_top": 0.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 1.5,
+    "max_inscribed_diam_mm": 18.49,
+    "shape": [
+     241,
+     241,
+     234
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     -518.0,
+     -246.5
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1152",
+    "vox": 15630,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 265.3,
+    "eso_z": [
+     752.5,
+     982.0
+    ],
+    "trachea_top_minus_eso_top": -1.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 1.5,
+    "max_inscribed_diam_mm": 22.45,
+    "shape": [
+     333,
+     333,
+     548
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     601.0,
+     910.0
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1135",
+    "vox": 17298,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 259.9,
+    "eso_z": [
+     471.5,
+     714.5
+    ],
+    "trachea_top_minus_eso_top": -3.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 1.5,
+    "max_inscribed_diam_mm": 19.9,
+    "shape": [
+     299,
+     299,
+     443
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     318.5,
+     645.5
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1298",
+    "vox": 17626,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 307.7,
+    "eso_z": [
+     -441.0,
+     -175.5
+    ],
+    "trachea_top_minus_eso_top": -6.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 17.23,
+    "shape": [
+     297,
+     297,
+     237
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": false,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": false,
+    "aorta_z": [
+     -510.0,
+     -232.5
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0657",
+    "vox": 15088,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 293.5,
+    "eso_z": [
+     545.3,
+     821.3
+    ],
+    "trachea_top_minus_eso_top": 0.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 16.16,
+    "shape": [
+     297,
+     297,
+     488
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     357.8,
+     723.8
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0751",
+    "vox": 17447,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 290.7,
+    "eso_z": [
+     1095.8,
+     1368.8
+    ],
+    "trachea_top_minus_eso_top": -4.4,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 23.62,
+    "shape": [
+     292,
+     192,
+     527
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     929.2,
+     1303.0
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0880",
+    "vox": 19723,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 255.7,
+    "eso_z": [
+     -329.8,
+     -103.3
+    ],
+    "trachea_top_minus_eso_top": -7.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 1.5,
+    "max_inscribed_diam_mm": 18.25,
+    "shape": [
+     291,
+     291,
+     463
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": false,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": false,
+    "aorta_z": [
+     -499.3,
+     -145.3
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0885",
+    "vox": 20176,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 291.9,
+    "eso_z": [
+     65.5,
+     340.0
+    ],
+    "trachea_top_minus_eso_top": 0.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 71.58,
+    "max_inscribed_diam_mm": 23.43,
+    "shape": [
+     259,
+     259,
+     448
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": false,
+    "S6_not_distended": true,
+    "PASS": false,
+    "aorta_z": [
+     -99.5,
+     259.0
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1016",
+    "vox": 14185,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 293.7,
+    "eso_z": [
+     -175.1,
+     76.9
+    ],
+    "trachea_top_minus_eso_top": -7.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 15.0,
+    "shape": [
+     333,
+     333,
+     471
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": false,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": false,
+    "aorta_z": [
+     -377.6,
+     27.4
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1361",
+    "vox": 18075,
+    "n_comp": 2,
+    "largest_frac": 0.9826,
+    "centreline_mm": 297.9,
+    "eso_z": [
+     492.2,
+     733.7
+    ],
+    "trachea_top_minus_eso_top": -1.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 16.16,
+    "shape": [
+     283,
+     283,
+     475
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     277.7,
+     700.7
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1088",
+    "vox": 10980,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 299.8,
+    "eso_z": [
+     857.1,
+     1116.6
+    ],
+    "trachea_top_minus_eso_top": -1.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 3.0,
+    "max_inscribed_diam_mm": 13.42,
+    "shape": [
+     333,
+     333,
+     544
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     701.1,
+     1059.6
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0550",
+    "vox": 15665,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 288.3,
+    "eso_z": [
+     446.3,
+     702.8
+    ],
+    "trachea_top_minus_eso_top": -1.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 18.97,
+    "shape": [
+     294,
+     294,
+     462
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     270.8,
+     648.8
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0918",
+    "vox": 17164,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 288.6,
+    "eso_z": [
+     483.5,
+     737.0
+    ],
+    "trachea_top_minus_eso_top": -1.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 20.78,
+    "shape": [
+     252,
+     252,
+     459
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     320.0,
+     687.5
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s1304",
+    "vox": 13428,
+    "n_comp": 2,
+    "largest_frac": 0.9644,
+    "centreline_mm": 270.2,
+    "eso_z": [
+     -176.0,
+     64.0
+    ],
+    "trachea_top_minus_eso_top": 21.0,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 2.12,
+    "max_inscribed_diam_mm": 17.49,
+    "shape": [
+     333,
+     333,
+     546
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     -348.5,
+     1.0
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0771",
+    "vox": 13486,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 290.2,
+    "eso_z": [
+     490.0,
+     758.5
+    ],
+    "trachea_top_minus_eso_top": 4.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 18.97,
+    "shape": [
+     310,
+     310,
+     247
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": true,
+    "PASS": true,
+    "aorta_z": [
+     409.0,
+     682.0
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   },
+   {
+    "subject": "s0437",
+    "vox": 18442,
+    "n_comp": 1,
+    "largest_frac": 1.0,
+    "centreline_mm": 275.6,
+    "eso_z": [
+     -296.6,
+     -40.1
+    ],
+    "trachea_top_minus_eso_top": 1.5,
+    "stomach_present": true,
+    "aorta_spans": false,
+    "gap_to_stomach_mm": 0.0,
+    "max_inscribed_diam_mm": 28.62,
+    "shape": [
+     294,
+     180,
+     294
+    ],
+    "voxel_mm": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "S1_single_component": true,
+    "S2_length_ge_200mm": true,
+    "S3_cervical_in_fov": true,
+    "S4_cardia_contiguous": true,
+    "S6_not_distended": false,
+    "PASS": false,
+    "aorta_z": [
+     -329.6,
+     -95.6
+    ],
+    "S5_aorta_arch_to_hiatus": true
+   }
+  ],
+  "round_2_table": [
+   {
+    "subject": "s0692",
+    "aorta_mL": 921.0,
+    "path_mm": 306.5,
+    "straight_mm": 255.4,
+    "tortuosity": 1.2,
+    "S7_aorta_volume_normal": false,
+    "S8_tortuosity_le_1_12": false,
+    "PASS2": false,
+    "vox": 22015
+   },
+   {
+    "subject": "s1361",
+    "aorta_mL": 822.8,
+    "path_mm": 290.4,
+    "straight_mm": 245.0,
+    "tortuosity": 1.185,
+    "S7_aorta_volume_normal": false,
+    "S8_tortuosity_le_1_12": false,
+    "PASS2": false,
+    "vox": 18075
+   },
+   {
+    "subject": "s0688",
+    "aorta_mL": 309.8,
+    "path_mm": 305.5,
+    "straight_mm": 292.9,
+    "tortuosity": 1.043,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 17497
+   },
+   {
+    "subject": "s0751",
+    "aorta_mL": 497.8,
+    "path_mm": 286.8,
+    "straight_mm": 273.2,
+    "tortuosity": 1.05,
+    "S7_aorta_volume_normal": false,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": false,
+    "vox": 17447
+   },
+   {
+    "subject": "s1135",
+    "aorta_mL": 239.4,
+    "path_mm": 256.8,
+    "straight_mm": 243.3,
+    "tortuosity": 1.056,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 17298
+   },
+   {
+    "subject": "s0918",
+    "aorta_mL": 321.8,
+    "path_mm": 282.8,
+    "straight_mm": 253.6,
+    "tortuosity": 1.115,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 17164
+   },
+   {
+    "subject": "s0550",
+    "aorta_mL": 312.6,
+    "path_mm": 282.7,
+    "straight_mm": 256.9,
+    "tortuosity": 1.1,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 15665
+   },
+   {
+    "subject": "s1152",
+    "aorta_mL": 192.1,
+    "path_mm": 259.5,
+    "straight_mm": 230.0,
+    "tortuosity": 1.128,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": false,
+    "PASS2": false,
+    "vox": 15630
+   },
+   {
+    "subject": "s0657",
+    "aorta_mL": 229.8,
+    "path_mm": 289.9,
+    "straight_mm": 278.3,
+    "tortuosity": 1.042,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 15088
+   },
+   {
+    "subject": "s0556",
+    "aorta_mL": 269.6,
+    "path_mm": 275.5,
+    "straight_mm": 258.1,
+    "tortuosity": 1.067,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 14645
+   },
+   {
+    "subject": "s0771",
+    "aorta_mL": 203.2,
+    "path_mm": 286.4,
+    "straight_mm": 270.1,
+    "tortuosity": 1.06,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 13486
+   },
+   {
+    "subject": "s1304",
+    "aorta_mL": 333.9,
+    "path_mm": 265.2,
+    "straight_mm": 240.9,
+    "tortuosity": 1.101,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 13428
+   },
+   {
+    "subject": "s1082",
+    "aorta_mL": 362.1,
+    "path_mm": 327.3,
+    "straight_mm": 289.1,
+    "tortuosity": 1.132,
+    "S7_aorta_volume_normal": false,
+    "S8_tortuosity_le_1_12": false,
+    "PASS2": false,
+    "vox": 13192
+   },
+   {
+    "subject": "s1088",
+    "aorta_mL": 308.0,
+    "path_mm": 294.4,
+    "straight_mm": 264.5,
+    "tortuosity": 1.113,
+    "S7_aorta_volume_normal": true,
+    "S8_tortuosity_le_1_12": true,
+    "PASS2": true,
+    "vox": 10980
+   }
+  ],
+  "criteria_declared_before_measurement_CORRECTION": "HONESTY CORRECTION, raised by review and accepted. The key name above says 'declared before measurement'. That is NOT what happened and the claim is withdrawn. The actual sequence: the screening loop computed and PRINTED the full per-subject table for all 22 candidates (centreline length, maximum inscribed diameter, gap to stomach, trachea-top offset, component count) FIRST; the S1-S6 thresholds were written in the NEXT cell, with that table already on screen. The QUANTITIES to measure were chosen in advance, but the THRESHOLD VALUES were set with the distribution visible. Two consequences follow and both are reported: (a) S1-S6 must be read as post-hoc thresholds over pre-chosen quantities, not as a pre-registered screen; (b) the separately-flagged round-2 criteria S7/S8 are post hoc in the stronger sense that the QUANTITIES themselves (neighbour aortic volume, tortuosity) were not considered until the round-1 winner turned out to have an ectatic aorta.",
+  "criteria_declared_before_measurement_RENAMED": "criteria_thresholds_set_with_table_visible"
+ },
+ "references": {
+  "esophagus_length_cm": [
+   18.0,
+   26.0,
+   "adult oesophageal length, cricopharyngeus to cardia (Gray's Anatomy 41e)"
+  ],
+  "outer_diameter_mm": [
+   13.0,
+   25.0,
+   "non-distended outer diameter, adult CT"
+  ],
+  "wall_thickness_mm": [
+   3.0,
+   6.0,
+   "CT wall thickness, non-distended"
+  ],
+  "tortuosity": [
+   1.0,
+   1.12,
+   "declared screening band; a tortuous oesophagus above this was treated as a confound"
+  ],
+  "aorta_volume_mL": [
+   90.0,
+   350.0,
+   "declared screening band for a non-ectatic thoracoabdominal aorta"
+  ],
+  "constriction_1_level": "C6 (cricopharyngeal)",
+  "constriction_2_level": "T4 (aortic arch)",
+  "constriction_2b_level": "T5-T6 (left main bronchus)",
+  "constriction_3_level": "T10 (diaphragmatic hiatus)"
+ },
+ "meshes": [
+  {
+   "structure": "esophagus",
+   "faces": 61999,
+   "vertices": 31036,
+   "surface_area_mm2": 15610.2,
+   "volume_mL": 56.39,
+   "label_volume_mL": 59.05,
+   "upsample": 2,
+   "mean_triangle_area_mm2": 0.2518,
+   "contour_anchored": true
+  },
+  {
+   "structure": "trachea",
+   "faces": 15999,
+   "vertices": 8029,
+   "surface_area_mm2": 11942.4,
+   "volume_mL": 55.24,
+   "label_volume_mL": 60.54,
+   "upsample": 1,
+   "mean_triangle_area_mm2": 0.7464,
+   "contour_anchored": true
+  },
+  {
+   "structure": "aorta",
+   "faces": 22000,
+   "vertices": 11022,
+   "surface_area_mm2": 41154.0,
+   "volume_mL": 297.7,
+   "label_volume_mL": 309.81,
+   "upsample": 1,
+   "mean_triangle_area_mm2": 1.8706,
+   "contour_anchored": true
+  },
+  {
+   "structure": "stomach",
+   "faces": 14999,
+   "vertices": 7553,
+   "surface_area_mm2": 22792.1,
+   "volume_mL": 231.97,
+   "label_volume_mL": 242.44,
+   "upsample": 1,
+   "mean_triangle_area_mm2": 1.5196,
+   "contour_anchored": true
+  },
+  {
+   "structure": "thyroid_gland",
+   "faces": 3482,
+   "vertices": 1793,
+   "surface_area_mm2": 2194.1,
+   "volume_mL": 6.28,
+   "label_volume_mL": 8.47,
+   "upsample": 1,
+   "mean_triangle_area_mm2": 0.6301,
+   "contour_anchored": true
+  },
+  {
+   "structure": "spinal_cord",
+   "faces": 6000,
+   "vertices": 3021,
+   "surface_area_mm2": 17833.0,
+   "volume_mL": 66.89,
+   "label_volume_mL": 75.77,
+   "upsample": 1,
+   "mean_triangle_area_mm2": 2.9722,
+   "contour_anchored": true
+  },
+  {
+   "structure": "vertebrae",
+   "faces": 22000,
+   "vertices": 10960,
+   "surface_area_mm2": 124118.6,
+   "volume_mL": 556.12,
+   "label_volume_mL": 589.66,
+   "upsample": 1,
+   "mean_triangle_area_mm2": 5.6418,
+   "contour_anchored": true
+  },
+  {
+   "structure": "heart",
+   "faces": 9000,
+   "vertices": 4502,
+   "surface_area_mm2": 51364.9,
+   "volume_mL": 538.96,
+   "label_volume_mL": 552.97,
+   "upsample": 1,
+   "mean_triangle_area_mm2": 5.7072,
+   "contour_anchored": true
+  }
+ ],
+ "mesh_totals": {
+  "structures": 8,
+  "faces": 155479,
+  "faces_gate": [
+   130000,
+   160000
+  ],
+  "faces_in_gate": true,
+  "esophagus_faces": 61999,
+  "esophagus_face_share_pct": 39.9,
+  "glb_bytes": 3745016,
+  "glb_MB": 3.745,
+  "glb_gate_MB": 7.0,
+  "resolution_declaration": "the oesophageal surface is marching cubes on the label TRILINEARLY UPSAMPLED x2. Mean triangle area 0.252 mm2 (edge ~0.76 mm) matches the upsampled grid pitch, but the INFORMATION CONTENT is that of the native 1.5 mm label - the extra triangles are interpolation, not detail. Every other structure is meshed at native resolution.",
+  "face_count_composition": "the 130k-160k face gate is met by the eight-structure scene, not by the oesophagus alone. A 305 mm tube of 15 610 mm2 surface area supports about 14 000 native-resolution triangles; inflating it alone to 140 000 would be pure interpolation. All eight structures are real segmentations from the same subject and the per-structure counts are listed above."
+ },
+ "measured": {
+  "esophagus_label_voxels": 17497,
+  "esophagus_label_mL": 59.052,
+  "connected_components": 1,
+  "largest_component_fraction": 1.0,
+  "centreline_length_mm": 305.49,
+  "centreline_length_cm": 30.549,
+  "length_vs_reference": "ABOVE the 18-26 cm published range by 17.5% - reported as computed, not adjusted",
+  "tortuosity": 1.043,
+  "cranial_vertebral_level": "C6",
+  "caudal_vertebral_level": "T12",
+  "inscribed_radius_mm": {
+   "min": 1.254,
+   "median": 5.396,
+   "max": 8.989
+  },
+  "inscribed_diameter_mm": {
+   "min": 2.509,
+   "median": 10.792,
+   "max": 17.978
+  },
+  "inscribed_diameter_vs_reference": "median 10.80 mm and max 17.98 mm, both BELOW the 13-25 mm published OUTER diameter range at the median. The label follows the outer wall of a COLLAPSED resting oesophagus, and the maximum inscribed sphere of a flattened slit is smaller than the outer transverse diameter, so these two quantities are not directly comparable. Reported as measured with that caveat rather than rescaled.",
+  "min_surface_gap_to_stomach_mm": 1.5,
+  "min_distance_to_aorta_mm": 5.27,
+  "min_distance_to_trachea_mm": 3.63,
+  "min_distance_to_thyroid_mm": 10.91,
+  "carina_arc_mm": 128.2,
+  "carina_level": "T6",
+  "aortic_arch_apex_arc_mm": 83.1,
+  "aortic_arch_apex_level": "T4",
+  "periesophageal_corridor_mL": 368.3
+ },
+ "contour_anchored": {
+  "esophagus_outer_surface": true,
+  "centreline": true,
+  "inscribed_radius_profile": true,
+  "vertebral_level_map": true,
+  "neighbour_distances": true,
+  "gastro_oesophageal_junction": true,
+  "constriction_1_cricopharyngeal": true,
+  "constriction_2_aortic_arch": true,
+  "constriction_2b_left_main_bronchus": true,
+  "constriction_3_diaphragmatic_hiatus": false,
+  "upper_oesophageal_sphincter_location": true,
+  "lower_oesophageal_sphincter_location": false,
+  "wall_four_layer_stack": false,
+  "muscle_type_thirds": false,
+  "sphincter_pressures": false,
+  "arterial_trees": false,
+  "venous_trees": false,
+  "azygos_course": false,
+  "palisade_zone": false,
+  "peristaltic_wave_speed": false,
+  "micro_cross_section_unit": false,
+  "molecular_layer": false
+ }
+}

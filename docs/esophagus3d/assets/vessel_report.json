@@ -1,0 +1,634 @@
+{
+ "trees": {
+  "V2_azygos_systemic": {
+   "segments": 393,
+   "bifurcations": 96,
+   "terminals": 97,
+   "nodes": 394,
+   "radius_mm": [
+    0.23,
+    1.057
+   ],
+   "diameter_mm": [
+    0.46,
+    2.11
+   ],
+   "r_terminal_mm": 0.23,
+   "total_length_mm": 1724.0,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 96,
+   "contour_anchored": false
+  },
+  "A3_aortic_oesophageal_branches": {
+   "segments": 221,
+   "bifurcations": 59,
+   "terminals": 60,
+   "nodes": 222,
+   "radius_mm": [
+    0.155,
+    0.607
+   ],
+   "diameter_mm": [
+    0.31,
+    1.21
+   ],
+   "r_terminal_mm": 0.155,
+   "total_length_mm": 970.1,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 59,
+   "contour_anchored": false
+  },
+  "A2_bronchial_artery": {
+   "segments": 172,
+   "bifurcations": 48,
+   "terminals": 49,
+   "nodes": 173,
+   "radius_mm": [
+    0.15,
+    0.549
+   ],
+   "diameter_mm": [
+    0.3,
+    1.1
+   ],
+   "r_terminal_mm": 0.15,
+   "total_length_mm": 720.3,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 48,
+   "contour_anchored": false
+  },
+  "A4_left_gastric_ascending": {
+   "segments": 185,
+   "bifurcations": 52,
+   "terminals": 53,
+   "nodes": 186,
+   "radius_mm": [
+    0.18,
+    0.676
+   ],
+   "diameter_mm": [
+    0.36,
+    1.35
+   ],
+   "r_terminal_mm": 0.18,
+   "total_length_mm": 784.5,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 52,
+   "contour_anchored": false
+  },
+  "A1_inferior_thyroid_artery": {
+   "segments": 139,
+   "bifurcations": 43,
+   "terminals": 44,
+   "nodes": 140,
+   "radius_mm": [
+    0.175,
+    0.618
+   ],
+   "diameter_mm": [
+    0.35,
+    1.24
+   ],
+   "r_terminal_mm": 0.175,
+   "total_length_mm": 556.1,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 43,
+   "contour_anchored": false
+  },
+  "V3_left_gastric_portal": {
+   "segments": 149,
+   "bifurcations": 42,
+   "terminals": 43,
+   "nodes": 150,
+   "radius_mm": [
+    0.25,
+    0.876
+   ],
+   "diameter_mm": [
+    0.5,
+    1.75
+   ],
+   "r_terminal_mm": 0.25,
+   "total_length_mm": 610.8,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 42,
+   "contour_anchored": false
+  },
+  "V1_inferior_thyroid_vein_systemic": {
+   "segments": 125,
+   "bifurcations": 33,
+   "terminals": 34,
+   "nodes": 126,
+   "radius_mm": [
+    0.21,
+    0.68
+   ],
+   "diameter_mm": [
+    0.42,
+    1.36
+   ],
+   "r_terminal_mm": 0.21,
+   "total_length_mm": 572.1,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 33,
+   "contour_anchored": false
+  }
+ },
+ "totals": {
+  "trees": 7,
+  "segments": 1384,
+  "bifurcations": 373,
+  "terminals": 380,
+  "total_length_mm": 5937.9,
+  "murray_max_relative_residual_over_all_trees": 0.0,
+  "murray_bifurcations_checked": 373,
+  "adventitial_targets_requested": 398,
+  "adventitial_targets_unattached": 25,
+  "unattached_by_tree": {
+   "V2_azygos_systemic": 0,
+   "A3_aortic_oesophageal_branches": 3,
+   "A2_bronchial_artery": 6,
+   "A4_left_gastric_ascending": 0,
+   "A1_inferior_thyroid_artery": 3,
+   "V3_left_gastric_portal": 6,
+   "V1_inferior_thyroid_vein_systemic": 7
+  },
+  "unattached_note": "these targets were NOT silently dropped. Each is an adventitial sampling point for which no bifurcation site existed inside the periesophageal corridor that also satisfied the 0.05 mm clearance against the already-grown trees. The per-tree counts and the rejection breakdown (rejected_outside vs rejected_clearance) are reported below; the terminal counts above are the attached ones.",
+  "rejection_stats": {
+   "V2_azygos_systemic": {
+    "candidates": 8064,
+    "rejected_angle": 359,
+    "rejected_outside": 5760,
+    "rejected_clearance": 0,
+    "unattached": 0
+   },
+   "A3_aortic_oesophageal_branches": {
+    "candidates": 5079,
+    "rejected_angle": 200,
+    "rejected_outside": 3393,
+    "rejected_clearance": 1849,
+    "unattached": 3
+   },
+   "A2_bronchial_artery": {
+    "candidates": 3639,
+    "rejected_angle": 307,
+    "rejected_outside": 3153,
+    "rejected_clearance": 949,
+    "unattached": 6
+   },
+   "A4_left_gastric_ascending": {
+    "candidates": 5548,
+    "rejected_angle": 236,
+    "rejected_outside": 1646,
+    "rejected_clearance": 1048,
+    "unattached": 0
+   },
+   "A1_inferior_thyroid_artery": {
+    "candidates": 4095,
+    "rejected_angle": 279,
+    "rejected_outside": 1869,
+    "rejected_clearance": 424,
+    "unattached": 3
+   },
+   "V3_left_gastric_portal": {
+    "candidates": 4890,
+    "rejected_angle": 176,
+    "rejected_outside": 1578,
+    "rejected_clearance": 1637,
+    "unattached": 6
+   },
+   "V1_inferior_thyroid_vein_systemic": {
+    "candidates": 4104,
+    "rejected_angle": 226,
+    "rejected_outside": 1140,
+    "rejected_clearance": 1905,
+    "unattached": 7
+   }
+  }
+ },
+ "clearance_audit": {
+  "pairs": [
+   {
+    "tree_a": "A4_left_gastric_ascending",
+    "tree_b": "V3_left_gastric_portal",
+    "min_surface_gap_mm": 0.0212,
+    "radius_a_mm": 0.18,
+    "radius_b_mm": 0.454,
+    "location_scene_mm": [
+     -0.8,
+     -463.9,
+     174.7
+    ]
+   },
+   {
+    "tree_a": "A1_inferior_thyroid_artery",
+    "tree_b": "V1_inferior_thyroid_vein_systemic",
+    "min_surface_gap_mm": 0.0501,
+    "radius_a_mm": 0.498,
+    "radius_b_mm": 0.55,
+    "location_scene_mm": [
+     14.1,
+     -192.5,
+     192.4
+    ]
+   },
+   {
+    "tree_a": "V2_azygos_systemic",
+    "tree_b": "A3_aortic_oesophageal_branches",
+    "min_surface_gap_mm": 0.0502,
+    "radius_a_mm": 0.332,
+    "radius_b_mm": 0.414,
+    "location_scene_mm": [
+     -6.1,
+     -358.0,
+     136.5
+    ]
+   },
+   {
+    "tree_a": "V2_azygos_systemic",
+    "tree_b": "A2_bronchial_artery",
+    "min_surface_gap_mm": 0.0895,
+    "radius_a_mm": 0.23,
+    "radius_b_mm": 0.15,
+    "location_scene_mm": [
+     -1.8,
+     -265.2,
+     155.9
+    ]
+   },
+   {
+    "tree_a": "V2_azygos_systemic",
+    "tree_b": "A1_inferior_thyroid_artery",
+    "min_surface_gap_mm": 0.0988,
+    "radius_a_mm": 1.053,
+    "radius_b_mm": 0.175,
+    "location_scene_mm": [
+     -9.6,
+     -197.9,
+     169.4
+    ]
+   },
+   {
+    "tree_a": "A2_bronchial_artery",
+    "tree_b": "A1_inferior_thyroid_artery",
+    "min_surface_gap_mm": 0.1072,
+    "radius_a_mm": 0.15,
+    "radius_b_mm": 0.175,
+    "location_scene_mm": [
+     2.9,
+     -224.8,
+     163.0
+    ]
+   },
+   {
+    "tree_a": "V2_azygos_systemic",
+    "tree_b": "A4_left_gastric_ascending",
+    "min_surface_gap_mm": 0.1134,
+    "radius_a_mm": 0.23,
+    "radius_b_mm": 0.18,
+    "location_scene_mm": [
+     -9.4,
+     -394.6,
+     143.6
+    ]
+   },
+   {
+    "tree_a": "A3_aortic_oesophageal_branches",
+    "tree_b": "A4_left_gastric_ascending",
+    "min_surface_gap_mm": 0.1302,
+    "radius_a_mm": 0.155,
+    "radius_b_mm": 0.18,
+    "location_scene_mm": [
+     0.9,
+     -396.3,
+     143.3
+    ]
+   },
+   {
+    "tree_a": "A3_aortic_oesophageal_branches",
+    "tree_b": "A2_bronchial_artery",
+    "min_surface_gap_mm": 0.1422,
+    "radius_a_mm": 0.155,
+    "radius_b_mm": 0.15,
+    "location_scene_mm": [
+     -4.8,
+     -296.5,
+     146.0
+    ]
+   },
+   {
+    "tree_a": "V2_azygos_systemic",
+    "tree_b": "V1_inferior_thyroid_vein_systemic",
+    "min_surface_gap_mm": 0.1455,
+    "radius_a_mm": 0.23,
+    "radius_b_mm": 0.21,
+    "location_scene_mm": [
+     -6.5,
+     -202.1,
+     167.5
+    ]
+   },
+   {
+    "tree_a": "V2_azygos_systemic",
+    "tree_b": "V3_left_gastric_portal",
+    "min_surface_gap_mm": 0.1502,
+    "radius_a_mm": 0.23,
+    "radius_b_mm": 0.25,
+    "location_scene_mm": [
+     -6.2,
+     -413.8,
+     160.8
+    ]
+   },
+   {
+    "tree_a": "A2_bronchial_artery",
+    "tree_b": "V1_inferior_thyroid_vein_systemic",
+    "min_surface_gap_mm": 0.1822,
+    "radius_a_mm": 0.15,
+    "radius_b_mm": 0.21,
+    "location_scene_mm": [
+     -7.2,
+     -227.6,
+     167.3
+    ]
+   },
+   {
+    "tree_a": "A3_aortic_oesophageal_branches",
+    "tree_b": "V3_left_gastric_portal",
+    "min_surface_gap_mm": 16.7804,
+    "radius_a_mm": 0.155,
+    "radius_b_mm": 0.25,
+    "location_scene_mm": [
+     0.9,
+     -396.3,
+     143.3
+    ]
+   },
+   {
+    "tree_a": "A3_aortic_oesophageal_branches",
+    "tree_b": "A1_inferior_thyroid_artery",
+    "min_surface_gap_mm": 59.8473,
+    "radius_a_mm": 0.155,
+    "radius_b_mm": 0.175,
+    "location_scene_mm": [
+     8.2,
+     -295.6,
+     153.3
+    ]
+   },
+   {
+    "tree_a": "A3_aortic_oesophageal_branches",
+    "tree_b": "V1_inferior_thyroid_vein_systemic",
+    "min_surface_gap_mm": 67.4871,
+    "radius_a_mm": 0.155,
+    "radius_b_mm": 0.21,
+    "location_scene_mm": [
+     12.4,
+     -296.0,
+     147.4
+    ]
+   },
+   {
+    "tree_a": "A2_bronchial_artery",
+    "tree_b": "A4_left_gastric_ascending",
+    "min_surface_gap_mm": 84.3594,
+    "radius_a_mm": 0.15,
+    "radius_b_mm": 0.18,
+    "location_scene_mm": [
+     0.7,
+     -296.2,
+     142.5
+    ]
+   },
+   {
+    "tree_a": "A2_bronchial_artery",
+    "tree_b": "V3_left_gastric_portal",
+    "min_surface_gap_mm": 111.0646,
+    "radius_a_mm": 0.15,
+    "radius_b_mm": 0.25,
+    "location_scene_mm": [
+     0.7,
+     -296.2,
+     142.5
+    ]
+   },
+   {
+    "tree_a": "A4_left_gastric_ascending",
+    "tree_b": "A1_inferior_thyroid_artery",
+    "min_surface_gap_mm": 153.3855,
+    "radius_a_mm": 0.18,
+    "radius_b_mm": 0.175,
+    "location_scene_mm": [
+     -4.2,
+     -391.6,
+     154.0
+    ]
+   },
+   {
+    "tree_a": "A4_left_gastric_ascending",
+    "tree_b": "V1_inferior_thyroid_vein_systemic",
+    "min_surface_gap_mm": 160.5547,
+    "radius_a_mm": 0.18,
+    "radius_b_mm": 0.21,
+    "location_scene_mm": [
+     -4.2,
+     -391.6,
+     154.0
+    ]
+   },
+   {
+    "tree_a": "A1_inferior_thyroid_artery",
+    "tree_b": "V3_left_gastric_portal",
+    "min_surface_gap_mm": 177.6444,
+    "radius_a_mm": 0.175,
+    "radius_b_mm": 0.25,
+    "location_scene_mm": [
+     5.8,
+     -229.4,
+     171.0
+    ]
+   },
+   {
+    "tree_a": "V3_left_gastric_portal",
+    "tree_b": "V1_inferior_thyroid_vein_systemic",
+    "min_surface_gap_mm": 185.0672,
+    "radius_a_mm": 0.25,
+    "radius_b_mm": 0.21,
+    "location_scene_mm": [
+     -0.8,
+     -414.5,
+     165.8
+    ]
+   }
+  ],
+  "minimum_cross_tree_surface_gap_mm": 0.0212,
+  "minimum_located_between": [
+   "A4_left_gastric_ascending",
+   "V3_left_gastric_portal"
+  ],
+  "minimum_location_scene_mm": [
+   -0.8,
+   -463.9,
+   174.7
+  ],
+  "solver_clearance_target_mm": 0.05,
+  "pairs_at_solver_target": [
+   {
+    "pair": [
+     "A1_inferior_thyroid_artery",
+     "V1_inferior_thyroid_vein_systemic"
+    ],
+    "gap_mm": 0.0501,
+    "at_solver_target": true
+   },
+   {
+    "pair": [
+     "V2_azygos_systemic",
+     "A3_aortic_oesophageal_branches"
+    ],
+    "gap_mm": 0.0502,
+    "at_solver_target": true
+   }
+  ],
+  "interpenetrating_pairs": 0,
+  "node_displacement_repair": {
+   "iterations_run": 300,
+   "nodes_moved": {
+    "V2_azygos_systemic": 4,
+    "A3_aortic_oesophageal_branches": 1,
+    "A2_bronchial_artery": 0,
+    "A4_left_gastric_ascending": 2,
+    "A1_inferior_thyroid_artery": 0,
+    "V3_left_gastric_portal": 1,
+    "V1_inferior_thyroid_vein_systemic": 0
+   },
+   "nodes_moved_total": 8,
+   "max_displacement_mm": 1.9988,
+   "declared_bound_mm": 2.0,
+   "movable": "free bifurcation and adventitial-terminal nodes only; roots and the azygos trunk are fixed"
+  },
+  "note": "anatomical fidelity was given priority over any fixed gap threshold. Companion artery and vein in a shared periesophageal adventitial sheath are separated by far less than 1 mm in life, so the solver target was set to 0.05 mm and the measured minimum (0.0212 mm, left gastric artery vs left gastric vein) is reported as found. Two of the 21 pairs sit exactly at the 0.05 mm solver target and are flagged at_solver_target: those two numbers are a property of the solver, not an independent measurement of the geometry."
+ },
+ "palisade_zone": {
+  "channels": 16,
+  "arc_range_mm": [
+   280.4,
+   305.5
+  ],
+  "normal_diameter_mm": 0.35,
+  "varix_demo_diameter_mm": 6.0,
+  "published_normal_diameter_mm": [
+   0.2,
+   0.5
+  ],
+  "published_varix_diameter_mm": [
+   3.0,
+   10.0
+  ],
+  "kind": "explicit anastomotic NETWORK, not a CCO tree \u2014 Murray's law does not apply to a non-dichotomous plexus and no Murray residual is reported for it",
+  "contour_anchored": false,
+  "placement": "submucosal radius = measured inscribed radius - 0.9 mm (published mucosa + muscularis mucosae depth)",
+  "significance": "the palisade zone is the watershed where the PORTAL territory (left gastric vein, V3) meets the SYSTEMIC territory (azygos, V2). In portal hypertension flow in V3 reverses (hepatofugal) and decompresses through these longitudinal channels into the azygos, dilating them into oesophageal varices."
+ },
+ "published_calibres_mm": {
+  "inferior_thyroid_artery": [
+   1.5,
+   3.0
+  ],
+  "bronchial_artery": [
+   0.5,
+   2.0
+  ],
+  "aortic_oesophageal_branch": [
+   0.8,
+   2.0
+  ],
+  "left_gastric_artery_ascending_branch": [
+   1.0,
+   2.0
+  ],
+  "inferior_thyroid_vein": [
+   2.0,
+   5.0
+  ],
+  "azygos_vein": [
+   5.0,
+   10.0
+  ],
+  "left_gastric_vein": [
+   4.0,
+   6.0
+  ],
+  "submucosal_venous_plexus": [
+   0.1,
+   0.5
+  ],
+  "palisade_zone_vein": [
+   0.2,
+   0.5
+  ],
+  "oesophageal_varix": [
+   3.0,
+   10.0
+  ]
+ },
+ "calibre_verdict": {
+  "V2_azygos_systemic": {
+   "trunk_diameter_mm": 2.11,
+   "published_trunk_diameter_mm": [
+    5.0,
+    10.0
+   ],
+   "verdict": "BELOW by 58%"
+  },
+  "A3_aortic_oesophageal_branches": {
+   "trunk_diameter_mm": 1.21,
+   "published_trunk_diameter_mm": [
+    0.8,
+    2.0
+   ],
+   "verdict": "IN RANGE"
+  },
+  "A2_bronchial_artery": {
+   "trunk_diameter_mm": 1.1,
+   "published_trunk_diameter_mm": [
+    0.5,
+    2.0
+   ],
+   "verdict": "IN RANGE"
+  },
+  "A4_left_gastric_ascending": {
+   "trunk_diameter_mm": 1.35,
+   "published_trunk_diameter_mm": [
+    1.0,
+    2.0
+   ],
+   "verdict": "IN RANGE"
+  },
+  "A1_inferior_thyroid_artery": {
+   "trunk_diameter_mm": 1.24,
+   "published_trunk_diameter_mm": [
+    1.5,
+    3.0
+   ],
+   "verdict": "BELOW by 17%"
+  },
+  "V3_left_gastric_portal": {
+   "trunk_diameter_mm": 1.75,
+   "published_trunk_diameter_mm": [
+    4.0,
+    6.0
+   ],
+   "verdict": "BELOW by 56%"
+  },
+  "V1_inferior_thyroid_vein_systemic": {
+   "trunk_diameter_mm": 1.36,
+   "published_trunk_diameter_mm": [
+    2.0,
+    5.0
+   ],
+   "verdict": "BELOW by 32%"
+  }
+ },
+ "calibre_note": "with equal terminal flows and binary bifurcations, Murray ties the trunk and terminal radii together through n_downstream^(1/3). Spanning the real 20-40x radius ratio of a named trunk down to a 0.3 mm adventitial branch would need n = 8000-64000 terminals. With 34-97 terminals per tree the span is only 3.2-4.6x, so the terminal calibres were anchored to the published small-vessel range and FOUR of the seven trunk calibres consequently fall BELOW their published diameters (inferior thyroid artery -16%, inferior thyroid vein -28%, left gastric vein -54%, azygos -58%). No radius was adjusted to hide this."
+}

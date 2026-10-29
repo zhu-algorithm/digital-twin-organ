@@ -91,8 +91,8 @@ const GC_LABEL = {
   phase_I:'I 相酶', phase_II:'II 相酶', uptake_transporter:'摄取转运体',
   efflux_transporter:'外排转运体', nuclear_receptor:'核受体', housekeeping_reference:'管家基因参考'
 };
-const ORGAN_LABEL = {kidney:'肾脏', liver:'肝脏', small_intestine:'小肠', heart:'心脏'};
-const ORDER = ['kidney','liver','small_intestine','heart'];
+const ORGAN_LABEL = {kidney:'肾脏', liver:'肝脏', small_intestine:'小肠', esophagus:'食管', heart:'心脏'};
+const ORDER = ['kidney','liver','small_intestine','esophagus','heart'];
 
 let COMP=null, organ='kidney', selCT=null;
 const EXPR = {};                 // organ -> parsed <organ>_expression.json (lazy)
@@ -137,10 +137,14 @@ function renderCellTypes(){
   document.getElementById('ctlist').innerHTML = c.cell_types.map(ct=>{
     const w=(ct.pct/mx*100).toFixed(1);
     const sd = ct.donor_pct_sd==null?'':` ±${ct.donor_pct_sd.toFixed(1)}`;
+    /* donors / clid are per-cell-type fields that not every organ's pull carries.
+       When absent the clause is omitted rather than rendered as "undefined". */
+    const dn = ct.donors==null?'':` · ${ct.donors} donor`;
+    const ttl = ct.clid==null?'':` title="${ct.clid}"`;
     return `<div class="ct ${ct.name===selCT?'sel':''}" data-ct="${ct.name.replace(/"/g,'&quot;')}">
       <div class="bar"><i style="width:${w}%"></i></div>
-      <div class="nm" title="${ct.clid}">${ct.name}</div>
-      <div class="pc">${ct.pct.toFixed(2)}%${sd} · ${fmt(ct.n)} 细胞 · ${ct.donors} donor</div>
+      <div class="nm"${ttl}>${ct.name}</div>
+      <div class="pc">${ct.pct.toFixed(2)}%${sd} · ${fmt(ct.n)} 细胞${dn}</div>
     </div>`;
   }).join('');
   document.querySelectorAll('.ct').forEach(e=>e.onclick=()=>{

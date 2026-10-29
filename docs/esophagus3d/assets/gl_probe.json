@@ -1,0 +1,109 @@
+{
+ "environment": {
+  "nvidia-smi -L": [
+   "GPU 0: NVIDIA A10G (UUID: GPU-0d99a0ac-8e19-2441-d574-ad89b3bc2007)"
+  ],
+  "ls -1": [
+   "intel_hasvk_icd.x86_64.json",
+   "intel_icd.x86_64.json",
+   "lvp_icd.x86_64.json",
+   "radeon_icd.x86_64.json"
+  ],
+  "bash -lc": [
+   "libEGL.so.1",
+   "libEGL.so.1.1.0",
+   "libEGL_mesa.so.0",
+   "libEGL_mesa.so.0.0.0",
+   "libEGL_nvidia.so.0",
+   "libEGL_nvidia.so.610.57.04",
+   "libGLESv1_CM_nvidia.so.1",
+   "libGLESv1_CM_nvidia.so.610.57.04",
+   "libGLESv2.so.2",
+   "libGLESv2.so.2.1.0",
+   "libGLESv2_nvidia.so.2",
+   "libGLESv2_nvidia.so.610.57.04",
+   "libnvidia-eglcore.so.610.57.04"
+  ]
+ },
+ "attempts": [
+  {
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "vendor": "Google Inc. (Google)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "maxTex": 8192,
+   "flag_set": "angle_gl",
+   "flags": [
+    "--use-gl=angle",
+    "--use-angle=gl",
+    "--ignore-gpu-blocklist",
+    "--enable-gpu-rasterization",
+    "--enable-zero-copy",
+    "--disable-gpu-driver-bug-workarounds"
+   ],
+   "software": true
+  },
+  {
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "vendor": "Google Inc. (Google)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "maxTex": 8192,
+   "flag_set": "desktop_gl",
+   "flags": [
+    "--use-gl=desktop",
+    "--ignore-gpu-blocklist",
+    "--enable-gpu-rasterization",
+    "--disable-gpu-driver-bug-workarounds"
+   ],
+   "software": true
+  },
+  {
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "vendor": "Google Inc. (Google)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "maxTex": 8192,
+   "flag_set": "egl",
+   "flags": [
+    "--use-gl=egl",
+    "--ignore-gpu-blocklist",
+    "--enable-gpu-rasterization",
+    "--disable-gpu-driver-bug-workarounds"
+   ],
+   "software": true
+  },
+  {
+   "renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+   "vendor": "Google Inc. (NVIDIA)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "maxTex": 32768,
+   "flag_set": "angle_vulkan",
+   "flags": [
+    "--use-gl=angle",
+    "--use-angle=vulkan",
+    "--ignore-gpu-blocklist",
+    "--enable-features=Vulkan,VulkanFromANGLE",
+    "--disable-gpu-driver-bug-workarounds"
+   ],
+   "software": false
+  },
+  {
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "vendor": "Google Inc. (Google)",
+   "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "maxTex": 8192,
+   "flag_set": "angle_gl_vulkan",
+   "flags": [
+    "--use-gl=angle",
+    "--use-angle=gl",
+    "--enable-unsafe-webgpu",
+    "--ignore-gpu-blocklist",
+    "--enable-gpu-rasterization",
+    "--enable-zero-copy",
+    "--disable-gpu-driver-bug-workarounds",
+    "--enable-features=Vulkan,VulkanFromANGLE"
+   ],
+   "software": true
+  }
+ ],
+ "hardware_gl_found": true,
+ "selected": "angle_vulkan"
+}

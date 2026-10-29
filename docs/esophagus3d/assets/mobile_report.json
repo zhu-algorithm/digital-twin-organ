@@ -1,0 +1,1184 @@
+{
+ "viewports": [
+  {
+   "viewport": "iphone14_390x844",
+   "width": 390,
+   "height": 844,
+   "dpr": 2.0,
+   "is_mobile": true,
+   "unmasked_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "unmasked_vendor": "Google Inc. (Google)",
+   "gl_version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "gpu_confirmed": false,
+   "software_rasteriser_fallback": true,
+   "views": [
+    {
+     "view": "organ",
+     "render_ms_mean": 0.6867,
+     "render_ms_median": 0.6,
+     "render_ms_p95": 1.3,
+     "render_ms_max": 1.9,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 24.28,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 2.4,
+     "draw_calls": 23,
+     "triangles": 209580,
+     "hud_boxes": 20,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.1703884776744,
+      "track_span": [
+       8.825,
+       364.7540174999999,
+       10.416300000000001
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "vessels",
+     "render_ms_mean": 0.4133,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.5,
+     "render_ms_max": 0.7,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 40.33,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 2.6,
+     "draw_calls": 16,
+     "triangles": 142922,
+     "hud_boxes": 20,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.11196211356316,
+      "track_span": [
+       7.06,
+       361.80735000000004,
+       10.3995
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "section",
+     "render_ms_mean": 0.365,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.5,
+     "render_ms_max": 0.8,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 45.67,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 3.8,
+     "draw_calls": 13,
+     "triangles": 7858,
+     "hud_boxes": 20,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.11196211356316,
+      "track_span": [
+       7.06,
+       361.80735000000004,
+       10.3995
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "micro",
+     "render_ms_mean": 0.1817,
+     "render_ms_median": 0.2,
+     "render_ms_p95": 0.3,
+     "render_ms_max": 0.5,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 91.76,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 8.0,
+     "draw_calls": 17,
+     "triangles": 6648,
+     "hud_boxes": 17,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.11196211356316,
+      "track_span": [
+       7.06,
+       361.80735000000004,
+       10.3995
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "molecular",
+     "render_ms_mean": 0.4067,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.6,
+     "render_ms_max": 0.7,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 40.99,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 19.6,
+     "draw_calls": 15,
+     "triangles": 3720,
+     "hud_boxes": 15,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 390,
+      "scrollWidth": 390,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.11196211356316,
+      "track_span": [
+       7.06,
+       361.80735000000004,
+       10.3995
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    }
+   ],
+   "frame_rate_verdict": "SwiftShader / software rasteriser detected \u2014 NO GPU FRAME RATE WAS MEASURED. All timings below are software-rasteriser numbers and must not be read as GPU performance.",
+   "wave_verification": {
+    "at_2_5s": {
+     "rings_total": 154,
+     "rings_undisplaced_front_at_0mm": 64,
+     "rings_undisplaced_front_at_mid": 14,
+     "declared_speed_mm_s": 35.3,
+     "measured_speed_mm_s": null,
+     "track_span": null,
+     "front_now": 92.36244999999998,
+     "mode": "primary",
+     "half_width_mm": 40,
+     "depth_fraction": 0.55
+    },
+    "at_4_0s": {
+     "rings_total": 154,
+     "rings_undisplaced_front_at_0mm": 64,
+     "rings_undisplaced_front_at_mid": 14,
+     "declared_speed_mm_s": 35.3,
+     "measured_speed_mm_s": 32.83190786128342,
+     "track_span": [
+      8.235490000000102,
+      137.36994999999996,
+      3.933199999999997
+     ],
+     "front_now": 137.36994999999996,
+     "mode": "primary",
+     "half_width_mm": 40,
+     "depth_fraction": 0.55
+    }
+   },
+   "secondary_verification": {
+    "rings_total": 154,
+    "rings_undisplaced_front_at_0mm": 103,
+    "rings_undisplaced_front_at_mid": 69,
+    "declared_speed_mm_s": 35.3,
+    "measured_speed_mm_s": null,
+    "track_span": null,
+    "front_now": 196.47950999999995,
+    "mode": "secondary",
+    "half_width_mm": 40,
+    "depth_fraction": 0.55
+   }
+  },
+  {
+   "viewport": "android_360x800",
+   "width": 360,
+   "height": 800,
+   "dpr": 2.0,
+   "is_mobile": true,
+   "unmasked_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "unmasked_vendor": "Google Inc. (Google)",
+   "gl_version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "gpu_confirmed": false,
+   "software_rasteriser_fallback": true,
+   "views": [
+    {
+     "view": "organ",
+     "render_ms_mean": 0.7,
+     "render_ms_median": 0.6,
+     "render_ms_p95": 1.4,
+     "render_ms_max": 1.7,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 23.81,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 2.5,
+     "draw_calls": 23,
+     "triangles": 209580,
+     "hud_boxes": 20,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.160294848105536,
+      "track_span": [
+       10.589999999999998,
+       354.45435999999995,
+       10.0662
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "vessels",
+     "render_ms_mean": 0.4317,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.5,
+     "render_ms_max": 1.1,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 38.62,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 2.8,
+     "draw_calls": 16,
+     "triangles": 142922,
+     "hud_boxes": 20,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.38609689790767,
+      "track_span": [
+       6.470489999999974,
+       360.63009500000015,
+       10.299500000000004
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "section",
+     "render_ms_mean": 0.38,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.6,
+     "render_ms_max": 0.7,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 43.87,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 4.0,
+     "draw_calls": 13,
+     "triangles": 7858,
+     "hud_boxes": 20,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.38609689790767,
+      "track_span": [
+       6.470489999999974,
+       360.63009500000015,
+       10.299500000000004
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "micro",
+     "render_ms_mean": 0.1683,
+     "render_ms_median": 0.2,
+     "render_ms_p95": 0.3,
+     "render_ms_max": 0.4,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 99.03,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 9.2,
+     "draw_calls": 17,
+     "triangles": 6648,
+     "hud_boxes": 17,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.38609689790767,
+      "track_span": [
+       6.470489999999974,
+       360.63009500000015,
+       10.299500000000004
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "molecular",
+     "render_ms_mean": 0.3783,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.5,
+     "render_ms_max": 0.8,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 44.06,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 22.4,
+     "draw_calls": 15,
+     "triangles": 3720,
+     "hud_boxes": 15,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 360,
+      "scrollWidth": 360,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.38609689790767,
+      "track_span": [
+       6.470489999999974,
+       360.63009500000015,
+       10.299500000000004
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    }
+   ],
+   "frame_rate_verdict": "SwiftShader / software rasteriser detected \u2014 NO GPU FRAME RATE WAS MEASURED. All timings below are software-rasteriser numbers and must not be read as GPU performance.",
+   "wave_verification": {
+    "at_2_5s": {
+     "rings_total": 154,
+     "rings_undisplaced_front_at_0mm": 64,
+     "rings_undisplaced_front_at_mid": 14,
+     "declared_speed_mm_s": 35.3,
+     "measured_speed_mm_s": null,
+     "track_span": null,
+     "front_now": 91.1869600000004,
+     "mode": "primary",
+     "half_width_mm": 40,
+     "depth_fraction": 0.55
+    },
+    "at_4_0s": {
+     "rings_total": 154,
+     "rings_undisplaced_front_at_0mm": 64,
+     "rings_undisplaced_front_at_mid": 14,
+     "declared_speed_mm_s": 35.3,
+     "measured_speed_mm_s": 32.52655825230829,
+     "track_span": [
+      7.64951000000041,
+      140.4587000000001,
+      4.083099999999991
+     ],
+     "front_now": 140.4587000000001,
+     "mode": "primary",
+     "half_width_mm": 40,
+     "depth_fraction": 0.55
+    }
+   },
+   "secondary_verification": {
+    "rings_total": 154,
+    "rings_undisplaced_front_at_0mm": 103,
+    "rings_undisplaced_front_at_mid": 69,
+    "declared_speed_mm_s": 35.3,
+    "measured_speed_mm_s": null,
+    "track_span": null,
+    "front_now": 195.29695999999993,
+    "mode": "secondary",
+    "half_width_mm": 40,
+    "depth_fraction": 0.55
+   }
+  },
+  {
+   "viewport": "desktop_1440x900",
+   "width": 1440,
+   "height": 900,
+   "dpr": 1.5,
+   "is_mobile": false,
+   "unmasked_renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "unmasked_vendor": "Google Inc. (Google)",
+   "gl_version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+   "gpu_confirmed": false,
+   "software_rasteriser_fallback": true,
+   "views": [
+    {
+     "view": "organ",
+     "render_ms_mean": 0.7233,
+     "render_ms_median": 0.6,
+     "render_ms_p95": 1.4,
+     "render_ms_max": 1.8,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 23.05,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 2.2,
+     "draw_calls": 23,
+     "triangles": 209580,
+     "hud_boxes": 35,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.055579651654675,
+      "track_span": [
+       11.179509999999993,
+       361.3696299999999,
+       10.282900000000001
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "vessels",
+     "render_ms_mean": 0.48,
+     "render_ms_median": 0.5,
+     "render_ms_p95": 0.6,
+     "render_ms_max": 0.9,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 34.73,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 2.5,
+     "draw_calls": 16,
+     "triangles": 142922,
+     "hud_boxes": 34,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.20398504790477,
+      "track_span": [
+       8.235489999999846,
+       361.66526749999986,
+       10.333
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "section",
+     "render_ms_mean": 0.4217,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.6,
+     "render_ms_max": 0.6,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 39.53,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 3.3,
+     "draw_calls": 13,
+     "triangles": 7858,
+     "hud_boxes": 31,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.20398504790477,
+      "track_span": [
+       8.235489999999846,
+       361.66526749999986,
+       10.333
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "micro",
+     "render_ms_mean": 0.24,
+     "render_ms_median": 0.2,
+     "render_ms_p95": 0.5,
+     "render_ms_max": 0.5,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 69.46,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 5.7,
+     "draw_calls": 17,
+     "triangles": 6648,
+     "hud_boxes": 29,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.20398504790477,
+      "track_span": [
+       8.235489999999846,
+       361.66526749999986,
+       10.333
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    },
+    {
+     "view": "molecular",
+     "render_ms_mean": 0.44,
+     "render_ms_median": 0.4,
+     "render_ms_p95": 0.7,
+     "render_ms_max": 0.8,
+     "budget_60fps_ms": 16.67,
+     "headroom_x_vs_60fps": 37.89,
+     "rAF_fps_unbounded_DO_NOT_READ_AS_USER_FPS": 13.0,
+     "draw_calls": 15,
+     "triangles": 3720,
+     "hud_boxes": 29,
+     "hud_overflow_count": 0,
+     "hud_overflow": [],
+     "dom": {
+      "viewportWidth": 1440,
+      "scrollWidth": 1440,
+      "horizontalOverflow": false,
+      "offenders": [],
+      "offenderCount": 0,
+      "domNodes": 520
+     },
+     "wave": {
+      "rings_total": 154,
+      "rings_undisplaced_front_at_0mm": 60,
+      "rings_undisplaced_front_at_mid": 12,
+      "declared_speed_mm_s": 35.3,
+      "measured_speed_mm_s": 34.20398504790477,
+      "track_span": [
+       8.235489999999846,
+       361.66526749999986,
+       10.333
+      ],
+      "front_now": -1,
+      "mode": "idle",
+      "half_width_mm": 40,
+      "depth_fraction": 0.55
+     },
+     "flow_nonfinite_steps": null,
+     "expression_loaded": true,
+     "expression_error": null,
+     "strata": [
+      {
+       "stratum": "basal",
+       "n_cells": 7251,
+       "matched": 2
+      },
+      {
+       "stratum": "suprabasal_spinous",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "superficial",
+       "n_cells": 0,
+       "matched": 0
+      },
+      {
+       "stratum": "stratified_unassigned",
+       "n_cells": 72863,
+       "matched": 3
+      }
+     ]
+    }
+   ],
+   "frame_rate_verdict": "SwiftShader / software rasteriser detected \u2014 NO GPU FRAME RATE WAS MEASURED. All timings below are software-rasteriser numbers and must not be read as GPU performance.",
+   "wave_verification": {
+    "at_2_5s": {
+     "rings_total": 154,
+     "rings_undisplaced_front_at_0mm": 64,
+     "rings_undisplaced_front_at_mid": 14,
+     "declared_speed_mm_s": 35.3,
+     "measured_speed_mm_s": null,
+     "track_span": null,
+     "front_now": 92.9554900000001,
+     "mode": "primary",
+     "half_width_mm": 40,
+     "depth_fraction": 0.55
+    },
+    "at_4_0s": {
+     "rings_total": 154,
+     "rings_undisplaced_front_at_0mm": 64,
+     "rings_undisplaced_front_at_mid": 14,
+     "declared_speed_mm_s": 35.3,
+     "measured_speed_mm_s": 32.11043569414659,
+     "track_span": [
+      8.239019999999794,
+      141.4876949999998,
+      4.1496999999999975
+     ],
+     "front_now": 141.4876949999998,
+     "mode": "primary",
+     "half_width_mm": 40,
+     "depth_fraction": 0.55
+    }
+   },
+   "secondary_verification": {
+    "rings_total": 154,
+    "rings_undisplaced_front_at_0mm": 103,
+    "rings_undisplaced_front_at_mid": 69,
+    "declared_speed_mm_s": 35.3,
+    "measured_speed_mm_s": null,
+    "track_span": null,
+    "front_now": 193.5354900000001,
+    "mode": "secondary",
+    "half_width_mm": 40,
+    "depth_fraction": 0.55
+   }
+  }
+ ],
+ "console": [
+  {
+   "viewport": "iphone14_390x844",
+   "type": "warning",
+   "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0F0A90044070000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content."
+  },
+  {
+   "viewport": "iphone14_390x844",
+   "type": "warning",
+   "text": "[.WebGL-0x342400e72200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+   "viewport": "iphone14_390x844",
+   "type": "warning",
+   "text": "[.WebGL-0x342400e72200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+   "viewport": "iphone14_390x844",
+   "type": "warning",
+   "text": "[.WebGL-0x342400e72200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+   "viewport": "iphone14_390x844",
+   "type": "warning",
+   "text": "[.WebGL-0x342400e72200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  },
+  {
+   "viewport": "android_360x800",
+   "type": "warning",
+   "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0F0A90044070000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content."
+  },
+  {
+   "viewport": "desktop_1440x900",
+   "type": "warning",
+   "text": "[GroupMarkerNotSet(crbug.com/242999)!:A0F0A90044070000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content."
+  }
+ ],
+ "page_errors": [],
+ "gl_flags": [
+  "--use-gl=angle",
+  "--use-angle=gl",
+  "--ignore-gpu-blocklist",
+  "--enable-gpu-rasterization",
+  "--enable-zero-copy",
+  "--disable-gpu-driver-bug-workarounds"
+ ],
+ "hardware_note": "measured on a data-centre NVIDIA A10G via Modal, NOT a laptop and NOT a real phone. Phone viewports are emulated size + devicePixelRatio and touch, on desktop-class GPU and CPU.",
+ "gl_flag_set": "angle_gl",
+ "gl_backend_note": "tools/probe_gl.py confirmed that --use-angle=vulkan DOES reach the A10G on this image: ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA). Rendering this scene on that backend did not complete inside the sandbox lifetime on three attempts, so the measurement below runs on angle_gl, which falls back to SwiftShader. NO GPU FRAME RATE WAS MEASURED for this page."
+}

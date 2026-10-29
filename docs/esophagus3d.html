@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维解剖学数字食管</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden;
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,340px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  button.hot{background:#4a1f2a;border-color:#c06a7a}
+  label{font-size:11.5px;color:#b8c4d6}
+  input[type=range]{width:104px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  .missbox{border:1px solid #6b1f1f;background:#2a0e0e;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5b0a0;margin-top:10px}
+  .okbox{border:1px solid #1f5b3a;background:#0c2419;border-radius:8px;padding:13px 15px;
+         font-size:13.5px;color:#a9e8c4;margin-top:10px}
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 8px;
+        font-size:10.5px;color:var(--dim);margin-right:5px}
+  .m-str{color:#d9584f}.m-mix{color:#e8a33d}.m-smo{color:#4a90d9}
+  /* Wide data tables are the one thing that genuinely does not fit a 360 px
+     viewport. Rather than scroll inside a wrapper (which leaves elements
+     measurably outside the viewport), they become stacked cards. */
+  @media(max-width:620px){
+    table.cards,table.cards thead,table.cards tbody,table.cards tr,
+    table.cards th,table.cards td{display:block;width:auto;max-width:100%}
+    table.cards thead{display:none}
+    table.cards tr{border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin:9px 0}
+    table.cards td{border:0;padding:2px 0;display:flex;justify-content:space-between;
+      gap:12px;align-items:baseline}
+    table.cards td::before{content:attr(data-label);color:var(--dim);font-size:10px;
+      text-transform:uppercase;letter-spacing:.05em;flex:0 0 auto}
+    table.cards td:first-child{font-weight:600;border-bottom:1px solid var(--line);
+      margin-bottom:4px;padding-bottom:4px}
+    .tablewrap{overflow-x:visible}
+  }
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:12px;padding:9px 10px;max-width:calc(100vw - 24px);left:12px;right:12px;
+        top:auto;bottom:12px;max-height:46vh;overflow:auto}
+    #ui.collapsed{display:none}
+    #panelbtn{display:block}
+    input[type=range]{width:84px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./esophagus3d/vendor/three/three.module.js",
+  "three/webgpu": "./esophagus3d/vendor/three/three.module.js",
+  "three/tsl": "./esophagus3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=esophagus">细胞与分子层 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="liver3d.html">三维肝脏 →</a>
+  <h1>三维解剖学数字食管</h1>
+  <div class="sub">真实 CT 分割中心线与内切半径剖面 · 实测三处生理性狭窄 · 行进式蠕动波 ·
+    肌层类型沿长轴转变 · 门-体静脉吻合与栅栏区</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <button id="panelbtn">控制面板</button>
+  <div id="ui">
+    <div class="row">
+      <label>视图</label>
+      <button id="v-organ" class="on">器官</button>
+      <button id="v-vessels">血管</button>
+      <button id="v-section">剖面</button>
+      <button id="v-micro">微观</button>
+      <button id="v-molecular">分子</button>
+    </div>
+    <div class="row" id="row-wave">
+      <label>蠕动</label>
+      <button id="b-swallow">吞咽 (原发性)</button>
+      <button id="b-secondary">扩张触发 (继发性)</button>
+    </div>
+    <div class="row" id="row-tree">
+      <button id="b-art" class="on">动脉 ×4</button>
+      <button id="b-vein" class="on">静脉 ×3</button>
+      <button id="b-varix">门脉高压 / 静脉曲张</button>
+    </div>
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+    </div>
+    <div class="note">
+      几何 = TotalSegmentator v2.0.1 受试者 <code>s0688</code>（CC-BY-4.0）。
+      血管树、管壁分层、肌层三分、LES 位置与栅栏区均为<b>构造</b>，
+      <code>contour_anchored:false</code>。流速显示增益 <b>8×</b>；蠕动波 <b>1×</b> 无增益。
+    </div>
+  </div>
+</div>
+
+<main>
+  <h2>这一页在测什么</h2>
+  <p>食管的签名特征不是代谢，而是<b>运输</b>。这一页把三件事做成可核验的数字：
+     （1）从该受试者自己的内切半径剖面上<b>实测</b>生理性狭窄的位置与口径；
+     （2）在三维管壁上让蠕动波<b>真的行进</b>，并在浏览器里实测波峰速度；
+     （3）把食管下段的<b>门-体静脉吻合</b>做出来 —— 这是门脉高压时食管静脉曲张的解剖基础，
+     也是本项目肝脏页的跨器官连接点。</p>
+
+  <div class="warnbox">
+    <b>受试者不是 s0688 以外的那一位。</b>本项目的心脏、肝脏、肾脏、小肠四页都用
+    TotalSegmentator 受试者 <code>s0236</code>。食管页<b>没有</b>沿用它：s0236 的扫描视野是腹部，
+    <code>trachea</code>、<code>thyroid_gland</code> 以及全部颈椎与上胸椎标签<b>为空</b>，
+    <code>esophagus</code> 标签只有 4443 体素（15.00 mL），仅覆盖远段。它在本器官自己的六条
+    筛选标准下直接不及格。因此本页改用 <code>s0688</code>，
+    <b>跨器官解剖一致性在食管–胃交界处并不成立</b>，这一点写进了 GEOMETRY_PROVENANCE.md。
+  </div>
+
+  <h2>实测 vs 已发表参考</h2>
+  <div class="tablewrap"><table class="cards" id="t-measure"><thead>
+    <tr><th>量</th><th>实测</th><th>已发表参考</th><th>判定</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>三处生理性狭窄 —— 从该受试者自己的半径剖面上找</h2>
+  <p>方法：对内切半径剖面做 21 mm 三次 Savitzky–Golay 平滑后取局部极小值
+     （突出度 ≥ 0.25 mm，间距 ≥ 20 mm）。狭窄 1 与 2 实测到了；经典教科书合并为"主动脉–支气管"
+     的单一狭窄，在这位受试者身上<b>分解成相距 41 mm 的两个独立极小值</b>。
+     <b>膈食管裂孔处的第三个狭窄没有测到</b> —— TotalSegmentator v2 没有膈、膈脚或裂孔标签。</p>
+  <div class="tablewrap"><table class="cards" id="t-constr"><thead>
+    <tr><th>狭窄</th><th>弧长 / 椎体</th><th>内切直径</th><th>突出度</th><th>邻接</th><th>状态</th></tr>
+    </thead><tbody></tbody></table></div>
+
+  <h2>肌层组成沿长轴的转变</h2>
+  <p><span class="m-str">■ 上 1/3 骨骼肌（横纹肌）</span> — 疑核经迷走神经支配，吞咽起始受随意控制，
+     蠕动由中枢程序顺序激活运动神经元产生。
+     <span class="m-mix">■ 中 1/3 混合</span> — 过渡区，高分辨率测压上可重复看到传播减速与压力低谷。
+     <span class="m-smo">■ 下 1/3 平滑肌</span> — 迷走神经背核与肌间神经丛支配，
+     蠕动由内在肌间环路产生：切断迷走神经后远段蠕动仍在，肌间神经元丧失（贲门失弛缓症）则消失。
+     三分法是<b>教学简化</b>，不是测量：已发表的细分是近端约 5% 纯横纹肌、过渡区约占全长 35–40%、
+     远端约 50–60% 纯平滑肌。本页按三分法着色并标注，<code>contour_anchored:false</code>。</p>
+
+  <h2>四层管壁 —— 外膜，不是浆膜</h2>
+  <div class="tablewrap"><table class="cards" id="t-wall"><thead>
+    <tr><th>层</th><th>内容</th><th>厚度（已发表）</th></tr></thead><tbody></tbody></table></div>
+  <div class="okbox">
+    <b>两个必须记住的对比。</b>其一，上皮是<b>非角化复层鳞状上皮</b>，而胃、小肠、结肠都是<b>单层柱状上皮</b>；
+    两者在胃食管交界处以 Z 线突变交接。其二，胸段与颈段食管的外覆是<b>外膜（adventitia）</b>，
+    <b>没有浆膜、没有间皮</b>。这是外科学上的关键差异：食管吻合口漏发生率高于胃肠吻合、
+    肿瘤早期即可达食管周围组织、T 分期里没有"穿透浆膜"这一级 —— 都源于此。
+    只有腹段食管前面覆有腹膜。
+  </div>
+
+  <h2>血管树与零逆流审计</h2>
+  <div class="tablewrap"><table class="cards" id="t-vessel"><thead>
+    <tr><th>树</th><th>段/分叉/终端</th><th>主干直径</th><th>已发表</th><th>判定</th><th>Murray 残差</th></tr>
+    </thead><tbody></tbody></table></div>
+
+  <h2>门-体静脉吻合与栅栏区</h2>
+  <p>食管下段黏膜下静脉丛是<b>门静脉系</b>（胃左静脉 → 门静脉）与<b>体循环系</b>（奇静脉 → 上腔静脉）
+     的分水岭。正常时该丛向下引流入胃左静脉；门脉压超过体循环静脉压时胃左静脉血流<b>反向</b>（离肝），
+     经栅栏区纵行通道向上减压入奇静脉，通道随之扩张为<b>食管静脉曲张</b>。
+     页面上的"门脉高压"开关切换的是两套预先烘焙的路径，<b>不是压力–流量网络求解</b>；
+     栅栏区流速 8 mm/s 是<b>声明值</b>，未检索到已发表的栅栏区流速。</p>
+
+  <h2>药理学定位 —— 诚实版本</h2>
+  <div class="missbox">
+    <b>食管不是药物吸收部位。</b>正常传输只有几秒，表面积约 0.02 m²（小肠约 200 m²），
+    上皮是多层鳞状。本项目的四种探针药（咪达唑仑 / CYP3A4、右美沙芬 / CYP2D6、
+    二甲双胍 / OCT2-MATE、非索非那定 / P-gp-OATP）在食管<b>没有任何 ADME 环节</b>。
+    本页不画吸收箭头、不报通量、<b>不使用任何标定系数</b>。
+  </div>
+  <p>食管真正的药理学意义是<b>药物性食管炎</b>：药片滞留后在无黏液毯保护的鳞状上皮上释放出高局部浓度。
+     滞留最常发生在本页实测到的那几个狭窄处和心后压迹处。</p>
+  <div class="tablewrap"><table class="cards" id="t-pill"><thead>
+    <tr><th>药物</th><th>类别</th><th>机制</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>分子层</h2>
+  <div id="mol-status"></div>
+  <div class="tablewrap"><table class="cards" id="t-strata"><thead>
+    <tr><th>鳞状上皮分层</th><th>Census 细胞类型</th><th>细胞数</th><th>分化程序</th></tr>
+    </thead><tbody></tbody></table></div>
+  <p>只有同时满足<b>（一）在本项目固定的 61 基因 ADME 面板里</b>、<b>（二）在极性上皮中有已记载定位</b>
+     的分子才被画在膜面上。这个交集是 <b>3 个</b>，不是 8 个。
+     面板里其余 58 个基因在 CSV 源表中照常报实测值，但<b>不给膜面</b> ——
+     在复层鳞状上皮里它们的极性未经确立，<b>把转运体画错膜面比不画更糟</b>。</p>
+  <div class="tablewrap"><table class="cards" id="t-local"><thead>
+    <tr><th>基因</th><th>膜面</th><th>证据与实测值</th></tr></thead><tbody></tbody></table></div>
+  <div class="missbox">
+    <b>未达成：5 个最该画的分子不在面板里。</b>在食管鳞状上皮中定位证据最好的几个分子 ——
+    ABCC1、SLC16A1、ALDH3A1、ADH1C、CYP2C18 —— <b>没有一个在本项目固定的 61 基因面板中</b>
+    （该面板取自 kidney_expression.json 的 genes 字段，跨器官固定、顺序不改）。
+    因此它们在本页<b>未被测量、也未被绘制</b>。列在下面是为了让这个缺口可见，而不是悄悄略过。
+  </div>
+  <div class="tablewrap"><table class="cards" id="t-oop"><thead>
+    <tr><th>基因</th><th>在鳞状上皮的定位记载</th></tr></thead><tbody></tbody></table></div>
+  <h2>四种探针药在食管鳞状上皮的实测表达</h2>
+  <p>这不是一个"为了凑代谢器官"的说法，而是实测结果：四条探针药通路在食管复层上皮里<b>几乎不存在</b>。</p>
+  <div class="tablewrap"><table class="cards" id="t-probe"><thead>
+    <tr><th>基因（探针药）</th><th>复层上皮细胞 n=51307</th><th>基底细胞 n=7239</th></tr>
+    </thead><tbody></tbody></table></div>
+  <p>作为对照，同一面板里 GSTP1 在复层上皮细胞中是 <b>3.5619（98.7%）</b>。
+     也就是说食管上皮<b>有</b>一套很强的 II 相解毒程序，但<b>没有</b>探针药所需的 I 相氧化酶与摄取/外排转运体。</p>
+
+  <h2>数据来源与诚实声明</h2>
+  <p class="sub">
+    几何：TotalSegmentator dataset v2.0.1（Wasserthal J. 等），doi:10.5281/zenodo.10047292，CC-BY-4.0，
+    受试者 s0688。仅通过 HTTP range 取出掩膜成员，<b>从未下载 CT 影像本体</b>，
+    本项目不含任何基于灰度的内容。<br>
+    单细胞：CELLxGENE Census 2025-11-08，<code>tissue_general == 'esophagus'</code>，
+    <code>is_primary_data == True</code>。<br>
+    搏动：本项目心脏模型输出（CO 5.1771 L/min、MAP 94.4872 mmHg、HR 64.45 bpm）。
+    其上游心率数据是 <b>PhysioNet nsrdb 记录 16265 的公开占位数据，不是使用者本人的数据</b>
+    （<code>is_user_personal_data = false</code>）。<br>
+    详见 <a class="lk" href="esophagus3d/ACCEPTANCE.md">ACCEPTANCE.md</a> 与
+    <a class="lk" href="esophagus3d/GEOMETRY_PROVENANCE.md">GEOMETRY_PROVENANCE.md</a>。
+  </p>
+</main>
+
+<script type="module">
+import { createEsophagusScene } from './esophagus3d/js/main.js';
+const errEl = document.getElementById('err');
+const show = (e) => { errEl.style.display='block';
+  errEl.textContent = (e && e.stack ? e.stack : String(e)) + '\n\nstage: ' + (window.__eso3dStage||'?'); };
+window.addEventListener('error', ev => show(ev.error || ev.message));
+window.addEventListener('unhandledrejection', ev => show(ev.reason));
+
+const BASE = './esophagus3d/assets/';
+const J = async f => (await fetch(BASE+f)).json();
+const td = (v,label) => `<td data-label="${label}">${v}</td>`;
+const fill = (id, rows) => {
+  const tb = document.querySelector('#'+id+' tbody');
+  const hs = [...document.querySelectorAll('#'+id+' thead th')].map(h=>h.textContent);
+  tb.innerHTML = rows.map(r => '<tr>'+r.map((c,i)=>td(c,hs[i]||'')).join('')+'</tr>').join('');
+};
+
+(async () => {
+  let api;
+  try {
+    api = await createEsophagusScene({ container: document.getElementById('app'), assetBase: BASE, view: 'organ' });
+  } catch (e) { show(e); }
+
+  const [geo, ves, model, cl, flow] = await Promise.all(
+    ['geometry_report.json','esophagus_vessels.json','esophagus_model.json',
+     'esophagus_centreline.json','flow_report.json'].map(J));
+
+  const m = geo.measured;
+  fill('t-measure', [
+    ['中心线长度', m.centreline_length_cm.toFixed(2)+' cm', '18–26 cm', '<b style="color:#f5b0a0">超范围 +17.5%</b>'],
+    ['迂曲度', m.tortuosity.toFixed(3), '≤1.12（本页筛选带）', '合格'],
+    ['椎体跨度', m.cranial_vertebral_level+' → '+m.caudal_vertebral_level, 'C6 → T10/T11', '远端偏低（T12）'],
+    ['内切直径 中位', m.inscribed_diameter_mm.median.toFixed(2)+' mm', '13–25 mm（外径）',
+     '低于范围，但内切球≠外径，见下'],
+    ['内切直径 最大', m.inscribed_diameter_mm.max.toFixed(2)+' mm', '13–25 mm（外径）', '在范围内'],
+    ['标签体积', m.esophagus_label_mL.toFixed(2)+' mL', '—', '实测'],
+    ['连通分量', String(m.connected_components), '1', '合格'],
+    ['至胃标签最小表面间隙', m.min_surface_gap_to_stomach_mm.toFixed(2)+' mm', '—', '贲门锚定成立'],
+    ['至主动脉最小距离', m.min_distance_to_aorta_mm.toFixed(2)+' mm', '—', '实测'],
+    ['至气管最小距离', m.min_distance_to_trachea_mm.toFixed(2)+' mm', '—', '实测'],
+    ['隆突 / 主动脉弓顶', 'T6 / T4', 'T4–T5 / T4', '隆突偏低一节'],
+    ['三角面总数', String(geo.mesh_totals.faces)+'（食管 '+geo.mesh_totals.esophagus_faces+'）',
+     '13万–16万', geo.mesh_totals.faces_in_gate ? '合格' : '不合格'],
+    ['glb 体积', geo.mesh_totals.glb_MB.toFixed(2)+' MB', '≤ 7 MB', '合格']
+  ]);
+
+  const cons = cl.constrictions.map(c => [
+    c.id.replace(/_/g,' '),
+    c.arc_mm.toFixed(1)+' mm / '+c.vertebral_level,
+    c.inscribed_diameter_mm.toFixed(2)+' mm',
+    c.prominence_mm.toFixed(2)+' mm',
+    '主动脉 '+c.distance_to_aorta_mm.toFixed(1)+' · 气管 '+c.distance_to_trachea_mm.toFixed(1)+' mm',
+    c.status]);
+  const nm3 = cl.constriction_not_measured;
+  cons.push(['constriction 3 diaphragmatic hiatus', nm3.arc_mm.toFixed(1)+' mm / T10',
+    (2*nm3.measured_inscribed_radius_mm).toFixed(2)+' mm', '无局部极小值', '—',
+    '<b style="color:#f5b0a0">未测到（无膈标签）</b>']);
+  fill('t-constr', cons);
+
+  fill('t-wall', model.wall_layers.map(l =>
+    [l.zh+' '+l.name, l.zh_sub, l.thickness_mm[0]+'–'+l.thickness_mm[1]+' mm']));
+
+  const vr = await J('vessel_report.json');
+  fill('t-vessel', Object.keys(ves.trees).map(n => {
+    const r = ves.trees[n].report, cv = vr.calibre_verdict[n];
+    return [n.replace(/_/g,' '),
+      r.segments+' / '+r.bifurcations+' / '+r.terminals,
+      cv.trunk_diameter_mm.toFixed(2)+' mm',
+      cv.published_trunk_diameter_mm.join('–')+' mm',
+      cv.verdict==='IN RANGE' ? '在范围内' : '<b style="color:#f5b0a0">'+cv.verdict+'</b>',
+      String(r.murray_max_relative_residual)];
+  }));
+
+  const PILLS = [
+    ['多西环素 doxycycline','四环素类','直接酸性损伤 —— 溶解中的胶囊局部 pH≈3；报告最多的致病药'],
+    ['阿仑膦酸钠 alendronate','双膦酸盐','对鳞状黏膜直接腐蚀；"200 mL 水、直立 30 分钟"的用药说明正为此而设'],
+    ['氯化钾 potassium chloride','电解质','高渗性局部坏死；蜡基质剂型滞留后缓慢释放'],
+    ['硫酸亚铁 ferrous sulphate','矿物质','腐蚀性，黏膜内铁沉积'],
+    ['非甾体抗炎药 NSAIDs','NSAID','局部酸捕获 + 前列腺素抑制'],
+    ['奎尼丁 quinidine','抗心律失常','直接黏膜损伤'],
+    ['抗坏血酸 ascorbic acid','维生素','溶解中片剂的低 pH']];
+  fill('t-pill', PILLS);
+
+  const st = document.getElementById('mol-status');
+  let expr=null; try { expr = await J('esophagus_expression.json'); } catch(e) {}
+  if (expr) {
+    let prov=null; try { prov = await J('esophagus_census_provenance.json'); } catch(e) {}
+    st.innerHTML = '<div class="okbox">CELLxGENE Census <b>'+expr.census_version+'</b> · '+
+      'tissue_general = esophagus · is_primary_data = True · '+
+      '<b>'+(expr.n_cells_used??'—')+'</b> 个细胞 · <b>'+expr.cell_types.length+'</b> 个细胞类型 · '+
+      '<b>'+(expr.n_donors??'—')+'</b> 位供体 · <b>'+(expr.n_datasets_used??'—')+'</b> 个数据集 · '+
+      '<b>'+expr.genes.length+'</b> 个 ADME 基因' +
+      (prov ? ' · 读取失败区块 <b>'+prov.blocks_failed+'/'+prov.blocks+'</b>' : '') + '</div>';
+    const SM = [
+      ['基底层 basal', ['basal cell','cycling basal cell'], 'KRT5/KRT14 · TP63 · 唯一增殖层'],
+      ['棘层/副基底层 suprabasal', [], 'KRT4/KRT13 · 桥粒丰富 · 分化中'],
+      ['表层 superficial', [], '扁平 · 非角化 · 紧密连接 · 通透屏障'],
+      ['复层上皮（Census 未分层）', ['stratified epithelial cell','epithelial cell of esophagus','keratinocyte'],
+       '同时涵盖棘层与表层，Census 不加区分']];
+    const idxOf = {}; expr.cell_types.forEach((c,i)=>{ idxOf[c]=i; });
+    const rows = SM.map(([zh, match, prog]) => {
+      const hit = match.filter(m => m in idxOf).map(m => [m, expr.n_cells[idxOf[m]]]);
+      return [zh,
+              hit.length ? hit.map(h=>`${h[0]} (${h[1]})`).join('、')
+                : '<b style="color:#f5b0a0">Census 的 esophagus 组织词下没有对应的 cell_type 标签</b>',
+              hit.length ? String(hit.reduce((s,h)=>s+h[1],0)) : '—', prog];
+    });
+    fill('t-strata', rows);
+    const PROBE = [['CYP3A4','咪达唑仑'],['CYP2D6','右美沙芬'],['SLC22A2','二甲双胍 OCT2'],
+                   ['SLC47A1','二甲双胍 MATE1'],['SLCO1B1','非索非那定 OATP1B1'],['ABCB1','非索非那定 P-gp']];
+    const gIx = {}; expr.genes.forEach((g,i)=>{ gIx[g]=i; });
+    const cell = (ct, g) => {
+      if (!(ct in idxOf) || !(g in gIx)) return '—';
+      const i = idxOf[ct], k = gIx[g];
+      return `${expr.expr[i][k].toFixed(4)} <span style="color:var(--dim)">(${expr.pct[i][k].toFixed(2)}%)</span>`;
+    };
+    fill('t-probe', PROBE.map(([g,drug]) => [
+      `${g} <span style="color:var(--dim)">${drug}</span>`,
+      cell('stratified epithelial cell', g), cell('basal cell', g)]));
+  } else {
+    st.innerHTML = '<div class="missbox"><b>分子层缺失。</b>'+
+      'esophagus_expression.json 未能生成。页面不以组织平均值或其它器官的值替代；'+
+      '失败原因与已尝试的路线记录在 ACCEPTANCE.md。</div>';
+    fill('t-strata', [['—','分子层缺失','—','—']]);
+  }
+
+  const LOC = [
+    ['ABCB1 (P-gp)','顶侧 apical',
+     '在极性上皮中 P-gp 一律位于顶侧。实测：复层上皮细胞 0.0002（0.02% 的细胞）、基底细胞 0.0023（0.10%）—— ' +
+     '基本不表达。画在顶侧是因为"若表达则在此"，同时标出实测值；<b>不声称任何外排功能</b>。'],
+    ['ABCC3 (MRP3)','基底侧 basolateral',
+     '上皮中普遍为基底侧。实测：复层上皮细胞 0.0333（4.1%）、基底细胞 0.0704（5.0%）—— 低。'],
+    ['GSTP1','胞质 cytosolic（无膜面）',
+     '胞质酶，谈不上膜面。实测：复层上皮细胞 <b>3.5619（98.7% 的细胞）</b> —— ' +
+     '<b>是 61 基因面板里在该组织中最高的一个，高于 GAPDH</b>。经典鳞状 II 相标志，实测把它坐实了。']];
+  fill('t-local', LOC);
+  const OOP = [
+    ['ABCC1 (MRP1)','上皮中普遍为基底侧'],
+    ['SLC16A1 (MCT1)','食管上皮唯一有良好记载的单羧酸通路'],
+    ['ALDH3A1','角膜与食管鳞状上皮高表达；醛解毒，与乙醇/乙醛损伤相关'],
+    ['ADH1C','胞质乙醇脱氢酶；食管黏膜表达是局部乙醛生成的基础'],
+    ['CYP2C18','唯一报道在鳞状上皮（含食管）优势表达的 CYP']];
+  fill('t-oop', OOP);
+
+  if (!api) return;
+  const B = id => document.getElementById(id);
+  const views = ['organ','vessels','section','micro','molecular'];
+  for (const v of views) B('v-'+v).onclick = () => {
+    api.setView(v); views.forEach(x => B('v-'+x).classList.toggle('on', x===v));
+  };
+  B('b-swallow').onclick = () => api.swallow();
+  B('b-secondary').onclick = () => api.secondary();
+  let artOn = true, veinOn = true, varix = false;
+  const ARTS = Object.keys(ves.trees).filter(n=>n.startsWith('A'));
+  const VNS  = Object.keys(ves.trees).filter(n=>n.startsWith('V'));
+  B('b-art').onclick = () => { artOn=!artOn; ARTS.forEach(n=>api.setTreeVisible(n,artOn));
+    B('b-art').classList.toggle('on',artOn); };
+  B('b-vein').onclick = () => { veinOn=!veinOn; VNS.forEach(n=>api.setTreeVisible(n,veinOn));
+    B('b-vein').classList.toggle('on',veinOn); };
+  B('b-varix').onclick = () => { varix=!varix; api.setVarices(varix);
+    B('b-varix').classList.toggle('hot',varix); };
+  B('rate').oninput = e => { const x=parseFloat(e.target.value);
+    api.setPlaybackRate(x); B('rate-v').innerHTML='<code>'+x.toFixed(2)+'×</code>'; };
+  B('panelbtn').onclick = () => B('ui').classList.toggle('collapsed');
+})();
+</script>
+</body>
+</html>
