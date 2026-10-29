@@ -1,0 +1,292 @@
+{
+ "fields": {
+  "serosa": {
+   "vertices": 25748,
+   "faces": 51492,
+   "region_vertex_counts": {
+    "1": 1969,
+    "2": 7777,
+    "3": 5890,
+    "4": 8618,
+    "5": 1494
+   },
+   "s_norm_range": [
+    0.0,
+    1.0
+   ],
+   "concavity_mm_range": [
+    -1.182,
+    2.411
+   ],
+   "luminal_pH_range": [
+    1.8,
+    4.5
+   ]
+  },
+  "mucosa": {
+   "vertices": 15002,
+   "faces": 30000,
+   "region_vertex_counts": {
+    "1": 1051,
+    "2": 4252,
+    "3": 3302,
+    "4": 5591,
+    "5": 806
+   },
+   "s_norm_range": [
+    0.019,
+    0.982
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    1.8,
+    4.5
+   ]
+  },
+  "cut_wall": {
+   "vertices": 9002,
+   "faces": 18000,
+   "region_vertex_counts": {
+    "1": 765,
+    "2": 1411,
+    "3": 3284,
+    "4": 2677,
+    "5": 865
+   },
+   "s_norm_range": [
+    0.046,
+    1.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    1.8,
+    4.5
+   ]
+  },
+  "cut_lumen": {
+   "vertices": 5002,
+   "faces": 10000,
+   "region_vertex_counts": {
+    "1": 305,
+    "2": 1283,
+    "3": 1445,
+    "4": 1661,
+    "5": 308
+   },
+   "s_norm_range": [
+    0.046,
+    0.982
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    1.8,
+    4.5
+   ]
+  },
+  "esophagus": {
+   "vertices": 2011,
+   "faces": 4000,
+   "region_vertex_counts": {
+    "0": 2011
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  },
+  "duodenum": {
+   "vertices": 3002,
+   "faces": 6000,
+   "region_vertex_counts": {
+    "0": 3002
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  },
+  "liver": {
+   "vertices": 5496,
+   "faces": 11000,
+   "region_vertex_counts": {
+    "0": 5496
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  },
+  "spleen": {
+   "vertices": 3002,
+   "faces": 6000,
+   "region_vertex_counts": {
+    "0": 3002
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  },
+  "pancreas": {
+   "vertices": 2502,
+   "faces": 5000,
+   "region_vertex_counts": {
+    "0": 2502
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  },
+  "aorta": {
+   "vertices": 2252,
+   "faces": 4500,
+   "region_vertex_counts": {
+    "0": 2252
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  },
+  "portal_splenic_vein": {
+   "vertices": 2252,
+   "faces": 4500,
+   "region_vertex_counts": {
+    "0": 2252
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  },
+  "colon": {
+   "vertices": 3002,
+   "faces": 6000,
+   "region_vertex_counts": {
+    "0": 3002
+   },
+   "s_norm_range": [
+    0.0,
+    0.0
+   ],
+   "concavity_mm_range": [
+    0.0,
+    0.0
+   ],
+   "luminal_pH_range": [
+    7.4,
+    7.4
+   ]
+  }
+ },
+ "glb_bytes": 5333940,
+ "glb_mb": 5.09,
+ "glb_budget_mb": 7.0,
+ "glb_within_budget": true,
+ "glb_total_faces": 156492,
+ "glb_total_vertices": 78273,
+ "field_layout": {
+  "_FIELD0": [
+   "region_id",
+   "s_norm",
+   "wall_depth_01",
+   "concavity"
+  ],
+  "_FIELD1": [
+   "luminal_pH",
+   "oxyntic_density_01",
+   "theta",
+   "surface_class"
+  ]
+ },
+ "region_ids": {
+  "0": "neighbour organ",
+  "1": "cardia",
+  "2": "fundus",
+  "3": "body",
+  "4": "antrum",
+  "5": "pylorus"
+ },
+ "constructed_vs_measured": {
+  "measured_on_the_label": [
+   "s_norm",
+   "wall_depth_01 (as a distance field; the wall THICKNESS it is divided by is published)",
+   "concavity",
+   "region_id for the fundus boundary and the body/antrum boundary"
+  ],
+  "constructed": [
+   "luminal_pH",
+   "oxyntic_density_01",
+   "region_id for the cardia collar and the pyloric canal"
+  ],
+  "luminal_pH_source": "fasted human gastric luminal pH 1.5-3.5 with a proximal-to-distal rise toward the pylorus and a near-neutral cardia; regional values assigned from that published range, NOT measured on this subject",
+  "oxyntic_density_source": "textbook regional gastric histology: oxyntic (parietal-cell) mucosa in fundus and body, pyloric/gastrin glands in the antrum, cardiac mucous glands at the cardia",
+  "no_calibration": "no coefficient anywhere on this page converts expression or density into acid flux; the mapping is qualitative"
+ }
+}

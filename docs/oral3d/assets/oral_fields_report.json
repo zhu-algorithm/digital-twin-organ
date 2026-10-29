@@ -1,0 +1,429 @@
+{
+ "parts": {
+  "brachiocephalic_vein_left": {
+   "faces": 1400,
+   "vertices": 702,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "brachiocephalic_vein_right": {
+   "faces": 1200,
+   "vertices": 602,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "buccal_left": {
+   "faces": 1470,
+   "vertices": 792,
+   "region_code": 5,
+   "kinematic_group": 0.0,
+   "mucosa_region": "buccal",
+   "epithelium_mid_um": 650.0,
+   "keratinised": false
+  },
+  "buccal_right": {
+   "faces": 1470,
+   "vertices": 792,
+   "region_code": 5,
+   "kinematic_group": 0.0,
+   "mucosa_region": "buccal",
+   "epithelium_mid_um": 650.0,
+   "keratinised": false
+  },
+  "common_carotid_artery_left": {
+   "faces": 1300,
+   "vertices": 652,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "common_carotid_artery_right": {
+   "faces": 1300,
+   "vertices": 652,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "esophagus": {
+   "faces": 2600,
+   "vertices": 1302,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "floor_of_mouth": {
+   "faces": 1326,
+   "vertices": 720,
+   "region_code": 8,
+   "kinematic_group": 4.0,
+   "mucosa_region": "sublingual",
+   "epithelium_mid_um": 150.0,
+   "keratinised": false
+  },
+  "gingiva_lower": {
+   "faces": 1840,
+   "vertices": 1044,
+   "region_code": 2,
+   "kinematic_group": 5.0,
+   "mucosa_region": "gingiva",
+   "epithelium_mid_um": 215.0,
+   "keratinised": true
+  },
+  "gingiva_upper": {
+   "faces": 1952,
+   "vertices": 1107,
+   "region_code": 2,
+   "kinematic_group": 0.0,
+   "mucosa_region": "gingiva",
+   "epithelium_mid_um": 215.0,
+   "keratinised": true
+  },
+  "hard_palate": {
+   "faces": 6882,
+   "vertices": 3584,
+   "region_code": 1,
+   "kinematic_group": 0.0,
+   "mucosa_region": "hard_palate",
+   "epithelium_mid_um": 250.0,
+   "keratinised": true
+  },
+  "heart": {
+   "faces": 3600,
+   "vertices": 1800,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "labial": {
+   "faces": 1170,
+   "vertices": 640,
+   "region_code": 6,
+   "kinematic_group": 0.0,
+   "mucosa_region": "labial",
+   "epithelium_mid_um": 550.0,
+   "keratinised": false
+  },
+  "mandible": {
+   "faces": 22000,
+   "vertices": 11000,
+   "region_code": 0,
+   "kinematic_group": 1.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "masseter_left": {
+   "faces": 1280,
+   "vertices": 642,
+   "region_code": 0,
+   "kinematic_group": 7.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "masseter_right": {
+   "faces": 1280,
+   "vertices": 642,
+   "region_code": 0,
+   "kinematic_group": 7.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "micro_acinus": {
+   "faces": 2648,
+   "vertices": 1354,
+   "region_code": 0,
+   "kinematic_group": 6.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "micro_mucosa_buccal": {
+   "faces": 36,
+   "vertices": 24,
+   "region_code": 0,
+   "kinematic_group": 6.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "micro_mucosa_hard_palate": {
+   "faces": 48,
+   "vertices": 32,
+   "region_code": 0,
+   "kinematic_group": 6.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "micro_mucosa_sublingual": {
+   "faces": 36,
+   "vertices": 24,
+   "region_code": 0,
+   "kinematic_group": 6.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "micro_papilla": {
+   "faces": 2624,
+   "vertices": 1366,
+   "region_code": 0,
+   "kinematic_group": 6.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "midface": {
+   "faces": 14000,
+   "vertices": 7002,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "papillae_circumvallate": {
+   "faces": 3528,
+   "vertices": 1800,
+   "region_code": 3,
+   "kinematic_group": 2.0,
+   "mucosa_region": "tongue_dorsum",
+   "epithelium_mid_um": 700.0,
+   "keratinised": true
+  },
+  "papillae_filiform": {
+   "faces": 10800,
+   "vertices": 7200,
+   "region_code": 3,
+   "kinematic_group": 2.0,
+   "mucosa_region": "tongue_dorsum",
+   "epithelium_mid_um": 700.0,
+   "keratinised": true
+  },
+  "papillae_foliate": {
+   "faces": 432,
+   "vertices": 336,
+   "region_code": 3,
+   "kinematic_group": 2.0,
+   "mucosa_region": "tongue_dorsum",
+   "epithelium_mid_um": 700.0,
+   "keratinised": true
+  },
+  "papillae_fungiform": {
+   "faces": 5600,
+   "vertices": 3360,
+   "region_code": 3,
+   "kinematic_group": 2.0,
+   "mucosa_region": "tongue_dorsum",
+   "epithelium_mid_um": 700.0,
+   "keratinised": true
+  },
+  "parotid_left": {
+   "faces": 5120,
+   "vertices": 2562,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "parotid_right": {
+   "faces": 5120,
+   "vertices": 2562,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "soft_palate": {
+   "faces": 2664,
+   "vertices": 1456,
+   "region_code": 4,
+   "kinematic_group": 3.0,
+   "mucosa_region": "soft_palate",
+   "epithelium_mid_um": 200.0,
+   "keratinised": false
+  },
+  "sublingual_left": {
+   "faces": 1280,
+   "vertices": 642,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "sublingual_right": {
+   "faces": 1280,
+   "vertices": 642,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "submandibular_left": {
+   "faces": 5120,
+   "vertices": 2562,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "submandibular_right": {
+   "faces": 5120,
+   "vertices": 2562,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "superior_vena_cava": {
+   "faces": 1400,
+   "vertices": 702,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "teeth_lower": {
+   "faces": 5120,
+   "vertices": 2592,
+   "region_code": 0,
+   "kinematic_group": 5.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "teeth_upper": {
+   "faces": 5120,
+   "vertices": 2592,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "temporalis_left": {
+   "faces": 1280,
+   "vertices": 642,
+   "region_code": 0,
+   "kinematic_group": 7.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "temporalis_right": {
+   "faces": 1280,
+   "vertices": 642,
+   "region_code": 0,
+   "kinematic_group": 7.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "thyroid_gland": {
+   "faces": 1600,
+   "vertices": 802,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "tongue": {
+   "faces": 20160,
+   "vertices": 10082,
+   "region_code": 3,
+   "kinematic_group": 2.0,
+   "mucosa_region": "tongue_dorsum",
+   "epithelium_mid_um": 700.0,
+   "keratinised": true
+  },
+  "trachea": {
+   "faces": 2600,
+   "vertices": 1304,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "uvula": {
+   "faces": 140,
+   "vertices": 72,
+   "region_code": 4,
+   "kinematic_group": 3.0,
+   "mucosa_region": "soft_palate",
+   "epithelium_mid_um": 200.0,
+   "keratinised": false
+  },
+  "vertebrae_C1": {
+   "faces": 1200,
+   "vertices": 598,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "vertebrae_C2": {
+   "faces": 1200,
+   "vertices": 600,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  },
+  "vertebrae_C3": {
+   "faces": 1200,
+   "vertices": 600,
+   "region_code": 0,
+   "kinematic_group": 0.0,
+   "mucosa_region": null,
+   "epithelium_mid_um": null,
+   "keratinised": false
+  }
+ },
+ "glb_bytes": 5671944,
+ "glb_mb": 5.409,
+ "glb_total_faces": 159826,
+ "glb_total_vertices": 83387,
+ "glb_parts": 45,
+ "field_semantics": {
+  "_FIELD0": "(region_code, keratinised, epithelium_thickness_um/1000, permeability_rank/8)",
+  "_FIELD1": "(u_along_tongue_axis, v_height_in_part, part_id, kinematic_group)",
+  "kinematic_groups": {
+   "0": "static",
+   "1": "mandible (rigid)",
+   "2": "tongue",
+   "3": "soft palate + uvula",
+   "4": "floor of mouth",
+   "5": "rides with mandible",
+   "6": "micro-anatomy",
+   "7": "masticatory muscle"
+  },
+  "permeability_rank_note": "an ORDERING ONLY (1 least .. 8 most permeable). There is no permeability coefficient and no flux calibration anywhere in this project."
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "tissue_general": "stomach",
+ "census_version": "2025-11-08",
+ "n_cells_total": 557791,
+ "n_cells_used": 557791,
+ "n_donors": 141,
+ "n_datasets": 8,
+ "n_cell_types": 131,
+ "n_genes_requested": 61,
+ "n_genes_resolved": 61,
+ "extra_genes_requested": [
+  "ATP4A",
+  "ATP4B"
+ ],
+ "extra_genes_resolved": [
+  "ATP4A",
+  "ATP4B"
+ ],
+ "genes_missing_from_census": [],
+ "blocks": 4,
+ "block_size": 150000,
+ "blocks_failed": 0,
+ "failed_block_indices": [],
+ "wall_seconds": 9890.1,
+ "assays": {
+  "10x 3' v2": 288423,
+  "10x 5' v1": 147240,
+  "10x 3' v3": 56609,
+  "10x 5' v2": 24165,
+  "microwell-seq": 22577,
+  "sci-RNA-seq3": 12106,
+  "10x 5' transcription profiling": 4812,
+  "10x gene expression flex": 1485,
+  "Smart-seq2": 374
+ },
+ "tissue_labels": {
+  "body of stomach": 262629,
+  "stomach": 203926,
+  "pyloric antrum": 35450,
+  "cardia of stomach": 18832,
+  "stomach smooth muscle": 16497,
+  "pylorus": 10418,
+  "mucosa of stomach": 7063,
+  "epithelium of stomach": 2684,
+  "muscularis mucosae of stomach": 292
+ },
+ "disease": {
+  "normal": 284282,
+  "gastric cancer": 217923,
+  "gastric intestinal metaplasia": 27462,
+  "gastritis": 26639,
+  "diffuse large B-cell lymphoma": 1485
+ },
+ "is_primary_data": true,
+ "cells_per_donor_median": 0.0,
+ "access_route": "contiguous sorted soma_joinid blocks of 150000 over one open SOMA handle",
+ "repair": {
+  "blocks_repaired": [
+   3
+  ],
+  "first_pass_failure": "block 4/4 failed on a transient S3 read timeout (curlCode 28, 10804 ms) in the first pass",
+  "first_pass_coverage": "450000/557791",
+  "first_pass_bias": "the first pass divided by the FULL per-cell-type cell count while the sums covered only 80.7% of cells, so every expression value was biased low; this repass fixes that",
+  "method": "partial sums reconstructed exactly from the written file (sum_log = expr*n_cells, cnt_nz = pct/100*n_cells), the missing joinid range re-read, contributions added, all outputs rewritten",
+  "retry_timeouts_raised_to_ms": 300000,
+  "repair_wall_seconds": 4906.7
+ }
+}

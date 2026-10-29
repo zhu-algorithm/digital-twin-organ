@@ -1,0 +1,2234 @@
+{
+ "salivary_glands": {
+  "source": "Humphrey SP & Williamson RT, A review of saliva: normal composition, flow, and function. J Prosthet Dent 2001;85:162-9; Dawes C, in Saliva and Oral Health, 2nd ed. 1996",
+  "whole_mouth_flow_mL_min": {
+   "unstimulated": [
+    0.25,
+    0.35
+   ],
+   "stimulated": [
+    1.5,
+    2.0
+   ],
+   "sleep": [
+    0.0,
+    0.1
+   ]
+  },
+  "daily_volume_mL": [
+   500,
+   1500
+  ],
+  "pH": {
+   "unstimulated": [
+    6.2,
+    7.4
+   ],
+   "stimulated": [
+    7.0,
+    7.8
+   ],
+   "note": "the degree of ionisation of a weak base or weak acid at the mucosal surface follows from this pH through the Henderson-Hasselbalch relation. This project does NOT compute an absorbed fraction from it."
+  },
+  "glands": {
+   "parotid": {
+    "type": "serous",
+    "volume_mL": [
+     14,
+     35
+    ],
+    "duct": "parotid (Stensen) duct",
+    "duct_length_mm": [
+     40,
+     70
+    ],
+    "duct_diameter_mm": [
+     1.0,
+     3.0
+    ],
+    "ostium": "buccal mucosa opposite the maxillary second molar (FDI 17 / 27)",
+    "share_unstimulated": 0.23,
+    "share_stimulated": 0.5,
+    "amylase": "high"
+   },
+   "submandibular": {
+    "type": "mixed (seromucous, serous-predominant)",
+    "volume_mL": [
+     5,
+     12
+    ],
+    "duct": "submandibular (Wharton) duct",
+    "duct_length_mm": [
+     40,
+     60
+    ],
+    "duct_diameter_mm": [
+     1.5,
+     3.0
+    ],
+    "ostium": "sublingual caruncle, beside the lingual frenulum behind FDI 41 / 31",
+    "share_unstimulated": 0.65,
+    "share_stimulated": 0.35,
+    "amylase": "moderate"
+   },
+   "sublingual": {
+    "type": "mucous-predominant",
+    "volume_mL": [
+     1.5,
+     4.0
+    ],
+    "duct": "ducts of Rivinus (plus the Bartholin duct when present)",
+    "duct_length_mm": [
+     8,
+     20
+    ],
+    "duct_diameter_mm": [
+     0.5,
+     1.0
+    ],
+    "ostium": "a row of openings along the sublingual fold",
+    "share_unstimulated": 0.04,
+    "share_stimulated": 0.07,
+    "amylase": "low"
+   },
+   "minor": {
+    "type": "mucous (labial, buccal, palatal, lingual)",
+    "count": [
+     600,
+     1000
+    ],
+    "volume_mL": null,
+    "duct": "short direct ducts",
+    "ostium": "the mucosa above them",
+    "share_unstimulated": 0.08,
+    "share_stimulated": 0.08,
+    "amylase": "none to low"
+   }
+  },
+  "innervation": {
+   "parotid": "inferior salivatory nucleus -> CN IX -> lesser petrosal nerve -> otic ganglion -> auriculotemporal nerve",
+   "submandibular_and_sublingual": "superior salivatory nucleus -> CN VII -> chorda tympani -> lingual nerve -> submandibular ganglion"
+  }
+ },
+ "mucosa": {
+  "source": "Squier CA & Kremer MJ, Biology of oral mucosa and oesophagus. J Natl Cancer Inst Monogr 2001;(29):7-15; Harris D & Robinson JR, J Pharm Sci 1992;81:1-10; Shojaei AH, J Pharm Pharm Sci 1998;1:15-30; Collins LMC & Dawes C, J Dent Res 1987;66:1300-2",
+  "total_area_cm2": [
+   170,
+   215
+  ],
+  "regions": {
+   "hard_palate": {
+    "keratinised": true,
+    "epithelium_um": [
+     200,
+     300
+    ],
+    "route": "not used for drug delivery (least permeable, keratinised, tightly bound to periosteum)"
+   },
+   "gingiva": {
+    "keratinised": true,
+    "epithelium_um": [
+     180,
+     250
+    ],
+    "route": "periodontal local delivery only"
+   },
+   "tongue_dorsum": {
+    "keratinised": true,
+    "epithelium_um": [
+     500,
+     900
+    ],
+    "route": "specialised; taste, not absorption"
+   },
+   "soft_palate": {
+    "keratinised": false,
+    "epithelium_um": [
+     150,
+     250
+    ],
+    "route": "minor"
+   },
+   "buccal": {
+    "keratinised": false,
+    "epithelium_um": [
+     500,
+     800
+    ],
+    "route": "BUCCAL delivery: slower onset than sublingual but a larger, better retained area; also bypasses the hepatic first pass"
+   },
+   "labial": {
+    "keratinised": false,
+    "epithelium_um": [
+     500,
+     600
+    ],
+    "route": "minor"
+   },
+   "ventral_tongue": {
+    "keratinised": false,
+    "epithelium_um": [
+     100,
+     200
+    ],
+    "route": "part of the sublingual absorptive area"
+   },
+   "sublingual": {
+    "keratinised": false,
+    "epithelium_um": [
+     100,
+     200
+    ],
+    "route": "SUBLINGUAL delivery: the thinnest non-keratinised oral epithelium and the fastest onset"
+   }
+  },
+  "permeability_order_published": [
+   "sublingual",
+   "ventral_tongue",
+   "buccal",
+   "labial",
+   "soft_palate",
+   "gingiva",
+   "hard_palate"
+  ],
+  "permeability_order_note": "the published ORDER is sublingual > buccal > palatal. The intermediate positions are an ordering only. No permeability coefficient is assigned to any region anywhere in this project.",
+  "logP_dependence": "oral mucosal permeation rises with lipophilicity and then falls again for very lipophilic compounds that partition into and stay in the epithelium; the published optimum sits near log P 1.6-3.3 for buccal absorption (Shojaei 1998). Reported as the published relationship; NOT fitted and NOT used to compute an absorbed fraction here."
+ },
+ "first_pass": {
+  "sublingual_and_buccal_route": [
+   "sublingual / buccal mucosa",
+   "lingual vein and facial vein",
+   "internal jugular vein",
+   "brachiocephalic vein",
+   "superior vena cava",
+   "right atrium -> systemic circulation"
+  ],
+  "swallowed_route": [
+   "swallow (oral -> pharyngeal -> oesophageal phase)",
+   "stomach",
+   "small intestine (enterocyte CYP3A4 + P-gp)",
+   "portal vein",
+   "LIVER - hepatic first pass",
+   "hepatic vein -> inferior vena cava",
+   "right atrium -> systemic circulation"
+  ],
+  "the_point": "the sublingual route reaches the systemic circulation WITHOUT passing through the liver. It is the only route in the entire digestive tract that does.",
+  "published_examples": {
+   "glyceryl_trinitrate": {
+    "oral_bioavailability_pct": [
+     1,
+     10
+    ],
+    "sublingual_bioavailability_pct": [
+     38,
+     50
+    ],
+    "sublingual_tmax_min": [
+     2,
+     6
+    ],
+    "note": "extensive hepatic and vascular first-pass metabolism by mitochondrial ALDH2 and glutathione S-transferases makes the swallowed route near-useless"
+   },
+   "buprenorphine": {
+    "oral_bioavailability_pct": [
+     1,
+     10
+    ],
+    "sublingual_bioavailability_pct": [
+     30,
+     55
+    ],
+    "note": "CYP3A4 N-dealkylation plus extensive glucuronidation on the first pass"
+   },
+   "midazolam": {
+    "oral_bioavailability_pct": [
+     30,
+     44
+    ],
+    "buccal_bioavailability_pct": [
+     60,
+     75
+    ],
+    "note": "CYP3A4 probe; the project's own probe-drug set"
+   },
+   "fentanyl": {
+    "oral_bioavailability_pct": [
+     25,
+     35
+    ],
+    "buccal_bioavailability_pct": [
+     50,
+     65
+    ]
+   }
+  },
+  "published_examples_source": "product labelling and published pharmacokinetic reviews; quoted as literature, NOT computed here"
+ },
+ "mastication": {
+  "source": "Po JMC et al., Time-frequency analysis of chewing activity. J Dent Res 2011;90:1206-10; Hiiemae KM, in Oral Physiology (2004); Peyron MA et al., Arch Oral Biol 2002;47:51-61; Gallagher J et al. on maximum mouth opening",
+  "cycle_duration_s": [
+   0.6,
+   1.0
+  ],
+  "cycle_duration_used_s": 0.8,
+  "chewing_frequency_Hz": [
+   1.0,
+   1.7
+  ],
+  "maximum_interincisal_opening_mm": [
+   40,
+   60
+  ],
+  "chewing_vertical_amplitude_mm": [
+   16,
+   20
+  ],
+  "chewing_vertical_amplitude_used_mm": 18.0,
+  "lateral_excursion_mm": [
+   3,
+   6
+  ],
+  "lateral_excursion_used_mm": 4.5,
+  "condylar_translation_mm": [
+   10,
+   20
+  ],
+  "condylar_translation_used_mm": 3.0,
+  "condylar_translation_note": "the 10-20 mm published figure is for MAXIMUM opening. During a chewing cycle of 18 mm interincisal opening the condyle mostly rotates, with a few mm of forward slide; 3.0 mm is used and is declared.",
+  "bite_force_molar_N": [
+   500,
+   800
+  ],
+  "chewing_strokes_per_bolus": [
+   15,
+   40
+  ],
+  "kinematic_model": "rigid rotation of the mandible about the MEASURED condylar axis, plus a declared forward condylar slide and a lateral grinding component. The condyle-to-menton distance is invariant under this motion; the viewer measures it every frame as the proof that the jaw rotates rather than the model scaling."
+ },
+ "deglutition": {
+  "source": "Standring S (ed), Gray's Anatomy 42e; Logemann JA, Evaluation and Treatment of Swallowing Disorders, 2nd ed. 1998; Matsuo K & Palmer JB, Phys Med Rehabil Clin N Am 2008;19:691-707",
+  "phases": [
+   "oral preparatory",
+   "oral (propulsive)",
+   "pharyngeal",
+   "oesophageal"
+  ],
+  "oral_transit_time_s": [
+   0.6,
+   1.2
+  ],
+  "oral_transit_time_used_s": 0.9,
+  "pharyngeal_transit_time_s": [
+   0.6,
+   1.0
+  ],
+  "swallows_per_day": [
+   500,
+   1000
+  ],
+  "tongue_propulsion_wave": "the tongue tip seals against the hard palate behind the incisors and the contact point sweeps backwards, squeezing the bolus into the oropharynx",
+  "wave_speed_declared_mm_s": 101.34,
+  "wave_speed_derivation": "measured tongue axis length / oral transit time; it is DERIVED from a published transit time and the measured geometry, not independently published",
+  "soft_palate_elevation_mm": [
+   8,
+   15
+  ],
+  "soft_palate_elevation_used_mm": 11.0,
+  "hyoid_elevation_mm": [
+   15,
+   25
+  ],
+  "hyoid_elevation_used_mm": 18.0,
+  "tongue_axis_length_mm_measured": 91.21
+ },
+ "taste": {
+  "source": "Standring S (ed), Gray's Anatomy 42e; Miller IJ & Reedy FE, Physiol Behav 1990;47:1213-9; Arvidson K, Scand J Dent Res 1979",
+  "papillae": {
+   "filiform": {
+    "taste_buds": 0,
+    "height_mm": [
+     2,
+     3
+    ],
+    "distribution": "anterior two thirds of the dorsum; keratinised, mechanical, NO taste buds"
+   },
+   "fungiform": {
+    "count": [
+     200,
+     400
+    ],
+    "diameter_mm": [
+     0.5,
+     1.0
+    ],
+    "taste_buds_each": [
+     0,
+     20
+    ],
+    "distribution": "tip and lateral margins",
+    "innervation": "chorda tympani (CN VII)"
+   },
+   "foliate": {
+    "folds_per_side": [
+     4,
+     11
+    ],
+    "taste_buds_each": [
+     50,
+     150
+    ],
+    "distribution": "posterolateral margin",
+    "innervation": "CN VII anteriorly, CN IX posteriorly"
+   },
+   "circumvallate": {
+    "count": [
+     7,
+     12
+    ],
+    "diameter_mm": [
+     1,
+     3
+    ],
+    "taste_buds_each": [
+     100,
+     250
+    ],
+    "distribution": "a V immediately anterior to the sulcus terminalis",
+    "innervation": "glossopharyngeal (CN IX)"
+   }
+  },
+  "total_taste_buds": [
+   2000,
+   8000
+  ],
+  "taste_bud_dimensions_um": {
+   "height": [
+    50,
+    80
+   ],
+   "width": [
+    30,
+    60
+   ]
+  },
+  "von_ebner_glands": "serous glands emptying into the circumvallate and foliate trenches; they flush the trench so successive tastants are not confounded"
+ },
+ "tongue_muscles": {
+  "intrinsic": [
+   "superior longitudinal",
+   "inferior longitudinal",
+   "transverse",
+   "vertical"
+  ],
+  "intrinsic_note": "three orthogonal fibre directions, which is what lets the tongue change shape at constant volume - a muscular hydrostat",
+  "extrinsic": {
+   "genioglossus": "protrudes and depresses the midline",
+   "hyoglossus": "depresses and retracts",
+   "styloglossus": "elevates and retracts",
+   "palatoglossus": "elevates the posterior tongue (the only one supplied by the vagus, CN X, not the hypoglossal CN XII)"
+  },
+  "innervation": "all intrinsic and extrinsic tongue muscles are supplied by the hypoglossal nerve (CN XII) except palatoglossus (CN X)"
+ },
+ "honesty": {
+  "is_user_personal_data": false,
+  "personal_data_note": "No physiological signal on this page comes from the user. The cardiac coupling is the project's own heart model, whose RR series is PhysioNet MIT-BIH Normal Sinus Rhythm Database record 16265 - a PUBLIC PLACEHOLDER, not the user's own data.",
+  "no_calibration": "there is no expression-to-flux, abundance-to-conductance, or concentration calibration anywhere in this build. The molecular layer is a qualitative map.",
+  "cross_organ_subject_consistency": "BROKEN for this organ: the project's heart, liver, kidney and small intestine all use TotalSegmentator subject s0236, whose head is outside the scanned field of view. A head-covering subject is used here instead and the switch is stated on the page itself."
+ },
+ "kinematics_frame": {
+  "condyle_right": [
+   -80.44897993995633,
+   189.86899563318778,
+   125.23063932860262
+  ],
+  "condyle_left": [
+   18.525480217889907,
+   189.6559633027523,
+   136.56167574541286
+  ],
+  "menton": [
+   -26.48828125,
+   106.0,
+   193.98828125
+  ],
+  "occlusal_y_mm": 149.5,
+  "condyle_to_menton_mm": 111.0062,
+  "tongue_axis": [
+   [
+    -31.74,
+    142.5,
+    201.238
+   ],
+   [
+    -31.74,
+    142.577,
+    200.598
+   ],
+   [
+    -31.74,
+    142.65,
+    199.957
+   ],
+   [
+    -31.74,
+    142.716,
+    199.316
+   ],
+   [
+    -31.74,
+    142.778,
+    198.675
+   ],
+   [
+    -31.74,
+    142.834,
+    198.033
+   ],
+   [
+    -31.74,
+    142.886,
+    197.391
+   ],
+   [
+    -31.74,
+    142.931,
+    196.749
+   ],
+   [
+    -31.74,
+    142.972,
+    196.106
+   ],
+   [
+    -31.74,
+    143.007,
+    195.462
+   ],
+   [
+    -31.74,
+    143.038,
+    194.819
+   ],
+   [
+    -31.74,
+    143.062,
+    194.175
+   ],
+   [
+    -31.74,
+    143.082,
+    193.53
+   ],
+   [
+    -31.74,
+    143.097,
+    192.886
+   ],
+   [
+    -31.74,
+    143.106,
+    192.24
+   ],
+   [
+    -31.74,
+    143.11,
+    191.595
+   ],
+   [
+    -31.74,
+    143.108,
+    190.949
+   ],
+   [
+    -31.74,
+    143.102,
+    190.303
+   ],
+   [
+    -31.74,
+    143.09,
+    189.656
+   ],
+   [
+    -31.74,
+    143.073,
+    189.009
+   ],
+   [
+    -31.74,
+    143.05,
+    188.361
+   ],
+   [
+    -31.74,
+    143.023,
+    187.713
+   ],
+   [
+    -31.74,
+    142.99,
+    187.065
+   ],
+   [
+    -31.74,
+    142.952,
+    186.416
+   ],
+   [
+    -31.74,
+    142.909,
+    185.767
+   ],
+   [
+    -31.74,
+    142.86,
+    185.118
+   ],
+   [
+    -31.74,
+    142.806,
+    184.468
+   ],
+   [
+    -31.74,
+    142.747,
+    183.818
+   ],
+   [
+    -31.74,
+    142.683,
+    183.167
+   ],
+   [
+    -31.74,
+    142.613,
+    182.517
+   ],
+   [
+    -31.74,
+    142.538,
+    181.865
+   ],
+   [
+    -31.74,
+    142.458,
+    181.213
+   ],
+   [
+    -31.74,
+    142.373,
+    180.561
+   ],
+   [
+    -31.74,
+    142.282,
+    179.909
+   ],
+   [
+    -31.74,
+    142.187,
+    179.256
+   ],
+   [
+    -31.74,
+    142.086,
+    178.603
+   ],
+   [
+    -31.74,
+    141.979,
+    177.949
+   ],
+   [
+    -31.74,
+    141.868,
+    177.295
+   ],
+   [
+    -31.74,
+    141.751,
+    176.641
+   ],
+   [
+    -31.74,
+    141.629,
+    175.986
+   ],
+   [
+    -31.74,
+    141.502,
+    175.331
+   ],
+   [
+    -31.74,
+    141.369,
+    174.675
+   ],
+   [
+    -31.74,
+    141.231,
+    174.019
+   ],
+   [
+    -31.74,
+    141.088,
+    173.363
+   ],
+   [
+    -31.74,
+    140.94,
+    172.706
+   ],
+   [
+    -31.74,
+    140.786,
+    172.049
+   ],
+   [
+    -31.74,
+    140.628,
+    171.392
+   ],
+   [
+    -31.74,
+    140.464,
+    170.734
+   ],
+   [
+    -31.74,
+    140.294,
+    170.076
+   ],
+   [
+    -31.74,
+    140.12,
+    169.417
+   ],
+   [
+    -31.74,
+    139.94,
+    168.758
+   ],
+   [
+    -31.74,
+    139.755,
+    168.099
+   ],
+   [
+    -31.74,
+    139.565,
+    167.439
+   ],
+   [
+    -31.74,
+    139.369,
+    166.779
+   ],
+   [
+    -31.74,
+    139.168,
+    166.118
+   ],
+   [
+    -31.74,
+    138.962,
+    165.457
+   ],
+   [
+    -31.74,
+    138.751,
+    164.796
+   ],
+   [
+    -31.74,
+    138.535,
+    164.134
+   ],
+   [
+    -31.74,
+    138.313,
+    163.472
+   ],
+   [
+    -31.74,
+    138.086,
+    162.81
+   ],
+   [
+    -31.74,
+    137.854,
+    162.147
+   ],
+   [
+    -31.74,
+    137.616,
+    161.484
+   ],
+   [
+    -31.74,
+    137.373,
+    160.82
+   ],
+   [
+    -31.74,
+    137.125,
+    160.156
+   ],
+   [
+    -31.74,
+    136.872,
+    159.492
+   ],
+   [
+    -31.74,
+    136.614,
+    158.827
+   ],
+   [
+    -31.74,
+    136.35,
+    158.162
+   ],
+   [
+    -31.74,
+    136.081,
+    157.496
+   ],
+   [
+    -31.74,
+    135.807,
+    156.83
+   ],
+   [
+    -31.74,
+    135.527,
+    156.164
+   ],
+   [
+    -31.74,
+    135.242,
+    155.497
+   ],
+   [
+    -31.74,
+    134.952,
+    154.83
+   ],
+   [
+    -31.74,
+    134.657,
+    154.163
+   ],
+   [
+    -31.74,
+    134.357,
+    153.495
+   ],
+   [
+    -31.74,
+    134.051,
+    152.827
+   ],
+   [
+    -31.74,
+    133.74,
+    152.158
+   ],
+   [
+    -31.74,
+    133.424,
+    151.489
+   ],
+   [
+    -31.74,
+    133.102,
+    150.82
+   ],
+   [
+    -31.74,
+    132.776,
+    150.15
+   ],
+   [
+    -31.74,
+    132.444,
+    149.48
+   ],
+   [
+    -31.74,
+    132.106,
+    148.809
+   ],
+   [
+    -31.74,
+    131.764,
+    148.138
+   ],
+   [
+    -31.74,
+    131.416,
+    147.467
+   ],
+   [
+    -31.74,
+    131.063,
+    146.795
+   ],
+   [
+    -31.74,
+    130.705,
+    146.123
+   ],
+   [
+    -31.74,
+    130.342,
+    145.451
+   ],
+   [
+    -31.74,
+    129.973,
+    144.778
+   ],
+   [
+    -31.74,
+    129.599,
+    144.105
+   ],
+   [
+    -31.74,
+    129.22,
+    143.431
+   ],
+   [
+    -31.74,
+    128.835,
+    142.757
+   ],
+   [
+    -31.74,
+    128.446,
+    142.083
+   ],
+   [
+    -31.74,
+    128.051,
+    141.408
+   ],
+   [
+    -31.74,
+    127.65,
+    140.733
+   ],
+   [
+    -31.74,
+    127.245,
+    140.057
+   ],
+   [
+    -31.74,
+    126.834,
+    139.381
+   ],
+   [
+    -31.74,
+    126.418,
+    138.705
+   ],
+   [
+    -31.74,
+    125.997,
+    138.029
+   ],
+   [
+    -31.74,
+    125.571,
+    137.351
+   ],
+   [
+    -31.74,
+    125.139,
+    136.674
+   ],
+   [
+    -31.74,
+    124.702,
+    135.996
+   ],
+   [
+    -31.74,
+    124.26,
+    135.318
+   ],
+   [
+    -31.74,
+    123.813,
+    134.639
+   ],
+   [
+    -31.74,
+    123.36,
+    133.96
+   ],
+   [
+    -31.74,
+    122.902,
+    133.281
+   ],
+   [
+    -31.74,
+    122.439,
+    132.601
+   ],
+   [
+    -31.74,
+    121.97,
+    131.921
+   ],
+   [
+    -31.74,
+    121.497,
+    131.241
+   ],
+   [
+    -31.74,
+    121.018,
+    130.56
+   ],
+   [
+    -31.74,
+    120.534,
+    129.879
+   ],
+   [
+    -31.74,
+    120.044,
+    129.197
+   ],
+   [
+    -31.74,
+    119.55,
+    128.515
+   ],
+   [
+    -31.74,
+    119.05,
+    127.832
+   ],
+   [
+    -31.74,
+    118.545,
+    127.15
+   ],
+   [
+    -31.74,
+    118.034,
+    126.466
+   ],
+   [
+    -31.74,
+    117.518,
+    125.783
+   ],
+   [
+    -31.74,
+    116.998,
+    125.099
+   ],
+   [
+    -31.74,
+    116.471,
+    124.414
+   ],
+   [
+    -31.74,
+    115.94,
+    123.73
+   ],
+   [
+    -31.74,
+    115.403,
+    123.045
+   ],
+   [
+    -31.74,
+    114.862,
+    122.359
+   ],
+   [
+    -31.74,
+    114.314,
+    121.673
+   ],
+   [
+    -31.74,
+    113.762,
+    120.987
+   ],
+   [
+    -31.74,
+    113.204,
+    120.3
+   ],
+   [
+    -31.74,
+    112.642,
+    119.613
+   ],
+   [
+    -31.74,
+    112.073,
+    118.926
+   ],
+   [
+    -31.74,
+    111.5,
+    118.238
+   ]
+  ],
+  "tongue_half_width_mm": [
+   10.123,
+   13.486,
+   15.045,
+   16.273,
+   17.323,
+   18.258,
+   19.109,
+   19.894,
+   20.627,
+   21.315,
+   21.965,
+   22.582,
+   23.17,
+   23.731,
+   24.268,
+   24.782,
+   25.275,
+   25.748,
+   26.204,
+   26.641,
+   27.062,
+   27.467,
+   27.856,
+   28.231,
+   28.591,
+   28.937,
+   29.27,
+   29.589,
+   29.895,
+   30.188,
+   30.469,
+   30.737,
+   30.993,
+   31.237,
+   31.469,
+   31.69,
+   31.899,
+   32.096,
+   32.282,
+   32.456,
+   32.619,
+   32.771,
+   32.911,
+   33.041,
+   33.159,
+   33.267,
+   33.363,
+   33.449,
+   33.523,
+   33.587,
+   33.639,
+   33.681,
+   33.712,
+   33.732,
+   33.741,
+   33.74,
+   33.727,
+   33.704,
+   33.67,
+   33.625,
+   33.569,
+   33.502,
+   33.424,
+   33.335,
+   33.235,
+   33.125,
+   33.003,
+   32.87,
+   32.726,
+   32.571,
+   32.404,
+   32.226,
+   32.037,
+   31.836,
+   31.624,
+   31.4,
+   31.164,
+   30.917,
+   30.657,
+   30.385,
+   30.1,
+   29.803,
+   29.493,
+   29.17,
+   28.833,
+   28.483,
+   28.118,
+   27.739,
+   27.345,
+   26.936,
+   26.51,
+   26.067,
+   25.606,
+   25.127,
+   24.627,
+   24.107,
+   23.563,
+   22.994,
+   22.398,
+   21.771,
+   21.11,
+   20.409,
+   19.661,
+   18.857,
+   17.984,
+   17.018,
+   15.922,
+   14.619,
+   12.877,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123,
+   10.123
+  ],
+  "tongue_half_height_mm": [
+   8.905,
+   9.16,
+   9.407,
+   9.646,
+   9.879,
+   10.105,
+   10.326,
+   10.542,
+   10.752,
+   10.957,
+   11.158,
+   11.354,
+   11.546,
+   11.733,
+   11.917,
+   12.097,
+   12.273,
+   12.445,
+   12.614,
+   12.779,
+   12.94,
+   13.098,
+   13.253,
+   13.404,
+   13.552,
+   13.697,
+   13.839,
+   13.977,
+   14.113,
+   14.245,
+   14.374,
+   14.5,
+   14.623,
+   14.743,
+   14.86,
+   14.974,
+   15.085,
+   15.192,
+   15.297,
+   15.399,
+   15.498,
+   15.595,
+   15.688,
+   15.778,
+   15.865,
+   15.95,
+   16.031,
+   16.11,
+   16.185,
+   16.258,
+   16.328,
+   16.395,
+   16.459,
+   16.52,
+   16.578,
+   16.634,
+   16.686,
+   16.736,
+   16.783,
+   16.827,
+   16.868,
+   16.906,
+   16.941,
+   16.973,
+   17.003,
+   17.029,
+   17.053,
+   17.073,
+   17.091,
+   17.106,
+   17.118,
+   17.127,
+   17.133,
+   17.137,
+   17.137,
+   17.134,
+   17.129,
+   17.12,
+   17.109,
+   17.094,
+   17.077,
+   17.056,
+   17.033,
+   17.006,
+   16.976,
+   16.944,
+   16.908,
+   16.869,
+   16.827,
+   16.782,
+   16.733,
+   16.682,
+   16.627,
+   16.568,
+   16.507,
+   16.442,
+   16.373,
+   16.301,
+   16.225,
+   16.146,
+   16.062,
+   15.975,
+   15.884,
+   15.789,
+   15.689,
+   15.585,
+   15.477,
+   15.363,
+   15.244,
+   15.12,
+   14.991,
+   14.855,
+   14.712,
+   14.562,
+   14.405,
+   14.238,
+   14.062,
+   13.875,
+   13.674,
+   13.458,
+   13.223,
+   12.963,
+   12.67,
+   12.327,
+   11.891,
+   11.0
+  ],
+  "palatoglossal_arch": [
+   [
+    -5.955028500532228,
+    151.7861440208745,
+    123.0166329730614
+   ],
+   [
+    -67.19872,
+    147.7843076377625,
+    121.36989987333519
+   ]
+  ],
+  "uvula_tip": [
+   -38.215248943619805,
+   140.01063238524753,
+   139.44058637501354
+  ]
+ },
+ "micro": {
+  "circumvallate_diameter_mm_real": 2.0,
+  "taste_bud_height_um_real": 65.0,
+  "taste_bud_width_um_real": 45.0,
+  "magnification": 60.0,
+  "drawn_circumvallate_diameter_mm": 120.0,
+  "drawn_taste_bud_height_mm": 3.9000000000000004,
+  "mucosa_stacks": {
+   "hard_palate": {
+    "epithelium_um_real": [
+     200,
+     300
+    ],
+    "epithelium_mid_um": 250.0,
+    "drawn_epithelium_mm": 15.0,
+    "keratinised": true,
+    "permeability_rank": 1,
+    "drawn_total_mm": 99.0
+   },
+   "gingiva": {
+    "epithelium_um_real": [
+     180,
+     250
+    ],
+    "epithelium_mid_um": 215.0,
+    "drawn_epithelium_mm": 12.9,
+    "keratinised": true,
+    "permeability_rank": 2
+   },
+   "tongue_dorsum": {
+    "epithelium_um_real": [
+     500,
+     900
+    ],
+    "epithelium_mid_um": 700.0,
+    "drawn_epithelium_mm": 42.0,
+    "keratinised": true,
+    "permeability_rank": 3
+   },
+   "soft_palate": {
+    "epithelium_um_real": [
+     150,
+     250
+    ],
+    "epithelium_mid_um": 200.0,
+    "drawn_epithelium_mm": 12.0,
+    "keratinised": false,
+    "permeability_rank": 4
+   },
+   "buccal": {
+    "epithelium_um_real": [
+     500,
+     800
+    ],
+    "epithelium_mid_um": 650.0,
+    "drawn_epithelium_mm": 39.0,
+    "keratinised": false,
+    "permeability_rank": 5,
+    "drawn_total_mm": 123.0
+   },
+   "labial": {
+    "epithelium_um_real": [
+     500,
+     600
+    ],
+    "epithelium_mid_um": 550.0,
+    "drawn_epithelium_mm": 33.0,
+    "keratinised": false,
+    "permeability_rank": 6
+   },
+   "ventral_tongue": {
+    "epithelium_um_real": [
+     100,
+     200
+    ],
+    "epithelium_mid_um": 150.0,
+    "drawn_epithelium_mm": 9.0,
+    "keratinised": false,
+    "permeability_rank": 7
+   },
+   "sublingual": {
+    "epithelium_um_real": [
+     100,
+     200
+    ],
+    "epithelium_mid_um": 150.0,
+    "drawn_epithelium_mm": 9.0,
+    "keratinised": false,
+    "permeability_rank": 8,
+    "drawn_total_mm": 93.0
+   }
+  },
+  "layer_thickness_um_real": {
+   "lamina_propria": 500.0,
+   "submucosa": 900.0
+  },
+  "layer_source": "epithelial thicknesses from Squier & Kremer 2001 / Shojaei 1998; lamina propria and submucosa are order-of-magnitude published values",
+  "taste_buds_drawn": 24,
+  "taste_buds_per_circumvallate_published": 250,
+  "taste_buds_note": "a circumvallate papilla carries on the order of 250 taste buds; 24 are DRAWN - a declared subset, not a count",
+  "acinus_magnification_declared": 300.0,
+  "acinus_diameter_um_real": 40.0,
+  "intercalated_duct_diameter_um_real": 20.0,
+  "striated_duct_diameter_um_real": 40.0,
+  "acinus_source": "serous acinus 30-50 um, intercalated duct 10-25 um, striated duct 30-50 um (adult human salivary gland)"
+ },
+ "teeth": [
+  {
+   "fdi": 21,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "I1",
+   "position": 1,
+   "centre": [
+    -34.818019632239775,
+    156.95790398872037,
+    211.45115138342118
+   ],
+   "tangent": [
+    -0.9978650226370624,
+    0.034068780287839384,
+    0.055719967760524285
+   ],
+   "mesiodistal_mm": 8.5,
+   "buccolingual_mm": 7.0,
+   "crown_height_mm": 10.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 22,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "I2",
+   "position": 2,
+   "centre": [
+    -28.863554048818212,
+    158.44639642435178,
+    208.34826692654542
+   ],
+   "tangent": [
+    -0.4817507821300294,
+    -0.5768418924955016,
+    0.6596738701656396
+   ],
+   "mesiodistal_mm": 6.5,
+   "buccolingual_mm": 6.0,
+   "crown_height_mm": 9.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 23,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "C",
+   "position": 3,
+   "centre": [
+    -22.891809000145695,
+    158.0602717182799,
+    206.5902420544362
+   ],
+   "tangent": [
+    -0.2799593168530521,
+    -0.0807759330303993,
+    0.9566075629798464
+   ],
+   "mesiodistal_mm": 7.5,
+   "buccolingual_mm": 8.0,
+   "crown_height_mm": 10.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 24,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "P1",
+   "position": 4,
+   "centre": [
+    -19.96808501187912,
+    157.9469805543134,
+    200.14625006213012
+   ],
+   "tangent": [
+    -0.27714811270246226,
+    -0.3039936402244458,
+    0.9114695772918334
+   ],
+   "mesiodistal_mm": 7.0,
+   "buccolingual_mm": 9.0,
+   "crown_height_mm": 8.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 25,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "P2",
+   "position": 5,
+   "centre": [
+    -16.89217960353378,
+    158.75412569062988,
+    194.38392822227402
+   ],
+   "tangent": [
+    -0.6002487946614761,
+    -0.09684013887204307,
+    0.7939290724055196
+   ],
+   "mesiodistal_mm": 6.7,
+   "buccolingual_mm": 9.0,
+   "crown_height_mm": 8.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 26,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "M1",
+   "position": 6,
+   "centre": [
+    -12.899942480405075,
+    159.90450151543334,
+    187.24758127102973
+   ],
+   "tangent": [
+    -0.6489906370849451,
+    -0.0016738084679248214,
+    0.76079455264959
+   ],
+   "mesiodistal_mm": 10.0,
+   "buccolingual_mm": 11.0,
+   "crown_height_mm": 7.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 27,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "M2",
+   "position": 7,
+   "centre": [
+    -8.686372771372625,
+    161.07227812007832,
+    179.80621004850988
+   ],
+   "tangent": [
+    -0.4897021068743877,
+    -0.685582949624174,
+    0.5386723175618023
+   ],
+   "mesiodistal_mm": 9.0,
+   "buccolingual_mm": 11.0,
+   "crown_height_mm": 7.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 28,
+   "jaw": "maxillary",
+   "side": "left",
+   "type": "M3",
+   "position": 8,
+   "centre": [
+    -6.523930695771082,
+    164.25151487039759,
+    172.4490395634338
+   ],
+   "tangent": [
+    0.060302268915552855,
+    -0.42211588240888775,
+    0.9045340337332821
+   ],
+   "mesiodistal_mm": 8.5,
+   "buccolingual_mm": 10.0,
+   "crown_height_mm": 6.5,
+   "on_measured_arch": false
+  },
+  {
+   "fdi": 11,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "I1",
+   "position": 1,
+   "centre": [
+    -43.08519275831951,
+    157.3509171388743,
+    212.18168357575388
+   ],
+   "tangent": [
+    -0.9448219816698517,
+    0.10250427159621928,
+    -0.31113388960057536
+   ],
+   "mesiodistal_mm": 8.5,
+   "buccolingual_mm": 7.0,
+   "crown_height_mm": 10.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 12,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "I2",
+   "position": 2,
+   "centre": [
+    -50.15054324478727,
+    157.41747140565525,
+    212.04947538962733
+   ],
+   "tangent": [
+    -0.9659073999373134,
+    0.052341638505482645,
+    -0.2535414120511684
+   ],
+   "mesiodistal_mm": 6.5,
+   "buccolingual_mm": 6.0,
+   "crown_height_mm": 9.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 13,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "C",
+   "position": 3,
+   "centre": [
+    -56.311370995942504,
+    157.11341984904774,
+    208.92472694344266
+   ],
+   "tangent": [
+    -0.7595684979787857,
+    0.12213451485490547,
+    -0.6388574623180108
+   ],
+   "mesiodistal_mm": 7.5,
+   "buccolingual_mm": 8.0,
+   "crown_height_mm": 10.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 14,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "P1",
+   "position": 4,
+   "centre": [
+    -61.19201892897111,
+    157.87260639975142,
+    203.8287624123409
+   ],
+   "tangent": [
+    -0.6167405539573467,
+    0.3885435063658751,
+    -0.6845911427745003
+   ],
+   "mesiodistal_mm": 7.0,
+   "buccolingual_mm": 9.0,
+   "crown_height_mm": 8.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 15,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "P2",
+   "position": 5,
+   "centre": [
+    -64.88440457850918,
+    158.22283725203332,
+    198.6631657070777
+   ],
+   "tangent": [
+    -0.2186908200582504,
+    -0.016620502324370415,
+    -0.9756526452199756
+   ],
+   "mesiodistal_mm": 6.7,
+   "buccolingual_mm": 9.0,
+   "crown_height_mm": 8.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 16,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "M1",
+   "position": 6,
+   "centre": [
+    -66.33089135977211,
+    158.04674314851624,
+    190.6372945933908
+   ],
+   "tangent": [
+    -0.011559553129586727,
+    0.06077022216697996,
+    -0.9980848445043238
+   ],
+   "mesiodistal_mm": 10.0,
+   "buccolingual_mm": 11.0,
+   "crown_height_mm": 7.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 17,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "M2",
+   "position": 7,
+   "centre": [
+    -68.70694689169842,
+    158.6297367229246,
+    181.61089604782933
+   ],
+   "tangent": [
+    -0.34050261230352996,
+    0.08512565307592512,
+    -0.9363821838346078
+   ],
+   "mesiodistal_mm": 9.0,
+   "buccolingual_mm": 11.0,
+   "crown_height_mm": 7.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 18,
+   "jaw": "maxillary",
+   "side": "right",
+   "type": "M3",
+   "position": 8,
+   "centre": [
+    -71.19759619064249,
+    160.1304299052026,
+    174.284969142458
+   ],
+   "tangent": [
+    -0.26936179620310685,
+    0.7138087599382927,
+    -0.6464683108873882
+   ],
+   "mesiodistal_mm": 8.5,
+   "buccolingual_mm": 10.0,
+   "crown_height_mm": 6.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 31,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "I1",
+   "position": 1,
+   "centre": [
+    -28.84664594818929,
+    145.2434705134429,
+    204.26143308565787
+   ],
+   "tangent": [
+    -0.9553524776340582,
+    0.026247922795391985,
+    0.2943003398356745
+   ],
+   "mesiodistal_mm": 5.0,
+   "buccolingual_mm": 6.0,
+   "crown_height_mm": 9.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 32,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "I2",
+   "position": 2,
+   "centre": [
+    -24.542681959294548,
+    145.34003481154616,
+    201.35935352611077
+   ],
+   "tangent": [
+    -0.7820859151460376,
+    -0.03050459586052043,
+    0.6224235623444628
+   ],
+   "mesiodistal_mm": 5.5,
+   "buccolingual_mm": 6.5,
+   "crown_height_mm": 9.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 33,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "C",
+   "position": 3,
+   "centre": [
+    -20.41047384238193,
+    145.42975693191832,
+    196.68195173989847
+   ],
+   "tangent": [
+    -0.6508422615718237,
+    -0.012979760202256597,
+    0.7591020197425151
+   ],
+   "mesiodistal_mm": 7.0,
+   "buccolingual_mm": 7.5,
+   "crown_height_mm": 11.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 34,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "P1",
+   "position": 4,
+   "centre": [
+    -16.61688553085227,
+    145.446,
+    190.8154965652548
+   ],
+   "tangent": [
+    -0.5182273417138407,
+    0.0,
+    0.8552429025137867
+   ],
+   "mesiodistal_mm": 7.0,
+   "buccolingual_mm": 7.5,
+   "crown_height_mm": 8.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 35,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "P2",
+   "position": 5,
+   "centre": [
+    -12.251535609934715,
+    145.61509290597203,
+    185.05276687531264
+   ],
+   "tangent": [
+    -0.7371501319593136,
+    0.05055569161060981,
+    0.6738351467518888
+   ],
+   "mesiodistal_mm": 7.5,
+   "buccolingual_mm": 8.0,
+   "crown_height_mm": 8.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 36,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "M1",
+   "position": 6,
+   "centre": [
+    -6.377529569991464,
+    144.67813765791144,
+    178.05131154105229
+   ],
+   "tangent": [
+    -0.47744447141550295,
+    0.06721305665564772,
+    0.8760874281313342
+   ],
+   "mesiodistal_mm": 11.0,
+   "buccolingual_mm": 10.5,
+   "crown_height_mm": 7.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 37,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "M2",
+   "position": 7,
+   "centre": [
+    0.2714537815624716,
+    143.62534618389645,
+    169.9002848276482
+   ],
+   "tangent": [
+    -0.7753509286490818,
+    -0.053860032723364225,
+    0.6292297150628253
+   ],
+   "mesiodistal_mm": 10.5,
+   "buccolingual_mm": 10.0,
+   "crown_height_mm": 7.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 38,
+   "jaw": "mandibular",
+   "side": "left",
+   "type": "M3",
+   "position": 8,
+   "centre": [
+    7.603757296578055,
+    144.12359188540734,
+    162.8397974332991
+   ],
+   "tangent": [
+    -0.7071824632038585,
+    0.022704143291435164,
+    0.7066664599472127
+   ],
+   "mesiodistal_mm": 10.0,
+   "buccolingual_mm": 9.5,
+   "crown_height_mm": 7.0,
+   "on_measured_arch": false
+  },
+  {
+   "fdi": 41,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "I1",
+   "position": 1,
+   "centre": [
+    -33.638013908060955,
+    145.31509475490353,
+    205.66896145709615
+   ],
+   "tangent": [
+    -0.9804107244469233,
+    -0.0800444920232642,
+    0.1799658042134571
+   ],
+   "mesiodistal_mm": 5.0,
+   "buccolingual_mm": 6.0,
+   "crown_height_mm": 9.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 42,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "I2",
+   "position": 2,
+   "centre": [
+    -38.81478325675023,
+    144.85452428732563,
+    206.1366934996707
+   ],
+   "tangent": [
+    -0.9938766884862239,
+    -0.09929070526925293,
+    -0.0484817896822271
+   ],
+   "mesiodistal_mm": 5.5,
+   "buccolingual_mm": 6.5,
+   "crown_height_mm": 9.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 43,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "C",
+   "position": 3,
+   "centre": [
+    -44.97632415945778,
+    144.69923274891534,
+    205.337016197645
+   ],
+   "tangent": [
+    -0.9777554771329042,
+    0.04686731292542787,
+    -0.20444481386368552
+   ],
+   "mesiodistal_mm": 7.0,
+   "buccolingual_mm": 7.5,
+   "crown_height_mm": 11.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 44,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "P1",
+   "position": 4,
+   "centre": [
+    -51.64350028023894,
+    144.52761698395776,
+    203.28580641602377
+   ],
+   "tangent": [
+    -0.8172064160155261,
+    -0.008077222373649145,
+    -0.5762884972839432
+   ],
+   "mesiodistal_mm": 7.0,
+   "buccolingual_mm": 7.5,
+   "crown_height_mm": 8.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 45,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "P2",
+   "position": 5,
+   "centre": [
+    -57.05135131661137,
+    144.94969083133216,
+    198.49499818414515
+   ],
+   "tangent": [
+    -0.7519090957595398,
+    0.1265407990424633,
+    -0.6470086072779606
+   ],
+   "mesiodistal_mm": 7.5,
+   "buccolingual_mm": 8.0,
+   "crown_height_mm": 8.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 46,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "M1",
+   "position": 6,
+   "centre": [
+    -61.92871472995009,
+    146.1819224679737,
+    190.9278558607465
+   ],
+   "tangent": [
+    -0.28619878324274733,
+    0.2762415691140577,
+    -0.9174861590039244
+   ],
+   "mesiodistal_mm": 11.0,
+   "buccolingual_mm": 10.5,
+   "crown_height_mm": 7.5,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 47,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "M2",
+   "position": 7,
+   "centre": [
+    -64.33751847294373,
+    147.26387875350196,
+    180.76728233060186
+   ],
+   "tangent": [
+    -0.14093891951722562,
+    -0.13369206018035162,
+    -0.9809498733421859
+   ],
+   "mesiodistal_mm": 10.5,
+   "buccolingual_mm": 10.0,
+   "crown_height_mm": 7.0,
+   "on_measured_arch": true
+  },
+  {
+   "fdi": 48,
+   "jaw": "mandibular",
+   "side": "right",
+   "type": "M3",
+   "position": 8,
+   "centre": [
+    -67.60209791457375,
+    144.63758410329712,
+    171.63523202660227
+   ],
+   "tangent": [
+    -0.24440250294582622,
+    -0.3541900205785772,
+    -0.9026720588765128
+   ],
+   "mesiodistal_mm": 10.0,
+   "buccolingual_mm": 9.5,
+   "crown_height_mm": 7.0,
+   "on_measured_arch": true
+  }
+ ],
+ "gland_centroids": {
+  "parotid_right": [
+   -93.99,
+   171.5,
+   128.238
+  ],
+  "submandibular_right": [
+   -82.99,
+   112.0,
+   154.238
+  ],
+  "sublingual_right": [
+   -43.739999999999995,
+   131.5,
+   190.238
+  ],
+  "parotid_left": [
+   30.51,
+   171.5,
+   128.238
+  ],
+  "submandibular_left": [
+   19.51,
+   112.0,
+   154.238
+  ],
+  "sublingual_left": [
+   -19.739999999999995,
+   131.5,
+   190.238
+  ]
+ },
+ "subject": "s1304",
+ "geometry_source": {
+  "dataset": "TotalSegmentator dataset v2.0.1 (Wasserthal et al.)",
+  "doi": "10.5281/zenodo.10047292",
+  "licence": "CC-BY-4.0",
+  "subject": "s1304",
+  "voxel_mm": [
+   1.5,
+   1.5,
+   1.5
+  ],
+  "structures_used": [
+   "skull",
+   "vertebrae_C1",
+   "vertebrae_C2",
+   "vertebrae_C3",
+   "esophagus",
+   "trachea",
+   "thyroid_gland",
+   "brachiocephalic_vein_left",
+   "brachiocephalic_vein_right",
+   "superior_vena_cava",
+   "heart",
+   "common_carotid_artery_left",
+   "common_carotid_artery_right"
+  ],
+  "labels_absent_from_source": [
+   "mandible",
+   "maxilla",
+   "tongue",
+   "teeth",
+   "parotid_gland",
+   "submandibular_gland",
+   "sublingual_gland",
+   "minor_salivary_gland",
+   "oral_cavity",
+   "hard_palate",
+   "soft_palate",
+   "uvula",
+   "oral_mucosa",
+   "buccinator",
+   "masseter",
+   "temporalis",
+   "lingual_artery",
+   "facial_artery",
+   "internal_jugular_vein",
+   "parotid_duct",
+   "submandibular_duct"
+  ]
+ },
+ "cardiac_coupling": {
+  "hr_bpm": 64.45428703642494,
+  "cardiac_output_L_min": 5.1771,
+  "MAP_mmHg": 94.4872,
+  "SBP_mmHg": 111.343,
+  "DBP_mmHg": 71.7961,
+  "source": "the project's own validated heart model (heart_timeseries.json); no new haemodynamic number is invented on this page",
+  "data_source": "PhysioNet MIT-BIH Normal Sinus Rhythm Database (nsrdb) record 16265 (32 M, 22.24 h) \u2014 PUBLIC PLACEHOLDER, NOT THE USER'S OWN DATA",
+  "is_user_personal_data": false
+ }
+}

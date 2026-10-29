@@ -1,0 +1,293 @@
+{
+ "source": {
+  "dataset": "TotalSegmentator dataset v2.0.1 (Wasserthal et al. 2023)",
+  "doi": "10.5281/zenodo.10047292",
+  "licence": "CC-BY-4.0",
+  "licence_terms": "attribution only; redistribution of derivatives permitted",
+  "subject": "s0236",
+  "voxel_mm": [
+   1.5,
+   1.4999998807907104,
+   1.5
+  ],
+  "volume_shape": [
+   252,
+   198,
+   308
+  ],
+  "access": "HTTP range extraction of 13 mask members from the Zenodo zip; no CT image volume downloaded, nothing derived from greyscale",
+  "structures_used": [
+   "stomach",
+   "esophagus",
+   "duodenum",
+   "liver",
+   "spleen",
+   "pancreas",
+   "aorta",
+   "portal_vein_and_splenic_vein",
+   "small_bowel",
+   "colon",
+   "inferior_vena_cava",
+   "vertebrae_T12",
+   "vertebrae_L1"
+  ],
+  "labels_absent_from_source": [
+   "coeliac trunk",
+   "left/right gastric artery",
+   "left/right gastroepiploic artery",
+   "short gastric arteries",
+   "gastric veins",
+   "gastric wall vs lumen",
+   "gastric mucosa",
+   "rugae",
+   "gastric glands",
+   "cardia/fundus/body/antrum/pylorus sub-labels"
+  ],
+  "consequence": "every vessel on this page and the wall/lumen split are CONSTRUCTED; the serosal contour, the oesophago-gastric and pyloro-duodenal junctions, the fundus boundary and the neighbouring organ surfaces are MEASURED on this subject's own labels"
+ },
+ "references": {
+  "fasted_volume_mL": [
+   25.0,
+   50.0,
+   "fasted human gastric content volume, MRI; the organ wall is collapsed"
+  ],
+  "capacity_mL": [
+   1000.0,
+   1500.0,
+   "comfortable postprandial human gastric capacity"
+  ],
+  "wall_thickness_mm": [
+   2.0,
+   5.0,
+   "normal gastric wall on CT when the stomach is distended (<=5 mm)"
+  ],
+  "cardia_mucosa_mm": [
+   1.0,
+   15.0,
+   "histological cardiac mucosa extent, mean 5 mm (Am J Surg Pathol 2002;26:1207, via PathologyOutlines)"
+  ],
+  "antrum_length_mm": [
+   30.0,
+   40.0,
+   "antrum/pylorus = distal 3-4 cm (PathologyOutlines, gastric histology)"
+  ],
+  "mucosa_thickness_body_mm": [
+   0.6,
+   0.8,
+   "gastric body mucosal thickness; foveolar compartment 0.2 mm, glandular 0.6 mm, foveola:gland 1:4 (normal values tabulated in Gastroenterology 1993;104:1310, Menetrier series)"
+  ],
+  "mucosa_thickness_antrum_mm": [
+   0.8,
+   0.8,
+   "gastric antral mucosal thickness, foveolar compartment 0.4 mm (same source)"
+  ]
+ },
+ "measured": {
+  "label_volume_mL": 433.3,
+  "volume_vs_fasted_reference_mL": [
+   25.0,
+   50.0
+  ],
+  "volume_vs_capacity_reference_mL": [
+   1000.0,
+   1500.0
+  ],
+  "volume_state": "between the fasted range and the postprandial capacity range \u2014 this CT was not acquired in a declared fasted state, so neither range is a pass/fail test; both are reported",
+  "volume_above_fasted_upper": true,
+  "volume_below_capacity_lower": true,
+  "bbox_extent_mm": [
+   132.7,
+   79.5,
+   165.7
+  ],
+  "centreline_length_apex_to_pylorus_mm": 211.1,
+  "centreline_length_egj_to_pylorus_mm": 177.0,
+  "centreline_root": "fundic apex (most superior stomach voxel)",
+  "s_egj_on_centreline_mm": 34.1,
+  "greater_curvature_length_mm": 267.7,
+  "lesser_curvature_length_mm": 238.0,
+  "greater_to_lesser_ratio": 1.12,
+  "curvature_length_before_smoothing_mm": [
+   427.9,
+   612.6
+  ],
+  "greater_curvature_outline_arc_mm": 474.4,
+  "lesser_curvature_outline_arc_mm": 205.3,
+  "greater_to_lesser_outline_ratio": 2.31,
+  "outline_arc_definition": "textbook definition: the gastric label is projected into its own C-plane, the outline is split at the projected oesophago-gastric junction and pylorus, and the two arcs are measured.  Projection flattens the organ, so both numbers are LOWER BOUNDS on the true 3-D arc lengths.",
+  "curvature_trace_definition": "per-centreline-station extreme surface voxels along the in-C-plane normal, then Laplacian-smoothed and resampled at 2 mm; the longer trace is labelled greater curvature (a result, not an assumption). The pre-smoothing lengths are reported too, because per-voxel traces overestimate arc length.",
+  "antrum_centreline_length_mm": 72.5,
+  "antrum_length_reference_mm": [
+   30.0,
+   40.0
+  ],
+  "antrum_length_within_reference": false,
+  "c_plane_planarity_sv3_over_sv1": 0.1285,
+  "lumen_volume_mL_at_declared_wall": 295.9,
+  "wall_volume_mL_at_declared_wall": 137.5,
+  "egj_contact_voxels": 84,
+  "pyloroduodenal_contact_voxels": 6,
+  "fundus_volume_mL": 123.1,
+  "region_volumes_mL": {
+   "cardia": 30.3,
+   "fundus": 123.1,
+   "body": 111.1,
+   "antrum": 156.4,
+   "pylorus": 12.4
+  },
+  "region_volume_fractions": {
+   "cardia": 0.07,
+   "fundus": 0.284,
+   "body": 0.256,
+   "antrum": 0.361,
+   "pylorus": 0.029
+  },
+  "incisura_detected_on_this_subject": true,
+  "incisura_curvature_rad_per_mm": 0.37788,
+  "incisura_detection_threshold_rad_per_mm": 0.02,
+  "incisura_median_trace_curvature_rad_per_mm": 0.0272,
+  "incisura_prominence_ratio": 13.89,
+  "incisura_prominence_threshold": 2.0,
+  "incisura_curvature_window_mm": 8.0,
+  "incisura_position_fraction_of_centreline": 0.562,
+  "incisura_position_fraction_egj_to_pylorus": 0.477,
+  "coeliac_origin_anchored_to": "aorta surface at this subject's T12 level",
+  "distance_egj_to_coeliac_origin_mm": 31.8,
+  "distance_pylorus_to_duodenum_contact_mm": 0.35,
+  "stomach_to_spleen_min_surface_gap_mm": 3.35
+ },
+ "constructed": {
+  "wall_thickness_mm": {
+   "value": 4.0,
+   "reference": [
+    2.0,
+    5.0,
+    "normal gastric wall on CT when the stomach is distended (<=5 mm)"
+   ],
+   "note": "the label has no wall/lumen distinction; this is a published distended-CT value, NOT measured on this subject",
+   "contour_anchored": false
+  },
+  "cardia_collar_half_width_mm": {
+   "value": 10.0,
+   "band_width_mm": 20.0,
+   "note": "endoscopic/surgical cardia collar measured along the centreline from the MEASURED oesophago-gastric junction; the histological cardiac mucosa is only 1-15 mm (mean 5 mm)",
+   "reference": [
+    1.0,
+    15.0,
+    "histological cardiac mucosa extent, mean 5 mm (Am J Surg Pathol 2002;26:1207, via PathologyOutlines)"
+   ],
+   "contour_anchored": false
+  },
+  "pyloric_canal_mm": {
+   "value": 20.0,
+   "note": "published pyloric canal/sphincter length 1-2 cm",
+   "contour_anchored": false
+  },
+  "rugae": {
+   "count": 12,
+   "amplitude_mm": 2.5,
+   "note": "longitudinal mucosal folds, displaced inward as A*(0.5+0.5*cos(N*theta)) about the measured centreline and faded to zero through the antrum and pyloric canal; normal distended gastric folds are < 5 mm",
+   "contour_anchored": false
+  },
+  "body_antrum_boundary": {
+   "from": "measured curvature maximum on this subject's lesser curvature",
+   "contour_anchored": true
+  },
+  "fundus_boundary": {
+   "from": "horizontal plane through the MEASURED cardiac orifice (standard anatomical definition applied to this subject)",
+   "contour_anchored": true
+  }
+ },
+ "subject_screen": {
+  "criteria": [
+   "stomach label present and is one dominant connected component (largest component >= 95% of label volume)",
+   "label does not touch the field-of-view edge",
+   "label volume between the fasted lower bound and the published capacity upper bound (25-1500 mL)",
+   "a measurable oesophago-gastric contact band exists (cardia anchor)",
+   "a measurable pyloro-duodenal contact band exists (pylorus anchor)",
+   "both great-vessel anchors present: aorta and portal_vein_and_splenic_vein labels non-empty"
+  ],
+  "connected_components": 2,
+  "component_voxel_sizes": [
+   128386,
+   4
+  ],
+  "largest_component_fraction": 0.999969,
+  "touches_fov_edge": false,
+  "label_volume_mL": 433.3,
+  "egj_contact_voxels": 84,
+  "pyloroduodenal_contact_voxels": 6,
+  "aorta_voxels": 35167,
+  "portal_splenic_vein_voxels": 8485,
+  "vertebra_T12_voxels": 20790,
+  "passes": true
+ },
+ "surfaces": {
+  "serosa": {
+   "faces": 51492,
+   "vertices": 25748,
+   "watertight": true
+  },
+  "mucosa": {
+   "faces": 30000,
+   "vertices": 15002,
+   "watertight": true
+  },
+  "cut_wall": {
+   "faces": 18000,
+   "vertices": 9002,
+   "watertight": true
+  },
+  "cut_lumen": {
+   "faces": 10000,
+   "vertices": 5002,
+   "watertight": true
+  },
+  "esophagus": {
+   "faces": 4000,
+   "vertices": 2011,
+   "watertight": false
+  },
+  "duodenum": {
+   "faces": 6000,
+   "vertices": 3002,
+   "watertight": true
+  },
+  "liver": {
+   "faces": 11000,
+   "vertices": 5496,
+   "watertight": true
+  },
+  "spleen": {
+   "faces": 6000,
+   "vertices": 3002,
+   "watertight": true
+  },
+  "pancreas": {
+   "faces": 5000,
+   "vertices": 2502,
+   "watertight": true
+  },
+  "aorta": {
+   "faces": 4500,
+   "vertices": 2252,
+   "watertight": true
+  },
+  "portal_splenic_vein": {
+   "faces": 4500,
+   "vertices": 2252,
+   "watertight": false
+  },
+  "colon": {
+   "faces": 6000,
+   "vertices": 3002,
+   "watertight": true
+  },
+  "total_faces": 156492,
+  "face_budget": [
+   130000,
+   160000
+  ],
+  "within_budget": true
+ }
+}

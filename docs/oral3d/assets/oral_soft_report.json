@@ -1,0 +1,519 @@
+{
+ "construction": "ALL surfaces in this file are CONSTRUCTED; contour_anchored = false for every one of them. They are built into the measured bony frame.",
+ "references": {
+  "tongue_volume_mL": [
+   60.0,
+   110.0,
+   "adult tongue volume by MRI volumetry (oral + pharyngeal portion)"
+  ],
+  "tongue_length_mm": [
+   80.0,
+   100.0,
+   "adult tongue tip-to-root length"
+  ],
+  "parotid_volume_mL": [
+   14.0,
+   35.0,
+   "adult parotid gland volume, MRI/CT volumetry (mean ~25 mL)"
+  ],
+  "submandibular_volume_mL": [
+   5.0,
+   12.0,
+   "adult submandibular gland volume (mean ~8.5 mL)"
+  ],
+  "sublingual_volume_mL": [
+   1.5,
+   4.0,
+   "adult sublingual gland volume (mean ~2.5 mL)"
+  ],
+  "oral_mucosa_area_cm2": [
+   170.0,
+   215.0,
+   "total oral mucosal surface area; Collins LMC & Dawes C, J Dent Res 1987;66:1300-2 (mean 214.7 cm2 including the tongue dorsum)"
+  ],
+  "hard_palate_length_mm": [
+   45.0,
+   60.0,
+   "incisive papilla to the posterior border of the hard palate, adult"
+  ],
+  "circumvallate_count": [
+   7,
+   12,
+   "circumvallate papillae; Standring S (ed), Gray's Anatomy 42e"
+  ],
+  "circumvallate_diameter_mm": [
+   1.0,
+   3.0,
+   "circumvallate papilla diameter"
+  ],
+  "fungiform_count": [
+   200,
+   400,
+   "fungiform papillae on the human tongue"
+  ],
+  "fungiform_diameter_mm": [
+   0.5,
+   1.0,
+   "fungiform papilla diameter"
+  ],
+  "foliate_folds_per_side": [
+   4,
+   11,
+   "foliate folds per posterolateral margin"
+  ],
+  "taste_bud_height_um": [
+   50.0,
+   80.0,
+   "taste bud height"
+  ],
+  "taste_bud_width_um": [
+   30.0,
+   60.0,
+   "taste bud width"
+  ]
+ },
+ "magnification_declared": 60.0,
+ "parts": {
+  "teeth": {
+   "count": 32,
+   "notation": "FDI two-digit",
+   "crown_dimension_source": "Ash MM & Nelson SJ, Wheeler's Dental Anatomy, Physiology and Occlusion, 9th ed. - table of average crown dimensions",
+   "positions_on_measured_arch": 30,
+   "positions_extrapolated_beyond_measured_arch": 2,
+   "maxillary_arch_perimeter_measured_mm": 122.1,
+   "mandibular_arch_perimeter_measured_mm": 115.7,
+   "sum_published_crown_widths_maxillary_mm": 127.4,
+   "sum_published_crown_widths_mandibular_mm": 127.0,
+   "note": "where the published crown widths overrun the measured arch polyline, the distal teeth are placed along the arch tangent extrapolated beyond the measured window; the count of such teeth is reported above and is NOT hidden"
+  },
+  "papillae_counts": {
+   "filiform_drawn": 900,
+   "filiform_note": "the human tongue carries on the order of 10^5 filiform papillae; 900 are DRAWN. This is a declared subsample for rendering, not a count of the anatomy.",
+   "filiform_height_mm_published": [
+    2.0,
+    3.0
+   ],
+   "fungiform_drawn": 280,
+   "circumvallate_drawn": 9,
+   "foliate_folds_drawn_per_side": 6
+  },
+  "tongue": {
+   "faces": 20160,
+   "vertices": 10082,
+   "watertight": true,
+   "area_cm2": 195.93,
+   "contour_anchored": false,
+   "volume_mL": 119.402
+  },
+  "hard_palate": {
+   "faces": 6882,
+   "vertices": 3584,
+   "watertight": false,
+   "area_cm2": 29.95,
+   "contour_anchored": false
+  },
+  "soft_palate": {
+   "faces": 2664,
+   "vertices": 1456,
+   "watertight": false,
+   "area_cm2": 9.44,
+   "contour_anchored": false
+  },
+  "uvula": {
+   "faces": 140,
+   "vertices": 72,
+   "watertight": true,
+   "area_cm2": 2.36,
+   "contour_anchored": false,
+   "volume_mL": 0.265
+  },
+  "parotid_right": {
+   "faces": 5120,
+   "vertices": 2562,
+   "watertight": true,
+   "area_cm2": 87.18,
+   "contour_anchored": false,
+   "volume_mL": 25.0
+  },
+  "submandibular_right": {
+   "faces": 5120,
+   "vertices": 2562,
+   "watertight": true,
+   "area_cm2": 34.07,
+   "contour_anchored": false,
+   "volume_mL": 8.5
+  },
+  "sublingual_right": {
+   "faces": 1280,
+   "vertices": 642,
+   "watertight": true,
+   "area_cm2": 11.07,
+   "contour_anchored": false,
+   "volume_mL": 2.5
+  },
+  "parotid_left": {
+   "faces": 5120,
+   "vertices": 2562,
+   "watertight": true,
+   "area_cm2": 87.06,
+   "contour_anchored": false,
+   "volume_mL": 25.0
+  },
+  "submandibular_left": {
+   "faces": 5120,
+   "vertices": 2562,
+   "watertight": true,
+   "area_cm2": 33.9,
+   "contour_anchored": false,
+   "volume_mL": 8.5
+  },
+  "sublingual_left": {
+   "faces": 1280,
+   "vertices": 642,
+   "watertight": true,
+   "area_cm2": 11.06,
+   "contour_anchored": false,
+   "volume_mL": 2.5
+  },
+  "teeth_upper": {
+   "faces": 5120,
+   "vertices": 2592,
+   "watertight": true,
+   "area_cm2": 49.07,
+   "contour_anchored": false,
+   "volume_mL": 10.701
+  },
+  "teeth_lower": {
+   "faces": 5120,
+   "vertices": 2592,
+   "watertight": true,
+   "area_cm2": 47.41,
+   "contour_anchored": false,
+   "volume_mL": 6.338
+  },
+  "buccal_right": {
+   "faces": 1470,
+   "vertices": 792,
+   "watertight": false,
+   "area_cm2": 21.18,
+   "contour_anchored": false
+  },
+  "buccal_left": {
+   "faces": 1470,
+   "vertices": 792,
+   "watertight": false,
+   "area_cm2": 21.18,
+   "contour_anchored": false
+  },
+  "floor_of_mouth": {
+   "faces": 1326,
+   "vertices": 720,
+   "watertight": false,
+   "area_cm2": 29.32,
+   "contour_anchored": false
+  },
+  "labial": {
+   "faces": 1170,
+   "vertices": 640,
+   "watertight": false,
+   "area_cm2": 20.49,
+   "contour_anchored": false
+  },
+  "gingiva_upper": {
+   "faces": 1952,
+   "vertices": 1107,
+   "watertight": false,
+   "area_cm2": 9.34,
+   "contour_anchored": false
+  },
+  "gingiva_lower": {
+   "faces": 1840,
+   "vertices": 1044,
+   "watertight": false,
+   "area_cm2": 9.1,
+   "contour_anchored": false
+  },
+  "masseter_right": {
+   "faces": 1280,
+   "vertices": 642,
+   "watertight": true,
+   "area_cm2": 18.02,
+   "contour_anchored": false,
+   "volume_mL": 5.482
+  },
+  "temporalis_right": {
+   "faces": 1280,
+   "vertices": 642,
+   "watertight": true,
+   "area_cm2": 19.02,
+   "contour_anchored": false,
+   "volume_mL": 5.316
+  },
+  "masseter_left": {
+   "faces": 1280,
+   "vertices": 642,
+   "watertight": true,
+   "area_cm2": 18.02,
+   "contour_anchored": false,
+   "volume_mL": 5.482
+  },
+  "temporalis_left": {
+   "faces": 1280,
+   "vertices": 642,
+   "watertight": true,
+   "area_cm2": 19.02,
+   "contour_anchored": false,
+   "volume_mL": 5.316
+  },
+  "papillae_filiform": {
+   "faces": 10800,
+   "vertices": 7200,
+   "watertight": true,
+   "area_cm2": 15.89,
+   "contour_anchored": false,
+   "volume_mL": 0.093
+  },
+  "papillae_fungiform": {
+   "faces": 5600,
+   "vertices": 3360,
+   "watertight": true,
+   "area_cm2": 3.74,
+   "contour_anchored": false,
+   "volume_mL": 0.039
+  },
+  "papillae_circumvallate": {
+   "faces": 3528,
+   "vertices": 1800,
+   "watertight": true,
+   "area_cm2": 2.79,
+   "contour_anchored": false,
+   "volume_mL": 0.059
+  },
+  "papillae_foliate": {
+   "faces": 432,
+   "vertices": 336,
+   "watertight": false,
+   "area_cm2": 1.58,
+   "contour_anchored": false
+  },
+  "micro_mucosa_hard_palate": {
+   "faces": 48,
+   "vertices": 32,
+   "watertight": true,
+   "area_cm2": 334.4,
+   "contour_anchored": false,
+   "volume_mL": 197.472
+  },
+  "micro_mucosa_buccal": {
+   "faces": 36,
+   "vertices": 24,
+   "watertight": true,
+   "area_cm2": 332.64,
+   "contour_anchored": false,
+   "volume_mL": 238.128
+  },
+  "micro_mucosa_sublingual": {
+   "faces": 36,
+   "vertices": 24,
+   "watertight": true,
+   "area_cm2": 279.84,
+   "contour_anchored": false,
+   "volume_mL": 180.048
+  },
+  "micro_papilla": {
+   "faces": 2624,
+   "vertices": 1366,
+   "watertight": true,
+   "area_cm2": 1126.06,
+   "contour_anchored": false,
+   "volume_mL": 918.612
+  },
+  "micro_acinus": {
+   "faces": 2648,
+   "vertices": 1354,
+   "watertight": true,
+   "area_cm2": 103.47,
+   "contour_anchored": false,
+   "volume_mL": 4.535
+  }
+ },
+ "measured_back": {
+  "tongue_volume_mL": {
+   "value": 119.4,
+   "reference": [
+    60.0,
+    110.0
+   ],
+   "reference_source": "adult tongue volume by MRI volumetry (oral + pharyngeal portion)",
+   "within_reference": false
+  },
+  "tongue_length_mm": {
+   "value": 91.21,
+   "reference": [
+    80.0,
+    100.0
+   ],
+   "reference_source": "adult tongue tip-to-root length",
+   "within_reference": true
+  },
+  "parotid_volume_mL": {
+   "value": 25.0,
+   "reference": [
+    14.0,
+    35.0
+   ],
+   "reference_source": "adult parotid gland volume, MRI/CT volumetry (mean ~25 mL)",
+   "within_reference": true,
+   "at_published_mean": true,
+   "at_published_mean_note": "the mesh was SCALED to the published adult mean (25.0 mL). This number is a property of the construction, not an independent measurement of anything."
+  },
+  "submandibular_volume_mL": {
+   "value": 8.5,
+   "reference": [
+    5.0,
+    12.0
+   ],
+   "reference_source": "adult submandibular gland volume (mean ~8.5 mL)",
+   "within_reference": true
+  },
+  "sublingual_volume_mL": {
+   "value": 2.5,
+   "reference": [
+    1.5,
+    4.0
+   ],
+   "reference_source": "adult sublingual gland volume (mean ~2.5 mL)",
+   "within_reference": true
+  },
+  "oral_mucosa_area_cm2": {
+   "value": 232.3,
+   "reference": [
+    170.0,
+    215.0
+   ],
+   "reference_source": "total oral mucosal surface area; Collins LMC & Dawes C, J Dent Res 1987;66:1300-2 (mean 214.7 cm2 including the tongue dorsum)",
+   "within_reference": false,
+   "composition": "sum of the eight constructed mucosal sheets plus a declared 42%% share of the closed tongue surface as the dorsum; the 42%% share is DECLARED, not measured"
+  },
+  "hard_palate_length_mm": {
+   "value": 52.0,
+   "reference": [
+    45.0,
+    60.0
+   ],
+   "reference_source": "incisive papilla to the posterior border of the hard palate, adult",
+   "within_reference": true
+  },
+  "circumvallate_count": {
+   "value": 9.0,
+   "reference": [
+    7,
+    12
+   ],
+   "reference_source": "circumvallate papillae; Standring S (ed), Gray's Anatomy 42e",
+   "within_reference": true
+  },
+  "fungiform_count": {
+   "value": 280.0,
+   "reference": [
+    200,
+    400
+   ],
+   "reference_source": "fungiform papillae on the human tongue",
+   "within_reference": true
+  },
+  "foliate_folds_per_side": {
+   "value": 6.0,
+   "reference": [
+    4,
+    11
+   ],
+   "reference_source": "foliate folds per posterolateral margin",
+   "within_reference": true
+  }
+ },
+ "mucosa_regions": {
+  "hard_palate": {
+   "keratinised": 1,
+   "epi_um": [
+    200,
+    300
+   ],
+   "perm_rank": 1,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.1
+  },
+  "gingiva": {
+   "keratinised": 1,
+   "epi_um": [
+    180,
+    250
+   ],
+   "perm_rank": 2,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.12
+  },
+  "tongue_dorsum": {
+   "keratinised": 1,
+   "epi_um": [
+    500,
+    900
+   ],
+   "perm_rank": 3,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.28
+  },
+  "soft_palate": {
+   "keratinised": 0,
+   "epi_um": [
+    150,
+    250
+   ],
+   "perm_rank": 4,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.05
+  },
+  "buccal": {
+   "keratinised": 0,
+   "epi_um": [
+    500,
+    800
+   ],
+   "perm_rank": 5,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.22
+  },
+  "labial": {
+   "keratinised": 0,
+   "epi_um": [
+    500,
+    600
+   ],
+   "perm_rank": 6,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.08
+  },
+  "ventral_tongue": {
+   "keratinised": 0,
+   "epi_um": [
+    100,
+    200
+   ],
+   "perm_rank": 7,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.08
+  },
+  "sublingual": {
+   "keratinised": 0,
+   "epi_um": [
+    100,
+    200
+   ],
+   "perm_rank": 8,
+   "blood_mL_min_100g": null,
+   "constructed_area_share": 0.07
+  }
+ },
+ "permeability_note": "permeability_rank is an ORDERING ONLY (1 least .. 8 most permeable), anchored on the published sublingual > buccal > palatal ordering. No permeability coefficient, no flux calibration and no expression-to-transport conversion exists anywhere in this build.",
+ "total_faces": 103226
+}

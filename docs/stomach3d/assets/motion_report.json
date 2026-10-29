@@ -1,0 +1,47 @@
+{
+ "kinematics": {
+  "frequency_cpm": 3.0,
+  "period_s": 20.0,
+  "declared_speed_profile_mm_s": {
+   "corpus": 3.0,
+   "antrum_to_terminal": [
+    3.0,
+    3.3
+   ],
+   "terminal_28mm": [
+    3.3,
+    7.5
+   ]
+  },
+  "mean_antral_speed_computed_mm_s": 3.882,
+  "published_antral_mean_mm_s": 5.9,
+  "consistency_check": "the mean of the piecewise profile over the antrum is 3.88 mm/s against an independently published antral average of 5.9 mm/s - a DISAGREEMENT of -34%. The profile was built only from the corpus value and the terminal-antral acceleration, so this is an independent check and it does not pass.  The likely cause is geometric: this subject's antrum measures 72.5 mm along the centreline against a published antral length of 30-40 mm, so the slow proximal portion dominates the average, whereas in a 35 mm antrum almost the whole length would lie inside the accelerating terminal 28 mm.  The profile was NOT retuned to hit 5.9 mm/s.",
+  "mean_antral_within_20pct": false,
+  "pacemaker_to_pylorus_transit_s": 38.92,
+  "waves_in_flight": 1.946,
+  "rings_sampled": 700,
+  "rings_undisplaced_at_t0": 289,
+  "rings_undisplaced_fraction": 0.4129,
+  "why_that_number_matters": "a global scale pulse would displace EVERY ring at t=0.  Most rings being undisplaced is what distinguishes a travelling wave from a breathing balloon, and the browser re-measures this count on the live geometry rather than trusting this file.",
+  "amplitude_zero_proximal_to_pacemaker": true,
+  "fundus_contracts_phasically": false
+ },
+ "micro_scale": {
+  "gland_true_depth_um": 800.0,
+  "gland_rendered_mm": 48.0,
+  "mucus_true_um": 106.0,
+  "mucus_rendered_mm": 6.36,
+  "mucus_rendered_in_inset_mm": 50.88,
+  "organ_bbox_mm": [
+   132.7,
+   79.5,
+   165.7
+  ],
+  "statement": "the gland column is drawn at 60x and the mucus gel at 480x in the nested inset.  Both factors are shown in the HUD; nothing in the micro view is at organ scale and the page never implies it is."
+ },
+ "declared_gains": {
+  "vascular_flow": 1.0,
+  "motility": 1.0,
+  "note": "no time or speed gain is applied to the motility animation: at 3 cycles/min a wave crosses the antrum in 39 s, which is watchable in real time.  The only declared magnifications are SPATIAL, in the micro view."
+ }
+}

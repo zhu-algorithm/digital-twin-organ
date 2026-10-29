@@ -1,0 +1,201 @@
+{
+ "flow_sources": {
+  "total_gastric_arterial_inflow_mL_min": 51.771,
+  "rule": "0.010 of the cardiac output computed by this project's own heart model",
+  "cardiac_output_L_min": 5.1771,
+  "cardiac_output_source": "heart_timeseries.json (version 15f70d25-fec2-46d4-bda3-4a62590ba201)",
+  "is_measurement_of_this_subject": false,
+  "published_whole_stomach_flow_located": false,
+  "honesty_note": "no human whole-stomach blood-flow measurement was located in this build, so this fraction is an ASSUMPTION and not a validated value",
+  "implied_flow_per_100g_wall_mL_min": 38.66,
+  "per_tree_split_rule": "proportional to each tree's MEASURED territory wall volume; no hand-set ratios"
+ },
+ "pulsatility_coupling": {
+  "peak_to_mean_flow_ratio": 6.6488,
+  "from": "aortic-root flow waveform of the project heart model, 64 beats",
+  "cardiac_output_cross_check_L_min": 5.1161,
+  "caveat": "this ratio is measured at the AORTIC ROOT and applied unchanged to distal gastric branches.  Real splanchnic branches are damped, so every peak velocity below is an UPPER BOUND, not a prediction."
+ },
+ "velocity_definition": "v(s) = Q(s)/A(s) is a TIME-AVERAGED mean velocity.  The peak velocity reported alongside it is that mean multiplied by the peak:mean flow ratio of 6.6488, measured on the aortic root waveform of the project heart model.  Distal splanchnic branches are damped relative to the aortic root, so every peak velocity here is an UPPER BOUND.",
+ "trees": {
+  "left_gastric": {
+   "paths": 22,
+   "terminals_in_tree": 177,
+   "flow_mL_min": 11.073,
+   "per_terminal_flow_mm3_s": 1.042655,
+   "mean_velocity_cm_s": {
+    "trunk_max": 2.775,
+    "median_over_all_samples": 1.892,
+    "min": 0.47804
+   },
+   "peak_velocity_cm_s_upper_bound": {
+    "trunk_max": 18.448,
+    "median": 12.5796
+   },
+   "published_reference": [
+    null,
+    null,
+    "NO published peak or mean velocity range for the named gastric arteries (left/right gastric, left/right gastroepiploic, short gastric) was located in this build.  Measured values are reported without a pass/fail test rather than being compared against an invented range."
+   ],
+   "reference_located": false,
+   "samples_audited": 1408,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "non_advancing_samples": 0,
+   "direction": "left_gastric ostium -> gastric wall (inflow)",
+   "display_gain": 1.0
+  },
+  "right_gastric": {
+   "paths": 14,
+   "terminals_in_tree": 119,
+   "flow_mL_min": 6.376,
+   "per_terminal_flow_mm3_s": 0.892997,
+   "mean_velocity_cm_s": {
+    "trunk_max": 6.368,
+    "median_over_all_samples": 1.4943,
+    "min": 0.89192
+   },
+   "peak_velocity_cm_s_upper_bound": {
+    "trunk_max": 42.338,
+    "median": 9.9356
+   },
+   "published_reference": [
+    null,
+    null,
+    "NO published peak or mean velocity range for the named gastric arteries (left/right gastric, left/right gastroepiploic, short gastric) was located in this build.  Measured values are reported without a pass/fail test rather than being compared against an invented range."
+   ],
+   "reference_located": false,
+   "samples_audited": 896,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "non_advancing_samples": 0,
+   "direction": "right_gastric ostium -> gastric wall (inflow)",
+   "display_gain": 1.0
+  },
+  "left_gastroepiploic": {
+   "paths": 20,
+   "terminals_in_tree": 177,
+   "flow_mL_min": 5.552,
+   "per_terminal_flow_mm3_s": 0.522787,
+   "mean_velocity_cm_s": {
+    "trunk_max": 2.667,
+    "median_over_all_samples": 2.1688,
+    "min": 0.42705
+   },
+   "peak_velocity_cm_s_upper_bound": {
+    "trunk_max": 17.732,
+    "median": 14.4201
+   },
+   "published_reference": [
+    null,
+    null,
+    "NO published peak or mean velocity range for the named gastric arteries (left/right gastric, left/right gastroepiploic, short gastric) was located in this build.  Measured values are reported without a pass/fail test rather than being compared against an invented range."
+   ],
+   "reference_located": false,
+   "samples_audited": 1280,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "non_advancing_samples": 0,
+   "direction": "left_gastroepiploic ostium -> gastric wall (inflow)",
+   "display_gain": 1.0
+  },
+  "right_gastroepiploic": {
+   "paths": 22,
+   "terminals_in_tree": 181,
+   "flow_mL_min": 12.736,
+   "per_terminal_flow_mm3_s": 1.172744,
+   "mean_velocity_cm_s": {
+    "trunk_max": 7.118,
+    "median_over_all_samples": 2.6962,
+    "min": 0.73183
+   },
+   "peak_velocity_cm_s_upper_bound": {
+    "trunk_max": 47.325,
+    "median": 17.9262
+   },
+   "published_reference": [
+    null,
+    null,
+    "NO published peak or mean velocity range for the named gastric arteries (left/right gastric, left/right gastroepiploic, short gastric) was located in this build.  Measured values are reported without a pass/fail test rather than being compared against an invented range."
+   ],
+   "reference_located": false,
+   "samples_audited": 1408,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "non_advancing_samples": 0,
+   "direction": "right_gastroepiploic ostium -> gastric wall (inflow)",
+   "display_gain": 1.0
+  },
+  "short_gastric": {
+   "paths": 16,
+   "terminals_in_tree": 118,
+   "flow_mL_min": 16.034,
+   "per_terminal_flow_mm3_s": 2.264689,
+   "mean_velocity_cm_s": {
+    "trunk_max": 19.85,
+    "median_over_all_samples": 8.4577,
+    "min": 3.16956
+   },
+   "peak_velocity_cm_s_upper_bound": {
+    "trunk_max": 131.976,
+    "median": 56.2337
+   },
+   "published_reference": [
+    null,
+    null,
+    "NO published peak or mean velocity range for the named gastric arteries (left/right gastric, left/right gastroepiploic, short gastric) was located in this build.  Measured values are reported without a pass/fail test rather than being compared against an invented range."
+   ],
+   "reference_located": false,
+   "samples_audited": 1024,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "non_advancing_samples": 0,
+   "direction": "short_gastric ostium -> gastric wall (inflow)",
+   "display_gain": 1.0
+  },
+  "gastric_veins": {
+   "paths": 24,
+   "terminals_in_tree": 81,
+   "flow_mL_min": 51.771,
+   "per_terminal_flow_mm3_s": 10.652469,
+   "mean_velocity_cm_s": {
+    "trunk_max": 11.945,
+    "median_over_all_samples": 5.8943,
+    "min": 2.70243
+   },
+   "peak_velocity_cm_s_upper_bound": {
+    "trunk_max": 79.418,
+    "median": 39.1902
+   },
+   "published_reference": [
+    10.0,
+    25.0,
+    "portal vein time-averaged mean velocity by duplex ultrasound, normal range; the gastric veins drain into it"
+   ],
+   "reference_located": true,
+   "samples_audited": 1536,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "non_advancing_samples": 0,
+   "direction": "gastric wall -> portal confluence (outflow, into the liver)",
+   "display_gain": 1.0
+  }
+ },
+ "audit": {
+  "total_paths": 118,
+  "samples_per_path": 64,
+  "total_samples_audited": 7552,
+  "retrograde_samples_total": 0,
+  "zero_velocity_samples_total": 0,
+  "non_advancing_samples_total": 0,
+  "all_paths_single_direction": true,
+  "audit_statement": "v(s) = Q(s)/A(s) with Q and A both strictly positive, so no sample on any path can be negative.  The audit COUNTS every sample rather than asserting it, and separately counts samples where the travel direction fails to advance.",
+  "mass_balance_mL_min": {
+   "arterial_inflow": 51.771,
+   "venous_outflow": 51.771,
+   "residual": 0.0,
+   "residual_note": "closed BY CONSTRUCTION: the venous tree was given the whole arterial inflow.  This is bookkeeping, not a measured balance - gastric lymph and transmucosal water movement are not modelled at all."
+  },
+  "display_gain_note": "no display gain anywhere in the vascular layer: gastric arterial velocities are fast enough to be seen at 1x.  The MOTILITY layer declares its own gains separately."
+ }
+}

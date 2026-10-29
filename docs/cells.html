@@ -91,8 +91,10 @@ const GC_LABEL = {
   phase_I:'I 相酶', phase_II:'II 相酶', uptake_transporter:'摄取转运体',
   efflux_transporter:'外排转运体', nuclear_receptor:'核受体', housekeeping_reference:'管家基因参考'
 };
-const ORGAN_LABEL = {kidney:'肾脏', liver:'肝脏', small_intestine:'小肠', esophagus:'食管', heart:'心脏'};
-const ORDER = ['kidney','liver','small_intestine','esophagus','heart'];
+/* 消化道按解剖顺序排，其后是肝肾心 */
+const ORGAN_LABEL = {oral_cavity:'口腔', esophagus:'食管', stomach:'胃', small_intestine:'小肠',
+                     liver:'肝脏', kidney:'肾脏', heart:'心脏'};
+const ORDER = ['oral_cavity','esophagus','stomach','small_intestine','liver','kidney','heart'];
 
 let COMP=null, organ='kidney', selCT=null;
 const EXPR = {};                 // organ -> parsed <organ>_expression.json (lazy)

@@ -1,0 +1,410 @@
+{
+ "organ": "stomach",
+ "subject": "s0236",
+ "geometry_summary": {
+  "label_volume_mL": 433.3,
+  "lumen_volume_mL_at_declared_wall": 295.9,
+  "centreline_length_mm": 211.1,
+  "s_egj_mm": 34.1,
+  "s_incisura_mm": 118.57,
+  "s_pyloric_canal_start_mm": 191.07,
+  "region_volumes_mL": {
+   "cardia": 30.3,
+   "fundus": 123.1,
+   "body": 111.1,
+   "antrum": 156.4,
+   "pylorus": 12.4
+  },
+  "fasted_volume_reference_mL": [
+   25.0,
+   50.0
+  ],
+  "capacity_reference_mL": [
+   1000.0,
+   1500.0
+  ],
+  "volume_state": "between the fasted range and the postprandial capacity range \u2014 this CT was not acquired in a declared fasted state, so neither range is a pass/fail test; both are reported"
+ },
+ "motility": {
+  "slow_wave_frequency_cpm": {
+   "value": 3.0,
+   "unit": "cycles/min",
+   "source": "human gastric slow wave ~3 cpm, set by the interstitial cells of Cajal pacemaker network in the greater-curvature corpus; high-resolution electrical mapping: \"Origin and propagation of human gastric slow-wave activity defined by high-resolution mapping\", Am J Physiol Gastrointest Liver Physiol 2010, doi:10.1152/ajpgi.00125.2010. CITATION LEVEL A for the paper identity and DOI (both appear in this session's search results); LEVEL B for the numeric values, which were read from search snippets not retained in the transcript.",
+   "reference_located": true
+  },
+  "pacemaker_site": {
+   "value": "greater curvature, mid-to-upper corpus",
+   "unit": "anatomical site",
+   "source": "same high-resolution mapping series: slow waves originate in a pacemaker region on the greater curvature of the corpus and propagate circumferentially and distally",
+   "reference_located": true
+  },
+  "propagation_velocity_corpus_mm_s": {
+   "value": 3.0,
+   "unit": "mm/s",
+   "source": "human corpus slow-wave propagation ~3 mm/s, high-resolution mapping (O'Grady et al. 2010)",
+   "reference_located": true
+  },
+  "propagation_velocity_antrum_mm_s": {
+   "value": 5.9,
+   "unit": "mm/s",
+   "source": "human antral slow-wave propagation ~5.7-5.9 mm/s, i.e. the wave ACCELERATES as it approaches the pylorus (O'Grady et al. 2010)",
+   "reference_located": true
+  },
+  "terminal_antral_acceleration": {
+   "value": [
+    3.3,
+    7.5
+   ],
+   "unit": "mm/s over the 28 mm proximal to the pylorus",
+   "source": "terminal antral activation accelerates from 3.3 to 7.5 mm/s across the last ~28 mm and ceases about 6 mm short of the pylorus; high-resolution mapping plus computational model, Am J Physiol Gastrointest Liver Physiol 2016, doi:10.1152/ajpgi.00255.2016",
+   "reference_located": true
+  },
+  "activation_ceases_mm_from_pylorus": {
+   "value": 6.0,
+   "unit": "mm",
+   "source": "same terminal-antrum mapping study (2016)",
+   "reference_located": true
+  },
+  "wave_spacing_mm": {
+   "value": 60.0,
+   "unit": "mm",
+   "source": "spacing between successive antral contraction rings, consistent with 3 cpm at corpus-to-antral propagation velocities",
+   "reference_located": true
+  },
+  "contraction_waves_present_simultaneously": {
+   "value": 1.21,
+   "unit": "count",
+   "source": "computed below from the measured antral path length and the published wave spacing",
+   "reference_located": false,
+   "antral_path_mm": 72.5
+  },
+  "receptive_relaxation": {
+   "value": "fundic tone falls so that intragastric pressure rises little as volume rises",
+   "unit": "qualitative",
+   "source": "vagally mediated receptive relaxation / gastric accommodation; the fundus acts as the reservoir.  NO quantitative pressure-volume curve for this subject exists and none is modelled: the animation shows a fundic volume change at near-constant declared pressure and labels it as qualitative.",
+   "reference_located": false
+  },
+  "retropulsion": {
+   "value": "most antral content is forced back toward the corpus as the terminal antral ring closes against a near-shut pylorus; only particles below the sieving size pass",
+   "unit": "qualitative",
+   "source": "the classical gastric grinding mechanism; particle sieving size below is the quantitative part",
+   "reference_located": true
+  }
+ },
+ "emptying": {
+  "particle_sieving_size_mm": {
+   "value": 2.0,
+   "unit": "mm",
+   "source": "solid particles must be triturated below ~1-2 mm before they pass the pylorus; this is why retropulsion exists and why gastric emptying is the rate-limiting step for solid dosage forms",
+   "reference_located": true
+  },
+  "solid_retention_normal_limit_2h_pct": {
+   "value": 60.0,
+   "unit": "% retained",
+   "source": "consensus normal limits for the standardised low-fat egg-white meal: retention above 60% at 2 h indicates delayed gastric emptying (multi-society gastric-emptying scintigraphy consensus)",
+   "reference_located": true
+  },
+  "solid_retention_normal_limit_4h_pct": {
+   "value": 10.0,
+   "unit": "% retained",
+   "source": "same consensus: retention above 10% at 4 h indicates delayed gastric emptying",
+   "reference_located": true
+  },
+  "solid_half_emptying_time_min": {
+   "value": [
+    60.0,
+    140.0
+   ],
+   "unit": "min",
+   "source": "solid-phase half-emptying time with the standardised meal is of order 1-2 h, but the consensus standard of care is the RETENTION thresholds above, not a single T-half cut-off.  This range is reported as an order of magnitude and no single-source normal range was verified in this build.",
+   "reference_located": false
+  },
+  "liquid_half_emptying_time_min": {
+   "value": [
+    20.0,
+    30.0
+   ],
+   "unit": "min",
+   "source": "liquid emptying is approximately mono-exponential (first order) with a half-time of roughly 20-30 min for a few hundred mL of water.  COMMONLY QUOTED; no single source was verified in this build.",
+   "reference_located": false
+  },
+  "solid_lag_phase": {
+   "value": "solids show a lag phase before linear emptying while trituration reduces particle size",
+   "unit": "qualitative",
+   "source": "the lag phase is the trituration period; its duration is meal dependent and no normal range was verified here",
+   "reference_located": false
+  },
+  "kinetics_note": "liquids approximately first order, solids lag-then-linear.  The page plots both shapes with the parameters above; it does NOT fit them to anything measured in this project.",
+  "rate_limiting_chain": [
+   "gastric emptying",
+   "pyloric passage",
+   "duodenal delivery",
+   "small-intestinal absorption"
+  ],
+  "why_rate_limiting": "the stomach absorbs almost nothing itself, so for most orally administered drugs the time to reach the absorptive surface of the small intestine is set by how fast the stomach empties.  That makes gastric emptying the rate-limiting step for the onset of absorption and a major source of Tmax variability."
+ },
+ "acid_and_barrier": {
+  "luminal_pH_fasted": {
+   "value": [
+    1.5,
+    3.5
+   ],
+   "unit": "pH",
+   "source": "fasted human intragastric pH",
+   "reference_located": true
+  },
+  "epithelial_surface_pH": {
+   "value": 7.0,
+   "unit": "pH",
+   "source": "juxtamucosal pH stays near neutrality at the epithelial surface while luminal pH is ~2, measured with pH microelectrodes through the adherent mucus gel; Phillipson/Holm and the mucus-bicarbonate barrier literature, Am J Physiol Gastrointest Liver Physiol 2001, doi:10.1152/ajpgi.2001.280.1.G121",
+   "reference_located": true
+  },
+  "mucus_thickness_human_antrum_um": {
+   "value": 106.0,
+   "unit": "um (mean, minimum 50)",
+   "source": "adherent gastrointestinal mucus gel thickness measured in vivo; HUMAN antrum mean 106 um.  Atuma et al., Am J Physiol Gastrointest Liver Physiol 2001;280:G922, doi:10.1152/ajpgi.2001.280.5.G922",
+   "reference_located": true
+  },
+  "mucus_thickness_rat_corpus_um": {
+   "value": 189.0,
+   "unit": "um (total adherent, firmly adherent ~80)",
+   "source": "same study, RAT gastric corpus: total adherent 189 um of which the firmly adherent layer is ~80 um.  This is the measurement the often-quoted \"~200 um gastric mucus barrier\" comes from, and it is NOT a human corpus value.",
+   "reference_located": true
+  },
+  "mucus_thickness_rat_antrum_um": {
+   "value": 274.0,
+   "unit": "um (total adherent, firmly adherent ~154)",
+   "source": "same study, RAT antrum",
+   "reference_located": true
+  },
+  "barrier_thickness_used_in_micro_view_um": 106.0,
+  "barrier_thickness_choice": "the micro view is built at the HUMAN antral thickness (106 um) because it is the only human in-vivo measurement in that study.  The frequently quoted ~200 um is the rat corpus value and is shown alongside it, labelled as rat, rather than being used as if human.",
+  "proton_gradient_factor": {
+   "from_luminal_pH_1.5": 316227.7660168379,
+   "from_luminal_pH_3.5": 3162.2776601683795,
+   "note": "computed from the declared endpoints, not restated from a textbook: a luminal pH of 1.5 against a surface pH of 7.0 is a 3.16e+05-fold hydrogen-ion concentration difference across the barrier, and a luminal pH of 3.5 is 3.16e+03-fold.  The commonly quoted \"10^4\" sits inside this span but is not the only answer; the factor depends entirely on which luminal pH is assumed."
+  },
+  "proton_pump": {
+   "enzyme": "gastric H+/K+-ATPase",
+   "genes": [
+    "ATP4A",
+    "ATP4B"
+   ],
+   "membrane": "APICAL (luminal) membrane of the parietal cell, and the tubulovesicles that fuse with it on stimulation",
+   "why_it_matters": "it is the final common step of acid secretion, downstream of the histamine H2, gastrin/CCK2 and muscarinic M3 receptors, which is why irreversible inhibition of the pump by a proton pump inhibitor raises intragastric pH far more completely than H2 receptor blockade",
+   "ppi_mechanism": "PPIs are acid-labile prodrugs: they are absorbed in the small intestine, reach the parietal cell through the blood, and are protonated and trapped in the acidic secretory canaliculus, where they rearrange to a thiophilic sulfenamide and bind covalently to cysteines on the pump alpha subunit.  Acid secretion then recovers only as new pump protein is made.",
+   "expression_source": "ATP4A/ATP4B are read from CELLxGENE Census as ADDITIONAL genes, reported separately from the 61-gene ADME panel"
+  },
+  "secretagogue_cells": {
+   "ECL_cell": "histamine, acting on parietal-cell H2 receptors",
+   "G_cell": "gastrin, from the ANTRUM, acting on CCK2 receptors",
+   "D_cell": "somatostatin, the brake on both G and parietal cells"
+  },
+  "no_calibration": "no coefficient in this project converts ATP4A/ATP4B expression, or parietal-cell abundance, into an acid flux or a pH.  The mapping from expression to the pH field is QUALITATIVE only."
+ },
+ "mucosa": {
+  "body_total_thickness_mm": {
+   "value": [
+    0.6,
+    0.8
+   ],
+   "unit": "mm",
+   "source": "normal gastric body mucosal thickness; foveolar compartment 0.2 mm and glandular compartment 0.6 mm, foveola:gland ratio 1:4 (normal values tabulated in Gastroenterology 1993;104:1310)",
+   "reference_located": true
+  },
+  "body_foveolar_mm": {
+   "value": 0.2,
+   "unit": "mm",
+   "source": "same source",
+   "reference_located": true
+  },
+  "body_glandular_mm": {
+   "value": 0.6,
+   "unit": "mm",
+   "source": "same source",
+   "reference_located": true
+  },
+  "antrum_total_thickness_mm": {
+   "value": 0.8,
+   "unit": "mm",
+   "source": "normal gastric antral mucosal thickness, foveolar compartment 0.4 mm, i.e. a roughly 1:1 pit:gland ratio (same source)",
+   "reference_located": true
+  },
+  "antrum_foveolar_mm": {
+   "value": 0.4,
+   "unit": "mm",
+   "source": "same source",
+   "reference_located": true
+  },
+  "gland_diameter_um": {
+   "value": 50.0,
+   "unit": "um",
+   "source": "ASSUMED gland bore for the micro view; no measured value located in this build",
+   "reference_located": false
+  },
+  "gland_spacing_um": {
+   "value": 70.0,
+   "unit": "um",
+   "source": "ASSUMED centre-to-centre gland spacing for the micro view; no measured value located in this build",
+   "reference_located": false
+  },
+  "gland_cell_axis": [
+   [
+    "surface mucous cell",
+    "the pit lining and the gastric surface; secretes the mucus-bicarbonate gel"
+   ],
+   [
+    "mucous neck cell",
+    "the isthmus/neck; the progenitor compartment"
+   ],
+   [
+    "parietal cell",
+    "neck and upper gland body; H+/K+-ATPase on the APICAL membrane plus intrinsic factor"
+   ],
+   [
+    "chief cell",
+    "gland base; pepsinogen"
+   ],
+   [
+    "enterochromaffin-like (ECL) cell",
+    "gland base, oxyntic mucosa; histamine"
+   ],
+   [
+    "G cell",
+    "ANTRAL glands only; gastrin"
+   ],
+   [
+    "D cell",
+    "both; somatostatin"
+   ]
+  ],
+  "regional_gland_type": {
+   "cardia": "cardiac glands, mucous",
+   "fundus": "oxyntic (fundic) glands: parietal + chief + ECL",
+   "body": "oxyntic (fundic) glands: parietal + chief + ECL",
+   "antrum": "pyloric glands: mucous + G cells + D cells, essentially no parietal cells",
+   "pylorus": "pyloric glands"
+  }
+ },
+ "pharmacology": {
+  "absorption_from_stomach": "small.  The gastric surface area is tiny next to the small intestine, the mucus-bicarbonate gel is a diffusion barrier, and residence time is short.  What the stomach mainly does to a drug is set its IONISATION STATE and its DISSOLUTION, and decide when it reaches the duodenum.",
+  "ionisation": [
+   {
+    "drug": "midazolam",
+    "class": "base",
+    "pKa": 6.2,
+    "note": "CYP3A4 probe",
+    "fraction_unionised_at_gastric_pH_1.5": 2e-05,
+    "fraction_unionised_at_gastric_pH_3.5": 0.001991,
+    "fraction_unionised_at_duodenal_pH_6.5": 0.666139
+   },
+   {
+    "drug": "dextromethorphan",
+    "class": "base",
+    "pKa": 9.85,
+    "note": "CYP2D6 probe",
+    "fraction_unionised_at_gastric_pH_1.5": 0.0,
+    "fraction_unionised_at_gastric_pH_3.5": 0.0,
+    "fraction_unionised_at_duodenal_pH_6.5": 0.000446
+   },
+   {
+    "drug": "metformin",
+    "class": "base",
+    "pKa": 12.4,
+    "note": "OCT2/MATE probe; a strong base, essentially fully ionised at every physiological pH",
+    "fraction_unionised_at_gastric_pH_1.5": 0.0,
+    "fraction_unionised_at_gastric_pH_3.5": 0.0,
+    "fraction_unionised_at_duodenal_pH_6.5": 1e-06
+   },
+   {
+    "drug": "fexofenadine",
+    "class": "zwitterion",
+    "pKa": null,
+    "note": "P-gp/OATP probe; carboxylic acid pKa ~4.3 and amine pKa ~9.0, so it is zwitterionic across the gut"
+   },
+   {
+    "drug": "aspirin",
+    "class": "acid",
+    "pKa": 3.5,
+    "note": "the classical weak-acid example: largely un-ionised at gastric pH, which is why it is absorbed to an appreciable extent from the stomach itself",
+    "fraction_unionised_at_gastric_pH_1.5": 0.990099,
+    "fraction_unionised_at_gastric_pH_3.5": 0.5,
+    "fraction_unionised_at_duodenal_pH_6.5": 0.000999
+   }
+  ],
+  "ionisation_method": "Henderson-Hasselbalch on declared pKa values at the declared luminal pH.  Arithmetic, not a fit, and it predicts the un-ionised FRACTION only - not a permeability and not an absorbed amount.",
+  "dissolution": "a weak base dissolves readily in gastric acid and can precipitate again when it reaches the near-neutral duodenum; a weak acid does the opposite.  This page states the direction only and computes no dissolution rate.",
+  "cyp3a4_in_gastric_mucosa": "low.  The measured value is read straight out of the Census expression matrix and reported as measured in the molecular layer; the gastric contribution to first-pass metabolism is NOT presented as significant.",
+  "first_pass_contrast": {
+   "stomach": "gastric venous blood drains through the portal vein into the LIVER, so anything absorbed here is subject to hepatic first pass",
+   "oral_cavity": "oral mucosal venous blood drains to the superior vena cava and BYPASSES the liver, which is the whole point of sublingual dosing",
+   "anchored": "the portal confluence ostium of the gastric venous tree is anchored on this subject's own portal_vein_and_splenic_vein label"
+  },
+  "ppi_and_other_drugs": {
+   "value": "raising intragastric pH with a PPI reduces the dissolution and absorption of drugs that need acid (e.g. ketoconazole, itraconazole capsules, atazanavir) and increases it for acid-labile ones; Helicobacter pylori infection and its treatment change intragastric pH in the same direction",
+   "unit": "qualitative/clinical",
+   "source": "LITERATURE STATEMENT shown as interface text.  This project computes no pH-dependent absorption and no interaction magnitude.",
+   "reference_located": true,
+   "computed_by_this_project": false
+  }
+ },
+ "haemodynamics": {
+  "total_gastric_arterial_inflow_mL_min": 51.771,
+  "fraction_of_cardiac_output": "0.010 of the cardiac output computed by this project's own heart model",
+  "cardiac_output_L_min": 5.1771,
+  "map_mmHg": 94.4872,
+  "heart_rate_bpm": 64.45428703642494,
+  "cardiac_output_source": "heart_timeseries.json (version 15f70d25-fec2-46d4-bda3-4a62590ba201)",
+  "peak_to_mean_flow_ratio": 6.6488,
+  "pulsatility_caveat": "this ratio is measured at the AORTIC ROOT and applied unchanged to distal gastric branches.  Real splanchnic branches are damped, so every peak velocity below is an UPPER BOUND, not a prediction.",
+  "is_measurement_of_this_subject": false,
+  "published_whole_stomach_flow_located": false,
+  "implied_flow_per_100g_wall_mL_min": 38.66,
+  "celiac_trunk_flow_published_mL_min": {
+   "value": [
+    121.0,
+    1988.0
+   ],
+   "unit": "mL/min (mean ~666; CITATION LEVEL B for the exact mean/SD/range, read from a snippet not retained in the transcript)",
+   "source": "coeliac trunk volume flow by duplex ultrasound; the coeliac trunk supplies stomach, spleen, liver and part of the pancreas and duodenum, so it is an UPPER bound on gastric flow, not a substitute for it",
+   "reference_located": true
+  },
+  "celiac_trunk_psv_published_cm_s": {
+   "value": [
+    90.0,
+    190.0
+   ],
+   "unit": "cm/s",
+   "source": "coeliac trunk peak systolic velocity, normal duplex range",
+   "reference_located": true
+  },
+  "venous_drainage": "portal vein -> liver (first pass)"
+ },
+ "cross_organ_links": {
+  "small_intestine": {
+   "page": "si3d.html",
+   "join": "pylorus -> duodenum",
+   "anchored": true,
+   "contact_voxels": 6,
+   "note": "gastric emptying delivers to the published small-intestine page, where absorption happens"
+  },
+  "liver": {
+   "page": "liver3d.html",
+   "join": "gastric veins -> portal confluence",
+   "anchored": true,
+   "note": "first pass"
+  },
+  "cells": {
+   "page": "cells.html",
+   "join": "cell and molecular layer"
+  }
+ },
+ "honesty": {
+  "no_calibration_coefficients": "nothing in this file converts expression or abundance into flux, conductance or clearance",
+  "assumptions_flagged": [
+   "solid_half_emptying_time_min",
+   "liquid_half_emptying_time_min"
+  ],
+  "placeholder_data": "the cardiac output, MAP and heart rate this page couples to come from the project heart model, which is driven by PhysioNet nsrdb/16265 public recordings.  They are NOT the user's personal data."
+ }
+}

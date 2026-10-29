@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维解剖学数字胃</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden;
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,340px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  label{font-size:11.5px;color:#b8c4d6}
+  input[type=range]{width:100px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;display:block;overflow-x:auto}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;
+        white-space:nowrap}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  .hl{border-left:3px solid #f0a33c;padding-left:12px}
+  #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:12px;padding:9px 10px;max-width:calc(100vw - 24px);left:12px;right:12px;
+        top:auto;bottom:12px;max-height:46vh;overflow:auto}
+    #ui.collapsed{display:none}
+    #panelbtn{display:block}
+    input[type=range]{width:84px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./stomach3d/vendor/three/three.module.js",
+  "three/webgpu": "./stomach3d/vendor/three/three.module.js",
+  "three/tsl": "./stomach3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=stomach">细胞与分子层 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="si3d.html">三维小肠 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="liver3d.html">三维肝脏 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="kidney3d.html">三维肾脏 →</a>
+  <h1>三维解剖学数字胃</h1>
+  <div class="sub">真实 CT 分割浆膜轮廓 · 实测胃底界与角切迹 · 五支胃动脉 + 胃静脉入门静脉 ·
+     3 次/分胃窦蠕动波（浏览器内实测）· 真实比例胃底腺与黏液–碳酸氢盐屏障</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <button id="panelbtn">控制面板</button>
+  <div id="ui">
+    <div class="row">
+      <label>视图</label>
+      <button id="v-organ" class="on">器官</button>
+      <button id="v-ves">血管</button>
+      <button id="v-sec">剖面</button>
+      <button id="v-gland">腺体</button>
+      <button id="v-mol">分子</button>
+    </div>
+    <div class="row">
+      <button id="b-lg" class="on">胃左</button>
+      <button id="b-rg" class="on">胃右</button>
+      <button id="b-lge" class="on">网膜左</button>
+      <button id="b-rge" class="on">网膜右</button>
+      <button id="b-sg" class="on">胃短</button>
+      <button id="b-gv" class="on">胃静脉</button>
+    </div>
+    <div class="row">
+      <label>着色</label>
+      <button id="c-reg" class="on">分区</button>
+      <button id="c-ph">腔内 pH</button>
+      <button id="c-ox">泌酸腺密度</button>
+      <button id="b-lab" class="on">标注</button>
+    </div>
+    <div class="row">
+      <button id="b-mot" class="on">蠕动</button>
+      <label>容受性舒张</label>
+      <input id="acc" type="range" min="0" max="0.45" step="0.01" value="0">
+      <span id="acc-v"><code>0%</code></span>
+    </div>
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+      <label>粒子</label>
+      <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1">
+      <span id="dens-v"><code>100%</code></span>
+    </div>
+    <div class="note" id="prov">加载中…</div>
+  </div>
+</div>
+
+<main>
+  <div class="warnbox">
+    <b>这个页面能做什么、不能做什么。</b>
+    胃的浆膜轮廓、食管–胃连接（贲门）、幽门–十二指肠连接、<b>胃底边界</b>与<b>角切迹</b>是实测的。
+    <b>腹腔干和每一条胃动脉、胃静脉、胃壁与胃腔的分界、胃黏膜皱襞、胃腺、黏液–碳酸氢盐屏障
+    全部是构造的</b>——TotalSegmentator v2.0.1 只有一个 <code>stomach</code> 标签，
+    没有腹腔干、没有任何一条胃血管、没有壁/腔分层、没有分区亚标签。
+    <b>不存在任何"表达量→酸分泌通量"或"丰度→电导"的标定</b>，
+    分子层与 pH 场的颜色只能<b>定性</b>读；本页<b>没有</b>任何药物浓度与 PBPK 房室。
+    腔内 pH 的区域值是公开文献值，<b>不是本受试者的实测</b>。
+    心输出量、平均动脉压与心率来自本项目心脏模型，其驱动数据为 PhysioNet nsrdb/16265 <b>公开记录</b>，
+    <b>不是任何特定个体的数据</b>，所有文件中 <code>is_user_personal_data = false</code>。
+    本页为研究用模拟器，<b>不可用于临床给药或诊断决策</b>。
+  </div>
+
+  <h2>几何来源与许可</h2>
+  <p>TotalSegmentator 数据集 v2.0.1（117 种解剖结构 / 1228 例 CT），
+     DOI <a class="lk" href="https://doi.org/10.5281/zenodo.10047292">10.5281/zenodo.10047292</a>，
+     <b>CC-BY-4.0</b>，署名类许可、可在公开仓再分发。受试者 <code>s0236</code>
+     （1.5 mm 各向同性）——与本项目心脏、肝脏、肾脏、小肠同一受试者，
+     以保证跨器官解剖一致，但<b>按胃自己的标准重新核验</b>（见下）。
+     只用 HTTP Range 请求从 23.5 GB 的 Zenodo 压缩包里取出
+     13 个掩膜，<b>不下载 CT 影像本体</b>，
+     本项目不含任何基于影像灰度的内容。</p>
+  <p>本器官自己的受试者筛查（6 项判据，结果 <b>通过</b>）：
+     胃标签连通分量 <code>2</code> 个
+     （体素数 [128386, 4]，最大分量占比 <code>0.999969</code>——
+     第二个分量只有 4 个体素，照实报出）；
+     视野截断 <code>False</code>；
+     食管接触带 <code>84</code> 体素；
+     幽门–十二指肠接触带 <code>6</code> 体素
+     （<b>很薄，照实报出</b>）；
+     主动脉 <code>35167</code> / 门静脉+脾静脉 <code>8485</code> /
+     T12 椎体 <code>20790</code> 体素。</p>
+  <p>实测：胃标签体积 <b>433.3 mL</b>。
+     空腹参考 25.0–50.0 mL、
+     餐后容量参考 1000.0–1500.0 mL，
+     <b>本例落在两个区间之间</b>——这份 CT 并未声明禁食状态，
+     所以两个区间都<b>不是</b>通过/不通过判据，两者都照实列出。
+     包围盒 132.7 × 79.5 × 165.7 mm；
+     中心线（胃底顶点→幽门）<b>211.1 mm</b>，
+     其中贲门位于 <code>34.1</code> mm 处。
+     三角面合计 <b>156,492</b>（预算 130k–160k，
+     <b>落在预算内</b>），
+     glb <b>5.09 MB</b>（预算 ≤ 7 MB，
+     <b>通过</b>）。</p>
+
+  <h2>分区：哪些是量出来的，哪些是构造的</h2>
+  <p><b>胃底边界是实测的</b>：按标准解剖学定义取"经贲门口的水平面以上的部分"，
+     而贲门口本身是胃标签与食管标签的接触带质心——两者都在这位受试者自己的标签上。
+     <b>角切迹也是实测的</b>：把胃投影到它自身 C 形弯曲所在的平面，
+     在平滑后的小弯迹线上按固定 <code>8.0 mm</code> 物理窗口算平面内转折，
+     峰值 κ = <b>0.37788 rad/mm</b>，
+     为该迹线中位转折（0.0272 rad/mm）的
+     <b>13.89×</b>，
+     同时越过声明阈值 0.02 rad/mm 与显著度阈值
+     2.0×，判定为<b>检出</b>，
+     位于贲门–幽门中心线的 <code>0.477</code> 处。</p>
+  <table><thead><tr><th>分区</th><th>体积 mL</th><th>占比</th><th>来源</th></tr></thead>
+  <tbody><tr><td>贲门 cardia</td><td>30.3</td><td>0.07</td><td>构造（声明 20 mm 领，锚点为实测 EGJ）</td></tr>
+<tr><td>胃底 fundus</td><td>123.1</td><td>0.284</td><td><b>实测</b>（经实测贲门口的水平面）</td></tr>
+<tr><td>胃体 body</td><td>111.1</td><td>0.256</td><td><b>实测</b>（远端界为实测角切迹）</td></tr>
+<tr><td>胃窦 antrum</td><td>156.4</td><td>0.361</td><td><b>实测</b>（近端界为实测角切迹）</td></tr>
+<tr><td>幽门 pylorus</td><td>12.4</td><td>0.029</td><td>构造（声明 20 mm 幽门管）</td></tr></tbody></table>
+  <p class="hl"><b>一个超出范围且没有调参的量：</b>
+     本例胃窦沿中心线长 <b>72.5 mm</b>，
+     而已发表的胃窦长度是 30.0–40.0 mm
+     （"远端 3–4 cm"），<b>判定：超出范围</b>。
+     角切迹是按形态实测定位的，没有为了把胃窦压进 30–40 mm 而移动它。
+     这个偏差会往下传——见蠕动一节。</p>
+  <p>大弯/小弯长度用了<b>两套定义</b>，因为它们量的不是同一件事：
+     (1) 按中心线逐站取平面内极值点、平滑后重采样 → 大弯 <b>267.7 mm</b>、
+     小弯 <b>238.0 mm</b>，比值 1.12。
+     这个比值<b>必然</b>接近 1，因为两条迹线都是按同一条中心线参数化的，
+     结构上不可能复现教科书的大弯:小弯比——这一点写在报告里而不是藏起来。
+     (2) 教科书定义：把胃投影进它自己的 C 平面，在轮廓上以贲门与幽门为界切成两段弧 →
+     大弯 <b>474.4 mm</b>、
+     小弯 <b>205.3 mm</b>，
+     比值 <b>2.31</b>。
+     投影会把器官压扁，所以这两个数都是真实三维弧长的<b>下界</b>。
+     平滑前的逐体素迹线长度（427.9 /
+     612.6 mm）也一并列出，
+     因为逐体素迹线会显著高估弧长。</p>
+  <p>壁/腔分界<b>不是</b>从分割里读出来的：源数据只有一个实心标签。
+     这里按公开的"胃充盈时 CT 壁厚 ≤ 5 mm"取 <b>4.0 mm</b>
+     （落在 2–5 mm 区间内，<b>非本受试者实测</b>）做腐蚀，
+     得到腔 <b>295.9 mL</b> /
+     壁 <b>137.5 mL</b>。
+     胃黏膜皱襞（12 条，
+     幅度 2.5 mm）同样是构造的，
+     按真实皱襞的行为向胃窦与幽门管渐隐。</p>
+
+  <h2>血供：五支动脉 + 一支静脉，开口锚在真实解剖上</h2>
+  <p>源数据<b>没有腹腔干标签</b>，所以腹腔干起始点取这位受试者<b>自己的 T12 椎体</b>水平上
+     主动脉表面最靠前的体素（腹腔干在 79.8% 的 CT 受试者中发自 T12；
+     胃左动脉起点在 385 例 CT 中有 &gt;61% 位于 T12 下缘至 L1 上缘之间）。
+     <b>水平是锚定的，血管本身不是。</b>
+     脾门上下极分别作为胃短动脉与胃网膜左动脉的起点——
+     二者在真实解剖上就发自脾动脉的不同位置，共用一个开口会让两条主干从根部开始互相穿插。
+     胃静脉的开口锚在 <code>portal_vein_and_splenic_vein</code> 标签表面：
+     <b>胃的静脉血进肝，要经首过代谢</b>，这正是与口腔黏膜（绕过肝脏）的对照点。</p>
+  <p>半径按 <code>r = r_term · n_downstream^(1/3)</code> 结构性强制，
+     因此每个分叉上 <code>r_parent³ = Σ r_child³</code> 精确成立，
+     <b>六棵树逐分叉最大相对残差全部为 0.0</b>
+     （共核验 847 个分叉）。
+     <code>r_term</code> 是由声明的主干口径<b>反算</b>的：<code>r_term = r_root / n_terminals^(1/3)</code>。
+     代价照实报出——见下面的"尺度诚实性"。</p>
+  <table><thead><tr><th>树</th><th>段数</th><th>分叉</th><th>终端</th><th>直径 mm</th>
+     <th>总长 mm</th><th>Murray 残差</th><th>流量 mL/min</th><th>时均 cm/s</th>
+     <th>峰值上界 cm/s</th><th>参考 cm/s</th><th>判定</th></tr></thead>
+  <tbody><tr><td>left_gastric</td><td>453</td><td>176</td><td>177</td><td>0.527–2.9588</td><td>1793.6</td><td>0.0</td><td>11.073</td><td>2.775</td><td>18.448</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr>
+<tr><td>right_gastric</td><td>332</td><td>118</td><td>119</td><td>0.357–1.7561</td><td>1390.8</td><td>0.0</td><td>6.376</td><td>6.368</td><td>42.338</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr>
+<tr><td>left_gastroepiploic</td><td>450</td><td>176</td><td>177</td><td>0.3948–2.2167</td><td>1605.9</td><td>0.0</td><td>5.552</td><td>2.667</td><td>17.732</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr>
+<tr><td>right_gastroepiploic</td><td>472</td><td>180</td><td>181</td><td>0.4517–2.5551</td><td>1850.9</td><td>0.0</td><td>12.736</td><td>7.118</td><td>47.325</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr>
+<tr><td>short_gastric</td><td>381</td><td>117</td><td>118</td><td>0.3016–1.4794</td><td>1778.8</td><td>0.0</td><td>16.034</td><td>19.85</td><td>131.976</td><td>—</td><td><span style="color:#93a3ba">无公开参考值</span></td></tr>
+<tr><td>gastric_veins</td><td>350</td><td>80</td><td>81</td><td>0.7084–3.0652</td><td>1822.2</td><td>0.0</td><td>51.771</td><td>11.945</td><td>79.418</td><td>10.0–25.0</td><td><b style="color:#8fd9a8">落在范围内</b></td></tr></tbody></table>
+
+  <h2>不相交约束：求解出来的，不是凑出来的</h2>
+  <p>六棵树的净空是作为<b>约束</b>处理的，分四步：
+     (1) 先把六条"开口+主干+命名走行"的骨架全部铺好；
+     (2) 把每段骨架临时设为该树的主干半径（它能达到的最坏情况）再求解到互相净空
+     （冻结开口，位移上限 20 mm，实测骨架最小间隙
+     <code>0.25</code> mm，
+     <b style="color:#f0b25a">恰好等于求解器目标</b>，已标 <code>at_solver_target</code>——
+     这是求解器的属性，不是对几何的独立测量）；
+     (3) 冻结整套骨架，逐树生长终端，生长时把其它树的半径<b>膨胀到各自主干半径</b>、
+     并按本树主干半径加罚，使"插入时验证过的净空"不会因为下游终端增加、Murray 半径变粗而失效；
+     (4) <b>不做</b>生长后的松弛——每一种松弛配置都会把一棵树的主干拖进另一棵树的终端里，
+     把生长时已经保证好的净空重新弄坏。</p>
+  <p>还有一处必须讲明：<code>subdivide()</code> 的<b>横向弓形偏置被关掉了</b>（bow = 0）。
+     那是纯装饰性的曲率，但它施加在所有净空检查<b>之后</b>，
+     一段 30 mm 的血管按 8% 偏置就是 2.4 mm——它是最后一个造成相互穿插的来源。
+     关掉之后，<b>15 对树全部非负</b>。</p>
+  <table><thead><tr><th>树对</th><th>实测最小表面间隙 mm</th><th>发生在哪一级</th><th>性质</th></tr></thead>
+  <tbody><tr><td>right_gastric ↔ right_gastroepiploic</td><td>0.7475</td><td>right_gastric_trunk ↔ right_gastroepiploic_trunk</td><td>实测</td></tr>
+<tr><td>left_gastroepiploic ↔ short_gastric</td><td>1.1267</td><td>left_gastroepiploic_course ↔ short_gastric_terminal</td><td>实测</td></tr>
+<tr><td>right_gastric ↔ gastric_veins</td><td>1.4082</td><td>right_gastric_course ↔ gastric_veins_trunk</td><td>实测</td></tr>
+<tr><td>short_gastric ↔ gastric_veins</td><td>1.662</td><td>short_gastric_terminal ↔ gastric_veins_terminal</td><td>实测</td></tr>
+<tr><td>left_gastric ↔ gastric_veins</td><td>1.6736</td><td>left_gastric_terminal ↔ gastric_veins_terminal</td><td>实测</td></tr>
+<tr><td>left_gastric ↔ left_gastroepiploic</td><td>2.1063</td><td>left_gastric_terminal ↔ left_gastroepiploic_terminal</td><td>实测</td></tr>
+<tr><td>left_gastric ↔ short_gastric</td><td>2.1821</td><td>left_gastric_terminal ↔ short_gastric_terminal</td><td>实测</td></tr>
+<tr><td>left_gastric ↔ right_gastric</td><td>2.2161</td><td>left_gastric_course ↔ right_gastric_terminal</td><td>实测</td></tr>
+<tr><td>right_gastric ↔ short_gastric</td><td>2.2854</td><td>right_gastric_terminal ↔ short_gastric_terminal</td><td>实测</td></tr>
+<tr><td>left_gastroepiploic ↔ right_gastroepiploic</td><td>2.6573</td><td>left_gastroepiploic_terminal ↔ right_gastroepiploic_terminal</td><td>实测</td></tr>
+<tr><td>right_gastroepiploic ↔ short_gastric</td><td>3.0366</td><td>right_gastroepiploic_terminal ↔ short_gastric_terminal</td><td>实测</td></tr>
+<tr><td>right_gastroepiploic ↔ gastric_veins</td><td>3.3799</td><td>right_gastroepiploic_terminal ↔ gastric_veins_terminal</td><td>实测</td></tr>
+<tr><td>left_gastroepiploic ↔ gastric_veins</td><td>4.5123</td><td>left_gastroepiploic_trunk ↔ gastric_veins_terminal</td><td>实测</td></tr>
+<tr><td>right_gastric ↔ left_gastroepiploic</td><td>6.0773</td><td>right_gastric_terminal ↔ left_gastroepiploic_terminal</td><td>实测</td></tr>
+<tr><td>left_gastric ↔ right_gastroepiploic</td><td>8.1275</td><td>left_gastric_terminal ↔ right_gastroepiploic_terminal</td><td>实测</td></tr></tbody></table>
+  <p><b>全局最小表面间隙 0.7475 mm</b>
+     （right_gastric ↔ right_gastroepiploic，
+     right_gastric_trunk ↔ right_gastroepiploic_trunk），<b>不等于</b>求解器目标，是真实测量。
+     伴行的胃动脉与胃静脉在大小弯上本来就相距不到 1 mm，
+     所以<b>亚毫米的实测间隙是可接受的伴行间距</b>，不是缺陷。
+     <b>没有删除任何一段血管</b>（0 段），
+     也没有把任何节点推出可通行空间（0 个）。
+     伴行静脉偏置声明值 4.5 mm，
+     领域间终端间距 2.5 mm。</p>
+  <p><b>代价也照实报：</b>共有 <b>653</b> 个目标点
+     在保守净空下无法接入（其中绝大多数是胃静脉树，它要穿过全部五个动脉领域）。
+     胃静脉树最终只长出 81 个终端，
+     低于请求的 180 个。
+     这是<b>约束的代价，不是被隐藏的失败</b>。</p>
+
+  <h2>尺度诚实性</h2>
+  <p>人胃的小动脉树有 ~10⁵ 个终末；本场景六棵树合计只有
+     <b>853</b> 个。
+     在立方律下用公开主干口径反算，必然导致终末口径远大于真实黏膜下小动脉：</p>
+  <table><thead><tr><th>树</th><th>反算终末直径 µm</th><th>已发表小动脉 µm</th><th>判定</th></tr></thead>
+  <tbody><tr><td>left_gastric</td><td>527.0</td><td>50.0–150.0</td><td><b style='color:#f0b25a'>超出范围</b></td></tr><tr><td>right_gastric</td><td>357.0</td><td>50.0–150.0</td><td><b style='color:#f0b25a'>超出范围</b></td></tr><tr><td>left_gastroepiploic</td><td>394.8</td><td>50.0–150.0</td><td><b style='color:#f0b25a'>超出范围</b></td></tr><tr><td>right_gastroepiploic</td><td>451.7</td><td>50.0–150.0</td><td><b style='color:#f0b25a'>超出范围</b></td></tr><tr><td>short_gastric</td><td>301.6</td><td>50.0–150.0</td><td><b style='color:#f0b25a'>超出范围</b></td></tr><tr><td>gastric_veins</td><td>708.4</td><td>50.0–150.0</td><td><b style='color:#f0b25a'>超出范围</b></td></tr></tbody></table>
+  <p><b>本项目没有为了凑数去发明任何系数。</b>这几行就是照算出来的报。</p>
+
+  <h2>血流动力学：与心脏模型耦合</h2>
+  <p>胃动脉总入流<b>是一个声明过的假设，不是实测</b>：
+     取本项目心脏模型实算心输出量 <b>5.1771 L/min</b> 的
+     <b>1.0%</b> = <b>51.771 mL/min</b>，
+     折合每 100 g 胃壁 <b>38.66 mL/min</b>。
+     <b>本次构建没有找到可用于校验的人体全胃血流实测值</b>（<code>published_whole_stomach_flow_located = false</code>），
+     所以这个分数只能标为假设。
+     腹腔干实测容积流量 121.0–1988.0 mL/min
+     （均值 666 ± 412）只是<b>上界</b>——腹腔干同时供应脾、肝、胰与部分十二指肠。
+     五棵动脉树之间按各自<b>实测领域胃壁体积</b>分配，没有手设比例。
+     平均动脉压 94.4872 mmHg、心率 64.45 bpm 同样来自心脏模型。</p>
+  <p>搏动性用心脏模型自己的<b>主动脉根部流量波形</b>（64 拍）
+     算出峰/均比 <b>6.6488</b>，
+     直接乘到时均流速上。<b>这个比值测于主动脉根部</b>，
+     而真实内脏分支是被衰减过的，所以上表每一个"峰值上界"都<b>只是上界，不是预测</b>。
+     逐采样点逆流审计：<b>118 条通路 /
+     7,552 个采样点，逆流 0 个、
+     零速 0 个、不前进 0 个</b>。
+     血管层<b>没有任何显示增益</b>（1×）。
+     质量守恒 0.0 mL/min 是<b>按构造闭合</b>的记账，
+     不是实测闭合：胃淋巴与跨黏膜水分运动根本没有建模。</p>
+
+  <h2>动画：3 次/分的胃窦收缩波（浏览器内实测）</h2>
+  <p>波由 Cajal 间质细胞起搏网络驱动，起搏区在<b>胃体大弯中上部</b>，
+     频率 <b>3.0 cpm</b>（周期 20.0 s）。
+     传播速度按已发表的人体高分辨电标测逐段取值，<b>每个值只用在它自己的区段</b>：
+     胃体 3.0 mm/s；
+     胃窦至距幽门 28 mm 处 3.0→3.3 mm/s；
+     <b>终末 28 mm 加速 3.3→7.5 mm/s</b>，
+     并在距幽门 6 mm 处停止激动。
+     振幅在起搏区近侧为零——<b>胃底不做位相性收缩</b>，这正是它能当储袋的原因。</p>
+  <p class="hl"><b>一个独立核验，而且没通过：</b>
+     上述分段剖面在胃窦上的平均速度算出来是 <b>3.882 mm/s</b>，
+     而独立发表的胃窦平均值是 <b>5.9 mm/s</b>，
+     相差 <b>−34%</b>，<code>mean_antral_within_20pct = false</code>。
+     剖面只用了胃体值与终末加速两组数据搭起来，所以这是一次真正的独立检验。
+     成因很可能是几何：本例胃窦长 72.5 mm，
+     而已发表胃窦长 30–40 mm——缓慢的近侧段在本例里占了大头，
+     而在 35 mm 的胃窦里几乎整条都落在加速的终末 28 mm 内。
+     <b>没有为了凑到 5.9 mm/s 而重调剖面。</b></p>
+  <p>动画是<b>在真实网格顶点上逐点形变</b>（CPU，不是只在着色器里），
+     所以下面这些数字核验的就是用户正在看的那个几何。
+     页面启动时自动跑一次 <code>api.measureMotion()</code>：
+     沿中心线取 <b>700</b> 个采样环，从<b>实时顶点缓冲</b>读回每环的平均腔半径，
+     逐帧找出收缩最深的那一环，并对它的弧长位置求导。</p>
+  <table><thead><tr><th>量</th><th>声明值</th><th>浏览器内实测</th></tr></thead><tbody>
+    <tr><td>频率 cpm</td><td>3.0</td><td id="mm-freq">—</td></tr>
+    <tr><td>波速 mm/s（中位）</td><td>3.0–7.5</td><td id="mm-speed">—</td></tr>
+    <tr><td>t=0 未位移采样环</td><td>—</td><td id="mm-static">—</td></tr>
+    <tr><td>起搏区→幽门传播时间 s</td><td>38.92</td><td>—</td></tr>
+    <tr><td>同时在行进的波数</td><td>1.946</td><td>—</td></tr>
+  </tbody></table>
+  <p><b>为什么"未位移环数"是关键：</b>整体缩放会让<b>每一个</b>环在 t=0 同时位移；
+     大量环保持未位移，才证明这是一列<b>行进中的波</b>而不是一只呼吸的气球。
+     这个计数由浏览器在实时几何上重测，<b>不信任</b>生成文件里的声明值。</p>
+  <p><b>回推（retropulsion）</b>：终末收缩环抵住近乎关闭的幽门时，
+     大部分胃窦内容物被挤回胃体，只有直径小于<b>2.0 mm</b>
+     的颗粒能通过幽门——这就是胃的研磨机制。
+     剖面视图里按 0.5, 1.0, 2.0, 4.0, 8.0 mm
+     放了五档颗粒，通过与回推的次数由浏览器<b>计数</b>，筛分尺寸是唯一的声明输入。
+     <b>容受性舒张</b>做成一个独立的、缓慢的胃底容积变化，
+     压力行为标为<b>定性</b>——本项目<b>没有</b>任何压力–容积曲线。</p>
+
+  <h2>胃排空：口服药物吸收的限速步骤</h2>
+  <p>胃本身几乎不吸收，所以对大多数口服药而言，<b>到达小肠吸收面的时间由胃排空决定</b>，
+     这也是 T<sub>max</sub> 变异的主要来源之一。限速链：
+     <b>gastric emptying → pyloric passage → duodenal delivery → small-intestinal absorption</b>，终点是已上线的
+     <a class="lk" href="si3d.html">三维小肠页</a>。</p>
+  <p>液体近似<b>一级</b>排空，固体<b>先延迟后线性</b>。
+     共识标准（标准化低脂蛋清餐）是<b>滞留率</b>而不是单一半排空时间：
+     2 h 滞留 &gt; 60.0%
+     或 4 h 滞留 &gt; 10.0% 判为排空延迟
+     （<code>reference_located = true</code>）。
+     本页画曲线用的半排空时间——液体 20.0–30.0 min、
+     固体 60.0–140.0 min——
+     <b>本次构建没有核实到单一来源</b>（<code>reference_located = false</code>），
+     只能当作量级，<b>没有拟合本项目的任何数据</b>。</p>
+
+  <h2>胃酸与 pH 梯度：胃的签名特征</h2>
+  <p>空腹腔内 pH <b>1.5–3.5</b>，
+     而上皮表面 pH 约 <b>7.0</b>，
+     中间只隔着一层<b>黏液–碳酸氢盐屏障</b>。
+     按声明的两个端点<b>算出来</b>（不是复述教科书）：
+     腔内 pH 1.5 对表面 7.0 是 <b>3.16×10⁵</b> 倍的氢离子浓度差，
+     腔内 pH 3.5 则是 <b>3.16×10³</b> 倍。
+     常被引用的"10⁴ 倍"落在这个区间内，但<b>它不是唯一答案</b>——
+     倍数完全取决于假设哪一个腔内 pH。</p>
+  <p class="hl"><b>关于"约 200 µm"这个厚度，必须讲清楚。</b>
+     被广泛引用的 ~200 µm 是<b>大鼠胃体</b>的在体测量
+     （总黏附层 189.0 µm，其中牢固黏附层约 80 µm）；
+     同一研究里<b>人体</b>的在体测量是<b>胃窦</b>，均值
+     <b>106.0 µm</b>（最小 50 µm），
+     大鼠胃窦则是 274.0 µm。
+     本页的微观视图<b>按人体胃窦的 106.0 µm 建</b>，
+     并把大鼠胃体值标注为大鼠值并列显示，<b>而不是</b>把它当人体值用。</p>
+  <p>屏障内的 pH 场是两个已发表端点之间的<b>线性插值（在 pH 上线性）</b>，
+     <b>不是</b>反应–扩散方程的解：真实的近黏膜剖面是 S 形的，
+     由 H⁺ 反向扩散与 HCO₃⁻ 分泌的平衡决定。
+     <code>pH_profile_is_a_transport_solution = false</code>，这一点也写在界面上。</p>
+
+  <h2>胃底腺：真实比例，放大倍数已声明</h2>
+  <p>腺体柱按公开的人体形态计量<b>真实尺寸</b>建模，再按声明的
+     <b>60×</b> 放大（与本项目肝小叶、小肠绒毛同一倍数）；
+     106.0 µm 的黏液凝胶另有一层嵌套放大
+     <b>8×</b>，合计
+     <b>480×</b>。两个倍数都显示在 HUD 里。</p>
+  <table><thead><tr><th>结构</th><th>真实尺寸 µm</th><th>场景内 mm</th><th>来源已核实</th></tr></thead><tbody>
+    <tr><td>泌酸腺总深度</td><td>800</td>
+        <td>48.0</td><td>是</td></tr>
+    <tr><td>胃小凹（foveola）</td><td>200</td><td>—</td><td>是</td></tr>
+    <tr><td>腺体部</td><td>600</td><td>—</td><td>是</td></tr>
+    <tr><td>幽门腺总深度</td><td>800</td><td>—</td><td>是</td></tr>
+    <tr><td>黏液凝胶（人胃窦）</td><td>106.0</td>
+        <td>6.36（嵌套 50.88）</td><td>是</td></tr>
+    <tr><td>腺体口径</td><td>50.0</td><td>—</td>
+        <td><b style="color:#f0b25a">否（假设值）</b></td></tr>
+    <tr><td>腺体间距</td><td>70.0</td><td>—</td>
+        <td><b style="color:#f0b25a">否（假设值）</b></td></tr>
+  </tbody></table>
+  <p>由假设间距<b>算出</b>的腺体密度 204.1/mm²
+     是<b>结果而不是实测</b>——本次构建没有找到人体胃腺密度的实测值。
+     胃小凹→腺颈→腺底的轴向分化按公开顺序放置：
+     表面黏液细胞 → 颈黏液细胞（峡部，祖细胞区）→ <b>壁细胞</b>（颈与腺体上部）→
+     <b>主细胞</b>（腺底，胃蛋白酶原）→ <b>ECL 细胞</b>（腺底，组胺）；
+     <b>G 细胞与 D 细胞只画在胃窦的幽门腺里</b>，泌酸腺里没有 G 细胞。</p>
+  <p class="hl"><b>质子泵画在正确的膜面上。</b>
+     H⁺/K⁺-ATP 酶（<code>ATP4A</code>/<code>ATP4B</code>）位于<b>壁细胞顶膜</b>，
+     以及受刺激后与顶膜融合的管泡系统——场景里它沿分泌小管内面排布，
+     <code>userData.membrane = 'apical'</code>。
+     画到基底侧会比不画更糟，所以膜面由数据决定而不是由构图决定。
+     它是酸分泌的<b>最终共同通路</b>，位于组胺 H2、胃泌素 CCK2 与毒蕈碱 M3 三条受体通路的下游——
+     这就是 PPI 抑酸比 H2 受体阻断更彻底的原因。
+     PPI 本身是酸不稳定的<b>前药</b>：在小肠吸收、经血流到达壁细胞，
+     在酸性分泌小管内被质子化而被"困住"，重排为亲硫的次磺酰胺并与泵 α 亚基的半胱氨酸共价结合；
+     此后泌酸只能随新泵蛋白合成而恢复。</p>
+
+  <h2>药理学：胃决定解离状态与溶出，而不是代谢</h2>
+  <p>small.  The gastric surface area is tiny next to the small intestine, the mucus-bicarbonate gel is a diffusion barrier, and residence time is short.  What the stomach mainly does to a drug is set its IONISATION STATE and its DISSOLUTION, and decide when it reaches the duodenum.</p>
+  <p>按 Henderson–Hasselbalch 在声明 pKa 与声明腔内 pH 上<b>算</b>非解离比例
+     （是算术，不是拟合；它只给出<b>非解离分数</b>，既不是渗透性也不是吸收量）：</p>
+  <table><thead><tr><th>药物</th><th>类型</th><th>pKa</th><th>pH 1.5 非解离</th>
+     <th>pH 3.5 非解离</th><th>十二指肠 pH 6.5 非解离</th></tr></thead>
+  <tbody><tr><td>midazolam</td><td>base</td><td>6.2</td><td>2e-05</td><td>0.001991</td><td>0.666139</td></tr>
+<tr><td>dextromethorphan</td><td>base</td><td>9.85</td><td>0.0</td><td>0.0</td><td>0.000446</td></tr>
+<tr><td>metformin</td><td>base</td><td>12.4</td><td>0.0</td><td>0.0</td><td>1e-06</td></tr>
+<tr><td>fexofenadine</td><td>zwitterion</td><td>None</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>aspirin</td><td>acid</td><td>3.5</td><td>0.990099</td><td>0.5</td><td>0.000999</td></tr></tbody></table>
+  <p>弱酸（阿司匹林 pKa 3.5）在 pH 1.5 下非解离分数达 <b>0.99</b>，
+     这正是它能从胃本身被相当程度吸收的原因；
+     而咪达唑仑这类弱碱在同一 pH 下非解离分数只有 <b>2×10⁻⁵</b>。
+     溶出方向：弱碱在胃酸里易溶，到近中性的十二指肠可能再析出；弱酸相反。
+     <b>本页只说方向，不算任何溶出速率。</b></p>
+  <p><b>不要夸大胃的代谢作用。</b>胃黏膜 CYP3A4 表达很低，
+     实测值在下面的分子层里照实报出，本页<b>不</b>把胃说成首过代谢的重要部位。</p>
+  <p>PPI 与幽门螺杆菌如何改变胃内 pH、进而影响其它药物的吸收
+     （需要酸才能溶出的酮康唑、伊曲康唑胶囊、阿扎那韦等会被削弱），
+     作为<b>文献陈述</b>放在界面上：<code>computed_by_this_project = false</code>，
+     本项目既不算 pH 依赖吸收，也不算相互作用幅度。</p>
+  <p class="hl"><b>首过代谢的对照：</b>胃的静脉血经门静脉<b>进肝</b>，要过首过；
+     口腔黏膜的静脉血回上腔静脉、<b>绕过肝脏</b>，这正是舌下给药的意义所在。
+     本页胃静脉树的门静脉开口锚定在这位受试者自己的
+     <code>portal_vein_and_splenic_vein</code> 标签上，衔接到已上线的
+     <a class="lk" href="liver3d.html">三维肝脏页</a>。</p>
+
+  <h2>分子层：胃的单细胞 ADME 谱</h2>
+  
+  <p>数据为本项目自建的胃单细胞 ADME 矩阵：
+     <b>131 种细胞类型 × 61 个基因，
+     557791 个细胞 /
+     141 位 donor /
+     8 个数据集</b>，
+     CELLxGENE Census <code>2025-11-08</code>，
+     <code>is_primary_data == True</code>，CP10K + log1p。
+     读取路线为<b>连续 soma_joinid 区块</b>（4 块 ×
+     150000 行，失败 0 块）。</p>
+  <table><thead><tr><th>细胞类型</th><th>细胞数</th><th>CYP3A4</th><th>CYP3A5</th><th>CYP2C19</th><th>CYP2D6</th><th>ABCB1</th><th>ABCG2</th><th>ABCC2</th><th>SLC15A1</th><th>SLCO2B1</th><th>SLC22A1</th><th>SLC22A3</th><th>CES2</th><th>SULT1A1</th><th>GSTP1</th><th>UGT1A1</th></tr></thead>
+  <tbody><tr><td>壁细胞 <code>parietal cell</code></td><td>1802</td><td>0.0016</td><td>0.4411</td><td>0.0009</td><td>0.0019</td><td>0.0000</td><td>0.0012</td><td>0.0012</td><td>0.0009</td><td>0.0006</td><td>0.0017</td><td>0.0062</td><td>0.0562</td><td>0.1501</td><td>0.6970</td><td>0.0024</td></tr><tr><td>主细胞（Census 标签 peptic cell） <code>peptic cell</code></td><td>8840</td><td>0.0006</td><td>0.0392</td><td>0.0000</td><td>0.0017</td><td>0.0010</td><td>0.0011</td><td>0.0002</td><td>0.0021</td><td>0.0013</td><td>0.0001</td><td>0.0033</td><td>0.0397</td><td>0.0341</td><td>0.4453</td><td>0.0008</td></tr><tr><td>G 细胞 <code>type G enteroendocrine cell</code></td><td>1892</td><td>0.0017</td><td>0.1627</td><td>0.0010</td><td>0.0041</td><td>0.0011</td><td>0.0309</td><td>0.0006</td><td>0.0466</td><td>0.0003</td><td>0.0008</td><td>0.0030</td><td>0.0737</td><td>0.0308</td><td>1.1907</td><td>0.0039</td></tr><tr><td>表面黏液细胞（胃小凹） <code>foveolar cell of stomach</code></td><td>41796</td><td>0.0052</td><td>0.9131</td><td>0.0226</td><td>0.0059</td><td>0.0010</td><td>0.0060</td><td>0.0010</td><td>0.0086</td><td>0.0076</td><td>0.0007</td><td>0.0164</td><td>0.4378</td><td>0.0992</td><td>2.5630</td><td>0.0123</td></tr><tr><td>颈黏液细胞 <code>mucous neck cell of gastric gland</code></td><td>26574</td><td>0.0008</td><td>0.3179</td><td>0.0037</td><td>0.0076</td><td>0.0008</td><td>0.0014</td><td>0.0010</td><td>0.0035</td><td>0.0055</td><td>0.0007</td><td>0.0274</td><td>0.1064</td><td>0.0533</td><td>1.9022</td><td>0.0032</td></tr></tbody></table>
+  <h2>质子泵 ATP4A / ATP4B：面板外的附加基因</h2>
+  <p>ATP4A 与 ATP4B <b>不在 61 基因 ADME 面板里</b>。它们是在同一次 Census X 读取中
+     一并取出的附加基因，<b>单独报告</b>，以免把面板悄悄加宽。
+     质子泵位于<b>壁细胞顶膜</b>（以及受刺激后与之融合的管泡系统），
+     这正是 PPI 的作用位点。</p>
+  <table><thead><tr><th>细胞类型</th><th>ATP4A</th><th>ATP4B</th></tr></thead><tbody><tr><td>壁细胞 <code>parietal cell</code></td><td>2.6147 (77.52%)</td><td>2.6134 (84.07%)</td></tr>
+<tr><td>主细胞（Census 标签 peptic cell） <code>peptic cell</code></td><td>0.0648 (3.81%)</td><td>0.0881 (4.33%)</td></tr>
+<tr><td>G 细胞 <code>type G enteroendocrine cell</code></td><td>0.0111 (1.16%)</td><td>0.0055 (0.63%)</td></tr>
+<tr><td>表面黏液细胞（胃小凹） <code>foveolar cell of stomach</code></td><td>0.0177 (1.30%)</td><td>0.0117 (0.93%)</td></tr>
+<tr><td>颈黏液细胞 <code>mucous neck cell of gastric gland</code></td><td>0.0212 (1.63%)</td><td>0.0182 (1.39%)</td></tr></tbody></table>
+  <p><b>未能在 Census 胃队列中定位的关键细胞类型</b>：ECL 细胞 <code>enterochromaffin-like cell</code>、D 细胞 <code>type D enteroendocrine cell</code>。
+     这些类型<b>没有用别的细胞或组织平均值顶替</b>，缺就是缺。</p>
+
+  <h2>与相邻器官页的衔接</h2>
+  <p>幽门处与<a class="lk" href="si3d.html">三维小肠页</a>相接：
+     幽门–十二指肠接触带 <code>6</code> 个体素，
+     实测幽门点到接触带质心 <code>0.35</code> mm，
+     <b>contour_anchored = true</b>。
+     腹腔干/门静脉处与<a class="lk" href="liver3d.html">三维肝脏页</a>相接。
+     贲门到腹腔干起始实测 <code>31.8</code> mm；
+     胃与脾的实测最小表面间隙 <code>3.35</code> mm。
+     五个器官共用受试者 <code>s0236</code> 与同一场景坐标系
+     （患者左、上、前），所以衔接处是对得上的。</p>
+</main>
+
+<script type="module">
+import { createStomachScene } from './stomach3d/js/main.js';
+
+const errEl = document.getElementById('err');
+function fail(e){
+  const txt = (e && e.stack) ? e.stack : String(e);
+  errEl.style.display='block';
+  errEl.textContent = '三维场景启动失败\n\n' + txt;
+  window.__stomach3dError = txt;
+  console.error('[stomach3d:fatal] ' + txt);
+}
+window.addEventListener('error', ev => fail(ev.error || ev.message));
+window.addEventListener('unhandledrejection', ev => fail(ev.reason));
+
+const narrow = Math.min(window.innerWidth, window.innerHeight) < 520;
+
+try{
+  const api = await createStomachScene({
+    container: document.getElementById('app'),
+    assetBase: './stomach3d/assets/',
+    particlesPerPath: narrow ? 90 : 210
+  });
+  const $ = id => document.getElementById(id);
+
+  const views = [['v-organ','organ'],['v-ves','vessels'],['v-sec','section'],
+                 ['v-gland','gland'],['v-mol','molecular']];
+  for (const [id, v] of views){
+    $(id).onclick = () => {
+      api.setView(v);
+      for (const [i2] of views) $(i2).classList.toggle('on', i2 === id);
+      prov();
+    };
+  }
+  const toggle = (el, fn, init) => {
+    if (init === false) el.classList.remove('on');
+    el.onclick = () => { el.classList.toggle('on'); fn(el.classList.contains('on')); };
+  };
+  toggle($('b-lg'),  on => api.setTreeVisible('left_gastric', on));
+  toggle($('b-rg'),  on => api.setTreeVisible('right_gastric', on));
+  toggle($('b-lge'), on => api.setTreeVisible('left_gastroepiploic', on));
+  toggle($('b-rge'), on => api.setTreeVisible('right_gastroepiploic', on));
+  toggle($('b-sg'),  on => api.setTreeVisible('short_gastric', on));
+  toggle($('b-gv'),  on => api.setTreeVisible('gastric_veins', on));
+  toggle($('b-lab'), on => api.setLabelsVisible(on));
+  toggle($('b-mot'), on => api.setMotility(on));
+
+  const modes = [['c-reg',0],['c-ph',1],['c-ox',2]];
+  for (const [id, md] of modes){
+    $(id).onclick = () => {
+      api.setWallMode(md);
+      for (const [i2] of modes) $(i2).classList.toggle('on', i2 === id);
+    };
+  }
+
+  $('acc').oninput = e => { const x = parseFloat(e.target.value);
+    api.setAccommodation(x); $('acc-v').innerHTML = `<code>${Math.round(x*100)}%</code>`; };
+  $('rate').oninput = e => { const x = parseFloat(e.target.value);
+    api.setPlaybackRate(x); $('rate-v').innerHTML = `<code>${x.toFixed(2)}×</code>`; };
+  $('dens').oninput = e => { const f2 = parseFloat(e.target.value);
+    api.setParticleDensity(f2); $('dens-v').innerHTML = `<code>${Math.round(f2*100)}%</code>`; };
+
+  $('panelbtn').onclick = () => $('ui').classList.toggle('collapsed');
+  if (narrow) $('ui').classList.add('collapsed');
+
+  // fill the measured-vs-declared table from the live geometry
+  const mm = api.diag.motionMeasured;
+  if (mm) {
+    $('mm-freq').textContent  = mm.measuredFrequency_cpm ?? '—';
+    $('mm-speed').textContent =
+      `${mm.measuredPeakSpeed_mm_s.median}（p10 ${mm.measuredPeakSpeed_mm_s.p10} · p90 ${mm.measuredPeakSpeed_mm_s.p90}）`;
+    $('mm-static').textContent =
+      `${mm.ringsUndisplacedAtT0} / ${mm.stationsTotal}（${(mm.ringsUndisplacedFraction*100).toFixed(1)}%）`;
+  }
+
+  function prov(){ $('prov').innerHTML = api.hud(narrow); }
+  prov();
+}catch(e){ fail(e); }
+</script>
+</body>
+</html>

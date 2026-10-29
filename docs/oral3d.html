@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维解剖学数字口腔</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden;
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,330px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  label{font-size:11.5px;color:#b8c4d6}
+  input[type=range]{width:104px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;display:block;overflow-x:auto}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;
+        white-space:nowrap}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  .okbox{border:1px solid #1d5a3a;background:#0c2419;border-radius:8px;padding:13px 15px;
+         font-size:13.5px;color:#a8e6c0}
+  .hl{border-left:3px solid #f0a33c;padding-left:12px}
+  #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:12px;padding:9px 10px;max-width:calc(100vw - 24px);left:12px;right:12px;
+        top:auto;bottom:12px;max-height:46vh;overflow:auto}
+    #ui.collapsed{display:none}
+    #panelbtn{display:block}
+    input[type=range]{width:84px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./oral3d/vendor/three/three.module.js",
+  "three/webgpu": "./oral3d/vendor/three/three.module.js",
+  "three/tsl": "./oral3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=oral_cavity">细胞与分子层 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="heart3d.html">三维心脏 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="liver3d.html">三维肝脏 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="kidney3d.html">三维肾脏 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="si3d.html">三维小肠 →</a>
+  <h1>三维解剖学数字口腔</h1>
+  <div class="sub">真实 CT 分割的口腔骨性框架 · 实测牙槽弓上的 32 颗 FDI 牙 ·
+    三对大唾液腺与各自导管开口 · 咀嚼与吞咽在浏览器内实测 ·
+    舌下吸收绕过肝首过</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <button id="panelbtn">控制面板</button>
+  <div id="ui">
+    <div class="row">
+      <label>视图</label>
+      <button id="v-organ" class="on">器官</button>
+      <button id="v-vessels">血管/导管</button>
+      <button id="v-motion">运动</button>
+      <button id="v-section">黏膜剖面</button>
+      <button id="v-mol">分子</button>
+    </div>
+    <div class="row">
+      <button id="m-chew" class="on">咀嚼</button>
+      <button id="m-swallow">吞咽</button>
+      <button id="m-rest">静止</button>
+    </div>
+    <div class="row">
+      <button id="b-art" class="on">动脉</button>
+      <button id="b-ven" class="on">静脉回流</button>
+      <button id="b-duct" class="on">唾液导管</button>
+      <button id="b-lab" class="on">标注</button>
+    </div>
+    <div class="row">
+      <button id="o-perm">渗透性排序</button>
+      <button id="o-kerat">角化 / 非角化</button>
+    </div>
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+      <label>粒子</label>
+      <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1">
+      <span id="dens-v"><code>100%</code></span>
+    </div>
+    <div class="note" id="prov">加载中…</div>
+  </div>
+</div>
+
+<main>
+  <div class="warnbox">
+    <b>这个页面能做什么、不能做什么。</b>
+    下颌骨、中面部骨、上下牙槽弓曲线、髁突轴、颈椎 C1–C3，以及气管、食管、甲状腺、
+    头臂静脉、上腔静脉、颈总动脉、心脏这些锚点，都是<b>实测</b>的 CT 分割。
+    <b>除此之外全部是构造的</b>——舌、舌乳头、硬腭与软腭、悬雍垂、三对唾液腺、
+    全部导管、32 颗牙、所有黏膜分区、唇颊与咀嚼肌，一个都不是分割标签：
+    TotalSegmentator v2.0.1 的 117 个结构里<b>没有</b>下颌骨、上颌骨、舌、牙、唾液腺、
+    口腔、腭或口腔黏膜中的任何一个。
+    牙的<b>位置</b>落在实测牙槽弓上，牙的<b>尺寸</b>是已发表平均值；腺体体积是已发表均值，
+    <b>按均值缩放得到，不是测量结果</b>。
+    <b>不存在任何"表达量→转运通量"或"渗透性系数"的标定</b>，
+    所以这里<b>没有</b>任何药物浓度、生物利用度计算或 PBPK 房室，
+    分子层的颜色与排序只能定性读。
+    心率与搏动包络来自本项目自己的心脏模型，其 RR 序列是
+    PhysioNet MIT-BIH Normal Sinus Rhythm Database 记录 16265 的<b>公开占位数据</b>，
+    <b>不是用户本人的数据</b>，所有文件中 <code>is_user_personal_data = false</code>。
+    本页为研究用模拟器，<b>不可用于临床给药或诊断决策</b>。
+  </div>
+
+  <div class="warnbox" style="margin-top:12px">
+    <b>跨器官受试者一致性在这一个器官上被打破了。</b>
+    本项目的心脏、肝脏、肾脏、小肠都用 TotalSegmentator 受试者 <code>s0236</code>。
+    <code>s0236</code> 是一次 <code>ct abdomen-pelvis</code> 检查：实测其
+    <code>skull</code>、<code>brain</code>、<code>vertebrae_C1…C7</code>、
+    <code>trachea</code>、<code>thyroid_gland</code> 掩膜<b>全部为空</b>，
+    头部根本不在扫描野内。口腔因此<b>无法</b>锚定到 s0236。
+    本页改用一例覆盖头部的受试者，并按本器官自己的标准独立复核；
+    筛选标准与实测值写在 GEOMETRY_PROVENANCE.md 里。
+  </div>
+
+  <h2>几何来源</h2>
+  <table id="t-geo"><tbody></tbody></table>
+
+  <h2>骨性框架实测值对已发表人群范围</h2>
+  <table id="t-bone"><thead><tr><th>量</th><th>实测</th><th>参考范围</th><th>落入</th></tr></thead><tbody></tbody></table>
+
+  <h2>构造软组织实测回读值</h2>
+  <table id="t-soft"><thead><tr><th>量</th><th>实测回读</th><th>参考范围</th><th>落入</th><th>备注</th></tr></thead><tbody></tbody></table>
+
+  <h2>七套管道系统</h2>
+  <table id="t-vessel"><thead><tr><th>系统</th><th>段</th><th>分叉</th><th>终末</th><th>直径 mm</th><th>总长 mm</th><th>Murray 最大相对残差</th><th>轮廓锚定</th></tr></thead><tbody></tbody></table>
+
+  <h2>流动：实测 v = Q / A</h2>
+  <table id="t-flow"><thead><tr><th>系统</th><th>Q mL/min</th><th>v 范围 mm/s</th><th>已发表参考</th><th>落入</th><th>显示增益</th></tr></thead><tbody></tbody></table>
+
+  <h2>运动学：声明值对浏览器内实测值</h2>
+  <table id="t-kin"><tbody></tbody></table>
+
+  <h2>唾液腺：分泌比例与导管开口</h2>
+  <table id="t-gland"><thead><tr><th>腺体</th><th>性质</th><th>体积 mL</th><th>静息占比</th><th>刺激占比</th><th>导管</th><th>开口</th></tr></thead><tbody></tbody></table>
+
+  <h2>口腔黏膜分区：角化与上皮厚度</h2>
+  <table id="t-muc"><thead><tr><th>分区</th><th>角化</th><th>上皮 µm</th><th>给药意义</th></tr></thead><tbody></tbody></table>
+
+  <h2>两条吸收路线</h2>
+  <div class="okbox" id="firstpass"></div>
+
+  <h2>分子层数据状态</h2>
+  <div id="molstat" class="warnbox"></div>
+
+  <p class="hl" style="margin-top:22px">
+    本页所有数字都可在页面控制台用 <code>window.__oral3d</code> 取到：
+    <code>restCheck</code>、<code>measureKinematics()</code>、<code>sampleRings(n)</code>、
+    <code>flowAudit()</code>、<code>frameCostStats()</code>、<code>hudOverflow()</code>、
+    <code>reports</code>。
+  </p>
+</main>
+
+<script type="module">
+import { createOralScene } from './oral3d/js/main.js';
+
+const errEl = document.getElementById('err');
+const show = (e) => {
+  errEl.style.display = 'block';
+  errEl.textContent = 'stage: ' + (window.__oral3dStage || '?') + '\n\n' +
+    (e && e.stack ? e.stack : String(e));
+};
+window.addEventListener('error', (ev) => show(ev.error || ev.message));
+window.addEventListener('unhandledrejection', (ev) => show(ev.reason));
+
+const td = (r, k, v) => {
+  const tr = document.createElement('tr');
+  const a = document.createElement('th'); a.textContent = k;
+  const b = document.createElement('td'); b.textContent = v;
+  tr.append(a, b); r.appendChild(tr);
+};
+const row = (tb, cells) => {
+  const tr = document.createElement('tr');
+  cells.forEach((c) => {
+    const d = document.createElement('td'); d.textContent = c; tr.appendChild(d);
+  });
+  tb.appendChild(tr);
+};
+
+try {
+  const api = await createOralScene({
+    container: document.getElementById('app'),
+    assetBase: './oral3d/assets/',
+    view: 'organ'
+  });
+  const D = window.__oral3d;
+  const R = D.reports;
+  const model = R.geometry;
+
+  // ---- provenance line in the HUD panel
+  document.getElementById('prov').innerHTML =
+    `TotalSegmentator v2.0.1 · <code>${R.geometry.source.subject}</code> · CC-BY-4.0<br>` +
+    `${(D.triangles.total / 1000).toFixed(0)}k 三角面 · ` +
+    `${D.glb_parts} 个部件 · 软组织全部构造<br>` +
+    `渲染器 <code>${(D.renderer_unmasked || 'n/a').slice(0, 42)}</code>`;
+
+  // ---- geometry table
+  const gb = document.querySelector('#t-geo tbody');
+  td(gb, '数据集', R.geometry.source.dataset);
+  td(gb, 'DOI', R.geometry.source.doi);
+  td(gb, '许可', R.geometry.source.licence + ' — ' + R.geometry.source.licence_note);
+  td(gb, '受试者', R.geometry.source.subject);
+  td(gb, '体素 mm', R.geometry.source.voxel_mm.join(' × '));
+  td(gb, '用到的结构', R.geometry.source.structures_used.join(', '));
+  td(gb, '源数据中不存在的标签', R.geometry.source.labels_absent_from_source.join(', '));
+  td(gb, '取用方式', R.geometry.source.access);
+  td(gb, '方位核验', R.geometry.source.orientation_check);
+
+  // ---- bone table
+  const bb = document.querySelector('#t-bone tbody');
+  const B = R.geometry.measured.bone;
+  for (const k of Object.keys(B)) {
+    if (!k.endsWith('_within_reference')) continue;
+    const q = k.replace('_within_reference', '');
+    row(bb, [q, B[q], (B[q + '_reference'] || []).join(' – '),
+      B[k] ? '是' : '否 ← 照实报，未调参']);
+  }
+  row(bb, ['oral_bony_frame_mL', B.oral_bony_frame_mL, '（无标准参考）', '—']);
+  row(bb, ['mandible_mL', B.mandible_mL, '（无标准参考）', '—']);
+  row(bb, ['occlusal_level_z_mm', B.occlusal_level_z_mm, '（实测规则，见下）', '—']);
+  row(bb, ['mandible_vertical_extent_mm', B.mandible_vertical_extent_mm,
+    '（无姿势无关参考，不做判定）', '—']);
+
+  // ---- soft table
+  const sb = document.querySelector('#t-soft tbody');
+  for (const [k, v] of Object.entries(R.soft.measured_back)) {
+    row(sb, [k, v.value, (v.reference || []).join(' – '),
+      v.within_reference ? '是' : '否 ← 照实报，未调参',
+      v.at_published_mean ? '按已发表均值缩放，不是测量值' : '']);
+  }
+  row(sb, ['teeth_positions_on_measured_arch',
+    R.soft.parts.teeth.positions_on_measured_arch + ' / ' + R.soft.parts.teeth.count,
+    '—', '—', '其余 ' + R.soft.parts.teeth.positions_extrapolated_beyond_measured_arch +
+    ' 颗落在实测弓的切线外推段上']);
+
+  // ---- vessels
+  const vb = document.querySelector('#t-vessel tbody');
+  const ORDER = ['lingual_artery', 'facial_artery', 'inferior_alveolar_artery',
+    'venous_return', 'parotid_duct', 'submandibular_duct', 'sublingual_ducts'];
+  for (const n of ORDER) {
+    const t = R.vessel.trees[n];
+    row(vb, [n, t.segments, t.bifurcations, t.terminals,
+      t.diameter_mm.join(' – '), t.total_length_mm,
+      t.murray_max_relative_residual, String(t.contour_anchored)]);
+  }
+  row(vb, ['合计', R.vessel.totals.segments, R.vessel.totals.bifurcations,
+    R.vessel.totals.terminals, '—', R.vessel.totals.total_length_mm,
+    R.vessel.murray_max_relative_residual_over_all_trees, '—']);
+
+  // ---- flow
+  const fb = document.querySelector('#t-flow tbody');
+  for (const n of ORDER) {
+    const f = R.flow.per_tree[n];
+    row(fb, [n, f.flow_mL_min_per_root,
+      f.v_mm_s_min + ' – ' + f.v_mm_s_max,
+      f.published_reference_mm_s.join(' – '),
+      f.trunk_within_reference ? '是' : '否 ← 照实报',
+      f.display_gain_applied > 1 ? '×' + f.display_gain_applied : '无']);
+  }
+
+  // ---- kinematics
+  const kb = document.querySelector('#t-kin tbody');
+  const kmodel = R.geometry; // placeholder, real numbers below
+  const m0 = D.restCheck;
+  api.setMotionMode('chew');
+  await new Promise((r) => setTimeout(r, 1400));
+  const mc = D.measureKinematics();
+  api.setMotionMode('swallow');
+  await new Promise((r) => setTimeout(r, 2200));
+  const ms = D.measureKinematics();
+  api.setMotionMode('chew');
+  td(kb, '静止态：未位移的采样环 / 总环',
+    `${m0.rest_mode.rings_undisplaced} / ${m0.rest_mode.rings_sampled}`);
+  td(kb, '静止态：位移的舌顶点数', m0.rest_mode.tongue_vertices_displaced);
+  td(kb, '静止态：开口位移 mm（应为 0）', m0.rest_mode.interincisal_opening_mm);
+  td(kb, '切点静态基线间距 mm', m0.interincisal_baseline_mm.toFixed(4));
+  td(kb, '吞咽 t=0：位移的环 / 总环（只应在舌尖附近）',
+    `${m0.swallow_t0.rings_displaced} / ${m0.swallow_t0.rings_sampled}` +
+    `，u ∈ [${m0.swallow_t0.displaced_u_min}, ${m0.swallow_t0.displaced_u_max}]`);
+  td(kb, '咀嚼中实测开口位移 mm（声明 18.0）', mc.interincisal_opening_mm);
+  td(kb, '髁突–颏距离 mm（旋转下应恒定）',
+    `${mc.condyle_right_to_menton_mm}（参考 ${mc.condyle_to_menton_reference_mm}，漂移 ${mc.condyle_to_menton_drift_mm}）`);
+  td(kb, '髁突前滑 mm（声明 ' + mc.condylar_slide_declared_mm + '）', mc.condylar_slide_mm);
+  td(kb, '下颌转角 deg', mc.jaw_angle_deg);
+  td(kb, '铰链轴到切点力臂 mm', mc.lever_arm_hinge_to_incisal_mm);
+  td(kb, '吞咽波实测速度 mm/s（声明 ' + ms.wave_speed_declared_mm_s + '）',
+    ms.wave_speed_measured_mm_s ? ms.wave_speed_measured_mm_s.join(' – ') : 'n/a');
+  td(kb, '吞咽时位移的舌顶点 / 总顶点',
+    `${ms.tongue_vertices_displaced} / ${ms.tongue_vertices_total}`);
+
+  // ---- glands + mucosa from oral_model.json
+  const mdl = await fetch('./oral3d/assets/oral_model.json').then((r) => r.json());
+  const gl = document.querySelector('#t-gland tbody');
+  for (const [k, v] of Object.entries(mdl.salivary_glands.glands)) {
+    row(gl, [k, v.type, (v.volume_mL || []).join(' – ') || '—',
+      (v.share_unstimulated * 100).toFixed(0) + '%',
+      (v.share_stimulated * 100).toFixed(0) + '%', v.duct, v.ostium]);
+  }
+  const mu = document.querySelector('#t-muc tbody');
+  for (const [k, v] of Object.entries(mdl.mucosa.regions)) {
+    row(mu, [k, v.keratinised ? '角化' : '非角化',
+      v.epithelium_um.join(' – '), v.route]);
+  }
+
+  document.getElementById('firstpass').innerHTML =
+    '<b>舌下 / 颊黏膜：</b>' + mdl.first_pass.sublingual_and_buccal_route.join(' → ') +
+    '<br><b>吞咽：</b>' + mdl.first_pass.swallowed_route.join(' → ') +
+    '<br><b>要点：</b>' + mdl.first_pass.the_point +
+    '<br><span style="color:#93a3ba;font-size:12px">下列生物利用度为<b>已发表临床值引用</b>，' +
+    '本项目没有也不会用几何或表达量算出任何生物利用度：' +
+    Object.entries(mdl.first_pass.published_examples).map(([d, e]) =>
+      `${d} 口服 ${(e.oral_bioavailability_pct || []).join('–')}% vs ` +
+      `舌下/颊 ${((e.sublingual_bioavailability_pct || e.buccal_bioavailability_pct) || []).join('–')}%`
+    ).join('；') + '</span>';
+
+  const ms2 = D.molecular.exprStatus;
+  document.getElementById('molstat').textContent = ms2.ok
+    ? `CELLxGENE Census ${ms2.census_version} · ${ms2.cell_types} 个细胞类型 × ` +
+      `${ms2.genes} 个 ADME 基因 · ${ms2.cells.toLocaleString()} 个细胞 · ` +
+      `归一化：${ms2.normalization}。颜色只能定性读，没有任何通量标定。`
+    : `口腔单细胞 ADME 谱缺失（${ms2.reason}）。页面不以组织平均值或其它器官的值填补。`;
+
+  // ---- controls
+  const V = { 'v-organ': 'organ', 'v-vessels': 'vessels', 'v-motion': 'motion',
+    'v-section': 'section', 'v-mol': 'molecular' };
+  for (const [id, v] of Object.entries(V)) {
+    document.getElementById(id).onclick = (e) => {
+      Object.keys(V).forEach((k) => document.getElementById(k).classList.remove('on'));
+      e.target.classList.add('on');
+      api.setView(v);
+    };
+  }
+  const MM = { 'm-chew': 'chew', 'm-swallow': 'swallow', 'm-rest': 'rest' };
+  for (const [id, m] of Object.entries(MM)) {
+    document.getElementById(id).onclick = (e) => {
+      Object.keys(MM).forEach((k) => document.getElementById(k).classList.remove('on'));
+      e.target.classList.add('on');
+      api.setMotionMode(m);
+    };
+  }
+  const TREESETS = {
+    'b-art': ['lingual_artery', 'facial_artery', 'inferior_alveolar_artery'],
+    'b-ven': ['venous_return'],
+    'b-duct': ['parotid_duct', 'submandibular_duct', 'sublingual_ducts']
+  };
+  for (const [id, names] of Object.entries(TREESETS)) {
+    document.getElementById(id).onclick = (e) => {
+      const on = !e.target.classList.contains('on');
+      e.target.classList.toggle('on', on);
+      names.forEach((n) => api.setTreeVisible(n, on));
+    };
+  }
+  document.getElementById('b-lab').onclick = (e) => {
+    const on = !e.target.classList.contains('on');
+    e.target.classList.toggle('on', on);
+    api.setOverlay('labels', on);
+  };
+  document.getElementById('o-perm').onclick = (e) => {
+    const on = !e.target.classList.contains('on');
+    e.target.classList.toggle('on', on);
+    api.setOverlay('permeability', on);
+  };
+  document.getElementById('o-kerat').onclick = (e) => {
+    const on = !e.target.classList.contains('on');
+    e.target.classList.toggle('on', on);
+    api.setOverlay('keratinisation', on);
+  };
+  const rate = document.getElementById('rate');
+  rate.oninput = () => {
+    api.setPlaybackRate(+rate.value);
+    document.getElementById('rate-v').innerHTML =
+      '<code>' + (+rate.value).toFixed(2) + '×</code>';
+  };
+  const dens = document.getElementById('dens');
+  dens.oninput = () => {
+    api.setParticleDensity(+dens.value);
+    document.getElementById('dens-v').innerHTML =
+      '<code>' + Math.round(dens.value * 100) + '%</code>';
+  };
+  const pb = document.getElementById('panelbtn');
+  pb.onclick = () => document.getElementById('ui').classList.toggle('collapsed');
+  window.__oral3dReady = true;
+} catch (e) {
+  show(e);
+}
+</script>
+</body>
+</html>

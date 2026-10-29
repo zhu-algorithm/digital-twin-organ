@@ -1,0 +1,826 @@
+{
+ "source_note": "TotalSegmentator v2.0.1 has NO coeliac trunk and NO gastric artery or vein label.  Every vessel here is CONSTRUCTED; only the ostia are contour-anchored.",
+ "ostia": {
+  "coeliac_origin_on_aorta": {
+   "point": [
+    -2.77,
+    478.79,
+    166.92
+   ],
+   "contour_anchored": true,
+   "how": "anterior-most aortic surface voxel at this subject's own T12 vertebra level",
+   "reference": "the coeliac trunk emerges at the T12 level in the large majority of CT subjects (\"Anatomy of the coeliac trunk examined by CT imaging of 104 individuals\", PMID 14717069), and the left gastric artery origin lies around the T12/L1 junction in most subjects (PMC13440139). CITATION LEVEL B: paper identity confirmed from this session's search results; the exact percentages were read from snippets not retained in the transcript."
+  },
+  "splenic_hilum": {
+   "point": [
+    69.24,
+    507.29,
+    140.03
+   ],
+   "contour_anchored": true,
+   "how": "spleen-label surface voxel nearest the stomach label"
+  },
+  "splenic_hilum_superior_short_gastric": {
+   "point": [
+    86.16,
+    520.79,
+    146.52
+   ],
+   "contour_anchored": true,
+   "how": "superior-most voxel of the measured splenic hilar band (within 12 mm of the closest spleen-stomach approach)",
+   "why": "the short gastrics arise from the distal splenic / superior polar branches, not from the same point as the left gastroepiploic"
+  },
+  "splenic_hilum_inferior_gastroepiploic": {
+   "point": [
+    70.1,
+    486.29,
+    129.46
+   ],
+   "contour_anchored": true,
+   "how": "inferior-most voxel of the same measured hilar band",
+   "why": "the left gastroepiploic arises from the terminal splenic at the lower pole"
+  },
+  "gastroduodenal_near_pylorus": {
+   "point": [
+    -18.17,
+    444.29,
+    235.47
+   ],
+   "contour_anchored": true,
+   "how": "duodenum-label voxel nearest the measured pylorus"
+  },
+  "proper_hepatic_near_pylorus": {
+   "point": [
+    -27.93,
+    457.79,
+    248.08
+   ],
+   "contour_anchored": true,
+   "how": "liver-label voxel nearest the measured pylorus"
+  },
+  "portal_confluence": {
+   "point": [
+    -2.69,
+    441.29,
+    218.01
+   ],
+   "contour_anchored": true,
+   "how": "portal_vein_and_splenic_vein label surface nearest the pylorus",
+   "significance": "gastric venous blood enters the LIVER and is subject to hepatic first pass"
+  }
+ },
+ "territory_wall_volume_mL": {
+  "left_gastric": 28.64,
+  "right_gastric": 16.49,
+  "left_gastroepiploic": 14.36,
+  "right_gastroepiploic": 32.94,
+  "short_gastric": 41.47,
+  "gastric_veins": 137.46
+ },
+ "flow_assumption": {
+  "total_gastric_arterial_inflow_mL_min": 51.771,
+  "rule": "0.010 of the cardiac output computed by this project's own heart model",
+  "cardiac_output_L_min": 5.1771,
+  "cardiac_output_source": "heart_timeseries.json (version 15f70d25-fec2-46d4-bda3-4a62590ba201)",
+  "is_measurement_of_this_subject": false,
+  "published_whole_stomach_flow_located": false,
+  "honesty_note": "no human whole-stomach blood-flow measurement was located in this build, so this fraction is an ASSUMPTION and not a validated value",
+  "implied_flow_per_100g_wall_mL_min": 38.66,
+  "per_tree_split_rule": "proportional to each tree's MEASURED territory wall volume; no hand-set ratios"
+ },
+ "pulsatility_coupling": {
+  "peak_to_mean_flow_ratio": 6.6488,
+  "from": "aortic-root flow waveform of the project heart model, 64 beats",
+  "cardiac_output_cross_check_L_min": 5.1161,
+  "caveat": "this ratio is measured at the AORTIC ROOT and applied unchanged to distal gastric branches.  Real splanchnic branches are damped, so every peak velocity below is an UPPER BOUND, not a prediction."
+ },
+ "trees": {
+  "left_gastric": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 453,
+   "bifurcations": 176,
+   "terminals": 177,
+   "nodes": 454,
+   "roots": 1,
+   "radius_mm": [
+    0.2635,
+    1.4794
+   ],
+   "diameter_mm": [
+    0.527,
+    2.9588
+   ],
+   "r_terminal_mm": 0.26349,
+   "total_length_mm": 1793.6,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 176,
+   "by_level": {
+    "left_gastric_trunk": {
+     "segments": 17,
+     "diameter_mm": [
+      2.0857,
+      2.9588
+     ]
+    },
+    "left_gastric_course": {
+     "segments": 41,
+     "diameter_mm": [
+      0.527,
+      2.0857
+     ]
+    },
+    "left_gastric_terminal": {
+     "segments": 395,
+     "diameter_mm": [
+      0.527,
+      2.5018
+     ]
+    }
+   },
+   "contour_anchored": false,
+   "root_diameter_declared_mm": 2.8,
+   "root_diameter_reference": "left gastric artery ~2.7-3.6 mm. Sources identified: PMC12528509 (CT, embolisation series), \"Computed Tomography-Based Anatomical and Morphometric Analysis of the Left and Right Gastric Arteries in a Vietnamese Population\" (PMC13440139), and \"Morphological characteristics of the left gastric, common hepatic and splenic arteries ... in human cadavers\" (PMC10519692). CITATION LEVEL B: paper identity confirmed from this session's search results; exact means/SDs/n read from snippets not retained in the transcript.",
+   "root_diameter_reference_located": true,
+   "r_term_mm": 0.26349,
+   "r_term_rule": "r_root / n_terminals^(1/3) (back-calculated)",
+   "growth_stats": {
+    "candidates": 9906,
+    "rejected_angle": 527,
+    "rejected_outside": 894,
+    "rejected_clearance": 906,
+    "unattached": 4,
+    "targets_requested": 150,
+    "targets_fed": 180,
+    "target_pool_size": 600,
+    "clearance_demanded_mm": 1.65,
+    "avoid_radii": "other trees inflated to their root radius",
+    "self_pad_fraction": 1.0
+   },
+   "clearance_solve": {
+    "iterations_run": 0,
+    "nodes_moved": 0,
+    "sweeps_run": 0,
+    "max_displacement_from_original_mm": 0.0,
+    "max_node_displacement_mm": 0.0,
+    "mean_node_displacement_mm": 0.0,
+    "frozen_nodes": 31,
+    "trace": [],
+    "note": "post-growth relaxation deliberately not run"
+   },
+   "subdivision_nodes_inserted": 71,
+   "subdivision_note": "intermediate nodes only, so bifurcation count, downstream terminal counts and every Murray residual are untouched.  Lateral bowing is DISABLED (bow=0.0): it is applied after the clearance constraint and was the last source of interpenetration.",
+   "flow_mL_min": 11.073,
+   "retrograde": false,
+   "territory_wall_volume_mL": 28.64
+  },
+  "right_gastric": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 332,
+   "bifurcations": 118,
+   "terminals": 119,
+   "nodes": 333,
+   "roots": 1,
+   "radius_mm": [
+    0.1785,
+    0.8781
+   ],
+   "diameter_mm": [
+    0.357,
+    1.7561
+   ],
+   "r_terminal_mm": 0.17852,
+   "total_length_mm": 1390.8,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 118,
+   "by_level": {
+    "right_gastric_trunk": {
+     "segments": 8,
+     "diameter_mm": [
+      0.4498,
+      1.7561
+     ]
+    },
+    "right_gastric_course": {
+     "segments": 24,
+     "diameter_mm": [
+      0.357,
+      0.4498
+     ]
+    },
+    "right_gastric_terminal": {
+     "segments": 300,
+     "diameter_mm": [
+      0.357,
+      1.7412
+     ]
+    }
+   },
+   "contour_anchored": false,
+   "root_diameter_declared_mm": 1.6,
+   "root_diameter_reference": "right gastric artery ~1.6-1.9 mm. Sources identified: PMC13440139 (Vietnamese population CT series) and PMC10519692 (cadaveric). CITATION LEVEL B: paper identity confirmed; exact means/SDs/n read from snippets not retained in the transcript.",
+   "root_diameter_reference_located": true,
+   "r_term_mm": 0.178515,
+   "r_term_rule": "r_root / n_terminals^(1/3) (back-calculated)",
+   "growth_stats": {
+    "candidates": 6118,
+    "rejected_angle": 359,
+    "rejected_outside": 1082,
+    "rejected_clearance": 269,
+    "unattached": 2,
+    "targets_requested": 90,
+    "targets_fed": 120,
+    "target_pool_size": 360,
+    "clearance_demanded_mm": 1.05,
+    "avoid_radii": "other trees inflated to their root radius",
+    "self_pad_fraction": 1.0
+   },
+   "clearance_solve": {
+    "iterations_run": 0,
+    "nodes_moved": 0,
+    "sweeps_run": 0,
+    "max_displacement_from_original_mm": 0.0,
+    "max_node_displacement_mm": 0.0,
+    "mean_node_displacement_mm": 0.0,
+    "frozen_nodes": 29,
+    "trace": [],
+    "note": "post-growth relaxation deliberately not run"
+   },
+   "subdivision_nodes_inserted": 68,
+   "subdivision_note": "intermediate nodes only, so bifurcation count, downstream terminal counts and every Murray residual are untouched.  Lateral bowing is DISABLED (bow=0.0): it is applied after the clearance constraint and was the last source of interpenetration.",
+   "flow_mL_min": 6.376,
+   "retrograde": false,
+   "territory_wall_volume_mL": 16.49
+  },
+  "left_gastroepiploic": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 450,
+   "bifurcations": 176,
+   "terminals": 177,
+   "nodes": 451,
+   "roots": 1,
+   "radius_mm": [
+    0.1974,
+    1.1083
+   ],
+   "diameter_mm": [
+    0.3948,
+    2.2167
+   ],
+   "r_terminal_mm": 0.1974,
+   "total_length_mm": 1605.9,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 176,
+   "by_level": {
+    "left_gastroepiploic_trunk": {
+     "segments": 27,
+     "diameter_mm": [
+      2.1741,
+      2.2167
+     ]
+    },
+    "left_gastroepiploic_course": {
+     "segments": 43,
+     "diameter_mm": [
+      0.3948,
+      2.1741
+     ]
+    },
+    "left_gastroepiploic_terminal": {
+     "segments": 380,
+     "diameter_mm": [
+      0.3948,
+      1.5194
+     ]
+    }
+   },
+   "contour_anchored": false,
+   "root_diameter_declared_mm": 2.0,
+   "root_diameter_reference": "NO published diameter located in this build. ASSUMED 2.0 mm; its parent splenic artery is published at roughly 6 mm (PMC10519692, cadaveric; CITATION LEVEL B)",
+   "root_diameter_reference_located": false,
+   "r_term_mm": 0.197402,
+   "r_term_rule": "r_root / n_terminals^(1/3) (back-calculated)",
+   "growth_stats": {
+    "candidates": 8643,
+    "rejected_angle": 453,
+    "rejected_outside": 2130,
+    "rejected_clearance": 233,
+    "unattached": 4,
+    "targets_requested": 130,
+    "targets_fed": 180,
+    "target_pool_size": 520,
+    "clearance_demanded_mm": 1.25,
+    "avoid_radii": "other trees inflated to their root radius",
+    "self_pad_fraction": 1.0
+   },
+   "clearance_solve": {
+    "iterations_run": 0,
+    "nodes_moved": 0,
+    "sweeps_run": 0,
+    "max_displacement_from_original_mm": 0.0,
+    "max_node_displacement_mm": 0.0,
+    "mean_node_displacement_mm": 0.0,
+    "frozen_nodes": 54,
+    "trace": [],
+    "note": "post-growth relaxation deliberately not run"
+   },
+   "subdivision_nodes_inserted": 45,
+   "subdivision_note": "intermediate nodes only, so bifurcation count, downstream terminal counts and every Murray residual are untouched.  Lateral bowing is DISABLED (bow=0.0): it is applied after the clearance constraint and was the last source of interpenetration.",
+   "flow_mL_min": 5.552,
+   "retrograde": false,
+   "territory_wall_volume_mL": 14.36
+  },
+  "right_gastroepiploic": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 472,
+   "bifurcations": 180,
+   "terminals": 181,
+   "nodes": 473,
+   "roots": 1,
+   "radius_mm": [
+    0.2258,
+    1.2775
+   ],
+   "diameter_mm": [
+    0.4517,
+    2.5551
+   ],
+   "r_terminal_mm": 0.22585,
+   "total_length_mm": 1850.9,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 180,
+   "by_level": {
+    "right_gastroepiploic_trunk": {
+     "segments": 5,
+     "diameter_mm": [
+      2.5217,
+      2.5551
+     ]
+    },
+    "right_gastroepiploic_course": {
+     "segments": 68,
+     "diameter_mm": [
+      0.4517,
+      2.5217
+     ]
+    },
+    "right_gastroepiploic_terminal": {
+     "segments": 399,
+     "diameter_mm": [
+      0.4517,
+      1.2462
+     ]
+    }
+   },
+   "contour_anchored": false,
+   "root_diameter_declared_mm": 2.4,
+   "root_diameter_reference": "NO published diameter located in this build. ASSUMED 2.4 mm, i.e. somewhat smaller than its parent gastroduodenal artery, which IS published at roughly 4 mm (PMC10519692, cadaveric). CITATION LEVEL B for that parent figure.",
+   "root_diameter_reference_located": false,
+   "r_term_mm": 0.225849,
+   "r_term_rule": "r_root / n_terminals^(1/3) (back-calculated)",
+   "growth_stats": {
+    "candidates": 8928,
+    "rejected_angle": 386,
+    "rejected_outside": 1833,
+    "rejected_clearance": 524,
+    "unattached": 0,
+    "targets_requested": 150,
+    "targets_fed": 180,
+    "target_pool_size": 600,
+    "clearance_demanded_mm": 1.45,
+    "avoid_radii": "other trees inflated to their root radius",
+    "self_pad_fraction": 1.0
+   },
+   "clearance_solve": {
+    "iterations_run": 0,
+    "nodes_moved": 0,
+    "sweeps_run": 0,
+    "max_displacement_from_original_mm": 0.0,
+    "max_node_displacement_mm": 0.0,
+    "mean_node_displacement_mm": 0.0,
+    "frozen_nodes": 35,
+    "trace": [],
+    "note": "post-growth relaxation deliberately not run"
+   },
+   "subdivision_nodes_inserted": 78,
+   "subdivision_note": "intermediate nodes only, so bifurcation count, downstream terminal counts and every Murray residual are untouched.  Lateral bowing is DISABLED (bow=0.0): it is applied after the clearance constraint and was the last source of interpenetration.",
+   "flow_mL_min": 12.736,
+   "retrograde": false,
+   "territory_wall_volume_mL": 32.94
+  },
+  "short_gastric": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 381,
+   "bifurcations": 117,
+   "terminals": 118,
+   "nodes": 382,
+   "roots": 1,
+   "radius_mm": [
+    0.1508,
+    0.7397
+   ],
+   "diameter_mm": [
+    0.3016,
+    1.4794
+   ],
+   "r_terminal_mm": 0.15081,
+   "total_length_mm": 1778.8,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 117,
+   "by_level": {
+    "short_gastric_trunk": {
+     "segments": 48,
+     "diameter_mm": [
+      0.3016,
+      1.4794
+     ]
+    },
+    "short_gastric_terminal": {
+     "segments": 333,
+     "diameter_mm": [
+      0.3016,
+      1.147
+     ]
+    }
+   },
+   "contour_anchored": false,
+   "root_diameter_declared_mm": 1.4,
+   "root_diameter_reference": "NO published diameter located in this build. ASSUMED 1.4 mm for the short gastric trunk",
+   "root_diameter_reference_located": false,
+   "r_term_mm": 0.15081,
+   "r_term_rule": "r_root / n_terminals^(1/3) (back-calculated)",
+   "growth_stats": {
+    "candidates": 5589,
+    "rejected_angle": 363,
+    "rejected_outside": 1611,
+    "rejected_clearance": 319,
+    "unattached": 3,
+    "targets_requested": 100,
+    "targets_fed": 120,
+    "target_pool_size": 400,
+    "clearance_demanded_mm": 0.95,
+    "avoid_radii": "other trees inflated to their root radius",
+    "self_pad_fraction": 1.0
+   },
+   "clearance_solve": {
+    "iterations_run": 0,
+    "nodes_moved": 0,
+    "sweeps_run": 0,
+    "max_displacement_from_original_mm": 0.0,
+    "max_node_displacement_mm": 0.0,
+    "mean_node_displacement_mm": 0.0,
+    "frozen_nodes": 26,
+    "trace": [],
+    "note": "post-growth relaxation deliberately not run"
+   },
+   "subdivision_nodes_inserted": 122,
+   "subdivision_note": "intermediate nodes only, so bifurcation count, downstream terminal counts and every Murray residual are untouched.  Lateral bowing is DISABLED (bow=0.0): it is applied after the clearance constraint and was the last source of interpenetration.",
+   "flow_mL_min": 16.034,
+   "retrograde": false,
+   "territory_wall_volume_mL": 41.47
+  },
+  "gastric_veins": {
+   "radii_from": "structural Murray cube law r = r_term * n_downstream^(1/3)",
+   "segments": 350,
+   "bifurcations": 80,
+   "terminals": 81,
+   "nodes": 351,
+   "roots": 1,
+   "radius_mm": [
+    0.3542,
+    1.5326
+   ],
+   "diameter_mm": [
+    0.7084,
+    3.0652
+   ],
+   "r_terminal_mm": 0.35422,
+   "total_length_mm": 1822.2,
+   "murray_max_relative_residual": 0.0,
+   "murray_bifurcations_checked": 80,
+   "by_level": {
+    "gastric_veins_trunk": {
+     "segments": 6,
+     "diameter_mm": [
+      2.8338,
+      3.0652
+     ]
+    },
+    "gastric_veins_course": {
+     "segments": 56,
+     "diameter_mm": [
+      0.7084,
+      2.8338
+     ]
+    },
+    "gastric_veins_terminal": {
+     "segments": 288,
+     "diameter_mm": [
+      0.7084,
+      2.3818
+     ]
+    }
+   },
+   "contour_anchored": false,
+   "root_diameter_declared_mm": 4.0,
+   "root_diameter_reference": "NO published diameter located in this build. ASSUMED 4.0 mm for the left gastric (coronary) vein at the portal confluence",
+   "root_diameter_reference_located": false,
+   "r_term_mm": 0.35422,
+   "r_term_rule": "r_root / n_terminals^(1/3) (back-calculated)",
+   "growth_stats": {
+    "candidates": 37294,
+    "rejected_angle": 1489,
+    "rejected_outside": 5906,
+    "rejected_clearance": 35070,
+    "unattached": 640,
+    "targets_requested": 180,
+    "targets_fed": 720,
+    "target_pool_size": 720,
+    "clearance_demanded_mm": 2.25,
+    "avoid_radii": "other trees inflated to their root radius",
+    "self_pad_fraction": 1.0
+   },
+   "clearance_solve": {
+    "iterations_run": 0,
+    "nodes_moved": 0,
+    "sweeps_run": 0,
+    "max_displacement_from_original_mm": 0.0,
+    "max_node_displacement_mm": 0.0,
+    "mean_node_displacement_mm": 0.0,
+    "frozen_nodes": 46,
+    "trace": [],
+    "note": "post-growth relaxation deliberately not run"
+   },
+   "subdivision_nodes_inserted": 145,
+   "subdivision_note": "intermediate nodes only, so bifurcation count, downstream terminal counts and every Murray residual are untouched.  Lateral bowing is DISABLED (bow=0.0): it is applied after the clearance constraint and was the last source of interpenetration.",
+   "flow_mL_min": 51.771,
+   "retrograde": true,
+   "territory_wall_volume_mL": 137.46
+  }
+ },
+ "clearance": {
+  "solver_target_mm": 0.25,
+  "priority": "anatomical fidelity over the gap threshold: companion gastric vessels genuinely run well under 1 mm apart along the curvatures, so a sub-millimetre measured gap is ACCEPTABLE and is reported as measured.  No segment was deleted and no node was pushed out of navigable space.",
+  "pairwise": {
+   "left_gastric|right_gastric": {
+    "min_surface_gap_mm": 2.2161,
+    "between_levels": [
+     "left_gastric_course",
+     "right_gastric_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "left_gastric|left_gastroepiploic": {
+    "min_surface_gap_mm": 2.1063,
+    "between_levels": [
+     "left_gastric_terminal",
+     "left_gastroepiploic_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "left_gastric|right_gastroepiploic": {
+    "min_surface_gap_mm": 8.1275,
+    "between_levels": [
+     "left_gastric_terminal",
+     "right_gastroepiploic_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "left_gastric|short_gastric": {
+    "min_surface_gap_mm": 2.1821,
+    "between_levels": [
+     "left_gastric_terminal",
+     "short_gastric_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "left_gastric|gastric_veins": {
+    "min_surface_gap_mm": 1.6736,
+    "between_levels": [
+     "left_gastric_terminal",
+     "gastric_veins_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "right_gastric|left_gastroepiploic": {
+    "min_surface_gap_mm": 6.0773,
+    "between_levels": [
+     "right_gastric_terminal",
+     "left_gastroepiploic_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "right_gastric|right_gastroepiploic": {
+    "min_surface_gap_mm": 0.7475,
+    "between_levels": [
+     "right_gastric_trunk",
+     "right_gastroepiploic_trunk"
+    ],
+    "at_solver_target": false
+   },
+   "right_gastric|short_gastric": {
+    "min_surface_gap_mm": 2.2854,
+    "between_levels": [
+     "right_gastric_terminal",
+     "short_gastric_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "right_gastric|gastric_veins": {
+    "min_surface_gap_mm": 1.4082,
+    "between_levels": [
+     "right_gastric_course",
+     "gastric_veins_trunk"
+    ],
+    "at_solver_target": false
+   },
+   "left_gastroepiploic|right_gastroepiploic": {
+    "min_surface_gap_mm": 2.6573,
+    "between_levels": [
+     "left_gastroepiploic_terminal",
+     "right_gastroepiploic_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "left_gastroepiploic|short_gastric": {
+    "min_surface_gap_mm": 1.1267,
+    "between_levels": [
+     "left_gastroepiploic_course",
+     "short_gastric_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "left_gastroepiploic|gastric_veins": {
+    "min_surface_gap_mm": 4.5123,
+    "between_levels": [
+     "left_gastroepiploic_trunk",
+     "gastric_veins_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "right_gastroepiploic|short_gastric": {
+    "min_surface_gap_mm": 3.0366,
+    "between_levels": [
+     "right_gastroepiploic_terminal",
+     "short_gastric_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "right_gastroepiploic|gastric_veins": {
+    "min_surface_gap_mm": 3.3799,
+    "between_levels": [
+     "right_gastroepiploic_terminal",
+     "gastric_veins_terminal"
+    ],
+    "at_solver_target": false
+   },
+   "short_gastric|gastric_veins": {
+    "min_surface_gap_mm": 1.662,
+    "between_levels": [
+     "short_gastric_terminal",
+     "gastric_veins_terminal"
+    ],
+    "at_solver_target": false
+   }
+  },
+  "global_min_surface_gap_mm": 0.7475,
+  "global_min_between": "right_gastric|right_gastroepiploic",
+  "global_min_levels": [
+   "right_gastric_trunk",
+   "right_gastroepiploic_trunk"
+  ],
+  "segments_deleted": 0,
+  "node_displacement_cap_mm": 4.0,
+  "frozen_nodes_per_tree": {
+   "left_gastric": 31,
+   "right_gastric": 29,
+   "left_gastroepiploic": 54,
+   "right_gastroepiploic": 35,
+   "short_gastric": 26,
+   "gastric_veins": 46
+  },
+  "frozen_note": "the entire ostium+trunk+course scaffold of every tree is frozen; only CCO-grown nodes may move",
+  "radius_staleness_note": "Murray radii grow as terminals are added downstream, so a clearance verified when a segment was inserted can go stale.  The final relaxation is radius-aware and is what the reported gaps are measured after.",
+  "relaxation_sweeps": 0,
+  "companion_vein_offset_mm_declared": 4.5,
+  "scaffold_clearance_solve": {
+   "min_surface_gap_mm_at_root_radii": 0.25,
+   "solved_at": "every scaffold segment temporarily set to its tree root radius, the worst case it can ever reach",
+   "displacement_cap_mm": 20.0,
+   "max_displacement_mm": {
+    "left_gastric": 0.0,
+    "right_gastric": 0.0,
+    "left_gastroepiploic": 0.0,
+    "right_gastroepiploic": 0.0,
+    "short_gastric": 0.0,
+    "gastric_veins": 0.0
+   },
+   "nodes_moved": {
+    "left_gastric": 0,
+    "right_gastric": 0,
+    "left_gastroepiploic": 0,
+    "right_gastroepiploic": 0,
+    "short_gastric": 0,
+    "gastric_veins": 0
+   }
+  },
+  "scaffold_before_growth": "all six ostium+trunk+course scaffolds are laid before any terminal is grown, so each tree can avoid every other trunk during growth",
+  "inter_territory_standoff_mm": 2.5,
+  "standoff_note": "applied to EVERY tree, not just the venous one: each tree's targets are kept this far off every terminal already placed by an earlier tree",
+  "max_node_displacement_mm": 0.0,
+  "nodes_left_outside_navigable_space": 0
+ },
+ "terminal_calibre_audit": {
+  "left_gastric": {
+   "implied_terminal_diameter_um": 527.0,
+   "published_arteriole_um": [
+    50.0,
+    150.0
+   ],
+   "within_published": false,
+   "why_not": "a 10^2-terminal constructed tree cannot reach arteriolar calibre while keeping a published root calibre under a cube law; the real tree has ~10^5 terminals.  Reported, not tuned away."
+  },
+  "right_gastric": {
+   "implied_terminal_diameter_um": 357.0,
+   "published_arteriole_um": [
+    50.0,
+    150.0
+   ],
+   "within_published": false,
+   "why_not": "a 10^2-terminal constructed tree cannot reach arteriolar calibre while keeping a published root calibre under a cube law; the real tree has ~10^5 terminals.  Reported, not tuned away."
+  },
+  "left_gastroepiploic": {
+   "implied_terminal_diameter_um": 394.8,
+   "published_arteriole_um": [
+    50.0,
+    150.0
+   ],
+   "within_published": false,
+   "why_not": "a 10^2-terminal constructed tree cannot reach arteriolar calibre while keeping a published root calibre under a cube law; the real tree has ~10^5 terminals.  Reported, not tuned away."
+  },
+  "right_gastroepiploic": {
+   "implied_terminal_diameter_um": 451.7,
+   "published_arteriole_um": [
+    50.0,
+    150.0
+   ],
+   "within_published": false,
+   "why_not": "a 10^2-terminal constructed tree cannot reach arteriolar calibre while keeping a published root calibre under a cube law; the real tree has ~10^5 terminals.  Reported, not tuned away."
+  },
+  "short_gastric": {
+   "implied_terminal_diameter_um": 301.6,
+   "published_arteriole_um": [
+    50.0,
+    150.0
+   ],
+   "within_published": false,
+   "why_not": "a 10^2-terminal constructed tree cannot reach arteriolar calibre while keeping a published root calibre under a cube law; the real tree has ~10^5 terminals.  Reported, not tuned away."
+  },
+  "gastric_veins": {
+   "implied_terminal_diameter_um": 708.4,
+   "published_arteriole_um": [
+    50.0,
+    150.0
+   ],
+   "within_published": false,
+   "why_not": "a 10^2-terminal constructed tree cannot reach arteriolar calibre while keeping a published root calibre under a cube law; the real tree has ~10^5 terminals.  Reported, not tuned away."
+  }
+ },
+ "cross_organ_coupling": {
+  "pylorus_to_small_intestine": {
+   "pyloroduodenal_contact_voxels": 6,
+   "pylorus_point": [
+    -16.58,
+    444.29,
+    236.88
+   ],
+   "contour_anchored": true,
+   "note": "this is the handover to the published small-intestine page"
+  },
+  "gastric_veins_to_liver": {
+   "portal_ostium": [
+    -2.69,
+    441.29,
+    218.01
+   ],
+   "contour_anchored": true,
+   "note": "handover to the published liver page at the portal confluence"
+  },
+  "coeliac_to_aorta": {
+   "point": [
+    -2.77,
+    478.79,
+    166.92
+   ],
+   "contour_anchored": true
+  }
+ },
+ "murray_max_relative_residual_all_trees": 0.0,
+ "murray_law_note": "structural cube law with equal terminal flows: r_parent^3 = sum(r_child^3) holds exactly by construction, so 0 is expected and is NOT evidence of a fit",
+ "totals": {
+  "segments": 2438,
+  "bifurcations": 847,
+  "terminals": 853,
+  "total_length_mm": 10242.2,
+  "unattached_targets": 653
+ }
+}

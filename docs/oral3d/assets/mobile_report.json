@@ -1,0 +1,1037 @@
+{
+ "engine": "vulkan-angle",
+ "viewports": {
+  "desktop": {
+   "viewport": [
+    1440,
+    900
+   ],
+   "info": {
+    "renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "gl_version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "triangles": {
+     "organ": 154434,
+     "vessels": 29386,
+     "micro": 5392,
+     "total": 189212
+    },
+    "glb_parts": 45,
+    "programs": 45,
+    "programsNotLinked": [],
+    "restCheck": {
+     "rest_mode": {
+      "rings_sampled": 123,
+      "rings_undisplaced": 123,
+      "tongue_vertices_displaced": 0,
+      "interincisal_opening_mm": 0,
+      "interincisal_gap_mm": 11.8751,
+      "condyle_right_to_menton_mm": 121.1337,
+      "condyle_left_to_menton_mm": 111.0062,
+      "condyle_to_menton_drift_mm": 1.1e-05,
+      "condylar_slide_mm": 0
+     },
+     "swallow_t0": {
+      "rings_sampled": 123,
+      "rings_undisplaced": 53,
+      "rings_displaced": 69,
+      "displaced_u_min": 0.0036,
+      "displaced_u_max": 0.5036,
+      "tongue_vertices_displaced": 3022,
+      "tongue_vertices_total": 22778,
+      "wave_band_width_u_declared": 0.14
+     },
+     "interincisal_baseline_mm": 11.875127929624114
+    },
+    "flow": {
+     "paths": 112,
+     "particles": 35840,
+     "drawn": 35840,
+     "urineDisplayGain": 150,
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "cardiacPhase01": 0.2301534442233886,
+     "pulseNow": 1.265513617605479,
+     "byTree": {
+      "lingual_artery": {
+       "paths": 16,
+       "meanV_cm_s": 7.839675235748291
+      },
+      "facial_artery": {
+       "paths": 16,
+       "meanV_cm_s": 10.817551660537719
+      },
+      "inferior_alveolar_artery": {
+       "paths": 16,
+       "meanV_cm_s": 6.367619442939758
+      },
+      "venous_return": {
+       "paths": 16,
+       "meanV_cm_s": 7.324338150024414
+      },
+      "parotid_duct": {
+       "paths": 16,
+       "meanV_cm_s": 0.18465275317430496
+      },
+      "submandibular_duct": {
+       "paths": 16,
+       "meanV_cm_s": 0.11946070268750189
+      },
+      "sublingual_ducts": {
+       "paths": 16,
+       "meanV_cm_s": 0.2191792365163565
+      }
+     }
+    },
+    "expr": {
+     "ok": true,
+     "census_version": "2025-11-08",
+     "cell_types": 74,
+     "genes": 61,
+     "cells": 312586,
+     "normalization": "CP10K (raw counts / obs.raw_sum * 1e4) then log1p; mean over all cells of the cell type (zeros included)",
+     "genes_plotted": [
+      "CYP3A4",
+      "CYP3A5",
+      "CES1",
+      "CES2",
+      "UGT1A1",
+      "ABCB1",
+      "ABCG2",
+      "SLCO2B1"
+     ],
+     "vmax": 0.9176
+    },
+    "notes": [
+     "\u5b9e\u6d4b\u4e0e\u4e0a\u9762\u90a3\u5f20\u56fe\u4e0d\u4e00\u81f4\uff0c\u7167\u5b9e\u8bf4\uff1aABCB1 (P-gp) \u5728\u672c\u6570\u636e\u91cc\u6700\u9ad8\u7684\u662f endothelial cell\uff080.577\uff09\uff0c\u800c\u4e0d\u662f myoepithelial cell\uff080.062\uff09\u3002\u4e5f\u5c31\u662f\u8bf4\uff0c\u53e3\u8154\u9ecf\u819c\u91cc\u7684 P-gp \u4fe1\u53f7\u4e3b\u8981\u6765\u81ea\u8840\u7ba1\u5185\u76ae\u4e0e\u514d\u75ab\u7ec6\u80de\uff0c**\u672c\u6570\u636e\u5e76\u4e0d\u652f\u6301\"\u9876\u4fa7\u4e0a\u76ae P-gp \u5916\u6392\"\u8fd9\u6761\u53d9\u8ff0**\u3002\u56fe\u4e0a\u8be5\u8f6c\u8fd0\u4f53\u4ecd\u6807\u4e3a extrapolated\u3002",
+     "\u5355\u7ec6\u80de\uff1aCELLxGENE Census 2025-11-08\uff0c74 \u4e2a\u7ec6\u80de\u7c7b\u578b \u00d7 61 \u4e2a ADME \u57fa\u56e0\uff0c312,586 \u4e2a\u7ec6\u80de\u3002\u989c\u8272\u53ea\u80fd\u5b9a\u6027\u8bfb\uff1a\u672c\u9879\u76ee\u6ca1\u6709\u4efb\u4f55\"\u8868\u8fbe\u91cf\u2192\u8f6c\u8fd0\u901a\u91cf\"\u6807\u5b9a\u3002"
+    ],
+    "genesShown": [
+     {
+      "gene": "ABCB1",
+      "membrane": "apical (saliva-facing)",
+      "basis": "measured in human intestinal and renal epithelium; in stratified squamous oral epithelium the apical/superficial localisation is EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCG2",
+      "membrane": "apical (saliva-facing)",
+      "basis": "apical in intestine, placenta and mammary gland; oral assignment EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCC2",
+      "membrane": "apical (saliva-facing)",
+      "basis": "apical in hepatocyte and enterocyte; oral assignment EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCC1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral in most epithelia including squamous; well established",
+      "grade": "established"
+     },
+     {
+      "gene": "ABCC3",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral in hepatocyte and enterocyte",
+      "grade": "established"
+     },
+     {
+      "gene": "SLCO2B1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral uptake; reported in oral/oesophageal mucosa",
+      "grade": "reported"
+     },
+     {
+      "gene": "SLC22A3",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "OCT3, basolateral uptake, broadly expressed",
+      "grade": "established"
+     },
+     {
+      "gene": "CYP3A4",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "smooth endoplasmic reticulum",
+      "grade": "established"
+     },
+     {
+      "gene": "CYP3A5",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "smooth endoplasmic reticulum",
+      "grade": "established"
+     },
+     {
+      "gene": "CES1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER lumen, retained by an HXEL motif",
+      "grade": "established"
+     },
+     {
+      "gene": "CES2",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER lumen",
+      "grade": "established"
+     },
+     {
+      "gene": "UGT1A1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER membrane, lumen-facing active site",
+      "grade": "established"
+     },
+     {
+      "gene": "SULT1A1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "cytosolic",
+      "grade": "established"
+     },
+     {
+      "gene": "NKCC1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "\u57fa\u5e95\u4fa7 Cl- \u6444\u5165\uff0c\u9a71\u52a8\u7b49\u6e17\u521d\u7ea7\u5206\u6ccc",
+      "grade": "established"
+     },
+     {
+      "gene": "AQP5",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u9876\u4fa7\u6c34\u901a\u9053\uff0c\u6c34\u968f Cl- \u8fdb\u5165\u817a\u6ce1\u8154",
+      "grade": "established"
+     },
+     {
+      "gene": "ENaC",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u7eb9\u72b6\u7ba1\u9876\u4fa7\u56de\u6536 Na+",
+      "grade": "established"
+     },
+     {
+      "gene": "CFTR",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u7eb9\u72b6\u7ba1\u9876\u4fa7 Cl- \u901a\u9053",
+      "grade": "established"
+     },
+     {
+      "gene": "ABCB1 (P-gp)",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u5bfc\u7ba1\u9876\u4fa7\u5916\u6392 \u2014 \u628a\u5e95\u7269\u6cf5\u56de\u553e\u6db2",
+      "grade": "established"
+     },
+     {
+      "gene": "ATP1A1 (Na/K-ATPase)",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "\u57fa\u5e95\u4fa7\u94a0\u6cf5",
+      "grade": "established"
+     }
+    ],
+    "hud_boxes": 26,
+    "hud_overflow": [],
+    "domOverflow": [],
+    "viewport": [
+     1440,
+     900
+    ]
+   },
+   "per_view": {
+    "organ": {
+     "hud_overflow": [],
+     "hud_boxes": 33,
+     "frame": {
+      "n": 43,
+      "mean": 1.0232558139521346,
+      "p50": 1,
+      "p95": 1.2000000000116415,
+      "max": 1.2999999999883585
+     },
+     "rafFps": 43.63636363636363
+    },
+    "vessels": {
+     "hud_overflow": [],
+     "hud_boxes": 26,
+     "frame": {
+      "n": 29,
+      "mean": 7.441379310348441,
+      "p50": 1.2000000000116415,
+      "p95": 1.6000000000349246,
+      "max": 180.79999999998836
+     },
+     "rafFps": 32
+    },
+    "motion": {
+     "hud_overflow": [],
+     "hud_boxes": 33,
+     "frame": {
+      "n": 42,
+      "mean": 0.9595238095179888,
+      "p50": 0.9000000000232831,
+      "p95": 1.2000000000116415,
+      "max": 1.5
+     },
+     "rafFps": 60.007742934572164
+    },
+    "section": {
+     "hud_overflow": [],
+     "hud_boxes": 27,
+     "frame": {
+      "n": 42,
+      "mean": 0.5,
+      "p50": 0.40000000002328306,
+      "p95": 0.6000000000349246,
+      "max": 5.2999999999883585
+     },
+     "rafFps": 45
+    },
+    "molecular": {
+     "hud_overflow": [],
+     "hud_boxes": 26,
+     "frame": {
+      "n": 24,
+      "mean": 14.491666666673458,
+      "p50": 1.5,
+      "p95": 2.300000000046566,
+      "max": 312.70000000001164
+     },
+     "rafFps": 24
+    }
+   },
+   "screenshots": {
+    "organ": "oral3d_desktop_organ.jpg",
+    "vessels": "oral3d_desktop_vessels.jpg",
+    "motion": "oral3d_desktop_motion.jpg",
+    "section": "oral3d_desktop_section.jpg",
+    "molecular": "oral3d_desktop_molecular.jpg"
+   },
+   "kinematics": {
+    "chew": {
+     "samples": 45,
+     "incisal_excursion_3d_mm": {
+      "min": 0,
+      "max": 16.3376,
+      "mean": 7.207877777777781
+     },
+     "interincisal_opening_mm": {
+      "min": 0,
+      "max": 14.3193,
+      "mean": 6.088984444444445
+     },
+     "interincisal_gap_mm": {
+      "min": 11.8751,
+      "max": 26.1944,
+      "mean": 17.964108888888887
+     },
+     "interincisal_baseline_mm": 11.8751,
+     "declared_opening_mm": 18.0,
+     "condyle_to_menton_drift_mm": {
+      "min": 1.1e-05,
+      "max": 1.1e-05,
+      "mean": 1.0999999999999998e-05
+     },
+     "condyle_to_menton_reference_mm": 111.0062,
+     "condylar_slide_mm": {
+      "min": 0,
+      "max": 4.7608,
+      "mean": 1.977806666666667
+     },
+     "condylar_slide_forward_mm": {
+      "min": 0,
+      "max": 2.9987,
+      "mean": 1.2476266666666669
+     },
+     "condylar_slide_lateral_mm": {
+      "min": 0,
+      "max": 4.4749,
+      "mean": 1.0655644444444445
+     },
+     "declared_slide_forward_mm": 3,
+     "declared_lateral_excursion_mm": 4.5,
+     "bicondylar_mm": {
+      "min": 99.6212,
+      "max": 99.6212,
+      "mean": 99.62119999999999
+     },
+     "jaw_angle_deg": {
+      "min": 0,
+      "max": 11.9858,
+      "mean": 4.986837777777778
+     },
+     "lever_arm_mm": 86.007
+    },
+    "swallow": {
+     "wave_speed_declared_mm_s": 101.34,
+     "wave_speed_measured_mm_s": [
+      101.344,
+      101.344
+     ],
+     "wave_speed_samples": 87,
+     "tongue_vertices_total": 22778,
+     "tongue_vertices_displaced": 4364,
+     "tongue_axis_length_mm": 91.21,
+     "rings": {
+      "n": 123,
+      "moved_any": 102,
+      "moved_above_5pct_of_peak": 55,
+      "u_band_5pct": [
+       0.425,
+       0.8821
+      ],
+      "u_band_any": [
+       0.1536,
+       0.9964
+      ],
+      "peak_disp_mm": 5.992905,
+      "threshold_note": "the contact band is a Gaussian in u, so a 1e-6 mm threshold catches its far tail; the 5%-of-peak band is the band you can actually see"
+     }
+    },
+    "rest": {
+     "interincisal_opening_mm": 0,
+     "tongue_vertices_displaced": 0,
+     "condylar_slide_mm": 0,
+     "rings": {
+      "n": 123,
+      "still": 123
+     }
+    }
+   },
+   "frameCostStats_final": {
+    "n": 270,
+    "mean": 1.0644444444445307,
+    "p50": 1.099999999976717,
+    "p95": 1.400000000023283,
+    "max": 2
+   },
+   "gpu_frame_cost_measured": true,
+   "headroom_vs_60fps_on_p95": 11.907,
+   "console": [],
+   "bytes_served": 8749219,
+   "files_served": 25,
+   "missing_files": []
+  },
+  "phone390": {
+   "viewport": [
+    390,
+    844
+   ],
+   "info": {
+    "renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "gl_version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "triangles": {
+     "organ": 154434,
+     "vessels": 29386,
+     "micro": 5392,
+     "total": 189212
+    },
+    "glb_parts": 45,
+    "programs": 45,
+    "programsNotLinked": [],
+    "restCheck": {
+     "rest_mode": {
+      "rings_sampled": 123,
+      "rings_undisplaced": 123,
+      "tongue_vertices_displaced": 0,
+      "interincisal_opening_mm": 0,
+      "interincisal_gap_mm": 11.8751,
+      "condyle_right_to_menton_mm": 121.1337,
+      "condyle_left_to_menton_mm": 111.0062,
+      "condyle_to_menton_drift_mm": 1.1e-05,
+      "condylar_slide_mm": 0
+     },
+     "swallow_t0": {
+      "rings_sampled": 123,
+      "rings_undisplaced": 53,
+      "rings_displaced": 69,
+      "displaced_u_min": 0.0036,
+      "displaced_u_max": 0.5036,
+      "tongue_vertices_displaced": 3022,
+      "tongue_vertices_total": 22778,
+      "wave_band_width_u_declared": 0.14
+     },
+     "interincisal_baseline_mm": 11.875127929624114
+    },
+    "flow": {
+     "paths": 112,
+     "particles": 20160,
+     "drawn": 20160,
+     "urineDisplayGain": 150,
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "cardiacPhase01": 0.6627578709452846,
+     "pulseNow": 1.0197096923381033,
+     "byTree": {
+      "lingual_artery": {
+       "paths": 16,
+       "meanV_cm_s": 7.839675235748291
+      },
+      "facial_artery": {
+       "paths": 16,
+       "meanV_cm_s": 10.817551660537719
+      },
+      "inferior_alveolar_artery": {
+       "paths": 16,
+       "meanV_cm_s": 6.367619442939758
+      },
+      "venous_return": {
+       "paths": 16,
+       "meanV_cm_s": 7.324338150024414
+      },
+      "parotid_duct": {
+       "paths": 16,
+       "meanV_cm_s": 0.18465275317430496
+      },
+      "submandibular_duct": {
+       "paths": 16,
+       "meanV_cm_s": 0.11946070268750189
+      },
+      "sublingual_ducts": {
+       "paths": 16,
+       "meanV_cm_s": 0.2191792365163565
+      }
+     }
+    },
+    "expr": {
+     "ok": true,
+     "census_version": "2025-11-08",
+     "cell_types": 74,
+     "genes": 61,
+     "cells": 312586,
+     "normalization": "CP10K (raw counts / obs.raw_sum * 1e4) then log1p; mean over all cells of the cell type (zeros included)",
+     "genes_plotted": [
+      "CYP3A4",
+      "CYP3A5",
+      "CES1",
+      "CES2",
+      "UGT1A1",
+      "ABCB1",
+      "ABCG2",
+      "SLCO2B1"
+     ],
+     "vmax": 0.9176
+    },
+    "notes": [
+     "\u5b9e\u6d4b\u4e0e\u4e0a\u9762\u90a3\u5f20\u56fe\u4e0d\u4e00\u81f4\uff0c\u7167\u5b9e\u8bf4\uff1aABCB1 (P-gp) \u5728\u672c\u6570\u636e\u91cc\u6700\u9ad8\u7684\u662f endothelial cell\uff080.577\uff09\uff0c\u800c\u4e0d\u662f myoepithelial cell\uff080.062\uff09\u3002\u4e5f\u5c31\u662f\u8bf4\uff0c\u53e3\u8154\u9ecf\u819c\u91cc\u7684 P-gp \u4fe1\u53f7\u4e3b\u8981\u6765\u81ea\u8840\u7ba1\u5185\u76ae\u4e0e\u514d\u75ab\u7ec6\u80de\uff0c**\u672c\u6570\u636e\u5e76\u4e0d\u652f\u6301\"\u9876\u4fa7\u4e0a\u76ae P-gp \u5916\u6392\"\u8fd9\u6761\u53d9\u8ff0**\u3002\u56fe\u4e0a\u8be5\u8f6c\u8fd0\u4f53\u4ecd\u6807\u4e3a extrapolated\u3002",
+     "\u5355\u7ec6\u80de\uff1aCELLxGENE Census 2025-11-08\uff0c74 \u4e2a\u7ec6\u80de\u7c7b\u578b \u00d7 61 \u4e2a ADME \u57fa\u56e0\uff0c312,586 \u4e2a\u7ec6\u80de\u3002\u989c\u8272\u53ea\u80fd\u5b9a\u6027\u8bfb\uff1a\u672c\u9879\u76ee\u6ca1\u6709\u4efb\u4f55\"\u8868\u8fbe\u91cf\u2192\u8f6c\u8fd0\u901a\u91cf\"\u6807\u5b9a\u3002"
+    ],
+    "genesShown": [
+     {
+      "gene": "ABCB1",
+      "membrane": "apical (saliva-facing)",
+      "basis": "measured in human intestinal and renal epithelium; in stratified squamous oral epithelium the apical/superficial localisation is EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCG2",
+      "membrane": "apical (saliva-facing)",
+      "basis": "apical in intestine, placenta and mammary gland; oral assignment EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCC2",
+      "membrane": "apical (saliva-facing)",
+      "basis": "apical in hepatocyte and enterocyte; oral assignment EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCC1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral in most epithelia including squamous; well established",
+      "grade": "established"
+     },
+     {
+      "gene": "ABCC3",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral in hepatocyte and enterocyte",
+      "grade": "established"
+     },
+     {
+      "gene": "SLCO2B1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral uptake; reported in oral/oesophageal mucosa",
+      "grade": "reported"
+     },
+     {
+      "gene": "SLC22A3",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "OCT3, basolateral uptake, broadly expressed",
+      "grade": "established"
+     },
+     {
+      "gene": "CYP3A4",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "smooth endoplasmic reticulum",
+      "grade": "established"
+     },
+     {
+      "gene": "CYP3A5",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "smooth endoplasmic reticulum",
+      "grade": "established"
+     },
+     {
+      "gene": "CES1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER lumen, retained by an HXEL motif",
+      "grade": "established"
+     },
+     {
+      "gene": "CES2",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER lumen",
+      "grade": "established"
+     },
+     {
+      "gene": "UGT1A1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER membrane, lumen-facing active site",
+      "grade": "established"
+     },
+     {
+      "gene": "SULT1A1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "cytosolic",
+      "grade": "established"
+     },
+     {
+      "gene": "NKCC1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "\u57fa\u5e95\u4fa7 Cl- \u6444\u5165\uff0c\u9a71\u52a8\u7b49\u6e17\u521d\u7ea7\u5206\u6ccc",
+      "grade": "established"
+     },
+     {
+      "gene": "AQP5",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u9876\u4fa7\u6c34\u901a\u9053\uff0c\u6c34\u968f Cl- \u8fdb\u5165\u817a\u6ce1\u8154",
+      "grade": "established"
+     },
+     {
+      "gene": "ENaC",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u7eb9\u72b6\u7ba1\u9876\u4fa7\u56de\u6536 Na+",
+      "grade": "established"
+     },
+     {
+      "gene": "CFTR",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u7eb9\u72b6\u7ba1\u9876\u4fa7 Cl- \u901a\u9053",
+      "grade": "established"
+     },
+     {
+      "gene": "ABCB1 (P-gp)",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u5bfc\u7ba1\u9876\u4fa7\u5916\u6392 \u2014 \u628a\u5e95\u7269\u6cf5\u56de\u553e\u6db2",
+      "grade": "established"
+     },
+     {
+      "gene": "ATP1A1 (Na/K-ATPase)",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "\u57fa\u5e95\u4fa7\u94a0\u6cf5",
+      "grade": "established"
+     }
+    ],
+    "hud_boxes": 15,
+    "hud_overflow": [],
+    "domOverflow": [],
+    "viewport": [
+     390,
+     844
+    ]
+   },
+   "per_view": {
+    "organ": {
+     "hud_overflow": [],
+     "hud_boxes": 20,
+     "frame": {
+      "n": 44,
+      "mean": 0.9250000000055562,
+      "p50": 0.9000000000232831,
+      "p95": 1.099999999976717,
+      "max": 1.2999999999883585
+     },
+     "rafFps": 60
+    },
+    "vessels": {
+     "hud_overflow": [],
+     "hud_boxes": 15,
+     "frame": {
+      "n": 42,
+      "mean": 2.283333333332502,
+      "p50": 1.1999999999534339,
+      "p95": 1.5,
+      "max": 47.90000000002328
+     },
+     "rafFps": 60
+    },
+    "motion": {
+     "hud_overflow": [],
+     "hud_boxes": 20,
+     "frame": {
+      "n": 43,
+      "mean": 0.8883720930235266,
+      "p50": 0.8999999999650754,
+      "p95": 1.2000000000116415,
+      "max": 1.400000000023283
+     },
+     "rafFps": 47.37091425864524
+    },
+    "section": {
+     "hud_overflow": [],
+     "hud_boxes": 15,
+     "frame": {
+      "n": 43,
+      "mean": 0.4558139534878306,
+      "p50": 0.3999999999650754,
+      "p95": 0.5,
+      "max": 4.800000000046566
+     },
+     "rafFps": 60
+    },
+    "molecular": {
+     "hud_overflow": [],
+     "hud_boxes": 15,
+     "frame": {
+      "n": 42,
+      "mean": 2.3428571428535396,
+      "p50": 1.400000000023283,
+      "p95": 2.599999999976717,
+      "max": 36.899999999965075
+     },
+     "rafFps": 60.007742934572164
+    }
+   },
+   "screenshots": {
+    "organ": "oral3d_phone390_organ.jpg",
+    "vessels": "oral3d_phone390_vessels.jpg",
+    "motion": "oral3d_phone390_motion.jpg",
+    "section": "oral3d_phone390_section.jpg",
+    "molecular": "oral3d_phone390_molecular.jpg"
+   },
+   "kinematics": null,
+   "frameCostStats_final": {
+    "n": 42,
+    "mean": 2.3428571428535396,
+    "p50": 1.400000000023283,
+    "p95": 2.599999999976717,
+    "max": 36.899999999965075
+   },
+   "gpu_frame_cost_measured": true,
+   "headroom_vs_60fps_on_p95": 6.412,
+   "console": [],
+   "bytes_served": 8749219,
+   "files_served": 25,
+   "missing_files": []
+  },
+  "phone360": {
+   "viewport": [
+    360,
+    800
+   ],
+   "info": {
+    "renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10 (0x00002236)), NVIDIA)",
+    "vendor": "Google Inc. (NVIDIA)",
+    "gl_version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "triangles": {
+     "organ": 154434,
+     "vessels": 29386,
+     "micro": 5392,
+     "total": 189212
+    },
+    "glb_parts": 45,
+    "programs": 45,
+    "programsNotLinked": [],
+    "restCheck": {
+     "rest_mode": {
+      "rings_sampled": 123,
+      "rings_undisplaced": 123,
+      "tongue_vertices_displaced": 0,
+      "interincisal_opening_mm": 0,
+      "interincisal_gap_mm": 11.8751,
+      "condyle_right_to_menton_mm": 121.1337,
+      "condyle_left_to_menton_mm": 111.0062,
+      "condyle_to_menton_drift_mm": 1.1e-05,
+      "condylar_slide_mm": 0
+     },
+     "swallow_t0": {
+      "rings_sampled": 123,
+      "rings_undisplaced": 53,
+      "rings_displaced": 69,
+      "displaced_u_min": 0.0036,
+      "displaced_u_max": 0.5036,
+      "tongue_vertices_displaced": 3022,
+      "tongue_vertices_total": 22778,
+      "wave_band_width_u_declared": 0.14
+     },
+     "interincisal_baseline_mm": 11.875127929624114
+    },
+    "flow": {
+     "paths": 112,
+     "particles": 20160,
+     "drawn": 20160,
+     "urineDisplayGain": 150,
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "cardiacPhase01": 0.6803753818917752,
+     "pulseNow": 1.0064971525375674,
+     "byTree": {
+      "lingual_artery": {
+       "paths": 16,
+       "meanV_cm_s": 7.839675235748291
+      },
+      "facial_artery": {
+       "paths": 16,
+       "meanV_cm_s": 10.817551660537719
+      },
+      "inferior_alveolar_artery": {
+       "paths": 16,
+       "meanV_cm_s": 6.367619442939758
+      },
+      "venous_return": {
+       "paths": 16,
+       "meanV_cm_s": 7.324338150024414
+      },
+      "parotid_duct": {
+       "paths": 16,
+       "meanV_cm_s": 0.18465275317430496
+      },
+      "submandibular_duct": {
+       "paths": 16,
+       "meanV_cm_s": 0.11946070268750189
+      },
+      "sublingual_ducts": {
+       "paths": 16,
+       "meanV_cm_s": 0.2191792365163565
+      }
+     }
+    },
+    "expr": {
+     "ok": true,
+     "census_version": "2025-11-08",
+     "cell_types": 74,
+     "genes": 61,
+     "cells": 312586,
+     "normalization": "CP10K (raw counts / obs.raw_sum * 1e4) then log1p; mean over all cells of the cell type (zeros included)",
+     "genes_plotted": [
+      "CYP3A4",
+      "CYP3A5",
+      "CES1",
+      "CES2",
+      "UGT1A1",
+      "ABCB1",
+      "ABCG2",
+      "SLCO2B1"
+     ],
+     "vmax": 0.9176
+    },
+    "notes": [
+     "\u5b9e\u6d4b\u4e0e\u4e0a\u9762\u90a3\u5f20\u56fe\u4e0d\u4e00\u81f4\uff0c\u7167\u5b9e\u8bf4\uff1aABCB1 (P-gp) \u5728\u672c\u6570\u636e\u91cc\u6700\u9ad8\u7684\u662f endothelial cell\uff080.577\uff09\uff0c\u800c\u4e0d\u662f myoepithelial cell\uff080.062\uff09\u3002\u4e5f\u5c31\u662f\u8bf4\uff0c\u53e3\u8154\u9ecf\u819c\u91cc\u7684 P-gp \u4fe1\u53f7\u4e3b\u8981\u6765\u81ea\u8840\u7ba1\u5185\u76ae\u4e0e\u514d\u75ab\u7ec6\u80de\uff0c**\u672c\u6570\u636e\u5e76\u4e0d\u652f\u6301\"\u9876\u4fa7\u4e0a\u76ae P-gp \u5916\u6392\"\u8fd9\u6761\u53d9\u8ff0**\u3002\u56fe\u4e0a\u8be5\u8f6c\u8fd0\u4f53\u4ecd\u6807\u4e3a extrapolated\u3002",
+     "\u5355\u7ec6\u80de\uff1aCELLxGENE Census 2025-11-08\uff0c74 \u4e2a\u7ec6\u80de\u7c7b\u578b \u00d7 61 \u4e2a ADME \u57fa\u56e0\uff0c312,586 \u4e2a\u7ec6\u80de\u3002\u989c\u8272\u53ea\u80fd\u5b9a\u6027\u8bfb\uff1a\u672c\u9879\u76ee\u6ca1\u6709\u4efb\u4f55\"\u8868\u8fbe\u91cf\u2192\u8f6c\u8fd0\u901a\u91cf\"\u6807\u5b9a\u3002"
+    ],
+    "genesShown": [
+     {
+      "gene": "ABCB1",
+      "membrane": "apical (saliva-facing)",
+      "basis": "measured in human intestinal and renal epithelium; in stratified squamous oral epithelium the apical/superficial localisation is EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCG2",
+      "membrane": "apical (saliva-facing)",
+      "basis": "apical in intestine, placenta and mammary gland; oral assignment EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCC2",
+      "membrane": "apical (saliva-facing)",
+      "basis": "apical in hepatocyte and enterocyte; oral assignment EXTRAPOLATED",
+      "grade": "extrapolated"
+     },
+     {
+      "gene": "ABCC1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral in most epithelia including squamous; well established",
+      "grade": "established"
+     },
+     {
+      "gene": "ABCC3",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral in hepatocyte and enterocyte",
+      "grade": "established"
+     },
+     {
+      "gene": "SLCO2B1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "basolateral uptake; reported in oral/oesophageal mucosa",
+      "grade": "reported"
+     },
+     {
+      "gene": "SLC22A3",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "OCT3, basolateral uptake, broadly expressed",
+      "grade": "established"
+     },
+     {
+      "gene": "CYP3A4",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "smooth endoplasmic reticulum",
+      "grade": "established"
+     },
+     {
+      "gene": "CYP3A5",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "smooth endoplasmic reticulum",
+      "grade": "established"
+     },
+     {
+      "gene": "CES1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER lumen, retained by an HXEL motif",
+      "grade": "established"
+     },
+     {
+      "gene": "CES2",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER lumen",
+      "grade": "established"
+     },
+     {
+      "gene": "UGT1A1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "ER membrane, lumen-facing active site",
+      "grade": "established"
+     },
+     {
+      "gene": "SULT1A1",
+      "membrane": "intracellular (smooth ER / cytosol)",
+      "basis": "cytosolic",
+      "grade": "established"
+     },
+     {
+      "gene": "NKCC1",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "\u57fa\u5e95\u4fa7 Cl- \u6444\u5165\uff0c\u9a71\u52a8\u7b49\u6e17\u521d\u7ea7\u5206\u6ccc",
+      "grade": "established"
+     },
+     {
+      "gene": "AQP5",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u9876\u4fa7\u6c34\u901a\u9053\uff0c\u6c34\u968f Cl- \u8fdb\u5165\u817a\u6ce1\u8154",
+      "grade": "established"
+     },
+     {
+      "gene": "ENaC",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u7eb9\u72b6\u7ba1\u9876\u4fa7\u56de\u6536 Na+",
+      "grade": "established"
+     },
+     {
+      "gene": "CFTR",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u7eb9\u72b6\u7ba1\u9876\u4fa7 Cl- \u901a\u9053",
+      "grade": "established"
+     },
+     {
+      "gene": "ABCB1 (P-gp)",
+      "membrane": "apical (saliva-facing)",
+      "basis": "\u5bfc\u7ba1\u9876\u4fa7\u5916\u6392 \u2014 \u628a\u5e95\u7269\u6cf5\u56de\u553e\u6db2",
+      "grade": "established"
+     },
+     {
+      "gene": "ATP1A1 (Na/K-ATPase)",
+      "membrane": "basolateral (lamina propria / capillary-facing)",
+      "basis": "\u57fa\u5e95\u4fa7\u94a0\u6cf5",
+      "grade": "established"
+     }
+    ],
+    "hud_boxes": 15,
+    "hud_overflow": [],
+    "domOverflow": [],
+    "viewport": [
+     360,
+     800
+    ]
+   },
+   "per_view": {
+    "organ": {
+     "hud_overflow": [],
+     "hud_boxes": 20,
+     "frame": {
+      "n": 44,
+      "mean": 0.9113636363644301,
+      "p50": 0.9000000000232831,
+      "p95": 1.1000000000349246,
+      "max": 1.2999999999883585
+     },
+     "rafFps": 60.007742934572164
+    },
+    "vessels": {
+     "hud_overflow": [],
+     "hud_boxes": 15,
+     "frame": {
+      "n": 41,
+      "mean": 2.334146341470797,
+      "p50": 1.1000000000349246,
+      "p95": 1.400000000023283,
+      "max": 50.20000000001164
+     },
+     "rafFps": 60.00774293457226
+    },
+    "motion": {
+     "hud_overflow": [],
+     "hud_boxes": 20,
+     "frame": {
+      "n": 43,
+      "mean": 0.897674418610878,
+      "p50": 0.8999999999650754,
+      "p95": 1.2000000000116415,
+      "max": 1.3000000000465661
+     },
+     "rafFps": 46.160947838128905
+    },
+    "section": {
+     "hud_overflow": [],
+     "hud_boxes": 15,
+     "frame": {
+      "n": 42,
+      "mean": 0.47142857143106603,
+      "p50": 0.3999999999650754,
+      "p95": 0.5,
+      "max": 5.2000000000116415
+     },
+     "rafFps": 59.98800239952016
+    },
+    "molecular": {
+     "hud_overflow": [],
+     "hud_boxes": 15,
+     "frame": {
+      "n": 42,
+      "mean": 2.473809523808692,
+      "p50": 1.5,
+      "p95": 2.7000000000116415,
+      "max": 37.59999999997672
+     },
+     "rafFps": 60.007742934572164
+    }
+   },
+   "screenshots": {
+    "organ": "oral3d_phone360_organ.jpg",
+    "vessels": "oral3d_phone360_vessels.jpg",
+    "motion": "oral3d_phone360_motion.jpg",
+    "section": "oral3d_phone360_section.jpg",
+    "molecular": "oral3d_phone360_molecular.jpg"
+   },
+   "kinematics": null,
+   "frameCostStats_final": {
+    "n": 42,
+    "mean": 2.473809523808692,
+    "p50": 1.5,
+    "p95": 2.7000000000116415,
+    "max": 37.59999999997672
+   },
+   "gpu_frame_cost_measured": true,
+   "headroom_vs_60fps_on_p95": 6.174,
+   "console": [],
+   "bytes_served": 8749219,
+   "files_served": 25,
+   "missing_files": []
+  }
+ },
+ "hardware_note": "measured on a DATA-CENTRE NVIDIA A10/A10G, not a laptop and not a real phone; the phone entries are viewport sizes only",
+ "raf_fps_note": "headless Chromium has NO vsync, so its requestAnimationFrame rate is unbounded and is NOT a user-visible frame rate. The per-frame render cost in ms against the 16.67 ms budget of 60 fps is the number that means something.",
+ "problems": []
+}
