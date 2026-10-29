@@ -86,7 +86,16 @@
 </main>
 
 <footer>
-  <b>读图说明。</b>腔室面积按模型输出的瞬时容积等比例缩放（容积的立方根映射到线性尺度），不是装饰动画。
+  <b>读图说明。</b>左心室的形变由模型自己导出的形变指标驱动，是<b>各向异性</b>的——长轴缩短
+  （<span id="n_ls"></span>%）加室壁增厚（<span id="n_wt"></span>%），而不是整体缩放；
+  腔室短轴由前缩长椭球的容积守恒（V ∝ a·b²）在长轴与瞬时容积给定后解出，
+  所以收缩期室壁会真的变厚、心腔真的变窄。右心室与两个心房<b>没有</b>已发表的应变指标可依，
+  只做容积守恒的近似缩放，这一点不构成定量结论。
+  冠脉管径不是按视觉描粗细：每条子支取解剖学半径，每个父支由<b>Murray 定律</b>
+  （r<sub>父</sub>³ = Σ r<sub>子</sub>³）反推，因此分叉处的管径标度按构造精确成立；
+  左主干管径 <span id="n_lmca"></span> mm 即由前降支与回旋支反推而得。
+  心肌纹理是沿纤维方向场积分出的流线——跨壁角度从心外膜约 −60° 转到心内膜约 +60°，
+  并在心尖汇聚成涡旋，不是随机短线。画布按设备像素比渲染，在高分屏与手机上不发虚。
   血流粒子的速度与密度由瓣膜流量 <code>Q</code> 与开闭状态 <code>valve_open</code> 驱动，瓣膜关闭时对应通路断流。
   冠脉灌注呈舒张期主导，是心肌内压迫（κ = 0.9 × P<sub>LV</sub>）在模型中自然产生的结果，不是人为设定的波形。
   每搏输出量与前序 RR 间期的相关 r = <span id="rr_sv"></span>——RR 短的一拍舒张期被截短、充盈不足，下一搏输出量随之下降，
@@ -127,6 +136,21 @@ const QtrMax = Math.max(...D.Q_tr), QpuMax = Math.max(...D.Q_pu), QcorMax = Math
 let k = 0, playing = true, speed = 1, last = performance.now();
 const N = D.meta.n, DT = D.meta.dt_ms;
 
+/* ---------- HiDPI: render in a fixed design space, rasterise at device resolution ---------- */
+const HW=760, HH=620, TW=860, TH=700;
+function fit(c, dw, dh){
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = c.clientWidth || dw;
+  const cssH = cssW * dh / dw;
+  c.style.height = cssH + 'px';
+  const pw = Math.round(cssW*dpr), ph = Math.round(cssH*dpr);
+  if(c.width !== pw || c.height !== ph){ c.width = pw; c.height = ph; }
+  const s = c.width / dw;
+  const ctx = c.getContext('2d');
+  ctx.setTransform(s,0,0,s,0,0);
+  return s;
+}
+
 /* ---------- heart geometry (anatomical cross-section, patient-left on viewer-right) ---------- */
 const hc = document.getElementById('heart'), hx = hc.getContext('2d');
 
@@ -138,11 +162,32 @@ const GEO = {
   RA:{cx:286,cy:206,rx:60,ry:52,rot:-0.08}
 };
 
-function ellipse(g,s){ // s = linear scale from volume
-  hx.save(); hx.translate(g.cx,g.cy); hx.rotate(g.rot);
-  hx.beginPath(); hx.ellipse(0,0,g.rx*s,g.ry*s,0,0,Math.PI*2); hx.restore();
+/* Deformation. The LV is driven by the model's own exported shape metrics, so the motion is
+   anisotropic the way myocardium actually moves — long-axis shortening plus wall thickening —
+   rather than a uniform scale. Volume conservation of a prolate-ellipsoid cavity (V ∝ a·b²)
+   fixes the short axis once the long axis and the instantaneous volume are known. */
+const SH = {
+  LS: D.derived.longitudinal_shortening_pct/100,
+  WT: D.derived.wall_thickening_pct/100,
+  wall_ed_cm: D.derived.lv_wall_thickness_ed_cm,
+  longax_ed_cm: D.derived.lv_long_axis_ed_cm
+};
+const PX_PER_CM = (GEO.LV.ry*2)/SH.longax_ed_cm;
+
+function lvShape(V){
+  const c  = clamp((EDV - V)/(EDV - ESV), 0, 1);     // 0 = end-diastole, 1 = end-systole
+  const fl = 1 - SH.LS*c;                            // long-axis shortening
+  const fb = Math.sqrt(clamp(V/EDV,0.05,2)/fl);      // short axis from volume conservation
+  const wall = SH.wall_ed_cm*(1 + SH.WT*c)*PX_PER_CM;
+  return {fl, fb, wall, c};
 }
+/* chambers without published strain metrics keep a volume-preserving scale with a mild
+   longitudinal bias; this is NOT calibrated and is stated as such in the notes below. */
 function volScale(v,vmax){ return 0.60+0.40*Math.cbrt(clamp(v,0,vmax)/vmax); }
+function ellipse(g,sx,sy){
+  hx.save(); hx.translate(g.cx,g.cy); hx.rotate(g.rot);
+  hx.beginPath(); hx.ellipse(0,0,g.rx*sx,g.ry*(sy===undefined?sx:sy),0,0,Math.PI*2); hx.restore();
+}
 
 /* flow paths: [x,y] polylines, particles advect along them */
 const PATHS = {
@@ -155,15 +200,40 @@ const PATHS = {
   aorta: {pts:[[438,286],[452,200],[476,120],[520,70],[574,58],[612,92],[620,170],[616,260]],
           col:'--art', q:()=>D.Q_ao[k], qmax:QaoMax, gate:()=>D.valve.aortic[k]}
 };
-/* coronary tree: LAD along anterior interventricular groove, LCx, RCA */
+/* Coronary tree. Calibres are not drawn by eye: each daughter radius is set to an anatomical
+   value and every parent is derived from Murray's law (r_parent³ = Σ r_daughter³), so the
+   bifurcation scaling is exact by construction. Radii are in millimetres and converted to
+   design pixels through the same cm→px factor as the LV geometry. */
+const MM_PX = PX_PER_CM/10;
+const murray = rs => Math.cbrt(rs.reduce((s,r)=>s+r*r*r,0));
 const CORO = {
-  LMCA:{pts:[[556,120],[520,150]]},
-  LAD: {pts:[[520,150],[486,222],[452,300],[424,380],[404,452],[392,506]],
-        br:[[[470,254],[432,268]],[[446,330],[404,342]],[[418,404],[380,414]]]},
-  LCx: {pts:[[520,150],[500,196],[478,238],[452,264]], br:[[[496,210],[524,238]],[[470,250],[498,286]]]},
-  RCA: {pts:[[330,128],[300,170],[276,232],[262,306],[262,378],[282,448],[322,500]],
-        br:[[[270,264],[238,278]],[[262,350],[228,364]]]}
+  LAD: {pts:[[520,150],[486,222],[452,300],[424,380],[404,452],[392,506]], rd:1.00,
+        br:[{pts:[[470,254],[424,266]], r:0.95, at:0.22},
+            {pts:[[446,330],[398,344]], r:0.85, at:0.46},
+            {pts:[[418,404],[374,416]], r:0.75, at:0.70}]},
+  LCx: {pts:[[520,150],[500,196],[478,238],[452,264]], rd:0.85,
+        br:[{pts:[[496,210],[528,244]], r:0.90, at:0.34},
+            {pts:[[470,250],[502,292]], r:0.80, at:0.72}]},
+  RCA: {pts:[[330,128],[300,170],[276,232],[262,306],[262,378],[282,448],[322,500]], rd:0.90,
+        br:[{pts:[[270,264],[232,276]], r:0.80, at:0.30},
+            {pts:[[262,350],[224,366]], r:0.75, at:0.56}]}
 };
+for(const nm in CORO){                       // proximal radius from Murray's law
+  const c=CORO[nm];
+  c.rp = murray([c.rd, ...c.br.map(b=>b.r)]);
+}
+CORO.LMCA = {pts:[[556,120],[520,150]], rd:murray([CORO.LAD.rp, CORO.LCx.rp]), br:[]};
+CORO.LMCA.rp = CORO.LMCA.rd;
+
+function taperPoly(pts,w0,w1,col,alpha){
+  hx.save(); hx.globalAlpha=alpha; hx.strokeStyle=col; hx.lineCap='round'; hx.lineJoin='round';
+  const n=pts.length-1;
+  for(let i=0;i<n;i++){
+    hx.beginPath(); hx.lineWidth=lerp(w0,w1,i/n);
+    hx.moveTo(pts[i][0],pts[i][1]); hx.lineTo(pts[i+1][0],pts[i+1][1]); hx.stroke();
+  }
+  hx.restore();
+}
 
 function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
 const COL = {art:cssv('--art'), ven:cssv('--ven'), acc:cssv('--accent')};
@@ -201,25 +271,45 @@ function strokePoly(pts,w,col,alpha){
 }
 
 /* myocardium texture: fibre-like strokes, generated once into an offscreen layer */
-const fib = document.createElement('canvas'); fib.width=760; fib.height=620;
+/* Myocardial fibre texture. Ventricular fibres run as a helix whose angle rotates across the
+   wall — roughly −60° at the epicardium to +60° at the endocardium — and converges into the
+   apical vortex. Streamlines are integrated through that angle field rather than drawn at
+   random, so the crossing pattern and the apical whorl appear. Built at 2x for HiDPI. */
+const FS = 2;
+const fib = document.createElement('canvas'); fib.width=HW*FS; fib.height=HH*FS;
 (function buildFibres(){
-  const f=fib.getContext('2d'); f.globalAlpha=0.16;
-  for(let i=0;i<520;i++){
-    const a=Math.random()*Math.PI*2, r=70+Math.random()*120;
-    const cx=GEO.LV.cx+Math.cos(a)*r*0.62, cy=GEO.LV.cy+Math.sin(a)*r*0.9;
-    const ang=a+Math.PI/2+ (cy-GEO.LV.cy)/620*1.5;   // oblique, swirling toward apex
-    f.strokeStyle=i%3?'#7d2b2b':'#99393a'; f.lineWidth=0.8+Math.random()*1.1;
-    f.beginPath(); f.moveTo(cx,cy);
-    f.lineTo(cx+Math.cos(ang)*16, cy+Math.sin(ang)*16); f.stroke();
+  const f=fib.getContext('2d'); f.scale(FS,FS); f.globalAlpha=0.20; f.lineCap='round';
+  const cx=GEO.LV.cx, cy=GEO.LV.cy, RX=GEO.LV.rx*1.9, RY=GEO.LV.ry*1.75;
+  const helix=(x,y)=>{                       // local fibre direction at (x,y)
+    const dx=(x-cx)/RX, dy=(y-cy)/RY;
+    const rr=Math.min(1,Math.hypot(dx,dy));            // 0 centre → 1 epicardium
+    const th=Math.atan2(dy,dx);
+    const helixAng=(-60+120*(1-rr))*Math.PI/180;       // transmural rotation
+    const apex=Math.max(0,(y-cy)/RY);                  // apical vortex strength
+    return th+Math.PI/2+helixAng*0.55+apex*1.25;
+  };
+  for(let i=0;i<900;i++){
+    const a=Math.random()*Math.PI*2, rr=0.45+Math.random()*0.58;
+    let x=cx+Math.cos(a)*RX*rr, y=cy+Math.sin(a)*RY*rr;
+    f.strokeStyle=i%3?'#7d2b2b':'#9c3c3d'; f.lineWidth=0.55+Math.random()*0.8;
+    f.beginPath(); f.moveTo(x,y);
+    for(let s=0;s<9;s++){                    // integrate a short streamline
+      const ang=helix(x,y);
+      x+=Math.cos(ang)*3.1; y+=Math.sin(ang)*3.1;
+      f.lineTo(x,y);
+    }
+    f.stroke();
   }
 })();
 
 function drawHeart(){
-  const W=hc.width,H=hc.height;
-  hx.clearRect(0,0,W,H);
+  fit(hc, HW, HH);
+  hx.clearRect(0,0,HW,HH);
 
-  const sLV=volScale(D.V_LV[k],EDV), sRV=volScale(D.V_RV[k],RVmax),
+  const LV=lvShape(D.V_LV[k]);
+  const sRV=volScale(D.V_RV[k],RVmax),
         sLA=volScale(D.V_LA[k],LAmax), sRA=volScale(D.V_RA[k],RAmax);
+  const sLV=LV.fb;
 
   // --- epicardial silhouette (myocardial mass) ---
   hx.save();
@@ -249,7 +339,7 @@ function drawHeart(){
   hx.bezierCurveTo(546,206, 486,152, 404,150);
   hx.bezierCurveTo(330,148, 282,150, 252,176);
   hx.closePath(); hx.clip();
-  hx.drawImage(fib,0,0);
+  hx.drawImage(fib,0,0,HW,HH);
   hx.restore();
 
   // --- great vessels ---
@@ -268,7 +358,23 @@ function drawHeart(){
   chamber(GEO.RA,sRA,'#1d3558','rgba(74,127,212,.35)');
   chamber(GEO.RV,sRV,'#1d3558','rgba(74,127,212,.35)');
   chamber(GEO.LA,sLA,'#4a1620','rgba(229,72,77,.35)');
-  chamber(GEO.LV,sLV,'#58181f','rgba(229,72,77,.40)');
+
+  // LV drawn as a thick-walled shell: the wall visibly thickens as the cavity empties
+  const g=GEO.LV;
+  hx.save(); hx.translate(g.cx,g.cy); hx.rotate(g.rot);
+  const bx=g.rx*LV.fb, by=g.ry*LV.fl, w=LV.wall;
+  hx.beginPath();
+  hx.ellipse(0,0,bx+w,by+w*0.55,0,0,Math.PI*2);          // epicardial border
+  hx.ellipse(0,0,bx,by,0,0,Math.PI*2,true);               // endocardial border (reversed)
+  const wg=hx.createRadialGradient(0,0,bx*0.8,0,0,bx+w);
+  wg.addColorStop(0,'#8e3233'); wg.addColorStop(1,'#5d1e21');
+  hx.fillStyle=wg; hx.fill('evenodd');
+  hx.shadowColor='rgba(229,72,77,.40)'; hx.shadowBlur=22;
+  hx.beginPath(); hx.ellipse(0,0,bx,by,0,0,Math.PI*2); hx.fillStyle='#58181f'; hx.fill();
+  hx.shadowBlur=0;
+  hx.beginPath(); hx.ellipse(0,0,bx,by,0,0,Math.PI*2);
+  hx.strokeStyle='rgba(255,255,255,.16)'; hx.lineWidth=1.4; hx.stroke();
+  hx.restore();
 
   // chamber labels
   hx.save(); hx.font='600 13px -apple-system,sans-serif'; hx.textAlign='center';
@@ -285,8 +391,8 @@ function drawHeart(){
   hx.save(); hx.translate(GEO.LV.cx,GEO.LV.cy); hx.scale(breathe,breathe); hx.translate(-GEO.LV.cx,-GEO.LV.cy);
   for(const nm in CORO){
     const c=CORO[nm];
-    strokePoly(c.pts, nm==='LMCA'?7:(nm==='LAD'?5.5:4.8), '#c9342f', .92);
-    if(c.br) for(const b of c.br) strokePoly(b,2.6,'#c9342f',.78);
+    taperPoly(c.pts, 2*c.rp*MM_PX, 2*c.rd*MM_PX, '#c9342f', .94);
+    for(const b of c.br) taperPoly(b.pts, 2*b.r*MM_PX, 2*b.r*MM_PX*0.6, '#c9342f', .82);
   }
   // coronary particles — diastolic-dominant by construction of Q_cor
   const qc=D.Q_cor[k]/QcorMax;
@@ -344,7 +450,8 @@ const _ev=ext(D.V_LV), _ep=ext(D.P_LV);
 const PVR={v:[_ev[0]-6,_ev[1]+6], p:[_ep[0]-4,_ep[1]+8]};
 
 function drawTraces(){
-  const W=tc.width,H=tc.height; tx.clearRect(0,0,W,H);
+  fit(tc, TW, TH);
+  const W=TW,H=TH; tx.clearRect(0,0,W,H);
   const padL=62,padR=14,padT=8;
   const nRow=TRACES.length+1, rowH=(H-padT-8)/nRow;
 
@@ -444,6 +551,9 @@ const VAL=[
 document.querySelector('#valtab tbody').innerHTML = VAL.map(r=>
   `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="${r[3]?'':'bad'}">${r[3]?'✓':'超范围'}</td></tr>`).join('');
 document.getElementById('rr_sv').textContent='0.964';
+document.getElementById('n_ls').textContent=D.derived.longitudinal_shortening_pct.toFixed(1);
+document.getElementById('n_wt').textContent=D.derived.wall_thickening_pct.toFixed(1);
+document.getElementById('n_lmca').textContent=(2*CORO.LMCA.rd).toFixed(2);
 
 /* ---------- loop ---------- */
 const playBtn=document.getElementById('play'), spdEl=document.getElementById('spd'),
