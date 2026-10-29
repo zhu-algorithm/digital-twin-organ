@@ -137,7 +137,7 @@ Murray 残差在全部 **373** 个分叉上逐个核验，最大相对残差 **0
 | `V3_left_gastric_portal` | 1.75 | 4.0–6.0 | **BELOW by 56%** |
 | `V1_inferior_thyroid_vein_systemic` | 1.36 | 2.0–5.0 | **BELOW by 32%** |
 
-**原因（未调参）：** with equal terminal flows and binary bifurcations, Murray ties the trunk and terminal radii together through n_downstream^(1/3). Spanning the real 20-40x radius ratio of a named trunk down to a 0.3 mm adventitial branch would need n = 8000-64000 terminals. With 34-97 terminals per tree the span is only 3.2-4.6x, so the terminal calibres were anchored to the published small-vessel range and FOUR of the seven trunk calibres consequently fall BELOW their published diameters (inferior thyroid artery -16%, inferior thyroid vein -28%, left gastric vein -54%, azygos -58%). No radius was adjusted to hide this.
+**原因（未调参）：** with equal terminal flows and binary bifurcations, Murray ties the trunk and terminal radii together through n_downstream^(1/3). Spanning the real 20-40x radius ratio of a named trunk down to a 0.3 mm adventitial branch would need n = 8000-64000 terminals. With 34-97 terminals per tree the span is only 3.2-4.6x, so the terminal calibres were anchored to the published small-vessel range and FOUR of the seven trunk calibres consequently fall BELOW their published diameters (inferior thyroid artery -17%, inferior thyroid vein -32%, left gastric vein -56%, azygos -58%). No radius was adjusted to hide this.
 
 ### 未达成的终端数
 

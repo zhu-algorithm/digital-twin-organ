@@ -525,7 +525,7 @@
    3.0,
    10.0
   ],
-  "kind": "explicit anastomotic NETWORK, not a CCO tree \u2014 Murray's law does not apply to a non-dichotomous plexus and no Murray residual is reported for it",
+  "kind": "explicit anastomotic NETWORK, not a CCO tree — Murray's law does not apply to a non-dichotomous plexus and no Murray residual is reported for it",
   "contour_anchored": false,
   "placement": "submucosal radius = measured inscribed radius - 0.9 mm (published mucosa + muscularis mucosae depth)",
   "significance": "the palisade zone is the watershed where the PORTAL territory (left gastric vein, V3) meets the SYSTEMIC territory (azygos, V2). In portal hypertension flow in V3 reverses (hepatofugal) and decompresses through these longitudinal channels into the azygos, dilating them into oesophageal varices."
@@ -630,5 +630,5 @@
    "verdict": "BELOW by 32%"
   }
  },
- "calibre_note": "with equal terminal flows and binary bifurcations, Murray ties the trunk and terminal radii together through n_downstream^(1/3). Spanning the real 20-40x radius ratio of a named trunk down to a 0.3 mm adventitial branch would need n = 8000-64000 terminals. With 34-97 terminals per tree the span is only 3.2-4.6x, so the terminal calibres were anchored to the published small-vessel range and FOUR of the seven trunk calibres consequently fall BELOW their published diameters (inferior thyroid artery -16%, inferior thyroid vein -28%, left gastric vein -54%, azygos -58%). No radius was adjusted to hide this."
+ "calibre_note": "with equal terminal flows and binary bifurcations, Murray ties the trunk and terminal radii together through n_downstream^(1/3). Spanning the real 20-40x radius ratio of a named trunk down to a 0.3 mm adventitial branch would need n = 8000-64000 terminals. With 34-97 terminals per tree the span is only 3.2-4.6x, so the terminal calibres were anchored to the published small-vessel range and FOUR of the seven trunk calibres consequently fall BELOW their published diameters (inferior thyroid artery -17%, inferior thyroid vein -32%, left gastric vein -56%, azygos -58%). No radius was adjusted to hide this."
 }
