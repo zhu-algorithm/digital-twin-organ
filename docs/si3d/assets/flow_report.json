@@ -1,0 +1,103 @@
+{
+ "flow_sources": {
+  "sma_mL_min_fasting": 517.7,
+  "sma_mL_min_postprandial": 1294.3,
+  "smv_mL_min_fasting": 476.3,
+  "intestinal_lymph_mL_min": [
+   1.0,
+   2.0
+  ],
+  "provenance": {
+   "cardiac_output": "本项目心脏模型实算（四腔时变弹性腔 + Windkessel，60.5 s 静息窗）",
+   "sma_fraction": "The splanchnic bed receives about 25 % of cardiac output at rest and the superior mesenteric artery about 10 %, roughly doubling to tripling after a meal (Barrett KE et al., Ganong's Review of Medical Physiology 26th ed., ch. 32; Doppler series give fasting SMA flow 0.3-0.6 L/min and postprandial 1.0-1.6 L/min) —— 教科书量级，非本项目实测",
+   "smv_share": "静脉回流取动脉流量的 92%（其余为淋巴回流与肠腔净吸收水分），教科书量级近似"
+  }
+ },
+ "trees": {
+  "mesenteric_artery": {
+   "paths": 30,
+   "terminals_in_tree": 258,
+   "per_terminal_flow_mm3_s": 33.44315,
+   "velocity_cm_s": {
+    "trunk": 28.754,
+    "median_over_all_samples": 17.8759,
+    "max": 37.861,
+    "min": 4.51626
+   },
+   "published_reference_cm_s": [
+    20.0,
+    45.0,
+    "superior mesenteric artery, time-averaged mean velocity by duplex Doppler (peak systolic is 100-200 cm/s fasting; the model computes a time-averaged value, so the mean range is the one that applies)"
+   ],
+   "trunk_within_published_reference": true,
+   "samples_audited": 1920,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "direction": "superior mesenteric ostium -> bowel wall (inflow)",
+   "display_gain": 1.0
+  },
+  "mesenteric_vein": {
+   "paths": 26,
+   "terminals_in_tree": 260,
+   "per_terminal_flow_mm3_s": 30.53205,
+   "velocity_cm_s": {
+    "trunk": 16.138,
+    "median_over_all_samples": 10.5189,
+    "max": 23.837,
+    "min": 2.52827
+   },
+   "published_reference_cm_s": [
+    8.0,
+    20.0,
+    "superior mesenteric vein, time-averaged mean velocity by duplex Doppler"
+   ],
+   "trunk_within_published_reference": true,
+   "samples_audited": 1664,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "direction": "bowel wall -> superior mesenteric vein (outflow)",
+   "display_gain": 1.0
+  },
+  "lymphatic": {
+   "paths": 18,
+   "terminals_in_tree": 131,
+   "per_terminal_flow_mm3_s": 0.19084,
+   "velocity_cm_s": {
+    "trunk": 0.687,
+    "median_over_all_samples": 0.53,
+    "max": 0.687,
+    "min": 0.13542
+   },
+   "published_reference_cm_s": [
+    0.1,
+    1.0,
+    "mesenteric collecting lymphatics, 1-10 mm/s by intravital microscopy (Dixon JB et al., Microcirculation 2006, doi:10.1080/10739680600893909). That is a RAT mesentery measurement - no human intestinal-lymphatic velocity series exists - and is labelled as such wherever it is shown."
+   ],
+   "trunk_within_published_reference": true,
+   "samples_audited": 1152,
+   "retrograde_samples": 0,
+   "zero_velocity_samples": 0,
+   "direction": "lacteal -> mesenteric lymphatics -> intestinal trunk",
+   "display_gain": 30.0
+  }
+ },
+ "audit": {
+  "total_paths": 74,
+  "samples_per_path": 64,
+  "total_samples_audited": 4736,
+  "retrograde_samples_total": 0,
+  "zero_velocity_samples_total": 0,
+  "all_paths_single_direction": true,
+  "audit_statement": "v(s) = Q(s)/A(s) with Q and A both strictly positive, so no sample on any path can be negative; the audit counts the samples rather than asserting it",
+  "mass_balance_mL_min": {
+   "arterial_inflow": 517.7,
+   "venous_outflow": 476.3,
+   "lymphatic_outflow": 1.5,
+   "residual": 39.9,
+   "residual_note": "动脉入 - 静脉出 - 淋巴出 = 肠腔净吸收水分，本模型按教科书量级取 8% 的静脉回流折减，不是实测闭合"
+  },
+  "lymph_display_gain": 30.0,
+  "lymph_true_trunk_velocity_cm_s": 0.687,
+  "arcades_excluded": "the arcade anastomoses carry no net flow at rest and are not part of any flow path"
+ }
+}

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维解剖学数字小肠</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);overflow-x:hidden;
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(70vh,660px);min-height:360px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,330px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  label{font-size:11.5px;color:#b8c4d6}
+  select{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:3px 5px;font-size:12px;font-family:inherit;max-width:190px}
+  input[type=range]{width:104px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  .missbox{border:1px solid #6b1f1f;background:#2a0e0e;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5b0a0;margin-top:10px}
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  /* Wide data tables are the one thing that genuinely does not fit a 360 px
+     viewport. Rather than let them scroll inside a wrapper (which leaves
+     elements measurably outside the viewport), they become stacked cards. */
+  @media(max-width:620px){
+    table.cards,table.cards thead,table.cards tbody,table.cards tr,
+    table.cards th,table.cards td{display:block;width:auto;max-width:100%}
+    table.cards thead{display:none}
+    table.cards tr{border:1px solid var(--line);border-radius:8px;
+      padding:7px 9px;margin:9px 0}
+    table.cards td{border:0;padding:2px 0;display:flex;justify-content:space-between;
+      gap:12px;align-items:baseline}
+    table.cards td::before{content:attr(data-label);color:var(--dim);font-size:10px;
+      text-transform:uppercase;letter-spacing:.05em;flex:0 0 auto}
+    table.cards td:first-child{font-weight:600;border-bottom:1px solid var(--line);
+      margin-bottom:4px;padding-bottom:4px}
+    .tablewrap{overflow-x:visible}
+  }
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:12px;padding:9px 10px;max-width:calc(100vw - 24px);left:12px;right:12px;
+        top:auto;bottom:12px;max-height:46vh;overflow:auto}
+    #ui.collapsed{display:none}
+    #panelbtn{display:block}
+    input[type=range]{width:84px}
+    select{max-width:150px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./si3d/vendor/three/three.module.js",
+  "three/webgpu": "./si3d/vendor/three/three.module.js",
+  "three/tsl": "./si3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=small_intestine">细胞与分子层 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="liver3d.html">三维肝脏 →</a>
+  <h1>三维解剖学数字小肠</h1>
+  <div class="sub">真实 CT 分割占位包络 · 十二指肠中心线轮廓锚定 · 行进式蠕动波 · 肠系膜弓与直血管 · 三级表面放大</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <button id="panelbtn">控制面板</button>
+  <div id="ui">
+    <div class="row">
+      <label>视图</label>
+      <button id="v-organ" class="on">器官</button>
+      <button id="v-vessels">血管</button>
+      <button id="v-wall">剖面</button>
+      <button id="v-villus">微观</button>
+    </div>
+    <div class="row" id="row-tree">
+      <button id="b-art" class="on">肠系膜动脉</button>
+      <button id="b-vein" class="on">肠系膜静脉</button>
+      <button id="b-lym">淋巴</button>
+      <button id="b-arc" class="on">动脉弓</button>
+    </div>
+    <div class="row" id="row-seg">
+      <label>分段高亮</label>
+      <button id="s-none" class="on">关</button>
+      <button id="s-0">十二指肠</button>
+      <button id="s-1">空肠</button>
+      <button id="s-2">回肠</button>
+    </div>
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+      <label>粒子</label>
+      <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1">
+      <span id="dens-v"><code>100%</code></span>
+    </div>
+    <div class="note" id="prov">加载中…</div>
+  </div>
+</div>
+
+<main>
+  <div class="warnbox">
+    <b>这个页面能做什么、不能做什么。</b>
+    <b>实测的部分</b>：小肠的占位包络（真实 CT 分割）、十二指肠中心线、两个肠襻交界的位置、包络的局部内切半径、
+    以及分子层的单细胞表达谱。<b>参数化的部分</b>：整条管腔、分段边界、所有口径、环形皱襞、绒毛、隐窝、肠壁分层——
+    TotalSegmentator v2 把空肠与回肠合并为一个 <code>small_bowel</code> 区域、没有管腔，绒毛又远低于 1.5 mm 体素，
+    这些结构在任何公开分割里都不存在，所以一律在 JSON 里标 <code>contour_anchored: false</code>，
+    并在 <code>ACCEPTANCE.md</code> 里单列。
+    <b>没有的东西</b>：本项目<b>没有</b>任何把表达量换算成 Jmax 或 CL<sub>int</sub> 的标定系数，也不发明一个；
+    吸收与肠壁首过用的全部是已发表的 Fa/Fg/Fh 与转运时间，表达谱只做<b>定性</b>映射。
+    呼吸频率来自 PhysioNet nsrdb/16265 公开数据，<b>不是任何特定个体</b>，所有文件中
+    <code>is_user_personal_data = false</code>。本页为研究用模拟器，<b>不可用于临床给药决策</b>。
+  </div>
+  <div id="missbox" class="missbox" style="display:none"></div>
+
+  <h2>几何来源与许可</h2>
+  <p>TotalSegmentator 数据集 v2.0.1（117 种解剖结构 / 1228 例 CT），
+     DOI <a class="lk" href="https://doi.org/10.5281/zenodo.10047292">10.5281/zenodo.10047292</a>，
+     <b>CC-BY-4.0</b>，署名类许可、可在公开仓再分发。沿用肝脏页的受试者 <code>s0236</code>
+     以保证跨器官解剖一致性，但<b>按小肠自己的标准重新核验</b>：
+     <code>small_bowel</code> 在六个体数据面上均为 0 个体素（无视野截断）、
+     最大连通分量占 <b>99.997%</b>、<code>duodenum</code> 为单一连通分量、
+     与十二指肠接触 <b>302</b> 体素（十二指肠空肠曲）、与结肠接触 <b>8157</b> 体素（回盲部），
+     包络体积 <b>1431.1 mL</b>。
+     只用 HTTP Range 请求从 23.5 GB 的 Zenodo 压缩包里取出 9 个掩膜（约数 MB），
+     <b>不下载 CT 影像本体</b>，本项目不含任何基于影像灰度的内容。</p>
+
+  <h2>中心线：实测到什么、补了什么</h2>
+  <p>包络骨架的<b>最长测地路径只有 0.47 m</b>，远短于活体 3–5 m ——
+     因为相邻肠襻在 CT 上彼此接触，骨架把它们合并成了一条枝，
+     所以骨架量的是<b>肠襻占位</b>，不是<b>管腔走行</b>。这一点必须讲清楚，而不是拿骨架长度充数。
+     于是空回肠走行改为：在实测包络内做蛇形空间填充路径——
+     晶格间距 = 包络内切半径的 <b>2×p75 = 14.70 mm</b>，节点准入阈值 = <b>中位内切半径 4.50 mm</b>，
+     两个数都是在这位受试者身上量出来的，没有一个是为了凑长度而调的；
+     起点锚在十二指肠空肠曲、终点锚在回盲部，中间用开放 TSP（最近邻 + 2-opt + Or-opt）排序，
+     任何一跳只要离开包络就改走包络内的体素测地线。
+     结果：十二指肠 <b>130.9 mm</b>（轮廓锚定）+ 交界桥接 <b>18.5 mm</b> + 空回肠 <b>3262.3 mm</b>
+     = <b>3.412 m</b>（130.9 + 18.5 + 3262.3 = 3411.7 mm）。
+     那 18.5 mm 是十二指肠骨架末端到第一个空肠晶格节点之间的直线桥接——
+     十二指肠空肠曲锚点取的是 <code>small_bowel</code>/<code>duodenum</code> 接触面的质心，
+     而十二指肠中心线止于标签内部的骨架末端，两者不是同一点，这一段计入总弧长、不隐去。
+     总长
+     落在活体 3–5 m 内；<b>96.75%</b> 的采样点落在实测包络内。
+     另一条独立核对：包络体积 1431 mL 除以 20 mm 口径的截面积 = <b>4.56 m</b>，
+     说明这个腹腔装得下 3–5 m 的肠管，两个数互相印证。</p>
+
+  <h2>蠕动与分节</h2>
+  <p>收缩波是<b>真的在三维管壁上行进</b>，不是整体缩放：每一个环按自己的弧长 <code>s</code>
+     在顶点着色器里位移，<code>r(s,t) = r₀(s)·(1 − 深度·exp(−((s − vt)/w)²))·(1 − 分节项)·(1 + 皱襞项)</code>。
+     传播速度取 <b>3 cm/s</b>（已发表 2–4 cm/s）；分节频率由 Cajal 间质细胞的慢波决定，
+     沿轴从十二指肠 <b>11.5 次/分</b> 线性降到回肠 <b>8.5 次/分</b>。
+     收缩深度 45% 是可视化取值，<b>未从影像测得</b>，已在 JSON 与验收记录里标为参数化。
+     移行性复合运动 III 相（清扫波）<b>未建模</b>。</p>
+
+  <h2>三级表面放大</h2>
+  <p>环形皱襞（Kerckring 皱襞）<b>×3</b> → 绒毛 <b>×10</b> → 微绒毛刷状缘 <b>×20</b>，合计 <b>×600</b>
+     （Wilson 1962，见于各标准生理学教科书）。三级在可视化里逐级递进：
+     整体视图看皱襞的周期起伏，剖面视图（<b>×12</b>，真实比例均匀放大）看皱襞剖面与绒毛毯，
+     微观视图（<b>×60</b>）看单个绒毛–隐窝单元，刷状缘插图（<b>×20000</b>，视野约 2.1 µm）看 1 µm 的微绒毛。
+     把 ×600 乘到本模型自己的光滑圆柱面积 <b>0.2431 m²</b> 上得 <b>145.9 m²</b>，
+     而 Helander &amp; Fändriks（2014，doi:10.3109/00365521.2014.898326）用直接形态测量把人小肠黏膜面积
+     修订到约 <b>30 m²</b>。两个数都如实并列，<b>不为了对齐而改任何一个</b>。</p>
+
+  <h2>肠系膜血管</h2>
+  <p>三棵树：肠系膜上动脉、肠系膜上静脉、肠淋巴干。Murray 定律按
+     <code>r = r_term · n_downstream^(1/3)</code> 结构性强制，三棵树的分叉处<b>最大相对残差均为 0</b>。
+     三者之间有不相交约束，但<b>优先级明确：解剖保真 &gt; 间隙阈值</b>。
+     1.0 mm 这个数是肝脏页实际达成 6.378 mm 之后反过来写的验收门槛，<b>不是解剖学约束</b>——
+     真实伴行血管的壁间距本来就可以小于 1 mm。所以这里<b>既不把血管推出肠系膜、也不删任何一段</b>来凑这个数：
+     实测最小表面间隙 <b>-1.667 mm</b>，照实报。
+     动脉–淋巴 <b>1.073 mm</b>、
+     静脉–淋巴 <b>1.068 mm</b> 都清开了；
+     动脉–静脉还有 <b>8 对</b>段面相交。
+     最小值出现的位置也报出来：一条半径 <b>0.62 mm</b> 的静脉末梢
+     （下游终末 1 个）横过一条半径 <b>2.478 mm</b> 的动脉分支
+     （下游终末 133 个），中心线相距 1.431 mm——
+     是末梢穿过主干，不是两条主干相撞。
+     成因在 CCO 本身：它只对新建的两段做净空检验、不复检被截短的母段，而此后每加一个终末都会把祖先的半径撑粗。
+     两遍生长（先用临时的静脉/淋巴树长动脉，再用最终的动脉树长静脉与淋巴）把相交段对从 22 降到
+     8；
+     剩下的<b>作为未达成项单列</b>，不靠位移或删除抹平。
+     位移本身也有上界并报出：89 个自由节点被推动，
+     中位 0.868 mm、
+     最大 6.0 mm（声明上限 6.0 mm），
+     <b>轮廓锚定节点与主干节点位移为 0</b>，另有
+     148 次推动因为会把节点推出肠系膜而<b>被否决</b>。
+     只有<b>动脉开口</b>锚在这位受试者自己的主动脉标注上（L1 水平、前壁最前点，相对实测十二指肠空肠曲
+     声明性上移 30 mm），以及<b>肠系膜根的两个端点</b>；
+     SMA / 空肠动脉 / 回肠动脉本身在 TotalSegmentator v2 里<b>没有标注</b>，走行是构建的。</p>
+  <p><b>空肠弓少而直血管长、回肠弓多而直血管短</b>——这是小肠血管的签名差别，这里是算出来的，不是画上去的：
+     弓的层级放在"肠壁 → 肠系膜根"连线的 <code>f_k = (k+1)/(层数+1)</code> 处，
+     空肠 <b>2</b> 层、回肠 <b>5</b> 层（Gray's Anatomy 42nd ed.），
+     于是最外层弓在空肠离肠壁远、在回肠离肠壁近，直血管长度就自然分开：
+     实测空肠直血管均长 <b>26.71 mm</b>、回肠 <b>10.55 mm</b>，比值 <b>2.53</b>。
+     动脉弓是<b>吻合环</b>不是分叉，Murray 定律对它不成立、静息时也不携带净流量，
+     所以它作为单独的边集渲染，并<b>明确排除</b>在 Murray 审计与流量求解之外。</p>
+
+  <h2>血流（与心脏模型耦合）</h2>
+  <p>粒子速度是真实流速 <code>v = Q/A</code>，逐采样点计算。心输出量 <b>5.177 L/min</b>
+     来自本项目心脏模型实算；肠系膜上动脉取其 <b>10%</b> = <b>517.7 mL/min</b>（空腹），
+     餐后 <b>×2.5</b> = <b>1294.3 mL/min</b>——这两个<b>比例是教科书量级而非本项目实测</b>，已逐项标注；
+     算出的 SMA 主干时均流速 <b>26.3 cm/s</b>、SMV <b>16.3 cm/s</b>，都落在双功超声的已发表时均区间内。
+     <b>74 条通路、4736 个采样点，逆流采样点 0 个</b>。
+     肠淋巴真实流速约 <b>0.68 cm/s</b>，约为动脉血的四十分之一，按<b>声明过的 30× 显示增益</b>渲染，
+     增益刻意压在动脉速度以下，以免把三套系统看混。</p>
+  <p><b>跨器官耦合点</b>：肠系膜上静脉汇入门静脉。SMV 口径不是自由参数——
+     它由肝脏页在<b>同一受试者</b> <code>portal_vein_and_splenic_vein</code> 标注上实测的门静脉主干半径
+     <b>4.743 mm（直径 9.49 mm）</b>，经门静脉汇合处的 Murray 定律
+     <code>r_SMV = r_portal · (Q_SMV/Q_portal)^(1/3)</code> 导出，得 <b>4.15 mm（直径 8.30 mm）</b>，
+     落在成人 SMV 8–12 mm 内。其中 SMV 占门静脉入流 <b>2/3</b> 是教科书比例，非实测。</p>
+
+  <h2>肠壁四层与绒毛–隐窝轴</h2>
+  <p>剖面视图按真实比例建模后<b>均匀放大 ×12</b>：黏膜（上皮 + 固有层 + 黏膜肌层）、
+     黏膜下层（Meissner 丛）、肌层（内环行 + Auerbach 丛 + Cajal 细胞 + 外纵行）、浆膜，
+     合计壁厚 <b>1.21 mm</b>（正常扩张小肠已发表 ≤ 3 mm，Macari &amp; Balthazar, AJR 2001）。
+     <b>层厚取已发表范围的中点量级，不是在这位受试者的 CT 上测的</b>——1.5 mm 体素分辨不了这些层。</p>
+  <p>微观视图（×60）里的绒毛高 <b>1.05 mm</b>、隐窝深 <b>0.25 mm</b>、肠上皮细胞高 <b>25 µm</b>，
+     都在已发表区间内（0.5–1.6 mm / 0.1–0.4 mm）。绒毛内部有
+     <b>中央乳糜管</b>（盲端、止于顶端稍下）、<b>上皮下毛细血管网</b>、
+     以及沿轴上行的小动脉与下行的小静脉构成的<b>逆流交换对</b>。
+     隐窝底是干细胞龛与 Paneth 细胞，细胞沿绒毛向顶端迁移、约 <b>3–5 天</b>更新一轮
+     （Darwich 等 2014），动画按 4 天的中点播放并已声明。
+     逆流交换只按已发表解剖绘制，<b>没有做氧分压或溶质梯度的定量求解</b>。</p>
+
+  <h2>分段吸收与肠壁首过</h2>
+  <p>小肠按 7 个串联混合室表示，小肠平均转运时间 <b>199 min</b>（Yu &amp; Amidon 1999），
+     每室驻留 <b>28.43 min</b>。吸收速率常数不是拟合出来的，而是由已发表的 Fa 闭式反解：
+     <code>ka = ((1 − Fa)^(−1/N) − 1)/τ</code>。</p>
+  <div class="tablewrap"><table id="drugtab" class="cards"><thead><tr>
+    <th>探针药</th><th>探针对象</th><th>Fa</th><th>Fg（肠壁）</th><th>Fh（肝）</th>
+    <th>F 预测</th><th>F 实测</th><th>残差</th></tr></thead><tbody></tbody></table></div>
+  <p>链条是 <b>腔内 → 上皮摄入 → 肠壁 CYP3A4 代谢 / P-gp 外排回腔 → 基底侧出胞 → 绒毛毛细血管网 →
+     肠系膜上静脉 → 门静脉 → 肝脏二次首过</b>。
+     咪达唑仑的 <b>49% 剂量消失在肠壁</b>（1 − Fg = 0.49），这正是口服生物利用度的关键环节；
+     非索非那定几乎不代谢，它的低生物利用度是 P-gp 把已进入上皮的药泵回肠腔造成的<b>吸收受限表型</b>。
+     沿轴梯度这件事要分两半说，<b>不能笼统地讲"一个也没测"</b>：</p>
+  <p><b>测到的那一半。</b>195 种细胞类型里有 3 种把肠段写进了本体标签
+     （<code>enterocyte of epithelium proper of duodenum / jejunum / ileum</code>），
+     对这 3 种来说位置就在数据里，梯度是<b>实测</b>的——
+     十二指肠肠上皮 <b>13,495</b> 个细胞、
+     空肠 <b>405</b> 个、回肠 <b>6,477</b> 个。
+     实测结果里<b>有一条与文献方向相反，照实报</b>：</p>
+  <div class="tablewrap"><table class="cards"><thead><tr>
+    <th>基因</th><th>十二指肠</th><th>空肠（n=405，暂定）</th><th>回肠</th>
+    <th>回肠/十二指肠</th><th>实测方向</th><th>文献方向</th><th>一致？</th></tr></thead><tbody>
+    <tr><td data-label="基因">CYP3A4</td>
+        <td data-label="十二指肠">1.5693</td>
+        <td data-label="空肠">0.7225</td>
+        <td data-label="回肠">1.7999</td>
+        <td data-label="回肠/十二指肠"><b>1.147</b></td>
+        <td data-label="实测方向">远端高</td><td data-label="文献方向">近端高</td>
+        <td data-label="一致？"><b>否 — 相反</b></td></tr>
+    <tr><td data-label="基因">ABCB1（P-gp）</td>
+        <td data-label="十二指肠">0.6255</td>
+        <td data-label="空肠">0.3123</td>
+        <td data-label="回肠">1.4762</td>
+        <td data-label="回肠/十二指肠"><b>2.36</b></td>
+        <td data-label="实测方向">远端高</td><td data-label="文献方向">远端高</td>
+        <td data-label="一致？">是</td></tr>
+    <tr><td data-label="基因">SLC15A1（PEPT1）</td>
+        <td data-label="十二指肠">1.8646</td>
+        <td data-label="空肠">1.2824</td>
+        <td data-label="回肠">1.7758</td>
+        <td data-label="回肠/十二指肠"><b>0.952</b></td>
+        <td data-label="实测方向">近端略高</td><td data-label="文献方向">近端高</td>
+        <td data-label="一致？">是</td></tr>
+  </tbody></table></div>
+  <p><b>CYP3A4 实测为回肠高于十二指肠（比值 1.147），与 Paine 等 2006
+     报道的近端高方向相反。</b>这个数就这么报，<b>不调参、不换细胞类型、不换归一化去把它掰回来</b>。
+     可能的原因（本项目未验证）：这些是<b>按数据集给的本体标签</b>，标的是取材肠段、不是沿肠轴的坐标；
+     各段的供体与平台组成不同；回肠样本偏少（6 477 个细胞）。
+     空肠只有 <b>405</b> 个细胞，远低于本项目设的 2 000 个阈值，<b>整列按暂定值标注</b>。</p>
+  <p><b>没测到的那一半。</b>其余 192 种细胞类型的标签不含肠段，它们的沿轴方向只能来自文献并逐条标注引文。
+     另外必须说明：<b>ASBT（SLC10A2）不在这 61 个基因的面板里</b>——
+     这个面板是为肝与肾建的，含的是肝侧的 SLC10A1（NTCP）。
+     所以回肠末端胆汁酸转运体的表达<b>本项目没有测</b>，界面上也不显示它的任何数值，
+     只在文献方向那一栏里标注。</p>
+
+  <h2>分子层：ADME 表达谱</h2>
+  <div id="exprnote"><p>加载中…</p></div>
+  <div class="tablewrap"><table id="exprtab" class="cards"><thead><tr>
+    <th>细胞类型</th><th>细胞数</th><th>CYP3A4</th><th>ABCB1</th><th>SLC15A1</th>
+    <th>SLCO2B1</th><th>ABCG2</th><th>UGT1A1</th><th>CES2</th></tr></thead><tbody></tbody></table></div>
+
+  <h2>未达成的条目</h2>
+  <p>逐条写在 <code>ACCEPTANCE.md</code> 的"未达成 / 未测量 / 合成"一节里，包括：
+     空回肠管腔走行非轮廓锚定、所有口径与分层为参数化、十二指肠骨架长度低于已发表区间、
+     净空修复把约 30% 的自由节点推出了肠系膜扇形域、SMA 与淋巴干口径取已发表值而非实测、
+     以及移行性复合运动未建模。</p>
+</main>
+
+<script type="module">
+import { createIntestineScene } from './si3d/js/main.js';
+
+const errEl = document.getElementById('err');
+function fail(e){
+  const txt = (e && e.stack) ? e.stack : String(e);
+  errEl.style.display='block';
+  errEl.textContent = '三维场景启动失败\n\n' + txt;
+  window.__si3dError = txt;
+  console.error('[si3d:fatal] ' + txt);
+}
+window.addEventListener('error', (ev) => fail(ev.error || ev.message));
+window.addEventListener('unhandledrejection', (ev) => fail(ev.reason));
+
+const GENES = ['CYP3A4','ABCB1','SLC15A1','SLCO2B1','ABCG2','UGT1A1','CES2'];
+
+(async () => {
+  try {
+    const api = await createIntestineScene({
+      container: document.getElementById('app'),
+      assetBase: './si3d/assets/'
+    });
+    const st = api.stats();
+    const $ = (id) => document.getElementById(id);
+
+    const views = { 'v-organ':'organ','v-vessels':'vessels','v-wall':'wall','v-villus':'villus' };
+    for (const [id,v] of Object.entries(views)) {
+      $(id).onclick = () => {
+        api.setView(v);
+        for (const k of Object.keys(views)) $(k).classList.toggle('on', k===id);
+        $('row-tree').style.display = (v==='vessels') ? 'flex' : 'none';
+        $('row-seg').style.display  = (v==='organ') ? 'flex' : 'none';
+      };
+    }
+    $('row-tree').style.display = 'none';
+
+    const trees = { 'b-art':'mesenteric_artery','b-vein':'mesenteric_vein','b-lym':'lymphatic' };
+    for (const [id,n] of Object.entries(trees)) {
+      api.setTree(n, id!=='b-lym');
+      $(id).onclick = () => {
+        const on = !$(id).classList.contains('on');
+        $(id).classList.toggle('on', on); api.setTree(n, on);
+      };
+    }
+    $('b-arc').onclick = () => {
+      const on = !$('b-arc').classList.contains('on');
+      $('b-arc').classList.toggle('on', on); api.setArcades(on);
+    };
+    const segs = { 's-none':-1, 's-0':0, 's-1':1, 's-2':2 };
+    for (const [id,i] of Object.entries(segs)) {
+      $(id).onclick = () => {
+        api.setStation(i);
+        for (const k of Object.keys(segs)) $(k).classList.toggle('on', k===id);
+      };
+    }
+    $('rate').oninput = (e) => {
+      api.setPlaybackRate(+e.target.value);
+      $('rate-v').innerHTML = '<code>'+(+e.target.value).toFixed(2)+'×</code>';
+    };
+    $('dens').oninput = (e) => {
+      api.setParticleDensity(+e.target.value);
+      $('dens-v').innerHTML = '<code>'+Math.round(e.target.value*100)+'%</code>';
+    };
+    $('panelbtn').onclick = () => $('ui').classList.toggle('collapsed');
+
+    $('prov').innerHTML =
+      'TotalSegmentator v2.0.1 · s0236 · CC-BY-4.0<br>' +
+      '分割面数 ' + st.faces_in_glb.toLocaleString() + ' · 管腔 ' +
+      st.lumen.triangles.toLocaleString() + ' 三角形（参数化）<br>' +
+      '中心线 ' + (st.lumen.arc_length_mm/1000).toFixed(3) + ' m · 动脉弓 ' +
+      st.arcade_edges + ' 条 · 直血管 ' + st.vasa_recta_edges + ' 条';
+
+    // probe drugs
+    const model = await (await fetch('./si3d/assets/small_intestine_model.json')).json();
+    const tb = document.querySelector('#drugtab tbody');
+    for (const [k,d] of Object.entries(model.acat_absorption.drugs)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        `<td data-label="探针药">${d.cn}（${k}）</td>` +
+        `<td data-label="探针对象">${d.probe_for}</td>` +
+        `<td data-label="Fa">${d.Fa_published}</td>` +
+        `<td data-label="Fg 肠壁">${d.Fg_published}</td>` +
+        `<td data-label="Fh 肝">${d.Fh_published}</td>` +
+        `<td data-label="F 预测"><b>${d.F_oral_predicted}</b></td>` +
+        `<td data-label="F 实测">${d.F_oral_observed}</td>` +
+        `<td data-label="残差">${d.F_oral_residual>=0?'+':''}${d.F_oral_residual}</td>`;
+      tb.appendChild(tr);
+    }
+
+    // molecular layer
+    const er = await fetch('./si3d/assets/small_intestine_expression.json');
+    const note = document.getElementById('exprnote');
+    if (!er.ok) {
+      document.querySelector('#exprtab').style.display='none';
+      note.innerHTML = '<div class="missbox"><b>分子层缺失。</b>' +
+        '小肠的 ADME 单细胞表达谱未能取得，这里<b>不用组织平均值、也不用其它器官的值代替</b>。' +
+        '失败原因与已尝试的路线写在 <code>ACCEPTANCE.md</code> 的"未达成"一节。</div>';
+    } else {
+      const ex = await er.json();
+      const prov = await (await fetch('./si3d/assets/small_intestine_census_provenance.json')).json();
+      const total = ex.n_cells.reduce((a,b)=>a+b,0);
+      note.innerHTML = '<p>CZ CELLxGENE Census <b>' + ex.census_version + '</b>，' +
+        '<code>tissue_general == \'small intestine\'</code> 且 <code>is_primary_data == True</code>：' +
+        '<b>' + total.toLocaleString() + '</b> 个细胞 · <b>' + prov.n_donors + '</b> 位供体 · <b>' +
+        prov.n_datasets + '</b> 个数据集 · <b>' + ex.cell_types.length + '</b> 种细胞类型 × <b>' +
+        ex.genes.length + '</b> 个 ADME 基因。归一化：' + ex.normalization + '。' +
+        '表中为 log1p(CP10K) 的细胞类型均值（含零值细胞），逐基因标注，' +
+        '<b>不做任何组织平均值替代</b>。' +
+        '下表按细胞数排前 14 种，<b>不是按表达量排</b>：' +
+        '各基因的最高表达细胞类型见 <code>small_intestine_axial_enterocyte.json</code> 的 ' +
+        '<code>per_gene_top5_across_all_cell_types</code>——' +
+        'CYP3A4 最高的是回肠肠上皮（1.80），不是这里 13.6 万个细胞的通用 enterocyte 标签（0.877）。</p>';
+      const tb2 = document.querySelector('#exprtab tbody');
+      const gi = GENES.map(g => ex.genes.indexOf(g));
+      const order = ex.n_cells.map((n,i)=>[n,i]).sort((a,b)=>b[0]-a[0]).slice(0,14).map(x=>x[1]);
+      for (const i of order) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td data-label="细胞类型">${ex.cell_types[i]}</td>` +
+          `<td data-label="细胞数">${ex.n_cells[i].toLocaleString()}</td>` +
+          gi.map((j, q) => `<td data-label="${GENES[q]}">${j<0?'—':ex.expr[i][j].toFixed(3)}</td>`).join('');
+        tb2.appendChild(tr);
+      }
+    }
+  } catch (e) { fail(e); }
+})();
+</script>
+</body>
+</html>

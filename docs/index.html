@@ -75,10 +75,10 @@
       <div class="ds">678,856 细胞 · 107 种细胞类型<br>真实 CT 分割网格 + 门静脉／肝静脉双树 + 三维肝小叶<br>11 种细胞类型 × 60 个 ADME 基因（含小叶分区梯度）</div>
       <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">三层完整</span>
     </a>
-    <a class="organ" href="cells.html?organ=small_intestine">
+    <a class="organ" href="si3d.html">
       <div class="nm"><span class="dot" style="background:#d4a04a"></span>数字孪生肠道</div>
-      <div class="ds">999,959 细胞 · 146 种细胞类型<br>细胞层已就绪，酶表达谱采集未成功</div>
-      <span class="st wip">仅细胞层</span>
+      <div class="ds">1,434,955 细胞 · 195 种细胞类型 · 244 位 donor<br>真实分割占位包络 + 肠系膜动静脉／淋巴三树 + 蠕动波<br>绒毛–隐窝单元与四层肠壁（参数化）· 195 × 61 个 ADME 基因</div>
+      <span class="st live">三维可交互</span><span class="st live" style="margin-left:6px">三层完整</span>
     </a>
     <a class="organ wip" href="#vessel">
       <div class="nm"><span class="dot" style="background:var(--ven)"></span>数字孪生血管</div>
@@ -101,7 +101,10 @@
     小叶分区梯度可以直接读出——但梯度<b>并非对所有基因一致</b>（CYP3A4、CYP1A2 中央静脉周围偏高，CYP2D6 方向相反，
     CYP2C9 无明显梯度），页面逐基因给出比值与方向，不作全局性断言。
     <b>心脏</b>三层完整：三维解剖几何、84 种细胞类型、51 个离子通道与钙循环基因。其分子层有一个必须讲明的发现——<b>三层证据并不对等</b>：遗传层最丰富（7 个基因 25,193 条 ClinVar 记录），RNA 层完整，而蛋白层恰好在模型最需要处缺失（映射到模型参数的 24 个基因里有 11 个无蛋白证据，含 IKr／IK1／Ito 的全部亚基）。详见心脏的分子层页面。
-    <b>小肠</b>只有细胞层，酶表达谱采集未成功。
+    <b>小肠</b>三层已补齐：此前两次表达谱采集失败，现经连续区块读取拉全 195 种细胞类型 × 61 个基因（1,434,955 细胞 / 244 位 donor / 22 个数据集 / 0 失败区块）。
+    但小肠有一处必须讲明的结构性限制——<b>公开 CT 分割把小肠标为单一区域、无管腔，绒毛尺度低于影像分辨率</b>，
+    因此只有占位包络、十二指肠走行与两端连接点是轮廓锚定的，<b>空回肠管腔走行、管径、分段边界、皱襞／绒毛／隐窝与四层肠壁全部是参数化的</b>，页面逐项标注。
+    另外实测的 CYP3A4 轴向梯度<b>与文献方向相反</b>（回肠 1.800 高于十二指肠 1.569），按算出的报，未作调整。
     缺失的分子层一律如实显示缺失原因，<b>不会用组织平均值冒充细胞类型分辨的表达</b>。血管视图尚未开始。
   </div>
 

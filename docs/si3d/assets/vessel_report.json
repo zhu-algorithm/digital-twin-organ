@@ -1,0 +1,405 @@
+{
+ "frame": {
+  "axes": "scene = (patient-left, superior, anterior), mm",
+  "ras_to_scene": [
+   [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   [
+    0.0,
+    0.0,
+    1.0
+   ],
+   [
+    0.0,
+    1.0,
+    0.0
+   ]
+  ]
+ },
+ "subject": "s0236",
+ "reuses": "build_liver_vessels.py (Tree / grow_cco / subdivide / tree_report / seg_seg_dist) unmodified",
+ "sma_ostium": {
+  "scene_mm": [
+   -3.815563440322876,
+   424.79225158691406,
+   174.49388626217842
+  ],
+  "contour_anchored": true,
+  "definition": "most anterior voxel of this subject's own aorta label in a 8 mm axial band 30 mm cranial to the measured duodenojejunal flexure (L1 vs L2 vertebral level)",
+  "declared_offset_mm": 30.0,
+  "aorta_band_voxels": 980
+ },
+ "root_of_mesentery": {
+  "start_scene_mm": [
+   31.15982199049712,
+   397.51295409652425,
+   178.9630916022168
+  ],
+  "end_scene_mm": [
+   -29.92355891268345,
+   273.28346392852114,
+   191.15340521311643
+  ],
+  "measured_straight_length_mm": 139.0,
+  "published_reference_mm": "150 mm oblique root, duodenojejunal flexure to the right sacroiliac joint (Standring, Gray's Anatomy 42nd ed.)",
+  "endpoints_contour_anchored": true,
+  "course_contour_anchored": false,
+  "note": "measured straight-line distance between the two anchored junctions is reported as found; the real root is an oblique curved attachment, idealised here as a straight line"
+ },
+ "mesenteric_fan_domain": {
+  "definition": "union of 403 ruled-surface spokes (bowel-wall mesenteric border -> nearest root-of-mesentery point) dilated to 24.0 mm, minus the measured small_bowel envelope",
+  "spokes": 403,
+  "fan_half_thickness_mm": 24.0,
+  "contour_anchored": false,
+  "spoke_length_mm": {
+   "min": 3.1,
+   "median": 74.8,
+   "max": 132.5
+  }
+ },
+ "cco_growth": {
+  "scheme": "provisional vein+lymph -> artery vs provisional -> vein vs final artery -> lymph vs both final",
+  "why": "a single ordered pass leaves the first-grown tree blind to the later trees' branches, which is where cross-tree interpenetration came from; two passes let every tree choose its bifurcation sites against the others' real geometry and real final radii",
+  "growths_run": 5
+ },
+ "mesenteric_artery": {
+  "segments": 1090,
+  "bifurcations": 257,
+  "terminals": 258,
+  "nodes": 1091,
+  "radius_mm": [
+   0.485,
+   3.091
+  ],
+  "diameter_mm": [
+   0.97,
+   6.18
+  ],
+  "r_terminal_mm": 0.4855,
+  "total_length_mm": 5651.7,
+  "murray_max_relative_residual": 0.0,
+  "murray_bifurcations_checked": 257,
+  "contour_anchored": "no - TotalSegmentator v2.0.1 has no superior-mesenteric-artery label; only the aortic ostium and the two root-of-mesentery endpoints are anchored on real labels, the courses are constructed",
+  "anchored_nodes": 42,
+  "cco_stats": {
+   "candidates": 5285,
+   "rejected_angle": 557,
+   "rejected_outside": 2815,
+   "rejected_clearance": 2058,
+   "unattached": 43
+  },
+  "trunk_diameter_mm": 6.5,
+  "trunk_calibration": "r_term set so the trunk reproduces the published 5-8 mm adult SMA ostium diameter; NOT measured on this subject",
+  "vasa_recta_from_outermost_arcade_tier_mm": {
+   "jejunum": {
+    "n": 90,
+    "arcade_tiers": 2,
+    "mean_mm": 27.1,
+    "median_mm": 27.97,
+    "min_mm": 6.63,
+    "max_mm": 34.83
+   },
+   "ileum": {
+    "n": 168,
+    "arcade_tiers": 5,
+    "mean_mm": 10.84,
+    "median_mm": 11.36,
+    "min_mm": 0.0,
+    "max_mm": 22.07
+   }
+  }
+ },
+ "mesenteric_vein": {
+  "segments": 1091,
+  "bifurcations": 259,
+  "terminals": 260,
+  "nodes": 1092,
+  "radius_mm": [
+   0.62,
+   3.957
+  ],
+  "diameter_mm": [
+   1.24,
+   7.91
+  ],
+  "r_terminal_mm": 0.62,
+  "total_length_mm": 5657.4,
+  "murray_max_relative_residual": 0.0,
+  "murray_bifurcations_checked": 259,
+  "contour_anchored": "no - no superior-mesenteric-vein label in the release",
+  "anchored_nodes": 36,
+  "cco_stats": {
+   "candidates": 6127,
+   "rejected_angle": 487,
+   "rejected_outside": 1973,
+   "rejected_clearance": 2006,
+   "unattached": 41
+  },
+  "cross_organ_coupling": {
+   "liver_page_measured_portal_trunk_radius_mm": 4.743,
+   "liver_page_measured_portal_trunk_diameter_mm": 9.49,
+   "smv_share_of_portal_inflow": 0.67,
+   "smv_share_source": "textbook (SMV ~2/3, splenic vein ~1/3 of portal inflow); not measured here",
+   "derived_smv_trunk_radius_mm": 4.15,
+   "derived_smv_trunk_diameter_mm": 8.3,
+   "derivation": "Murray's law at the portal confluence: r_SMV = r_portal * (Q_SMV/Q_portal)^(1/3)",
+   "published_smv_diameter_reference_mm": "8-12 mm adult SMV",
+   "note": "the coupling point to the published liver page: the portal trunk radius is the liver page's MEASURED value on the same subject, the flow share is textbook"
+  }
+ },
+ "lymphatic": {
+  "segments": 571,
+  "bifurcations": 130,
+  "terminals": 131,
+  "nodes": 572,
+  "radius_mm": [
+   0.212,
+   1.076
+  ],
+  "diameter_mm": [
+   0.42,
+   2.15
+  ],
+  "r_terminal_mm": 0.2118,
+  "total_length_mm": 3364.1,
+  "murray_max_relative_residual": 0.0,
+  "murray_bifurcations_checked": 130,
+  "contour_anchored": "no - entirely synthetic; no open CT segmentation release labels intestinal lymphatics",
+  "anchored_nodes": 36,
+  "cco_stats": {
+   "candidates": 3533,
+   "rejected_angle": 191,
+   "rejected_outside": 247,
+   "rejected_clearance": 1086,
+   "unattached": 10
+  },
+  "trunk_diameter_mm": 2.2,
+  "trunk_calibration": "published intestinal lymph trunk 1.5-3 mm; not measured"
+ },
+ "arcades": {
+  "arcade_edges": 1011,
+  "vasa_recta_edges": 258,
+  "tiers_jejunum": 2,
+  "tiers_ileum": 5,
+  "tier_source": "jejunum 1-2 arcade tiers with long vasa recta, ileum 4-5 tiers with short vasa recta (Standring, Gray's Anatomy 42nd ed.)",
+  "tier_radial_placement": "f_k = (k+1)/(n_tiers+1) of the distance from the bowel wall to the root of the mesentery",
+  "vasa_recta_length_measured_mm": {
+   "jejunum": {
+    "n": 90,
+    "arcade_tiers": 2,
+    "mean_mm": 27.1,
+    "median_mm": 27.97,
+    "min_mm": 6.63,
+    "max_mm": 34.83
+   },
+   "ileum": {
+    "n": 168,
+    "arcade_tiers": 5,
+    "mean_mm": 10.84,
+    "median_mm": 11.36,
+    "min_mm": 0.0,
+    "max_mm": 22.07
+   }
+  },
+  "jejunal_over_ileal_vasa_recta_mean_ratio": 2.5,
+  "contour_anchored": false,
+  "excluded_from_murray_audit": true,
+  "excluded_from_flow_solve": true,
+  "why": "arcades are anastomotic loops, not bifurcations: Murray's law does not apply to them and a balanced arcade carries no net flow at rest. The CCO tree carries the flow from ostium to bowel wall; the arcade rings and the vasa recta springing from the outermost tier are rendered and declared separately."
+ },
+ "segment_subdivision": {
+  "nodes_inserted": {
+   "artery": 535,
+   "vein": 538,
+   "lymph": 276
+  },
+  "max_segment_length_mm": 7.0,
+  "lateral_bow_fraction_of_length": {
+   "artery": 0.12,
+   "vein": 0.12,
+   "lymph": 0.1
+  },
+  "ordering": "each tree is subdivided immediately after it is grown and BEFORE the trees that must clear it are grown, so the lateral bow is part of the geometry the clearance constraint sees rather than a displacement applied after it",
+  "note": "cosmetic curvature only - intermediate nodes, no new terminals or bifurcations, no radius change; bifurcation counts, downstream terminal counts and therefore every Murray residual are untouched. The clearance audit runs on the SUBDIVIDED geometry."
+ },
+ "cross_tree_clearance": {
+  "artery_vs_vein": {
+   "min_surface_gap_mm": -1.667,
+   "min_centreline_distance_mm": 0.096,
+   "segment_pairs_overlapping": 8,
+   "location_of_minimum": {
+    "tree_a": "artery",
+    "tree_b": "vein",
+    "radius_a_mm": 2.478,
+    "radius_b_mm": 0.62,
+    "downstream_terminals_a": 133,
+    "downstream_terminals_b": 1,
+    "midpoint_a_scene_mm": [
+     58.6,
+     372.4,
+     180.8
+    ],
+    "midpoint_b_scene_mm": [
+     58.9,
+     377.9,
+     182.0
+    ],
+    "centreline_distance_mm": 1.431
+   }
+  },
+  "artery_vs_lymph": {
+   "min_surface_gap_mm": 1.073,
+   "min_centreline_distance_mm": 1.771,
+   "segment_pairs_overlapping": 0,
+   "location_of_minimum": {
+    "tree_a": "artery",
+    "tree_b": "lymph",
+    "radius_a_mm": 0.485,
+    "radius_b_mm": 0.212,
+    "downstream_terminals_a": 1,
+    "downstream_terminals_b": 1,
+    "midpoint_a_scene_mm": [
+     90.6,
+     406.2,
+     234.4
+    ],
+    "midpoint_b_scene_mm": [
+     93.1,
+     403.8,
+     231.1
+    ],
+    "centreline_distance_mm": 1.771
+   }
+  },
+  "vein_vs_lymph": {
+   "min_surface_gap_mm": 1.068,
+   "min_centreline_distance_mm": 1.904,
+   "segment_pairs_overlapping": 0,
+   "location_of_minimum": {
+    "tree_a": "vein",
+    "tree_b": "lymph",
+    "radius_a_mm": 0.984,
+    "radius_b_mm": 0.212,
+    "downstream_terminals_a": 4,
+    "downstream_terminals_b": 1,
+    "midpoint_a_scene_mm": [
+     53.8,
+     401.8,
+     246.4
+    ],
+    "midpoint_b_scene_mm": [
+     53.9,
+     401.6,
+     243.8
+    ],
+    "centreline_distance_mm": 2.264
+   }
+  },
+  "required_gap_mm": 1.0,
+  "threshold_status": "The 1.0 mm figure is the liver page's acceptance threshold, not an anatomical constraint: real companion vessels run with wall-to-wall gaps well under 1 mm. Anatomical fidelity therefore outranks it here. No node was pushed out of the mesentery and nothing was deleted to reach a number; the measured minimum is reported wherever it lands.",
+  "min_surface_gap_over_all_tree_pairs_mm": -1.667,
+  "location_of_global_minimum": {
+   "tree_a": "artery",
+   "tree_b": "vein",
+   "radius_a_mm": 2.478,
+   "radius_b_mm": 0.62,
+   "downstream_terminals_a": 133,
+   "downstream_terminals_b": 1,
+   "midpoint_a_scene_mm": [
+    58.6,
+    372.4,
+    180.8
+   ],
+   "midpoint_b_scene_mm": [
+    58.9,
+    377.9,
+    182.0
+   ],
+   "centreline_distance_mm": 1.431
+  },
+  "total_segment_pairs_overlapping": 8,
+  "meets_1mm_threshold": false,
+  "no_interpenetration": false,
+  "repair": {
+   "priority": "anatomical fidelity first, gap threshold second",
+   "passes": {
+    "joint_relaxation": {
+     "iterations_used": 11,
+     "nodes_moved": 171,
+     "max_push_mm": 6.0,
+     "cap_mm": 6.0,
+     "nodes_at_cap": 6,
+     "pushes_vetoed_would_leave_mesentery": 148,
+     "nodes_left_in_place_by_veto": 18,
+     "max_cumulative_push_mm": 6.0,
+     "converged": true
+    },
+    "segment_counts_before": {
+     "artery": {
+      "segments": 1090,
+      "terminals": 258,
+      "nodes": 1091
+     },
+     "vein": {
+      "segments": 1091,
+      "terminals": 260,
+      "nodes": 1092
+     },
+     "lymph": {
+      "segments": 571,
+      "terminals": 131,
+      "nodes": 572
+     }
+    },
+    "segment_counts_after": {
+     "artery": {
+      "segments": 1090,
+      "terminals": 258,
+      "nodes": 1091
+     },
+     "vein": {
+      "segments": 1091,
+      "terminals": 260,
+      "nodes": 1092
+     },
+     "lymph": {
+      "segments": 571,
+      "terminals": 131,
+      "nodes": 572
+     }
+    },
+    "segments_dropped": {
+     "artery": 0,
+     "vein": 0,
+     "lymph": 0
+    },
+    "terminals_dropped": {
+     "artery": 0,
+     "vein": 0,
+     "lymph": 0
+    },
+    "nothing_deleted": true,
+    "displacement_from_cco_position_mm": {
+     "nodes_displaced": 89,
+     "max_mm": 6.0,
+     "median_mm": 0.868,
+     "declared_cap_mm": 6.0,
+     "nodes_over_cap": 0,
+     "anchored_nodes_displaced": 0,
+     "note": "contour-anchored nodes (the SMA ostium) and every trunk node are flagged fixed and are never moved by the relaxation; only free CCO nodes move, and only inside the mesenteric fan"
+    }
+   },
+   "why": "CCO tests clearance only on the two NEW segments it creates and with the radius they have at that moment; the shortened parent segment is not re-tested and every later terminal inflates the ancestors' radii (r ~ n_down^(1/3)). Free nodes are therefore nudged apart afterwards to recover from that \u2014 but a push is VETOED if it would take the node out of the mesenteric fan, cumulative displacement is capped, anchored and trunk nodes never move, and NOTHING is deleted. Every segment, bifurcation and terminal count reported for the trees is the count CCO produced.",
+   "free_nodes_total": 2713,
+   "free_nodes_outside_mesenteric_fan_before_repair": 809,
+   "free_nodes_outside_mesenteric_fan_after_repair": 808,
+   "free_nodes_pushed_outside_by_the_repair": -1,
+   "containment_attribution": "CCO tests inside() at the bifurcation SITE; the cosmetic subdivision then inserts bowed intermediate nodes that are never tested, which is where almost all of the out-of-fan nodes come from. The before/after pair separates the two causes instead of blaming the repair for geometry it did not create."
+  },
+  "interpretation": "no_interpenetration is the constraint that matters geometrically: zero segment pairs whose surfaces intersect. A positive gap below 1.0 mm is an anatomically ordinary companion spacing, not a defect."
+ },
+ "wall_seconds": 9.2
+}

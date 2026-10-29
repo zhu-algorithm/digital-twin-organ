@@ -99,9 +99,7 @@ const EXPR = {};                 // organ -> parsed <organ>_expression.json (laz
 const EXPR_STATE = {};           // organ -> 'loading' | 'ready' | 'absent'
 /* Which organs have a cell-type-resolved ADME/ion-channel expression layer, and
    for those that do not, the reason — shown verbatim instead of a blank panel. */
-const MOL_PENDING = {
-  small_intestine: '小肠的 ADME 表达谱采集未成功：源数据集整包下载过程中最后一步请求失败，因此没有细胞类型分辨的酶表达数据。'
-};
+const MOL_PENDING = {};
 let GEVID = null;                 // heart only: per-gene gene/RNA/protein evidence
 const CONF_LABEL = {
   one_to_one_pore_forming:'一对一·成孔亚基', multi_subunit_obligate:'多亚基·必需',

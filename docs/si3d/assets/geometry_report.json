@@ -1,0 +1,169 @@
+{
+ "source": {
+  "dataset": "TotalSegmentator dataset v2.0.1 (Wasserthal J. et al., Radiology: Artificial Intelligence 2023)",
+  "doi": "10.5281/zenodo.10047292",
+  "licence": "CC-BY-4.0 attribution-only",
+  "redistributable": true,
+  "subject": "s0236",
+  "voxel_mm": [
+   1.5,
+   1.4999998807907104,
+   1.5
+  ],
+  "volume_shape": [
+   252,
+   198,
+   308
+  ],
+  "access": "HTTP range extraction of 9 mask members from the 23.5 GB Zenodo zip central directory; the CT image (ct.nii.gz) was NOT downloaded and no image-intensity data is used anywhere in this project",
+  "structures_used": [
+   "small_bowel",
+   "duodenum",
+   "colon",
+   "stomach",
+   "liver",
+   "pancreas",
+   "aorta",
+   "portal_vein_and_splenic_vein",
+   "inferior_vena_cava"
+  ],
+  "label_granularity_note": "v2.0.1 labels the jejunum and ileum together as one region `small_bowel` with no lumen; `duodenum` is a separate label (verified against the release member list). Villi (~0.5-1.6 mm) and circular folds are at or below the 1.5 mm voxel pitch."
+ },
+ "subject_screen": {
+  "criteria": [
+   "small_bowel label entirely inside the field of view (zero voxels on any of the 6 volume faces)",
+   "small_bowel label effectively one connected component (largest component >= 99 % of voxels)",
+   "duodenum label present and connected",
+   "both bowel junctions present: small_bowel touches the duodenum label (duodenojejunal flexure) and the caecal end of the colon label (ileocaecal junction)",
+   "envelope volume consistent with a published in-vivo small-intestine length at a published calibre"
+  ],
+  "small_bowel_voxels_on_volume_faces": 0,
+  "duodenum_voxels_on_volume_faces": 0,
+  "small_bowel_components": 5,
+  "small_bowel_largest_component_fraction": 0.99997,
+  "duodenum_components": 1,
+  "small_bowel_touches_duodenum_voxels": 302,
+  "small_bowel_touches_colon_voxels": 8157,
+  "passed": true
+ },
+ "envelope": {
+  "small_bowel_label_mL": 1427.1,
+  "closed_filled_envelope_mL": 1431.1,
+  "inscribed_radius_mm": {
+   "mean": 5.09,
+   "median": 4.5,
+   "p75": 7.35,
+   "p90": 9.25,
+   "max": 16.77
+  },
+  "volume_consistent_length_m_at_20mm_calibre": 4.56,
+  "volume_consistency_note": "envelope volume / cross-section of a 20 mm-calibre tube = the length of bowel this abdomen could hold at perfect packing; compared against the published in-vivo 3-5 m",
+  "skeleton": {
+   "voxels": 1801,
+   "components": 4,
+   "largest_component_voxels": 1797,
+   "longest_geodesic_path_mm": 472.8,
+   "total_branch_length_mm": 3743.6,
+   "why_not_used_as_the_course": "adjacent loops touch, so the envelope skeleton merges them into a single branch: its longest path is only 0.47 m, an order of magnitude short of the published in-vivo small-intestine length. The skeleton therefore measures loop territory, not luminal course."
+  }
+ },
+ "centreline": {
+  "jejunoileal": {
+   "contour_anchored": false,
+   "lattice_pitch_mm": 14.7,
+   "lattice_pitch_definition": "2 x p75 of the envelope inscribed radius",
+   "node_admission_min_inscribed_radius_mm": 4.5,
+   "node_admission_definition": "median envelope inscribed radius",
+   "nodes": 203,
+   "nearest_neighbour_seed_length_mm": 4300.3,
+   "after_2opt_oropt_length_mm": 3753.2,
+   "hops_leaving_envelope": 8,
+   "hops_rerouted_on_geodesic": 8,
+   "final_smoothed_length_mm": 3262.3,
+   "samples": 1631,
+   "sample_step_mm": 2.0,
+   "samples_inside_measured_envelope_pct": 96.75
+  },
+  "duodenum": {
+   "contour_anchored": true,
+   "skeleton_components": 1,
+   "skeleton_voxels_largest": 79,
+   "raw_skeleton_geodesic_mm": 151.7,
+   "smoothed_length_mm": 130.9,
+   "published_reference": "duodenum 20-30 cm (Standring, Gray's Anatomy 42nd ed.); the skeleton of a sharply curved C-loop short-cuts the curve, so the measured value is reported below that range as found"
+  },
+  "duodenojejunal_bridge_mm": 18.5,
+  "duodenojejunal_bridge_note": "straight segment between the duodenal skeleton tip and the first jejunal lattice node; included in the assembled arc length, so total = duodenum + bridge + jejuno-ileum",
+  "total_length_m": 3.412,
+  "total_length_check_mm": 3411.7,
+  "published_in_vivo_reference": "3-5 m in vivo (Hounnou et al., Surg Radiol Anat 2002, found a mean of 6.90 m at autopsy with loss of tone; in-vivo intubation and imaging studies give 3-5 m). Measured value is reported, not tuned.",
+  "station_boundaries_mm": {
+   "duodenojejunal_flexure": 130.9,
+   "jejunoileal_boundary": 1443.2,
+   "jejunum_fraction_of_jejunoileum": 0.4,
+   "boundary_note": "the jejunum:ileum = 2:3 split is a textbook proportion, not a measurement: parametric"
+  },
+  "parametric_outer_diameter_mm": {
+   "duodenum": 27.0,
+   "jejunum": 25.0,
+   "ileum": 20.0
+  },
+  "measured_envelope_inscribed_radius_along_centreline_mm": {
+   "mean": 7.04,
+   "median": 7.5,
+   "p90": 10.82,
+   "note": "the subject's bowel is partly decompressed, so the measured inscribed radius is smaller than the published outer radius used for rendering; both are reported"
+  }
+ },
+ "surfaces": {
+  "small_bowel": {
+   "faces": 72000,
+   "vertices": 35978,
+   "watertight": true,
+   "volume_mL": 1406.25,
+   "contour_anchored": true
+  },
+  "duodenum": {
+   "faces": 14000,
+   "vertices": 7002,
+   "watertight": true,
+   "volume_mL": 55.03,
+   "contour_anchored": true
+  },
+  "colon": {
+   "faces": 22000,
+   "vertices": 11000,
+   "watertight": true,
+   "volume_mL": 802.16,
+   "contour_anchored": true
+  },
+  "stomach": {
+   "faces": 12000,
+   "vertices": 6002,
+   "watertight": true,
+   "volume_mL": 425.68,
+   "contour_anchored": true
+  },
+  "liver": {
+   "faces": 18000,
+   "vertices": 9000,
+   "watertight": true,
+   "volume_mL": 1423.86,
+   "contour_anchored": true
+  },
+  "pancreas": {
+   "faces": 8000,
+   "vertices": 4002,
+   "watertight": true,
+   "volume_mL": 75.56,
+   "contour_anchored": true
+  },
+  "total_faces": 146000
+ },
+ "glb": {
+  "path": "small_intestine.glb",
+  "bytes": 2631324,
+  "MB": 2.51
+ },
+ "wall_seconds": 12.6
+}
