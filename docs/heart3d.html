@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 三维数字孪生心脏</title>
+<style>
+  :root{color-scheme:dark;--bg:#070a10;--panel:rgba(10,14,22,.78);--line:rgba(120,140,170,.26);
+        --ink:#e9eef6;--dim:#93a3ba}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif}
+  header{padding:calc(14px + env(safe-area-inset-top)) 18px 10px;border-bottom:1px solid var(--line)}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  #stage{position:relative;width:100%;height:min(68vh,620px);min-height:340px;background:#070a10}
+  #app{position:absolute;inset:0}
+  #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,330px);
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+  #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:5px 10px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  button.on{background:#27405f;border-color:#6aa0e0}
+  label{font-size:11.5px;color:#b8c4d6}
+  input[type=range]{width:108px;accent-color:#6aa0e0}
+  .note{font-size:10.5px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:7px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+  #err{position:absolute;inset:0;display:none;padding:20px;overflow:auto;background:#160b0b;
+       color:#ffb4a8;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;z-index:50}
+  main{padding:18px;max-width:1040px}
+  h2{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 8px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  p{color:#c3ccd8;font-size:14px}
+  .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
+           font-size:13.5px;color:#f5d9a0}
+  @media(max-width:620px){
+    header,main{padding-left:13px;padding-right:13px}
+    #ui{font-size:11.5px;padding:8px 10px;max-width:min(88vw,280px)}
+    input[type=range]{width:86px}
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "./heart3d/vendor/three/three.module.js",
+  "three/webgpu": "./heart3d/vendor/three/three.module.js",
+  "three/tsl": "./heart3d/vendor/three/three.module.js"
+} }
+</script>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="heart.html">二维剖面视图 →</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=heart">细胞与分子层 →</a>
+  <h1>三维数字孪生心脏</h1>
+  <div class="sub">真实解剖网格 · 生理驱动的收缩形变 · 冠脉树（CCO + Murray 定律）· GPU 血流粒子 · 程序化心肌质感</div>
+</header>
+
+<div id="stage">
+  <div id="app"></div>
+  <div id="err"></div>
+  <div id="ui">
+    <div class="row">
+      <label>速度</label>
+      <input id="rate" type="range" min="0.1" max="2" step="0.05" value="1">
+      <span id="rate-v"><code>1.00×</code></span>
+    </div>
+    <div class="row">
+      <label>血流粒子</label>
+      <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1">
+      <span id="dens-v"><code>100%</code></span>
+    </div>
+    <div class="row">
+      <button id="b-coro" class="on">冠脉</button>
+      <button id="b-flow" class="on">血流</button>
+      <button id="b-myo" class="on">心肌</button>
+    </div>
+    <div class="note" id="prov">载入中…</div>
+  </div>
+</div>
+
+<main>
+  <div class="warnbox">
+    <b>形变幅度与当前契约不一致，这一点必须先讲。</b>
+    几何的收缩幅度由一次「容积↔形变」标定固定下来，而那次标定是对着一版<b>开发期占位契约</b>解的
+    （长轴缩短 18.06%、室壁增厚 47.80%、射血分数 63.73%）。现在驱动腔室容积的是心脏模型的<b>正式契约</b>
+    （24.48% / 53.33% / 61.13%）。因此：<b>时序、节律、逐拍差异都是正确的</b>——短 RR 间期那一拍充盈不足、
+    收缩幅度自然变小，这个耦合直接来自容积曲线；但<b>绝对形变幅度仍是 18.06%</b>，偏小。
+    HUD 里同时显示两个数（<code>geom</code> / <code>contract</code>），不用一个掩盖另一个。
+    重新标定需要原始图谱的表面网格，交付包里只有导出的 glTF，尚未重跑。
+  </div>
+
+  <h2>几何来源与许可</h2>
+  <table>
+    <thead><tr><th>部件</th><th>来源</th><th>许可</th></tr></thead>
+    <tbody>
+      <tr><td>双心室（心内膜・心外膜・瓣膜平面・心尖标志）</td>
+          <td>Schuler &amp; Loewe 双心室统计形状模型<br><code>10.5281/zenodo.4506463</code></td><td>CC-BY-4.0</td></tr>
+      <tr><td>心房・主动脉・肺动脉・上腔静脉・冠脉轮廓</td>
+          <td>开放心脏亚结构图谱（PlatiPy）<br><code>10.5281/zenodo.6592437</code></td><td>CC-BY-3.0</td></tr>
+    </tbody>
+  </table>
+  <p>两者均为署名类许可，可在公开仓再分发。总面数 150,280（心肌 110,000 + 心房 21,791 + 大血管 18,489），
+     加冠脉管网 11,006，浏览器内实测 161,242 个三角面。跨来源配准残差中位数 3.13 mm、p90 17.4 mm，
+     集中在瓣膜平面与右室流出道——那里两个来源本身就有差异。
+     <b>源数据中缺失的部件</b>：没有单独标注的室间隔、没有下腔静脉、没有肺静脉，右冠轮廓止于心脏十字交叉之前。</p>
+
+  <h2>冠脉树</h2>
+  <p>805 段 / 336 个分叉 / 338 个终末，半径 0.35–2.14 mm。Murray 定律按
+     <code>r = r_term · n_downstream^(1/3)</code> 结构性强制，<b>336 个分叉的最大相对残差为 0</b>。
+     左主干 4.29 mm、前降支 3.69 mm、回旋支 2.95 mm 均在解剖范围内；右冠 2.98 mm 低于范围下限 0.7%。
+     供血区域（心外膜面积占比）：前降支 0.458、回旋支 0.236、右冠 0.307。
+     <b>未达成</b>：源数据的右冠轮廓止于十字交叉之前，所以后降支是 CCO 生长出来的、未被轮廓锚定，
+     直径 1.11 mm 低于真实后降支的 1.5–2.5 mm。</p>
+
+  <h2>血流</h2>
+  <p>粒子速度是真实流速 <code>v = Q/A</code>，<code>Q</code> 取自契约并由 <code>valve_open</code> 门控。
+     全周期 13 条通路<b>零逆流样本</b>；主动脉瓣与二尖瓣<b>零同时开放</b>，三尖瓣与肺动脉瓣同样；
+     主动脉瓣关闭时左室→主动脉粒子速度精确为 0。冠脉舒张期灌注占 75%，
+     由心肌内压迫产生而非设定波形。13 条通路中 12 条的峰值流速落在已发表成人范围内。
+     <b>近似之处</b>：契约没有腔静脉与肺静脉流量信号，这 5 条通路由下游房室瓣流量的周期均值按静脉回流份额缩放驱动
+     （上腔 ⅓、下腔 ⅔、每条肺静脉 ¼）；下腔静脉与肺静脉的几何是合成的（源图谱中没有）。</p>
+
+  <h2>性能</h2>
+  <p>硬件加速 WebGL2 下 12 秒均值 <b>60.0 fps</b>（中位帧时 16.7 ms = 60 Hz 垂直同步间隔，
+     即场景受同步限制而非 GPU 限制，<b>60 fps 是下限而非饱和值</b>）；
+     纯软件光栅化回退时 <b>10 fps</b>，达不到目标。
+     <b>测量位置的诚实说明</b>：这个数字<b>不是</b>在普通笔记本上测的——沙箱内 Chrome、Chromium 与 WebKit
+     启动即 SIGABRT，无法在本机运行任何浏览器，因此测量是在 Linux 容器中的无头 Chromium 142 + NVIDIA A10 上完成的，
+     属于真实的硬件加速 WebGL2 测量，但硬件是数据中心级的。基准脚本可在普通 macOS 终端直接运行取得笔记本数字。</p>
+
+  <h2>数据来源声明</h2>
+  <p>心率节律来自 PhysioNet MIT-BIH Normal Sinus Rhythm Database 记录 16265（32 岁男性，22.24 h），
+     <b>为公开数据占位，不代表任何特定个体</b>；所有文件中 <code>is_user_personal_data = false</code>。
+     动作电位为 O'Hara-Rudy 2011 人类心室肌模型（41 个状态变量），右端项由 Myokit 参考文件机器生成，未手工转写方程。
+     <b>单细胞电生理驱动整个心室</b>：没有传导、没有组织、没有折返、没有仿真心电图；
+     每拍 QT 为 APD90 + 65 ms 假定激动扩布的<b>替代量</b>，系统性短于临床 QT，
+     <b>不可用于临床 QT 延长评估</b>，请改用 APD90 的变化量。
+     本项目为研究用模拟器，<b>不可用于任何临床给药决策</b>。</p>
+</main>
+
+<script type="module">
+import { createHeartScene } from './heart3d/js/main.js';
+
+const errEl = document.getElementById('err');
+function fail(e){
+  const txt = (e && e.stack) ? e.stack : String(e);
+  errEl.style.display='block';
+  errEl.textContent = '三维场景启动失败\n\n' + txt;
+  window.__heart3dError = txt;
+  console.error('[heart3d:fatal] ' + txt);
+}
+window.addEventListener('error', ev => fail(ev.error || ev.message));
+window.addEventListener('unhandledrejection', ev => fail(ev.reason));
+
+/* Thin the particle budget on small screens: the scene is fill-rate bound there,
+   and a phone GPU has a fraction of a laptop's. */
+const narrow = Math.min(window.innerWidth, window.innerHeight) < 520;
+
+try{
+  const api = await createHeartScene({
+    container: document.getElementById('app'),
+    assetBase: './heart3d/assets/',
+    state: 'rest',
+    states: ['rest'],                       // the active-state file was a development placeholder; not shipped
+    particlesPerPath: narrow ? 320 : 900
+  });
+
+  const ts = api.timeseries;
+  document.getElementById('prov').innerHTML =
+    '<b>is_user_personal_data = ' + ts.meta.is_user_personal_data + '</b><br>' +
+    'HR <code>' + ts.meta.hr_bpm_mean.toFixed(1) + ' bpm</code> · ' +
+    '三角面 <code>' + (api.diag.triangles/1000).toFixed(0) + 'k</code> · ' +
+    '冠脉 <code>' + api.diag.coronary.segments + ' 段</code><br>' +
+    '冠脉舒张期灌注 <code>' + (api.diag.coronaryDiastolicFraction*100).toFixed(0) + '%</code>' +
+    (narrow ? '<br><code>移动端：粒子数已降至 320/通路</code>' : '');
+
+  const rate = document.getElementById('rate');
+  rate.oninput = () => { api.setPlaybackRate(parseFloat(rate.value));
+    document.getElementById('rate-v').innerHTML = '<code>'+(+rate.value).toFixed(2)+'×</code>'; };
+  const dens = document.getElementById('dens');
+  dens.oninput = () => { api.setParticleDensity(parseFloat(dens.value));
+    document.getElementById('dens-v').innerHTML = '<code>'+Math.round(dens.value*100)+'%</code>'; };
+
+  const toggle = (btn, pred) => { btn.onclick = () => {
+    const on = !btn.classList.contains('on');
+    btn.classList.toggle('on', on);
+    api.heartGroup.traverse(o => { if (pred(o)) o.visible = on; });
+  }; };
+  toggle(document.getElementById('b-coro'), o => o.name === 'coronary_tree');
+  toggle(document.getElementById('b-flow'), o => o.isPoints);
+  toggle(document.getElementById('b-myo'),
+    o => o.isMesh && (o.name.startsWith('myo_') || o.name.startsWith('chamber_')));
+}catch(e){ fail(e); }
+</script>
+</body>
+</html>

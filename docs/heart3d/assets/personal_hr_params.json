@@ -1,0 +1,330 @@
+{
+ "organ": "heart",
+ "data_source": "PUBLIC PLACEHOLDER \u2014 NOT THE USER'S OWN DATA. Fitted to PhysioNet MIT-BIH Normal Sinus Rhythm Database (nsrdb) record 16265, a 32-year-old male, 22.24 h of annotated beat-to-beat intervals starting at clock time 08:04. The user's Apple Health export was not present on this machine (~/Downloads and ~/Documents searched); digitaltwin/signals/apple_health.py is ready to ingest it, after which this parameter set must be refitted and is_user_personal_data set to true.",
+ "is_user_personal_data": false,
+ "public_dataset": {
+  "database": "MIT-BIH Normal Sinus Rhythm Database (nsrdb)",
+  "record": "16265",
+  "subject": "32 M",
+  "accession": "doi:10.13026/C2NK5R",
+  "sampling_rate_hz": 128.0,
+  "annotation_file": "16265.atr",
+  "recording_start_clock": "08:04:00",
+  "annotated_span_h": 22.239
+ },
+ "preprocessing": {
+  "n_rr_total": 100954,
+  "n_nn_accepted": 99658,
+  "pct_rejected": 1.284,
+  "rules": [
+   "both bounding annotations must be normal sinus beats ('N')",
+   "RR within [300, 2000] ms",
+   "|RR - rolling 5-beat median| <= 20% of that median"
+  ]
+ },
+ "heart_rate": {
+  "mean_hr_bpm": 78.756,
+  "sd_hr_bpm": 16.992,
+  "hr_percentiles_bpm": {
+   "p1": 51.2,
+   "p5": 55.252,
+   "p25": 64.0,
+   "p50": 77.576,
+   "p75": 91.429,
+   "p95": 108.169,
+   "p99": 120.0
+  },
+  "resting_hr_estimators_bpm": {
+   "p05_of_beat_hr_bpm": 55.252,
+   "min_5min_window_mean_hr_bpm": 54.259,
+   "mean_of_lowest_decile_5min_windows_bpm": 57.31
+  },
+  "resting_hr_bpm": 57.31,
+  "resting_hr_definition": "mean of the lowest decile of 5-min window mean HR (27 of 267 windows)",
+  "hr_max_observed_5min_window_bpm": 113.494,
+  "hr_max_observed_single_beat_bpm": 142.222,
+  "hr_max_age_predicted_bpm": 185.6,
+  "hr_max_age_predicted_note": "Tanaka 2001 (208 - 0.7*age, age 32) \u2014 PREDICTED, not measured; no graded exercise test exists for this record",
+  "hr_reserve_observed_basis_bpm": 56.184,
+  "hr_reserve_predicted_basis_bpm": 128.29,
+  "hr_reserve_caveat": "A 24 h ambulatory recording contains no maximal effort; the observed-basis reserve is a lower bound and the predicted-basis reserve rests on a population regression, not on this subject."
+ },
+ "hrv_measured": {
+  "whole_record": {
+   "mean_hr_bpm": 78.7562,
+   "sd_hr_bpm": 16.992,
+   "hr_p05_bpm": 55.2518,
+   "hr_p50_bpm": 77.5758,
+   "hr_p95_bpm": 108.169,
+   "mean_nn_ms": 797.7231,
+   "sdnn_ms": 170.5543,
+   "rmssd_ms": 42.9316,
+   "pnn50_pct": 18.4212,
+   "lf_ms2": 1997.5401,
+   "hf_ms2": 699.3516,
+   "lf_hf": 2.8563,
+   "spectral_slope_beta": -1.0784,
+   "dfa_alpha1": 1.2625
+  },
+  "night_00_06": {
+   "mean_hr_bpm": 60.0362,
+   "sd_hr_bpm": 7.288,
+   "hr_p05_bpm": 51.5436,
+   "hr_p50_bpm": 58.626,
+   "hr_p95_bpm": 73.1429,
+   "mean_nn_ms": 1011.9369,
+   "sdnn_ms": 105.9772,
+   "rmssd_ms": 58.7496,
+   "pnn50_pct": 34.8333,
+   "lf_ms2": 2667.8814,
+   "hf_ms2": 1061.8034,
+   "lf_hf": 2.5126,
+   "spectral_slope_beta": -0.6037,
+   "dfa_alpha1": 1.229
+  },
+  "day_10_18": {
+   "mean_hr_bpm": 91.2363,
+   "sd_hr_bpm": 12.8563,
+   "hr_p05_bpm": 71.7757,
+   "hr_p50_bpm": 90.3529,
+   "hr_p95_bpm": 112.9412,
+   "mean_nn_ms": 670.7906,
+   "sdnn_ms": 94.7551,
+   "rmssd_ms": 32.7931,
+   "pnn50_pct": 9.5842,
+   "lf_ms2": 1457.7382,
+   "hf_ms2": 437.98,
+   "lf_hf": 3.3283,
+   "spectral_slope_beta": -1.1274,
+   "dfa_alpha1": 1.3121
+  }
+ },
+ "hrv_bands_hz": {
+  "vlf": [
+   0.0033,
+   0.04
+  ],
+  "lf": [
+   0.04,
+   0.15
+  ],
+  "hf": [
+   0.15,
+   0.4
+  ],
+  "standard": "Task Force ESC/NASPE 1996 (PMID 8598068)",
+  "spectral_method": "Lomb-Scargle periodogram on the unevenly sampled NN series; PSD normalisation verified against a sinusoid of known amplitude (recovered/expected = 1.000)"
+ },
+ "circadian": {
+  "model": "RR_baseline(clock_h) = mesor + amplitude * cos(2*pi*(clock_h - acrophase_h)/24)",
+  "mesor_ms": 826.413,
+  "amplitude_ms": 184.889,
+  "acrophase_h": 22.7315,
+  "r2": 0.7878,
+  "hr_equivalent": {
+   "mesor_bpm": 78.747,
+   "amplitude_bpm": 15.656,
+   "acrophase_h": 12.137,
+   "r2": 0.7627,
+   "note": "HR-space cosinor fitted on the first 18 h only (design A training set)"
+  },
+  "clock_hours_covered": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23
+  ],
+  "clock_hours_missing": [
+   7
+  ],
+  "coverage_caveat": "22.24 h of a 24 h cycle; clock hour 07 is unobserved, so the circadian term is interpolated there."
+ },
+ "rr_model": {
+  "mesor_ms": 826.4130513948309,
+  "amplitude_ms": 184.8888458702033,
+  "acrophase_h": 22.73149472686671,
+  "circadian_r2": 0.787769034912244,
+  "rest_ratio_mean": 1.0415403208060408,
+  "rest_ratio_sd": 0.1079098991860851,
+  "active_ratio_mean": 0.8490915207131253,
+  "active_ratio_sd": 0.04387841346531423,
+  "active_fraction": 0.2546816479400749,
+  "state_block_s": 300.0,
+  "beta_1f": -0.8397564092978682,
+  "psd_1f_at_ref_ms2_per_hz": 91104.5991914964,
+  "f_ref_hz": 0.01,
+  "f_low_cutoff_hz": 0.0002777777777777778,
+  "f_high_1f_hz": 0.15,
+  "f_rsa_hz": 0.18323492442358108,
+  "rsa_amplitude_ms": 33.677955608624366,
+  "rsa_scale_active": 0.8391043209393722,
+  "rsa_freq_jitter_hz": 0.01,
+  "sigma_white_ms": 16.10298054324263,
+  "rr_min_ms": 300.0,
+  "rr_max_ms": 2000.0,
+  "data_source": "PhysioNet MIT-BIH Normal Sinus Rhythm Database (nsrdb) record 16265 (32 M, 22.24 h) \u2014 PUBLIC PLACEHOLDER, NOT THE USER'S OWN DATA",
+  "is_user_personal_data": false,
+  "notes": "",
+  "extra": {
+   "spectral_slope_r2": 0.5101638284540212,
+   "hf_power_train_median_ms2": 670.5295274165458,
+   "lf_power_train_median_ms2": 1674.8336746677517,
+   "hf_power_train_integrated_ms2": 580.32044139283,
+   "slope_fit_band_hz": [
+    0.001,
+    0.15
+   ],
+   "white_power_in_hf_ms2": 103.42718042830919,
+   "rsa_variance_ms2": 567.1023469882366,
+   "white_psd_floor_ms2_per_hz": 413.70872171323674,
+   "power_1f_band_ms2_over_fit_window": 10370.739848133162,
+   "n_train_beats": 99658,
+   "train_span_h": 22.239164496527778,
+   "n_train_windows": 267
+  }
+ },
+ "rr_model_note": "Deliverable parameter set, fitted on all 99,658 NN intervals. Interface: digitaltwin.signals.rr_generator.RRGenerator.generate(duration_s, state='rest'|'active'|'mixed', seed=, start_clock_h=).",
+ "validation": {
+  "design_A_temporal_extrapolation": {
+   "definition": "params fitted on first 18.00 h; held-out last 4.24 h (clock 02:07-06:31)",
+   "n_holdout_beats": 15089,
+   "ks_D_hr_distribution": 0.6106,
+   "verdict": "FAILS. Mean HR +17.3% (70.8 vs 60.4 bpm), KS D=0.611. A single 24 h cosinor fitted on an 18 h window cannot extrapolate into clock hours it never saw; RMSSD -37%, pNN50 -50%.",
+   "fitted_params": {
+    "mesor_ms": 797.2061452706623,
+    "amplitude_ms": 158.80178660454226,
+    "acrophase_h": 23.77607644606768,
+    "circadian_r2": 0.7883066693835343,
+    "rest_ratio_mean": 1.0125902362301007,
+    "rest_ratio_sd": 0.06148916014034698,
+    "active_ratio_mean": 0.8582037245253604,
+    "active_ratio_sd": 0.03801247946682762,
+    "active_fraction": 0.125,
+    "state_block_s": 300.0,
+    "beta_1f": -0.8555333113395223,
+    "psd_1f_at_ref_ms2_per_hz": 93644.8230666581,
+    "f_ref_hz": 0.01,
+    "f_low_cutoff_hz": 0.0002777777777777778,
+    "f_high_1f_hz": 0.15,
+    "f_rsa_hz": 0.17442908166675714,
+    "rsa_amplitude_ms": 31.95991891190486,
+    "rsa_scale_active": 0.7318172277274624,
+    "rsa_freq_jitter_hz": 0.01,
+    "sigma_white_ms": 15.775916178443792,
+    "rr_min_ms": 300.0,
+    "rr_max_ms": 2000.0,
+    "data_source": "PhysioNet MIT-BIH Normal Sinus Rhythm Database (nsrdb) record 16265 (32 M, 22.24 h) \u2014 PUBLIC PLACEHOLDER, NOT THE USER'S OWN DATA",
+    "is_user_personal_data": false,
+    "notes": "",
+    "extra": {
+     "spectral_slope_r2": 0.5094269709995037,
+     "hf_power_train_median_ms2": 605.3393178722577,
+     "lf_power_train_median_ms2": 1666.2356436258844,
+     "hf_power_train_integrated_ms2": 480.4585184164825,
+     "slope_fit_band_hz": [
+      0.001,
+      0.15
+     ],
+     "white_power_in_hf_ms2": 94.62110944449066,
+     "rsa_variance_ms2": 510.71820842776697,
+     "white_psd_floor_ms2_per_hz": 378.4844377779626,
+     "power_1f_band_ms2_over_fit_window": 8644.024049570366,
+     "n_train_beats": 84569,
+     "train_span_h": 17.999407552083333,
+     "n_train_windows": 216
+    }
+   }
+  },
+  "design_B_interleaved_blocks": {
+   "definition": "26 of 134 non-overlapping 10-min blocks withheld at random (seed 7, 19.7% of beats); circadian term interpolates",
+   "n_holdout_beats": 19652,
+   "n_holdout_blocks": 26,
+   "ks_D_hr_distribution": 0.0771,
+   "verdict": "PASSES on rate and short-term variability, over-disperses on SDNN. Block-median comparisons: mean HR +5.0%, HR p05/p50/p95 within 7%, LF +5.1%, RMSSD -13.2%, pNN50 -11.0%, DFA alpha1 -0.8%, HF +29.9%, LF/HF -31.1%, SDNN +33.0%, spectral slope -1.097 vs -0.882 (abs diff -0.215). KS D=0.077 on the pooled HR distribution.",
+   "fitted_params": {
+    "mesor_ms": 827.5680402687336,
+    "amplitude_ms": 184.53180053363747,
+    "acrophase_h": 22.641050159280166,
+    "circadian_r2": 0.7882779324763965,
+    "rest_ratio_mean": 1.0501525634897153,
+    "rest_ratio_sd": 0.1112337286976378,
+    "active_ratio_mean": 0.8528262981226455,
+    "active_ratio_sd": 0.04223165335495318,
+    "active_fraction": 0.28837209302325584,
+    "state_block_s": 300.0,
+    "beta_1f": -0.8687410747284711,
+    "psd_1f_at_ref_ms2_per_hz": 97338.82096934467,
+    "f_ref_hz": 0.01,
+    "f_low_cutoff_hz": 0.0002777777777777778,
+    "f_high_1f_hz": 0.15,
+    "f_rsa_hz": 0.1743763377655191,
+    "rsa_amplitude_ms": 33.0440332298328,
+    "rsa_scale_active": 0.8743789993951042,
+    "rsa_freq_jitter_hz": 0.01,
+    "sigma_white_ms": 17.528572711978075,
+    "rr_min_ms": 300.0,
+    "rr_max_ms": 2000.0,
+    "data_source": "PhysioNet MIT-BIH Normal Sinus Rhythm Database (nsrdb) record 16265 (32 M, 22.24 h) \u2014 PUBLIC PLACEHOLDER, NOT THE USER'S OWN DATA",
+    "is_user_personal_data": false,
+    "notes": "",
+    "extra": {
+     "spectral_slope_r2": 0.5001540373127855,
+     "hf_power_train_median_ms2": 668.9699300349827,
+     "lf_power_train_median_ms2": 1685.314524414172,
+     "hf_power_train_integrated_ms2": 960.1131189556163,
+     "slope_fit_band_hz": [
+      0.001,
+      0.15
+     ],
+     "white_power_in_hf_ms2": 123.01586398783544,
+     "rsa_variance_ms2": 545.9540660471472,
+     "white_psd_floor_ms2_per_hz": 492.0634559513418,
+     "power_1f_band_ms2_over_fit_window": 13332.246080977373,
+     "n_train_beats": 80006,
+     "train_span_h": 22.072606336805556,
+     "n_train_windows": 215
+    }
+   }
+  },
+  "known_deficiency": "The single-slope power law fitted over [1e-3, 0.15] Hz is steeper than the in-block behaviour, over-predicting sub-0.04 Hz variance; this inflates 10-min block SDNN by ~33% and is the model's main residual error. A two-slope (broken power law) 1/f term would address it but is outside the generative structure specified for this model.",
+  "ks_note": "With n ~ 2x10^4 beats a KS p-value is uninformative; the D statistic is the effect size to read."
+ },
+ "apple_health_parser": {
+  "module": "digitaltwin/signals/apple_health.py",
+  "tested": true,
+  "tests": "tests/test_apple_health.py \u2014 11/11 passed on a synthetic export (XML, zip, ECG CSV)",
+  "record_types": [
+   "HKQuantityTypeIdentifierHeartRate",
+   "HKQuantityTypeIdentifierRestingHeartRate",
+   "HKQuantityTypeIdentifierWalkingHeartRateAverage",
+   "HKQuantityTypeIdentifierHeartRateVariabilitySDNN",
+   "HKQuantityTypeIdentifierOxygenSaturation"
+  ],
+  "user_export_found": false,
+  "searched": [
+   "~/Downloads",
+   "~/Documents"
+  ]
+ },
+ "sources": "PhysioNet MIT-BIH Normal Sinus Rhythm Database (PMID 10851218 / doi:10.13026/C2NK5R); Task Force ESC/NASPE 1996 HRV standards (PMID 8598068); Tanaka 2001 HRmax equation (PMID 11153730)",
+ "value_type": "fitted_from_public_placeholder_data"
+}

@@ -1,0 +1,177 @@
+{
+ "n_nodes": 807,
+ "n_segments": 805,
+ "n_bifurcations": 336,
+ "n_terminals": 338,
+ "n_anchored_nodes": 137,
+ "radius_range_mm": [
+  0.35,
+  2.144
+ ],
+ "diameter_range_mm": [
+  0.7,
+  4.29
+ ],
+ "murray_law": {
+  "enforced": "structurally: r = r_term * (downstream terminals)^(1/3) with equal terminal flows, so r_parent^3 = sum r_child^3 holds by construction",
+  "exponent": 3.0,
+  "n_bifurcations_checked": 336,
+  "max_relative_residual": 0.0,
+  "mean_relative_residual": 0.0
+ },
+ "trunks": {
+  "LM": {
+   "nodes": 9,
+   "radius_mm": [
+    2.144,
+    2.144
+   ],
+   "diameter_proximal_mm": 4.29,
+   "length_mm": 16.4
+  },
+  "LAD": {
+   "nodes": 95,
+   "radius_mm": [
+    0.35,
+    1.847
+   ],
+   "diameter_proximal_mm": 3.69,
+   "length_mm": 118.1
+  },
+  "LCx": {
+   "nodes": 49,
+   "radius_mm": [
+    0.35,
+    1.476
+   ],
+   "diameter_proximal_mm": 2.95,
+   "length_mm": 60.1
+  },
+  "RCA": {
+   "nodes": 51,
+   "radius_mm": [
+    0.35,
+    1.489
+   ],
+   "diameter_proximal_mm": 2.98,
+   "length_mm": 67.5
+  }
+ },
+ "named_branches": {
+  "diagonal": [
+   {
+    "name": "D1",
+    "node": 205,
+    "downstream_terminals": 27,
+    "radius_mm": 1.05,
+    "diameter_mm": 2.1
+   },
+   {
+    "name": "D2",
+    "node": 199,
+    "downstream_terminals": 19,
+    "radius_mm": 0.934,
+    "diameter_mm": 1.87
+   },
+   {
+    "name": "D3",
+    "node": 213,
+    "downstream_terminals": 16,
+    "radius_mm": 0.882,
+    "diameter_mm": 1.76
+   }
+  ],
+  "obtuse_marginal": [
+   {
+    "name": "OM1",
+    "node": 425,
+    "downstream_terminals": 31,
+    "radius_mm": 1.099,
+    "diameter_mm": 2.2
+   },
+   {
+    "name": "OM2",
+    "node": 473,
+    "downstream_terminals": 13,
+    "radius_mm": 0.823,
+    "diameter_mm": 1.65
+   }
+  ],
+  "rca_branches": [
+   {
+    "name": "R1",
+    "node": 605,
+    "downstream_terminals": 19,
+    "radius_mm": 0.934,
+    "diameter_mm": 1.87
+   },
+   {
+    "name": "R2",
+    "node": 627,
+    "downstream_terminals": 14,
+    "radius_mm": 0.844,
+    "diameter_mm": 1.69
+   },
+   {
+    "name": "R3",
+    "node": 643,
+    "downstream_terminals": 10,
+    "radius_mm": 0.754,
+    "diameter_mm": 1.51
+   }
+  ],
+  "posterior_descending": {
+   "node": 771,
+   "downstream_terminals": 4,
+   "radius_mm": 0.556,
+   "diameter_mm": 1.11,
+   "distance_to_posterior_IV_groove_mm": 8.28,
+   "contour_anchored": false,
+   "caveat": "The source RCA contour stops before the crux, so no posterior descending artery is anatomically anchored. This is the largest CCO-grown RCA branch reaching the posterior interventricular groove; its calibre is below the 1.5-2.5 mm of a real PDA."
+  }
+ },
+ "trunk_calibre_check": {
+  "LM": {
+   "model_diameter_mm": 4.29,
+   "human_reference_mm": [
+    4.0,
+    5.0
+   ],
+   "within_reference": true
+  },
+  "LAD": {
+   "model_diameter_mm": 3.69,
+   "human_reference_mm": [
+    3.0,
+    4.0
+   ],
+   "within_reference": true
+  },
+  "LCx": {
+   "model_diameter_mm": 2.95,
+   "human_reference_mm": [
+    2.8,
+    3.6
+   ],
+   "within_reference": true
+  },
+  "RCA": {
+   "model_diameter_mm": 2.98,
+   "human_reference_mm": [
+    3.0,
+    4.0
+   ],
+   "within_reference": false
+  }
+ },
+ "total_intravascular_volume_mm3": 4995.12,
+ "cco": {
+  "rejected_angle": 2396,
+  "candidates_evaluated": 11909
+ },
+ "territory_epicardial_area_fraction": {
+  "LAD": 0.458,
+  "LCx": 0.236,
+  "RCA": 0.307
+ }
+}

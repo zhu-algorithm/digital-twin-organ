@@ -1,0 +1,91 @@
+{
+ "sources": {
+  "A": {
+   "title": "Biventricular statistical shape model of the human heart adapted for computer simulations",
+   "authors": "Schuler S., Loewe A.",
+   "doi": "10.5281/zenodo.4506463",
+   "license": "CC-BY-4.0",
+   "file": "heart_sur.vtp",
+   "points": 99953,
+   "faces": 199902,
+   "classes": {
+    "1": "valve-ring / base plane",
+    "2": "epicardium",
+    "3": "LV endocardium",
+    "4": "RV endocardium",
+    "5": "apex landmark"
+   }
+  },
+  "B": {
+   "title": "Open cardiac sub-structure atlas (PlatiPy)",
+   "authors": "Finnegan R., Chlap P.",
+   "doi": "10.5281/zenodo.6592437",
+   "license": "CC-BY-3.0",
+   "case": "LCTSC-Test-S3-201",
+   "voxel_mm": [
+    1.171875,
+    1.171875,
+    2.0
+   ],
+   "structures": {
+    "Ventricle_L": 63685,
+    "Ventricle_R": 45775,
+    "Atrium_L": 28496,
+    "Atrium_R": 23318,
+    "A_Aorta": 12297,
+    "A_Pulmonary": 7244,
+    "V_Venacava_S": 1075,
+    "A_Coronary_L": 307,
+    "A_LAD": 866,
+    "A_Cflx": 532,
+    "A_Coronary_R": 709,
+    "Heart": 214403
+   }
+  }
+ },
+ "registration": {
+  "method": "anatomical-landmark similarity (long axis, LV->RV direction, valve plane) + 25 iterations of trimmed scaled-rigid ICP (Umeyama) of the source-B ventricular epicardial surface onto the source-A epicardium",
+  "scale": 1.1206,
+  "initial_median_surface_distance_mm": 8.35,
+  "final_median_surface_distance_mm": 3.13,
+  "final_p90_surface_distance_mm": 17.43,
+  "long_axis_mm_sourceA": 98.5,
+  "long_axis_mm_sourceB": 77.1
+ },
+ "meshes": {
+  "myo_biventricular": {
+   "faces_before": 199902,
+   "faces_after": 110000,
+   "vertices": 55002
+  },
+  "chamber_atrium_l": {
+   "faces": 10935,
+   "vertices": 5464
+  },
+  "chamber_atrium_r": {
+   "faces": 10856,
+   "vertices": 5429
+  },
+  "vessel_aorta": {
+   "faces": 8942,
+   "vertices": 4473
+  },
+  "vessel_pulmonary_artery": {
+   "faces": 7951,
+   "vertices": 3978
+  },
+  "vessel_svc": {
+   "faces": 1596,
+   "vertices": 800
+  }
+ },
+ "volumes_mL": {
+  "LV_cavity": 150.01,
+  "RV_cavity": 170.47,
+  "myocardium_wall": 145.02
+ },
+ "total_faces_glb": 150280,
+ "L_base_mm": 98.55,
+ "Z_top_mm": 159.96,
+ "glb_bytes": 6017576
+}

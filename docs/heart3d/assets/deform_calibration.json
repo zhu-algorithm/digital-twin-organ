@@ -1,0 +1,339 @@
+{
+ "world_to_heart": [
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  1.0
+ ],
+ "heart_to_world": [
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  1.0
+ ],
+ "L_base_mm": 98.54925235617901,
+ "Z_top_mm": 159.96319580078125,
+ "strain_shape": {
+  "a": 0.65,
+  "b": 0.7
+ },
+ "axis_xy": [
+  [
+   -13.720463020144559,
+   0.030991006056139952
+  ],
+  [
+   24.182688111678132,
+   0.0309910060561378
+  ],
+  [
+   -26.11710997375424,
+   0.9352890607951134
+  ],
+  [
+   24.040709073155796,
+   -19.358395046382043
+  ],
+  [
+   13.091483036939085,
+   19.85963532023249
+  ],
+  [
+   11.654652281673826,
+   12.121448795417697
+  ]
+ ],
+ "chambers": [
+  {
+   "scale_endo": [
+    1.0002751618703145,
+    -0.23142236214575868,
+    -0.03319498180890046,
+    -0.06615708263555982
+   ],
+   "scale_epi": [
+    1.0002225417743569,
+    -0.07242652975961686,
+    -0.027699226959393353,
+    -0.05482482601514182
+   ],
+   "eps_long_max": 0.18058,
+   "twist_max_rad": 0.1308996938995747
+  },
+  {
+   "scale_endo": [
+    1.0002676836177318,
+    -0.23790521532455425,
+    -0.033788184840720534,
+    -0.06444302860037765
+   ],
+   "scale_epi": [
+    1.0002554232709713,
+    -0.16189625405476135,
+    -0.030716273789305602,
+    -0.06081456939946371
+   ],
+   "eps_long_max": 0.18058,
+   "twist_max_rad": 0.1308996938995747
+  },
+  {
+   "scale_endo": [
+    1.0000637887785095,
+    -0.3918706788165186,
+    0.020995307498891967,
+    -0.025148212238738955
+   ],
+   "scale_epi": [
+    1.0000637887785095,
+    -0.3918706788165186,
+    0.020995307498891967,
+    -0.025148212238738955
+   ],
+   "eps_long_max": 0.18058,
+   "twist_max_rad": 0.0
+  },
+  {
+   "scale_endo": [
+    1.0000203357606738,
+    -0.39145040932597125,
+    0.03899405027437578,
+    -0.020061017132907463
+   ],
+   "scale_epi": [
+    1.0000203357606738,
+    -0.39145040932597125,
+    0.03899405027437578,
+    -0.020061017132907463
+   ],
+   "eps_long_max": 0.18058,
+   "twist_max_rad": 0.0
+  },
+  {
+   "scale_endo": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "scale_epi": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "eps_long_max": 0.18058,
+   "twist_max_rad": 0.0
+  },
+  {
+   "scale_endo": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "scale_epi": [
+    1,
+    0,
+    0,
+    0
+   ],
+   "eps_long_max": 0.18058,
+   "twist_max_rad": 0.0
+  }
+ ],
+ "arterial_distension": {
+  "k": 0.0011,
+  "p_ref_mmHg": 80.0,
+  "note": "aortic root radial distension ~5 % over a 45 mmHg pulse pressure"
+ },
+ "provenance": {
+  "inputs": {
+   "longitudinal_shortening_pct": 18.058,
+   "wall_thickening_pct": 47.8,
+   "ef_pct_mean": 63.733,
+   "contract_edv_mL": 134.622,
+   "contract_esv_mL": 46.877,
+   "net_torsion_deg": 15.0,
+   "strain_shape": {
+    "a": 0.65,
+    "b": 0.7
+   }
+  },
+  "chambers": {
+   "LV": {
+    "mesh_ED_cavity_mL": 150.01,
+    "achieved_ES_cavity_mL": 54.4,
+    "target_ES_cavity_mL": 54.4,
+    "achieved_ef_pct": 63.73,
+    "target_ef_pct": 63.73,
+    "mesh_ED_mean_wall_mm": 6.05,
+    "achieved_ES_mean_wall_mm": 8.95,
+    "achieved_wall_thickening_pct": 47.8,
+    "target_wall_thickening_pct": 47.8,
+    "scale_endo_ES": 0.6691,
+    "scale_epi_ES": 0.845,
+    "cubic_fit_max_residual": {
+     "scale_endo": 0.00037,
+     "scale_epi": 0.0003
+    },
+    "solved_scale_endo": [
+     1.0,
+     0.9809,
+     0.9608,
+     0.9395,
+     0.917,
+     0.8931,
+     0.8677,
+     0.8406,
+     0.8116,
+     0.7803,
+     0.7464,
+     0.7096,
+     0.6691
+    ],
+    "solved_scale_epi": [
+     1.0,
+     0.9941,
+     0.9874,
+     0.9797,
+     0.971,
+     0.9611,
+     0.95,
+     0.9375,
+     0.9233,
+     0.9073,
+     0.8892,
+     0.8686,
+     0.845
+    ],
+    "solved_wall_mm": [
+     6.053,
+     6.294,
+     6.535,
+     6.776,
+     7.017,
+     7.259,
+     7.5,
+     7.741,
+     7.982,
+     8.223,
+     8.464,
+     8.705,
+     8.946
+    ],
+    "basal_descent_mm": 17.8
+   },
+   "RV": {
+    "mesh_ED_cavity_mL": 170.47,
+    "achieved_ES_cavity_mL": 61.82,
+    "target_ES_cavity_mL": 61.82,
+    "achieved_ef_pct": 63.73,
+    "target_ef_pct": 63.73,
+    "mesh_ED_mean_wall_mm": 3.09,
+    "achieved_ES_mean_wall_mm": 4.57,
+    "achieved_wall_thickening_pct": 47.75,
+    "target_wall_thickening_pct": 47.8,
+    "scale_endo_ES": 0.6638,
+    "scale_epi_ES": 0.7465,
+    "cubic_fit_max_residual": {
+     "scale_endo": 0.00036,
+     "scale_epi": 0.00036
+    },
+    "solved_scale_endo": [
+     1.0,
+     0.9803,
+     0.9597,
+     0.9379,
+     0.9148,
+     0.8904,
+     0.8646,
+     0.837,
+     0.8075,
+     0.7758,
+     0.7416,
+     0.7044,
+     0.6638
+    ],
+    "solved_scale_epi": [
+     1.0,
+     0.9867,
+     0.9724,
+     0.9571,
+     0.9406,
+     0.9229,
+     0.9038,
+     0.8831,
+     0.8606,
+     0.836,
+     0.8091,
+     0.7795,
+     0.7465
+    ],
+    "solved_wall_mm": [
+     3.09,
+     3.213,
+     3.337,
+     3.46,
+     3.583,
+     3.706,
+     3.829,
+     3.953,
+     4.076,
+     4.199,
+     4.322,
+     4.446,
+     4.566
+    ],
+    "basal_descent_mm": 17.8
+   },
+   "LA": {
+    "mesh_volume_mL": 106.13,
+    "contract_V_max_mL": 76.28,
+    "contract_V_min_mL": 34.16,
+    "emptying_fraction_pct": 55.21,
+    "scale_at_min_volume": 0.604,
+    "cubic_fit_max_residual": 0.00011,
+    "note": "single outer surface in the source atlas: endocardial and epicardial scales are tied"
+   },
+   "RA": {
+    "mesh_volume_mL": 86.49,
+    "contract_V_max_mL": 50.35,
+    "contract_V_min_mL": 25.56,
+    "emptying_fraction_pct": 49.24,
+    "scale_at_min_volume": 0.6274,
+    "cubic_fit_max_residual": 6e-05,
+    "note": "single outer surface in the source atlas: endocardial and epicardial scales are tied"
+   }
+  },
+  "incompressibility": {
+   "myocardial_shell_volume_ED_mL": 145.01,
+   "myocardial_shell_volume_ES_mL": 148.74,
+   "change_pct": 2.57,
+   "note": "Myocardium is nearly incompressible in life; this residual is the error of the kinematic model, reported rather than corrected."
+  }
+ }
+}

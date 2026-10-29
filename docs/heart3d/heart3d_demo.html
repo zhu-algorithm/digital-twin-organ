@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Digital Twin — 3-D Beating Heart</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #070a10; color: #e9eef6;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #app { position: absolute; inset: 0; }
+  #ui { position: absolute; left: 14px; top: 14px; z-index: 10;
+    background: rgba(8,11,18,0.66); border: 1px solid rgba(120,140,170,0.25);
+    border-radius: 10px; padding: 12px 14px; max-width: 330px;
+    backdrop-filter: blur(6px); font-size: 12.5px; line-height: 1.45; }
+  #ui h1 { font-size: 14px; margin: 0 0 8px; letter-spacing: .01em; }
+  #ui .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+  button { background: #16202f; color: #e9eef6; border: 1px solid rgba(130,150,180,.35);
+    border-radius: 6px; padding: 4px 9px; font-size: 12px; cursor: pointer; }
+  button.on { background: #27405f; border-color: #6aa0e0; }
+  label { font-size: 11.5px; color: #b8c4d6; }
+  input[type=range] { width: 120px; }
+  .note { font-size: 10.5px; color: #93a3ba; margin-top: 8px;
+    border-top: 1px solid rgba(120,140,170,.2); padding-top: 7px; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; }
+  #err { position:absolute; inset:0; display:none; padding:24px; overflow:auto;
+    background:#160b0b; color:#ffb4a8; font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px; white-space: pre-wrap; z-index: 50; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/webgpu": "./vendor/three/three.module.js",
+    "three/tsl": "./vendor/three/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="err"></div>
+
+<div id="ui">
+  <h1>3-D beating heart</h1>
+  <div class="row">
+    <label>State</label>
+    <button id="b-rest" class="on">rest</button>
+    <button id="b-active">active</button>
+  </div>
+  <div class="row">
+    <label>Speed</label>
+    <input id="rate" type="range" min="0.1" max="2" step="0.05" value="1" />
+    <span id="rate-v"><code>1.00x</code></span>
+  </div>
+  <div class="row">
+    <label>Particles</label>
+    <input id="dens" type="range" min="0.1" max="1" step="0.05" value="1" />
+    <span id="dens-v"><code>100%</code></span>
+  </div>
+  <div class="row">
+    <button id="b-coro" class="on">coronaries</button>
+    <button id="b-flow" class="on">blood flow</button>
+    <button id="b-myo" class="on">myocardium</button>
+  </div>
+  <div class="note" id="prov">loading…</div>
+</div>
+
+<script type="module">
+import { createHeartScene } from './js/main.js';
+
+const errEl = document.getElementById('err');
+function fail (e) {
+  const txt = (e && e.stack) ? e.stack : String(e);
+  errEl.style.display = 'block';
+  errEl.textContent = 'heart3d failed to start\n\n' + txt;
+  window.__heart3dError = txt;
+  // also to the console so an automated run captures it
+  console.error('[heart3d:fatal] ' + txt);
+}
+window.addEventListener('error', (ev) => fail(ev.error || ev.message));
+window.addEventListener('unhandledrejection', (ev) => fail(ev.reason));
+
+try {
+  const api = await createHeartScene({
+    container: document.getElementById('app'),
+    assetBase: './assets/',
+    state: 'rest'
+  });
+
+  const ts = api.timeseries;
+  document.getElementById('prov').innerHTML =
+    '<code>' + ts.meta.data_source + '</code><br>' +
+    'state <code>' + ts.meta.state + '</code> &middot; HR <code>' +
+    ts.meta.hr_bpm_mean.toFixed(1) + ' bpm</code><br>' +
+    '<b>is_user_personal_data = ' + ts.meta.is_user_personal_data + '</b><br>' +
+    'triangles <code>' + (api.diag.triangles / 1000).toFixed(0) + 'k</code> &middot; ' +
+    'coronary segments <code>' + api.diag.coronary.segments + '</code><br>' +
+    'coronary diastolic flow fraction <code>' +
+    (api.diag.coronaryDiastolicFraction * 100).toFixed(0) + '%</code>';
+
+  const bRest = document.getElementById('b-rest');
+  const bAct = document.getElementById('b-active');
+  bRest.onclick = () => { api.setState('rest'); bRest.classList.add('on'); bAct.classList.remove('on'); };
+  bAct.onclick = () => { api.setState('active'); bAct.classList.add('on'); bRest.classList.remove('on'); };
+
+  const rate = document.getElementById('rate');
+  rate.oninput = () => {
+    api.setPlaybackRate(parseFloat(rate.value));
+    document.getElementById('rate-v').innerHTML = '<code>' + (+rate.value).toFixed(2) + 'x</code>';
+  };
+  const dens = document.getElementById('dens');
+  dens.oninput = () => {
+    api.setParticleDensity(parseFloat(dens.value));
+    document.getElementById('dens-v').innerHTML = '<code>' + Math.round(dens.value * 100) + '%</code>';
+  };
+
+  const toggle = (btn, pred) => {
+    btn.onclick = () => {
+      const on = !btn.classList.contains('on');
+      btn.classList.toggle('on', on);
+      api.heartGroup.traverse(o => { if (pred(o)) o.visible = on; });
+    };
+  };
+  toggle(document.getElementById('b-coro'), o => o.name === 'coronary_tree');
+  toggle(document.getElementById('b-flow'), o => o.isPoints);
+  toggle(document.getElementById('b-myo'),
+    o => o.isMesh && (o.name.startsWith('myo_') || o.name.startsWith('chamber_')));
+} catch (e) { fail(e); }
+</script>
+</body>
+</html>
