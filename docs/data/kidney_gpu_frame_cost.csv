@@ -1,0 +1,13 @@
+viewport,view,render_cost_ms,frame_p95_ms,frame_median_ms,hud_outside,labels_drawn,labels_culled,headroom_vs_60fps
+desktop,organ,0.75,4.3,0.5,0,6,3,3.9
+desktop,section,0.863,4.2,0.5,0,3,2,4.0
+desktop,nephron,1.253,4.3,0.5,0,8,12,3.9
+desktop,molecular,1.418,3.3,1.1,0,6,14,5.1
+phone390,organ,0.062,0.6,0.4,0,4,5,27.8
+phone390,section,0.055,0.5,0.4,0,3,2,33.3
+phone390,nephron,0.087,0.6,0.4,0,5,15,27.8
+phone390,molecular,0.707,1.3,1.1,0,5,15,12.8
+phone360,organ,0.057,0.6,0.4,0,4,5,27.8
+phone360,section,0.055,0.5,0.4,0,3,2,33.3
+phone360,nephron,0.087,0.6,0.4,0,5,15,27.8
+phone360,molecular,0.707,1.2,1.1,0,4,16,13.9

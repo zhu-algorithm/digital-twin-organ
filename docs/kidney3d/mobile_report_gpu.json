@@ -1,0 +1,1462 @@
+{
+ "engine": "chromium",
+ "root": "/work/web",
+ "page": "kidney3d.html",
+ "viewports": {
+  "desktop": {
+   "viewport": [
+    1440,
+    900
+   ],
+   "ready_ms": 999.7000000000116,
+   "frame_stats": {
+    "frames": 7827,
+    "meanFrameMs": 1.529777777777777,
+    "medianFrameMs": 0.5,
+    "p95FrameMs": 4.599999999998545,
+    "fpsMean": 653.6897152818133,
+    "fpsMedian": 2000
+   },
+   "probe": {
+    "webgl2": true,
+    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
+    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "programs": 13,
+    "programsNotLinked": [],
+    "triangles": 168782,
+    "sectionTriangles": 54000,
+    "nephronTriangles": 36304,
+    "molecularTriangles": 8944,
+    "particles": 25480,
+    "particlesDrawn": 25480,
+    "trees": {
+     "renal_artery": {
+      "name": "renal_artery",
+      "segments_rendered": 1895,
+      "segments_in_tree": 1895,
+      "triangles": 21978,
+      "vertices": 21978,
+      "radius_mm": [
+       0.4108,
+       2.8098
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "renal_artery": 26,
+       "segmental": 72,
+       "interlobar": 123,
+       "arcuate": 584,
+       "cortical_radiate": 1090
+      }
+     },
+     "renal_vein": {
+      "name": "renal_vein",
+      "segments_rendered": 1625,
+      "segments_in_tree": 1625,
+      "triangles": 21360,
+      "vertices": 21360,
+      "radius_mm": [
+       0.51349,
+       3.45271
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "renal_vein": 32,
+       "segmental_vein": 10,
+       "interlobar_vein": 278,
+       "arcuate_vein": 143,
+       "cortical_radiate_vein": 1162
+      }
+     },
+     "glomerular": {
+      "name": "glomerular",
+      "segments_rendered": 2304,
+      "segments_in_tree": 2304,
+      "triangles": 23040,
+      "vertices": 23040,
+      "radius_mm": [
+       0.0037,
+       0.01
+      ],
+      "radius_scale_applied": 9,
+      "segments_by_level": {
+       "afferent": 128,
+       "glomerulus": 1920,
+       "efferent": 256
+      }
+     },
+     "collecting_system": {
+      "name": "collecting_system",
+      "segments_rendered": 213,
+      "segments_in_tree": 213,
+      "triangles": 2824,
+      "vertices": 2824,
+      "radius_mm": [
+       0.81228,
+       1.75
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "ureter": 53,
+       "major_calyx": 12,
+       "minor_calyx": 148
+      }
+     }
+    },
+    "flowDiag": {
+     "paths": 98,
+     "particles": 25480,
+     "drawn": 25480,
+     "urineDisplayGain": 40,
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "cardiacPhase01": 0.6175649559802455,
+     "pulseNow": 0.9998998045952325,
+     "byTree": {
+      "renal_artery": {
+       "paths": 30,
+       "meanV_cm_s": 25.933336283365886
+      },
+      "renal_vein": {
+       "paths": 26,
+       "meanV_cm_s": 16.865085865901065
+      },
+      "glomerular": {
+       "paths": 26,
+       "meanV_cm_s": 4.510914068955642
+      },
+      "collecting_system": {
+       "paths": 16,
+       "meanV_cm_s": 0.118221977353096
+      }
+     }
+    },
+    "nephron": {
+     "magnification": 20,
+     "tubule_calibre_gain": 6,
+     "tubule_calibre_note": "tubule POSITIONS and LENGTHS are true at 20x; the rendered tubule CALIBRE carries an additional declared 6x gain because a 60 um tubule in a figure tall enough to hold an 18 mm loop is thinner than one pixel. The true diameters are in dimensions_mm and are what v = Q/A uses.",
+     "magnification_note": "built at real size in millimetres and displayed at 20x; every dimension is a published adult human value and none was changed to fit the screen",
+     "dimensions_mm": {
+      "glomerulus_diameter": 0.2,
+      "bowman_diameter": 0.22,
+      "pct_length": 14,
+      "pct_diameter": 0.06,
+      "pst_length": 6,
+      "pst_diameter": 0.05,
+      "thin_limb_diameter": 0.015,
+      "tal_length": 9,
+      "tal_diameter": 0.035,
+      "dct_length": 5,
+      "dct_diameter": 0.035,
+      "cnt_diameter": 0.04,
+      "cd_cortical_diameter": 0.04,
+      "cd_papillary_diameter": 0.2,
+      "afferent_diameter": 0.02,
+      "efferent_diameter": 0.013,
+      "vasa_recta_diameter": 0.017,
+      "cortical_loop_depth": 2,
+      "juxta_loop_depth": 18,
+      "macula_densa_diameter": 0.04
+     },
+     "nephrons": {
+      "cortical": {
+       "pct_length_mm": 14,
+       "dct_length_mm": 5,
+       "loop_depth_mm": 2,
+       "has_vasa_recta": false,
+       "tubular_velocity_mm_s": {
+        "proximal_tubule": 2.0952,
+        "loop_of_henle": 11.7331,
+        "distal_tubule": 1.724,
+        "collecting_duct": 1.2276
+       }
+      },
+      "juxtamedullary": {
+       "pct_length_mm": 14,
+       "dct_length_mm": 5,
+       "loop_depth_mm": 18,
+       "has_vasa_recta": true,
+       "tubular_velocity_mm_s": {
+        "proximal_tubule": 2.0952,
+        "loop_of_henle": 11.7331,
+        "distal_tubule": 1.724,
+        "collecting_duct": 1.2276
+       }
+      }
+     },
+     "triangles": 36304,
+     "tubular_flow_note": "tubular fluid speed is v = Q/A, with Q starting at this project's own single-nephron GFR and stepping down by the TEXTBOOK fractional reabsorption shares in kidney_model.json. No transport equation is solved and no solute concentration is computed.",
+     "tubular_display_gain": 25,
+     "lumen_assumption": "lumen radius taken as 0.42 of the published OUTER tubular radius; this is a declared assumption, not a measurement",
+     "ultrastructure_absent": "podocyte foot processes (0.2-0.4 \u00b5m), the filtration slit diaphragm and the proximal-tubule brush border are NOT modelled. They are two orders of magnitude below CT resolution and three below anything this geometry is derived from; drawing them would be illustration, not data."
+    },
+    "molecular": {
+     "triangles": 8944,
+     "cell_type": "epithelial cell of proximal tubule",
+     "n_cells": 113966,
+     "n_donors": 137,
+     "transporters_placed": {
+      "basolateral": 7,
+      "apical": 8,
+      "other": 4
+     },
+     "transporters_unassigned_membrane": 4,
+     "encoding": "marker radius and tint are an ORDINAL encoding of the measured mean expression (CP10K, log1p). They are NOT a transport rate: no calibrated expression-to-flux conversion exists in this project.",
+     "particle_speed": "a single declared display rate, identical for every step of the route; it does not encode any measured or inferred flux.",
+     "brush_border": "the microvillous ring is a declared schematic. Real microvilli are about 1 \u00b5m tall, far below the resolution of anything this project measures.",
+     "membrane_rule": "every marker is positioned from the membrane field of kidney_molecular.json; basolateral markers sit on the blood-facing surface and apical markers on the lumen-facing surface, so a transporter cannot be drawn on the wrong face."
+    },
+    "haemodynamics": {
+     "rbf_mL_min": 1139,
+     "gfr_mL_min": 125.3,
+     "rpf_mL_min": 626.4,
+     "filtration_fraction": 0.2,
+     "map_mmHg": 94.4872,
+     "glomerular_capillary_mmHg": [
+      45,
+      60
+     ],
+     "ordinary_capillary_mmHg": [
+      15,
+      25
+     ],
+     "net_filtration_pressure_mmHg": 11.5
+    },
+    "vesselReport": {
+     "murray": {
+      "renal_artery": 0,
+      "renal_vein": 0,
+      "glomerular": null,
+      "collecting_system": 0
+     },
+     "clearance": -0.729
+    },
+    "respiration": {
+     "f_hz": 0.18323,
+     "breaths_per_min": 10.99,
+     "excursion_cm": 1.5,
+     "excursion_reference_range_cm": [
+      1,
+      2
+     ],
+     "rotation_deg": 1.6,
+     "rigid_body": true,
+     "parenchymal_deformation": "none \u2014 the kidney is displaced, not deformed",
+     "source": "carried over unchanged from this project's cardiac model, where it was fitted as the respiratory sinus arrhythmia frequency of PhysioNet nsrdb record 16265 (PUBLIC placeholder data)",
+     "is_user_personal_data": false,
+     "measured_craniocaudal_excursion_mm": 15.597858138440074,
+     "max_interpoint_distance_drift_mm": 6.394884621840902e-14
+    },
+    "cardiac": {
+     "pulse_changed": true,
+     "pulse_now": 0.9998998045952325
+    },
+    "flowProbe": {
+     "paths": 98,
+     "retrogradePaths": 0,
+     "movingPaths": 98,
+     "nonFiniteAdvance": 0,
+     "sampleDeltas": [
+      0.683495820483234,
+      0.6831619018146178,
+      0.794843205951576,
+      0.7528446932033894,
+      0.8954750805045926,
+      0.8976342426429724
+     ],
+     "pathMeanV0": 240.40728759765625,
+     "pathLen0": 157.8247528076172,
+     "pulseNow": 0.9998998045952325,
+     "rrMs": 931.4,
+     "advanceSample": [
+      22.249699972363803,
+      22.238829986082894,
+      25.87436869034697,
+      24.507199674928632
+     ],
+     "phaseSample": [
+      0.24969878792762756,
+      0.23882952332496643,
+      0.8743706345558167,
+      0.5071986317634583
+     ],
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "advanceCtor": "[object Float64Array]",
+     "advanceLen": 98,
+     "meanVFinite": 98,
+     "lenFinite": 98,
+     "pulseLen": 64,
+     "direction": {
+      "renal_artery|root-to-terminal": 30,
+      "renal_vein|terminal-to-root": 26,
+      "glomerular|root-to-terminal": 26,
+      "collecting_system|terminal-to-root": 16
+     }
+    },
+    "hudBoxes": 30,
+    "hudLabelsDrawn": 6,
+    "hudLabelsCulled": 3,
+    "hudOverflow": [],
+    "domOverflow": [],
+    "documentScrollWidth": 1440,
+    "windowInnerWidth": 1440,
+    "horizontalOverflowPx": 0,
+    "view": "organ"
+   },
+   "per_view": {
+    "organ": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.75,
+      "fps": 1333.3333333333333
+     },
+     "frame_stats": {
+      "frames": 1633,
+      "meanFrameMs": 1.5341111111111119,
+      "medianFrameMs": 0.5,
+      "p95FrameMs": 4.299999999999272,
+      "fpsMean": 651.8432679075828,
+      "fpsMedian": 2000
+     },
+     "hud_overflow": [],
+     "labels_drawn": 6,
+     "labels_culled": 3
+    },
+    "section": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.8625,
+      "fps": 1159.4202898550725
+     },
+     "frame_stats": {
+      "frames": 1637,
+      "meanFrameMs": 1.5330000000000008,
+      "medianFrameMs": 0.5,
+      "p95FrameMs": 4.200000000000728,
+      "fpsMean": 652.3157208088711,
+      "fpsMedian": 2000
+     },
+     "hud_overflow": [],
+     "labels_drawn": 3,
+     "labels_culled": 2
+    },
+    "nephron": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 1.252500000000873,
+      "fps": 798.4031936122179
+     },
+     "frame_stats": {
+      "frames": 1931,
+      "meanFrameMs": 1.5791111111111078,
+      "medianFrameMs": 0.5,
+      "p95FrameMs": 4.299999999999272,
+      "fpsMean": 633.2676611314396,
+      "fpsMedian": 2000
+     },
+     "hud_overflow": [],
+     "labels_drawn": 8,
+     "labels_culled": 12
+    },
+    "molecular": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 1.417500000000291,
+      "fps": 705.467372133894
+     },
+     "frame_stats": {
+      "frames": 1883,
+      "meanFrameMs": 1.589333333333335,
+      "medianFrameMs": 1.0999999999985448,
+      "p95FrameMs": 3.3000000000029104,
+      "fpsMean": 629.1946308724825,
+      "fpsMedian": 909.0909090921117
+     },
+     "hud_overflow": [],
+     "labels_drawn": 6,
+     "labels_culled": 14
+    }
+   },
+   "hud_overflow_after_toggles": [],
+   "horizontal_overflow_px_after_toggles": 0,
+   "screenshots": {
+    "organ": "/work/out/kidney3d_desktop_organ.png",
+    "section": "/work/out/kidney3d_desktop_section.png",
+    "nephron": "/work/out/kidney3d_desktop_nephron.png",
+    "molecular": "/work/out/kidney3d_desktop_molecular.png",
+    "vessels": "/work/out/kidney3d_desktop_vessels.png"
+   },
+   "console": [],
+   "assets_served": [
+    [
+     "kidney3d.html",
+     24542
+    ],
+    [
+     "kidney3d/assets/flow_report.json",
+     10495
+    ],
+    [
+     "kidney3d/assets/geometry_report.json",
+     7175
+    ],
+    [
+     "kidney3d/assets/kidney.glb",
+     5236072
+    ],
+    [
+     "kidney3d/assets/kidney_flow.json",
+     297617
+    ],
+    [
+     "kidney3d/assets/kidney_model.json",
+     7210
+    ],
+    [
+     "kidney3d/assets/kidney_molecular.json",
+     88784
+    ],
+    [
+     "kidney3d/assets/kidney_vessels.json",
+     463000
+    ],
+    [
+     "kidney3d/assets/vessel_report.json",
+     27852
+    ],
+    [
+     "kidney3d/js/flow.js",
+     13267
+    ],
+    [
+     "kidney3d/js/hud.js",
+     9572
+    ],
+    [
+     "kidney3d/js/main.js",
+     25699
+    ],
+    [
+     "kidney3d/js/materials.js",
+     9627
+    ],
+    [
+     "kidney3d/js/molecular.js",
+     11630
+    ],
+    [
+     "kidney3d/js/motion.js",
+     4053
+    ],
+    [
+     "kidney3d/js/nephron.js",
+     21620
+    ],
+    [
+     "kidney3d/js/vessels.js",
+     5980
+    ],
+    [
+     "kidney3d/vendor/jsm/controls/OrbitControls.js",
+     40755
+    ],
+    [
+     "kidney3d/vendor/jsm/environments/RoomEnvironment.js",
+     4960
+    ],
+    [
+     "kidney3d/vendor/jsm/loaders/GLTFLoader.js",
+     117570
+    ],
+    [
+     "kidney3d/vendor/jsm/utils/BufferGeometryUtils.js",
+     37712
+    ],
+    [
+     "kidney3d/vendor/jsm/utils/SkeletonUtils.js",
+     11535
+    ],
+    [
+     "kidney3d/vendor/three/three.core.js",
+     1458113
+    ],
+    [
+     "kidney3d/vendor/three/three.module.js",
+     662772
+    ]
+   ]
+  },
+  "phone390": {
+   "viewport": [
+    390,
+    844
+   ],
+   "ready_ms": 945,
+   "frame_stats": {
+    "frames": 27325,
+    "meanFrameMs": 0.42522222222222306,
+    "medianFrameMs": 0.3999999999996362,
+    "p95FrameMs": 0.5,
+    "fpsMean": 2351.71152338646,
+    "fpsMedian": 2500.0000000022737
+   },
+   "probe": {
+    "webgl2": true,
+    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
+    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "programs": 13,
+    "programsNotLinked": [],
+    "triangles": 168782,
+    "sectionTriangles": 54000,
+    "nephronTriangles": 36304,
+    "molecularTriangles": 8944,
+    "particles": 10780,
+    "particlesDrawn": 4851,
+    "trees": {
+     "renal_artery": {
+      "name": "renal_artery",
+      "segments_rendered": 1895,
+      "segments_in_tree": 1895,
+      "triangles": 21978,
+      "vertices": 21978,
+      "radius_mm": [
+       0.4108,
+       2.8098
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "renal_artery": 26,
+       "segmental": 72,
+       "interlobar": 123,
+       "arcuate": 584,
+       "cortical_radiate": 1090
+      }
+     },
+     "renal_vein": {
+      "name": "renal_vein",
+      "segments_rendered": 1625,
+      "segments_in_tree": 1625,
+      "triangles": 21360,
+      "vertices": 21360,
+      "radius_mm": [
+       0.51349,
+       3.45271
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "renal_vein": 32,
+       "segmental_vein": 10,
+       "interlobar_vein": 278,
+       "arcuate_vein": 143,
+       "cortical_radiate_vein": 1162
+      }
+     },
+     "glomerular": {
+      "name": "glomerular",
+      "segments_rendered": 2304,
+      "segments_in_tree": 2304,
+      "triangles": 23040,
+      "vertices": 23040,
+      "radius_mm": [
+       0.0037,
+       0.01
+      ],
+      "radius_scale_applied": 9,
+      "segments_by_level": {
+       "afferent": 128,
+       "glomerulus": 1920,
+       "efferent": 256
+      }
+     },
+     "collecting_system": {
+      "name": "collecting_system",
+      "segments_rendered": 213,
+      "segments_in_tree": 213,
+      "triangles": 2824,
+      "vertices": 2824,
+      "radius_mm": [
+       0.81228,
+       1.75
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "ureter": 53,
+       "major_calyx": 12,
+       "minor_calyx": 148
+      }
+     }
+    },
+    "flowDiag": {
+     "paths": 98,
+     "particles": 10780,
+     "drawn": 4851,
+     "urineDisplayGain": 40,
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "cardiacPhase01": 0.6071505260897573,
+     "pulseNow": 1.0066792548851193,
+     "byTree": {
+      "renal_artery": {
+       "paths": 30,
+       "meanV_cm_s": 25.933336283365886
+      },
+      "renal_vein": {
+       "paths": 26,
+       "meanV_cm_s": 16.865085865901065
+      },
+      "glomerular": {
+       "paths": 26,
+       "meanV_cm_s": 4.510914068955642
+      },
+      "collecting_system": {
+       "paths": 16,
+       "meanV_cm_s": 0.118221977353096
+      }
+     }
+    },
+    "nephron": {
+     "magnification": 20,
+     "tubule_calibre_gain": 6,
+     "tubule_calibre_note": "tubule POSITIONS and LENGTHS are true at 20x; the rendered tubule CALIBRE carries an additional declared 6x gain because a 60 um tubule in a figure tall enough to hold an 18 mm loop is thinner than one pixel. The true diameters are in dimensions_mm and are what v = Q/A uses.",
+     "magnification_note": "built at real size in millimetres and displayed at 20x; every dimension is a published adult human value and none was changed to fit the screen",
+     "dimensions_mm": {
+      "glomerulus_diameter": 0.2,
+      "bowman_diameter": 0.22,
+      "pct_length": 14,
+      "pct_diameter": 0.06,
+      "pst_length": 6,
+      "pst_diameter": 0.05,
+      "thin_limb_diameter": 0.015,
+      "tal_length": 9,
+      "tal_diameter": 0.035,
+      "dct_length": 5,
+      "dct_diameter": 0.035,
+      "cnt_diameter": 0.04,
+      "cd_cortical_diameter": 0.04,
+      "cd_papillary_diameter": 0.2,
+      "afferent_diameter": 0.02,
+      "efferent_diameter": 0.013,
+      "vasa_recta_diameter": 0.017,
+      "cortical_loop_depth": 2,
+      "juxta_loop_depth": 18,
+      "macula_densa_diameter": 0.04
+     },
+     "nephrons": {
+      "cortical": {
+       "pct_length_mm": 14,
+       "dct_length_mm": 5,
+       "loop_depth_mm": 2,
+       "has_vasa_recta": false,
+       "tubular_velocity_mm_s": {
+        "proximal_tubule": 2.0952,
+        "loop_of_henle": 11.7331,
+        "distal_tubule": 1.724,
+        "collecting_duct": 1.2276
+       }
+      },
+      "juxtamedullary": {
+       "pct_length_mm": 14,
+       "dct_length_mm": 5,
+       "loop_depth_mm": 18,
+       "has_vasa_recta": true,
+       "tubular_velocity_mm_s": {
+        "proximal_tubule": 2.0952,
+        "loop_of_henle": 11.7331,
+        "distal_tubule": 1.724,
+        "collecting_duct": 1.2276
+       }
+      }
+     },
+     "triangles": 36304,
+     "tubular_flow_note": "tubular fluid speed is v = Q/A, with Q starting at this project's own single-nephron GFR and stepping down by the TEXTBOOK fractional reabsorption shares in kidney_model.json. No transport equation is solved and no solute concentration is computed.",
+     "tubular_display_gain": 25,
+     "lumen_assumption": "lumen radius taken as 0.42 of the published OUTER tubular radius; this is a declared assumption, not a measurement",
+     "ultrastructure_absent": "podocyte foot processes (0.2-0.4 \u00b5m), the filtration slit diaphragm and the proximal-tubule brush border are NOT modelled. They are two orders of magnitude below CT resolution and three below anything this geometry is derived from; drawing them would be illustration, not data."
+    },
+    "molecular": {
+     "triangles": 8944,
+     "cell_type": "epithelial cell of proximal tubule",
+     "n_cells": 113966,
+     "n_donors": 137,
+     "transporters_placed": {
+      "basolateral": 7,
+      "apical": 8,
+      "other": 4
+     },
+     "transporters_unassigned_membrane": 4,
+     "encoding": "marker radius and tint are an ORDINAL encoding of the measured mean expression (CP10K, log1p). They are NOT a transport rate: no calibrated expression-to-flux conversion exists in this project.",
+     "particle_speed": "a single declared display rate, identical for every step of the route; it does not encode any measured or inferred flux.",
+     "brush_border": "the microvillous ring is a declared schematic. Real microvilli are about 1 \u00b5m tall, far below the resolution of anything this project measures.",
+     "membrane_rule": "every marker is positioned from the membrane field of kidney_molecular.json; basolateral markers sit on the blood-facing surface and apical markers on the lumen-facing surface, so a transporter cannot be drawn on the wrong face."
+    },
+    "haemodynamics": {
+     "rbf_mL_min": 1139,
+     "gfr_mL_min": 125.3,
+     "rpf_mL_min": 626.4,
+     "filtration_fraction": 0.2,
+     "map_mmHg": 94.4872,
+     "glomerular_capillary_mmHg": [
+      45,
+      60
+     ],
+     "ordinary_capillary_mmHg": [
+      15,
+      25
+     ],
+     "net_filtration_pressure_mmHg": 11.5
+    },
+    "vesselReport": {
+     "murray": {
+      "renal_artery": 0,
+      "renal_vein": 0,
+      "glomerular": null,
+      "collecting_system": 0
+     },
+     "clearance": -0.729
+    },
+    "respiration": {
+     "f_hz": 0.18323,
+     "breaths_per_min": 10.99,
+     "excursion_cm": 1.5,
+     "excursion_reference_range_cm": [
+      1,
+      2
+     ],
+     "rotation_deg": 1.6,
+     "rigid_body": true,
+     "parenchymal_deformation": "none \u2014 the kidney is displaced, not deformed",
+     "source": "carried over unchanged from this project's cardiac model, where it was fitted as the respiratory sinus arrhythmia frequency of PhysioNet nsrdb record 16265 (PUBLIC placeholder data)",
+     "is_user_personal_data": false,
+     "measured_craniocaudal_excursion_mm": 15.597858138440074,
+     "max_interpoint_distance_drift_mm": 6.394884621840902e-14
+    },
+    "cardiac": {
+     "pulse_changed": true,
+     "pulse_now": 1.0066792548851193
+    },
+    "flowProbe": {
+     "paths": 98,
+     "retrogradePaths": 0,
+     "movingPaths": 98,
+     "nonFiniteAdvance": 0,
+     "sampleDeltas": [
+      0.6813643164516492,
+      0.6810314391193018,
+      0.7923644614630163,
+      0.7504969224480469,
+      0.892682512229733,
+      0.8948349409504672
+     ],
+     "pathMeanV0": 240.40728759765625,
+     "pathLen0": 157.8247528076172,
+     "pulseNow": 1.0066792548851193,
+     "rrMs": 931.4,
+     "advanceSample": [
+      22.23523803590116,
+      22.224375114931174,
+      25.857550779252467,
+      24.491270401050063
+     ],
+     "phaseSample": [
+      0.23523686826229095,
+      0.22437261044979095,
+      0.8575524091720581,
+      0.4912627041339874
+     ],
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "advanceCtor": "[object Float64Array]",
+     "advanceLen": 98,
+     "meanVFinite": 98,
+     "lenFinite": 98,
+     "pulseLen": 64,
+     "direction": {
+      "renal_artery|root-to-terminal": 30,
+      "renal_vein|terminal-to-root": 26,
+      "glomerular|root-to-terminal": 26,
+      "collecting_system|terminal-to-root": 16
+     }
+    },
+    "hudBoxes": 19,
+    "hudLabelsDrawn": 4,
+    "hudLabelsCulled": 5,
+    "hudOverflow": [],
+    "domOverflow": [],
+    "documentScrollWidth": 390,
+    "windowInnerWidth": 390,
+    "horizontalOverflowPx": 0,
+    "view": "organ"
+   },
+   "per_view": {
+    "organ": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.0625,
+      "fps": 16000
+     },
+     "frame_stats": {
+      "frames": 5596,
+      "meanFrameMs": 0.45755555555555877,
+      "medianFrameMs": 0.4000000000014552,
+      "p95FrameMs": 0.5999999999985448,
+      "fpsMean": 2185.5269548324277,
+      "fpsMedian": 2499.999999990905
+     },
+     "hud_overflow": [],
+     "labels_drawn": 4,
+     "labels_culled": 5
+    },
+    "section": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.05500000000029104,
+      "fps": 18181.81818172197
+     },
+     "frame_stats": {
+      "frames": 5990,
+      "meanFrameMs": 0.415444444444442,
+      "medianFrameMs": 0.4000000000014552,
+      "p95FrameMs": 0.5,
+      "fpsMean": 2407.06071142018,
+      "fpsMedian": 2499.999999990905
+     },
+     "hud_overflow": [],
+     "labels_drawn": 3,
+     "labels_culled": 2
+    },
+    "nephron": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.0875,
+      "fps": 11428.57142857143
+     },
+     "frame_stats": {
+      "frames": 5644,
+      "meanFrameMs": 0.444777777777777,
+      "medianFrameMs": 0.4000000000014552,
+      "p95FrameMs": 0.5999999999985448,
+      "fpsMean": 2248.3137646764967,
+      "fpsMedian": 2499.999999990905
+     },
+     "hud_overflow": [],
+     "labels_drawn": 5,
+     "labels_culled": 15
+    },
+    "molecular": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.7074999999997089,
+      "fps": 1413.4275618380373
+     },
+     "frame_stats": {
+      "frames": 2170,
+      "meanFrameMs": 1.1588888888888889,
+      "medianFrameMs": 1.1000000000021828,
+      "p95FrameMs": 1.2999999999992724,
+      "fpsMean": 862.895493767977,
+      "fpsMedian": 909.0909090891051
+     },
+     "hud_overflow": [],
+     "labels_drawn": 5,
+     "labels_culled": 15
+    }
+   },
+   "hud_overflow_after_toggles": [],
+   "horizontal_overflow_px_after_toggles": 0,
+   "screenshots": {
+    "organ": "/work/out/kidney3d_phone390_organ.png",
+    "section": "/work/out/kidney3d_phone390_section.png",
+    "nephron": "/work/out/kidney3d_phone390_nephron.png",
+    "molecular": "/work/out/kidney3d_phone390_molecular.png",
+    "vessels": "/work/out/kidney3d_phone390_vessels.png"
+   },
+   "console": [],
+   "assets_served": [
+    [
+     "kidney3d.html",
+     24542
+    ],
+    [
+     "kidney3d/assets/flow_report.json",
+     10495
+    ],
+    [
+     "kidney3d/assets/geometry_report.json",
+     7175
+    ],
+    [
+     "kidney3d/assets/kidney.glb",
+     5236072
+    ],
+    [
+     "kidney3d/assets/kidney_flow.json",
+     297617
+    ],
+    [
+     "kidney3d/assets/kidney_model.json",
+     7210
+    ],
+    [
+     "kidney3d/assets/kidney_molecular.json",
+     88784
+    ],
+    [
+     "kidney3d/assets/kidney_vessels.json",
+     463000
+    ],
+    [
+     "kidney3d/assets/vessel_report.json",
+     27852
+    ],
+    [
+     "kidney3d/js/flow.js",
+     13267
+    ],
+    [
+     "kidney3d/js/hud.js",
+     9572
+    ],
+    [
+     "kidney3d/js/main.js",
+     25699
+    ],
+    [
+     "kidney3d/js/materials.js",
+     9627
+    ],
+    [
+     "kidney3d/js/molecular.js",
+     11630
+    ],
+    [
+     "kidney3d/js/motion.js",
+     4053
+    ],
+    [
+     "kidney3d/js/nephron.js",
+     21620
+    ],
+    [
+     "kidney3d/js/vessels.js",
+     5980
+    ],
+    [
+     "kidney3d/vendor/jsm/controls/OrbitControls.js",
+     40755
+    ],
+    [
+     "kidney3d/vendor/jsm/environments/RoomEnvironment.js",
+     4960
+    ],
+    [
+     "kidney3d/vendor/jsm/loaders/GLTFLoader.js",
+     117570
+    ],
+    [
+     "kidney3d/vendor/jsm/utils/BufferGeometryUtils.js",
+     37712
+    ],
+    [
+     "kidney3d/vendor/jsm/utils/SkeletonUtils.js",
+     11535
+    ],
+    [
+     "kidney3d/vendor/three/three.core.js",
+     1458113
+    ],
+    [
+     "kidney3d/vendor/three/three.module.js",
+     662772
+    ]
+   ]
+  },
+  "phone360": {
+   "viewport": [
+    360,
+    800
+   ],
+   "ready_ms": 842,
+   "frame_stats": {
+    "frames": 27412,
+    "meanFrameMs": 0.43733333333333374,
+    "medianFrameMs": 0.3999999999996362,
+    "p95FrameMs": 0.6000000000003638,
+    "fpsMean": 2286.585365853656,
+    "fpsMedian": 2500.0000000022737
+   },
+   "probe": {
+    "webgl2": true,
+    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
+    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "programs": 13,
+    "programsNotLinked": [],
+    "triangles": 168782,
+    "sectionTriangles": 54000,
+    "nephronTriangles": 36304,
+    "molecularTriangles": 8944,
+    "particles": 10780,
+    "particlesDrawn": 4851,
+    "trees": {
+     "renal_artery": {
+      "name": "renal_artery",
+      "segments_rendered": 1895,
+      "segments_in_tree": 1895,
+      "triangles": 21978,
+      "vertices": 21978,
+      "radius_mm": [
+       0.4108,
+       2.8098
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "renal_artery": 26,
+       "segmental": 72,
+       "interlobar": 123,
+       "arcuate": 584,
+       "cortical_radiate": 1090
+      }
+     },
+     "renal_vein": {
+      "name": "renal_vein",
+      "segments_rendered": 1625,
+      "segments_in_tree": 1625,
+      "triangles": 21360,
+      "vertices": 21360,
+      "radius_mm": [
+       0.51349,
+       3.45271
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "renal_vein": 32,
+       "segmental_vein": 10,
+       "interlobar_vein": 278,
+       "arcuate_vein": 143,
+       "cortical_radiate_vein": 1162
+      }
+     },
+     "glomerular": {
+      "name": "glomerular",
+      "segments_rendered": 2304,
+      "segments_in_tree": 2304,
+      "triangles": 23040,
+      "vertices": 23040,
+      "radius_mm": [
+       0.0037,
+       0.01
+      ],
+      "radius_scale_applied": 9,
+      "segments_by_level": {
+       "afferent": 128,
+       "glomerulus": 1920,
+       "efferent": 256
+      }
+     },
+     "collecting_system": {
+      "name": "collecting_system",
+      "segments_rendered": 213,
+      "segments_in_tree": 213,
+      "triangles": 2824,
+      "vertices": 2824,
+      "radius_mm": [
+       0.81228,
+       1.75
+      ],
+      "radius_scale_applied": 1,
+      "segments_by_level": {
+       "ureter": 53,
+       "major_calyx": 12,
+       "minor_calyx": 148
+      }
+     }
+    },
+    "flowDiag": {
+     "paths": 98,
+     "particles": 10780,
+     "drawn": 4851,
+     "urineDisplayGain": 40,
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "cardiacPhase01": 0.6190680695726866,
+     "pulseNow": 0.9989233820055828,
+     "byTree": {
+      "renal_artery": {
+       "paths": 30,
+       "meanV_cm_s": 25.933336283365886
+      },
+      "renal_vein": {
+       "paths": 26,
+       "meanV_cm_s": 16.865085865901065
+      },
+      "glomerular": {
+       "paths": 26,
+       "meanV_cm_s": 4.510914068955642
+      },
+      "collecting_system": {
+       "paths": 16,
+       "meanV_cm_s": 0.118221977353096
+      }
+     }
+    },
+    "nephron": {
+     "magnification": 20,
+     "tubule_calibre_gain": 6,
+     "tubule_calibre_note": "tubule POSITIONS and LENGTHS are true at 20x; the rendered tubule CALIBRE carries an additional declared 6x gain because a 60 um tubule in a figure tall enough to hold an 18 mm loop is thinner than one pixel. The true diameters are in dimensions_mm and are what v = Q/A uses.",
+     "magnification_note": "built at real size in millimetres and displayed at 20x; every dimension is a published adult human value and none was changed to fit the screen",
+     "dimensions_mm": {
+      "glomerulus_diameter": 0.2,
+      "bowman_diameter": 0.22,
+      "pct_length": 14,
+      "pct_diameter": 0.06,
+      "pst_length": 6,
+      "pst_diameter": 0.05,
+      "thin_limb_diameter": 0.015,
+      "tal_length": 9,
+      "tal_diameter": 0.035,
+      "dct_length": 5,
+      "dct_diameter": 0.035,
+      "cnt_diameter": 0.04,
+      "cd_cortical_diameter": 0.04,
+      "cd_papillary_diameter": 0.2,
+      "afferent_diameter": 0.02,
+      "efferent_diameter": 0.013,
+      "vasa_recta_diameter": 0.017,
+      "cortical_loop_depth": 2,
+      "juxta_loop_depth": 18,
+      "macula_densa_diameter": 0.04
+     },
+     "nephrons": {
+      "cortical": {
+       "pct_length_mm": 14,
+       "dct_length_mm": 5,
+       "loop_depth_mm": 2,
+       "has_vasa_recta": false,
+       "tubular_velocity_mm_s": {
+        "proximal_tubule": 2.0952,
+        "loop_of_henle": 11.7331,
+        "distal_tubule": 1.724,
+        "collecting_duct": 1.2276
+       }
+      },
+      "juxtamedullary": {
+       "pct_length_mm": 14,
+       "dct_length_mm": 5,
+       "loop_depth_mm": 18,
+       "has_vasa_recta": true,
+       "tubular_velocity_mm_s": {
+        "proximal_tubule": 2.0952,
+        "loop_of_henle": 11.7331,
+        "distal_tubule": 1.724,
+        "collecting_duct": 1.2276
+       }
+      }
+     },
+     "triangles": 36304,
+     "tubular_flow_note": "tubular fluid speed is v = Q/A, with Q starting at this project's own single-nephron GFR and stepping down by the TEXTBOOK fractional reabsorption shares in kidney_model.json. No transport equation is solved and no solute concentration is computed.",
+     "tubular_display_gain": 25,
+     "lumen_assumption": "lumen radius taken as 0.42 of the published OUTER tubular radius; this is a declared assumption, not a measurement",
+     "ultrastructure_absent": "podocyte foot processes (0.2-0.4 \u00b5m), the filtration slit diaphragm and the proximal-tubule brush border are NOT modelled. They are two orders of magnitude below CT resolution and three below anything this geometry is derived from; drawing them would be illustration, not data."
+    },
+    "molecular": {
+     "triangles": 8944,
+     "cell_type": "epithelial cell of proximal tubule",
+     "n_cells": 113966,
+     "n_donors": 137,
+     "transporters_placed": {
+      "basolateral": 7,
+      "apical": 8,
+      "other": 4
+     },
+     "transporters_unassigned_membrane": 4,
+     "encoding": "marker radius and tint are an ORDINAL encoding of the measured mean expression (CP10K, log1p). They are NOT a transport rate: no calibrated expression-to-flux conversion exists in this project.",
+     "particle_speed": "a single declared display rate, identical for every step of the route; it does not encode any measured or inferred flux.",
+     "brush_border": "the microvillous ring is a declared schematic. Real microvilli are about 1 \u00b5m tall, far below the resolution of anything this project measures.",
+     "membrane_rule": "every marker is positioned from the membrane field of kidney_molecular.json; basolateral markers sit on the blood-facing surface and apical markers on the lumen-facing surface, so a transporter cannot be drawn on the wrong face."
+    },
+    "haemodynamics": {
+     "rbf_mL_min": 1139,
+     "gfr_mL_min": 125.3,
+     "rpf_mL_min": 626.4,
+     "filtration_fraction": 0.2,
+     "map_mmHg": 94.4872,
+     "glomerular_capillary_mmHg": [
+      45,
+      60
+     ],
+     "ordinary_capillary_mmHg": [
+      15,
+      25
+     ],
+     "net_filtration_pressure_mmHg": 11.5
+    },
+    "vesselReport": {
+     "murray": {
+      "renal_artery": 0,
+      "renal_vein": 0,
+      "glomerular": null,
+      "collecting_system": 0
+     },
+     "clearance": -0.729
+    },
+    "respiration": {
+     "f_hz": 0.18323,
+     "breaths_per_min": 10.99,
+     "excursion_cm": 1.5,
+     "excursion_reference_range_cm": [
+      1,
+      2
+     ],
+     "rotation_deg": 1.6,
+     "rigid_body": true,
+     "parenchymal_deformation": "none \u2014 the kidney is displaced, not deformed",
+     "source": "carried over unchanged from this project's cardiac model, where it was fitted as the respiratory sinus arrhythmia frequency of PhysioNet nsrdb record 16265 (PUBLIC placeholder data)",
+     "is_user_personal_data": false,
+     "measured_craniocaudal_excursion_mm": 15.597858138440074,
+     "max_interpoint_distance_drift_mm": 6.394884621840902e-14
+    },
+    "cardiac": {
+     "pulse_changed": true,
+     "pulse_now": 0.9989233820055828
+    },
+    "flowProbe": {
+     "paths": 98,
+     "retrogradePaths": 0,
+     "movingPaths": 98,
+     "nonFiniteAdvance": 0,
+     "sampleDeltas": [
+      0.6839449862990001,
+      0.6836108481925507,
+      0.7953655447667032,
+      0.753339432294176,
+      0.8960635505185905,
+      0.8982241315710127
+     ],
+     "pathMeanV0": 240.40728759765625,
+     "pathLen0": 157.8247528076172,
+     "pulseNow": 0.9989233820055828,
+     "rrMs": 931.4,
+     "advanceSample": [
+      22.252364925392726,
+      22.241493637161618,
+      25.877467787292147,
+      24.51013501949881
+     ],
+     "phaseSample": [
+      0.2523629367351532,
+      0.241493821144104,
+      0.8774696588516235,
+      0.5101314783096313
+     ],
+     "nonFiniteSteps": 0,
+     "firstNonFiniteStep": null,
+     "advanceCtor": "[object Float64Array]",
+     "advanceLen": 98,
+     "meanVFinite": 98,
+     "lenFinite": 98,
+     "pulseLen": 64,
+     "direction": {
+      "renal_artery|root-to-terminal": 30,
+      "renal_vein|terminal-to-root": 26,
+      "glomerular|root-to-terminal": 26,
+      "collecting_system|terminal-to-root": 16
+     }
+    },
+    "hudBoxes": 19,
+    "hudLabelsDrawn": 4,
+    "hudLabelsCulled": 5,
+    "hudOverflow": [],
+    "domOverflow": [],
+    "documentScrollWidth": 360,
+    "windowInnerWidth": 360,
+    "horizontalOverflowPx": 0,
+    "view": "organ"
+   },
+   "per_view": {
+    "organ": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.057499999999708964,
+      "fps": 17391.304347914112
+     },
+     "frame_stats": {
+      "frames": 5585,
+      "meanFrameMs": 0.45944444444444443,
+      "medianFrameMs": 0.4000000000014552,
+      "p95FrameMs": 0.6000000000021828,
+      "fpsMean": 2176.5417170495766,
+      "fpsMedian": 2499.999999990905
+     },
+     "hud_overflow": [],
+     "labels_drawn": 4,
+     "labels_culled": 5
+    },
+    "section": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.05500000000029104,
+      "fps": 18181.81818172197
+     },
+     "frame_stats": {
+      "frames": 5994,
+      "meanFrameMs": 0.4239999999999984,
+      "medianFrameMs": 0.4000000000014552,
+      "p95FrameMs": 0.5,
+      "fpsMean": 2358.490566037745,
+      "fpsMedian": 2499.999999990905
+     },
+     "hud_overflow": [],
+     "labels_drawn": 3,
+     "labels_culled": 2
+    },
+    "nephron": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.0875,
+      "fps": 11428.57142857143
+     },
+     "frame_stats": {
+      "frames": 5700,
+      "meanFrameMs": 0.4454444444444461,
+      "medianFrameMs": 0.4000000000014552,
+      "p95FrameMs": 0.5999999999985448,
+      "fpsMean": 2244.948865053621,
+      "fpsMedian": 2499.999999990905
+     },
+     "hud_overflow": [],
+     "labels_drawn": 5,
+     "labels_culled": 15
+    },
+    "molecular": {
+     "render_cost": {
+      "frames": 40,
+      "msPerFrame": 0.7074999999997089,
+      "fps": 1413.4275618380373
+     },
+     "frame_stats": {
+      "frames": 2273,
+      "meanFrameMs": 1.1218888888888896,
+      "medianFrameMs": 1.0999999999985448,
+      "p95FrameMs": 1.2000000000007276,
+      "fpsMean": 891.3538674853911,
+      "fpsMedian": 909.0909090921117
+     },
+     "hud_overflow": [],
+     "labels_drawn": 4,
+     "labels_culled": 16
+    }
+   },
+   "hud_overflow_after_toggles": [],
+   "horizontal_overflow_px_after_toggles": 0,
+   "screenshots": {
+    "organ": "/work/out/kidney3d_phone360_organ.png",
+    "section": "/work/out/kidney3d_phone360_section.png",
+    "nephron": "/work/out/kidney3d_phone360_nephron.png",
+    "molecular": "/work/out/kidney3d_phone360_molecular.png",
+    "vessels": "/work/out/kidney3d_phone360_vessels.png"
+   },
+   "console": [],
+   "assets_served": [
+    [
+     "kidney3d.html",
+     24542
+    ],
+    [
+     "kidney3d/assets/flow_report.json",
+     10495
+    ],
+    [
+     "kidney3d/assets/geometry_report.json",
+     7175
+    ],
+    [
+     "kidney3d/assets/kidney.glb",
+     5236072
+    ],
+    [
+     "kidney3d/assets/kidney_flow.json",
+     297617
+    ],
+    [
+     "kidney3d/assets/kidney_model.json",
+     7210
+    ],
+    [
+     "kidney3d/assets/kidney_molecular.json",
+     88784
+    ],
+    [
+     "kidney3d/assets/kidney_vessels.json",
+     463000
+    ],
+    [
+     "kidney3d/assets/vessel_report.json",
+     27852
+    ],
+    [
+     "kidney3d/js/flow.js",
+     13267
+    ],
+    [
+     "kidney3d/js/hud.js",
+     9572
+    ],
+    [
+     "kidney3d/js/main.js",
+     25699
+    ],
+    [
+     "kidney3d/js/materials.js",
+     9627
+    ],
+    [
+     "kidney3d/js/molecular.js",
+     11630
+    ],
+    [
+     "kidney3d/js/motion.js",
+     4053
+    ],
+    [
+     "kidney3d/js/nephron.js",
+     21620
+    ],
+    [
+     "kidney3d/js/vessels.js",
+     5980
+    ],
+    [
+     "kidney3d/vendor/jsm/controls/OrbitControls.js",
+     40755
+    ],
+    [
+     "kidney3d/vendor/jsm/environments/RoomEnvironment.js",
+     4960
+    ],
+    [
+     "kidney3d/vendor/jsm/loaders/GLTFLoader.js",
+     117570
+    ],
+    [
+     "kidney3d/vendor/jsm/utils/BufferGeometryUtils.js",
+     37712
+    ],
+    [
+     "kidney3d/vendor/jsm/utils/SkeletonUtils.js",
+     11535
+    ],
+    [
+     "kidney3d/vendor/three/three.core.js",
+     1458113
+    ],
+    [
+     "kidney3d/vendor/three/three.module.js",
+     662772
+    ]
+   ]
+  }
+ },
+ "frame_rate_method": "two numbers are reported per view. frame_stats comes from requestAnimationFrame and in headless Chromium reflects the compositor cadence as much as the scene; render_cost times back-to-back renderer.render() calls followed by gl.finish(), which is the real per-frame cost. Read render_cost.",
+ "problems": [],
+ "frame_rate_is_trustworthy": true
+}

@@ -196,6 +196,37 @@ The per-view figures also reflect the headless compositor cadence: nine of the t
 1. **真实 GPU 帧率未测量。** An NVIDIA A10 was allocated and present in the container (nvidia-smi lists it, /dev/nvidia0 exists, libEGL_nvidia and the 10_nvidia.json vendor ICD are installed), but all SEVEN Chromium GL backend configurations probed (angle-gl-egl, angle-vulkan, desktop-gl, egl, angle-default, ozone-headless-egl, ozone-headless-nativegl — with EGL_PLATFORM=surfaceless and the NVIDIA vendor ICD pinned) fell back to SwiftShader. There is no Vulkan ICD in this image (/usr/share/vulkan/icd.d absent). So every frame rate in this report was measured under a SOFTWARE rasteriser. HARDWARE-GPU FRAME RATE WAS NOT MEASURED and no claim about it is made anywhere. The per-view figures also reflect the headless compositor cadence: nine of the twelve land on exactly 10.0 fps, which is a requestAnimationFrame pacing artefact rather than a scene cost. They are reported as measured and are NOT evidence of on-device performance. 基准测试报告里的 fps 一律是软件光栅化下的数值，既不能读作桌面性能，也不能读作手机性能；此项按未测量列出，而不是把软件渲染的数字当成 GPU 结果来报。同一次测试中与渲染后端无关的结论（HUD 越界 0、水平溢出 0、DOM 越界 0、98/98 通路推进、逆流 0、非有限步 0、13 个着色器程序全部链接成功）仍然成立。
 1. **`renderCost` 背靠背渲染探针的结果已弃用。** 该探针在 SwiftShader 下返回 0.1–1.2 ms/帧（折合 849–10,526 fps），与软件光栅化的实际能力不符，判定为不可信，因此不在本文件中报告，也未用于任何结论。
 
+---
+
+## 补测更正（本节在上述构建完成之后追加）
+
+第 1 项与第 2 项中"真实 GPU 帧率未测量"的状态**已经解除**。根本原因已定位并修复：原镜像装了 NVIDIA 的厂商 EGL 库
+（`libEGL_nvidia`、`10_nvidia.json`），但**缺少 GLVND 派发层**（`libglvnd0` / `libegl1` / `libgles2`），
+Chromium 因此拿不到可用的 EGL 入口，七种后端全部静默退回 SwiftShader。补装这三个包后重测（NVIDIA A10、驱动 610.57.04）：
+
+页面实际拿到的渲染器字符串：`ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)`
+——**是硬件 GPU，不是软件光栅器**；`frame_rate_is_trustworthy = true`，`problems = []`。
+
+**但无头 Chromium 没有垂直同步，所以 rAF 帧率不设上限（实测 654–2,352 fps），这个数字不能读作用户可见帧率。**
+可以读的是每帧成本：
+
+| 视口 | 视图 | 渲染成本 ms/帧 | 帧时 p95 ms | 对 60 fps 预算 16.67 ms 的余量 |
+|---|---|---|---|---|
+| 桌面 1440×900 | 器官 | 0.750 | 4.3 | 3.9× |
+| 桌面 1440×900 | 剖面 | 0.863 | 4.2 | 4.0× |
+| 桌面 1440×900 | 肾单位 | 1.253 | 4.3 | 3.9× |
+| 桌面 1440×900 | 分子 | 1.418 | 3.3 | 5.1× |
+| 手机 390×844 | 器官 / 剖面 / 肾单位 / 分子 | 0.062 / 0.055 / 0.087 / 0.707 | 0.6 / 0.5 / 0.6 / 1.3 | 27.8× / 33.3× / 27.8× / 12.8× |
+| 手机 360×800 | 器官 / 剖面 / 肾单位 / 分子 | 0.057 / 0.055 / 0.087 / 0.707 | 0.6 / 0.5 / 0.6 / 1.2 | 27.8× / 33.3× / 27.8× / 13.9× |
+
+最差单项为桌面分子视图 1.418 ms/帧，最差帧时 p95 为 4.3 ms。场景就绪时间 842–1000 ms。
+12 个视口×视图组合的 HUD 越界、水平溢出、DOM 越界**全部为 0**，切换视图后复测仍为 0。
+
+**仍然成立的限制：这是数据中心 NVIDIA A10，不是笔记本，也不是真实手机。**
+390×844 与 360×800 只是布局与绘制开销测试，不构成对任何机型的性能测量；
+手机视口的渲染成本低至 0.055 ms 很可能是 GPU 异步提交未被背靠背探针完整捕获，不应作为绝对开销引用，
+其相对关系（分子视图最重、剖面最轻）才是可用的结论。
+
 ## H. 不得这样读这个页面
 
 - 这里**没有**药物浓度、肾清除率、PBPK 房室，因为没有表达量→通量的标定。
