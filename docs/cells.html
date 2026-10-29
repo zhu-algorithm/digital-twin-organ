@@ -44,6 +44,20 @@
   .scroll{max-height:460px;overflow-y:auto;-webkit-overflow-scrolling:touch}
   footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:12.5px}
   code{background:#0f141c;padding:1px 5px;border-radius:4px;font-size:12px}
+
+  /* Narrow screens: the cell-type name is the point of the row, so it gets its own
+     full-width line above the bar and the statistics instead of being squeezed out. */
+  @media (max-width:620px){
+    .ct{flex-wrap:wrap;row-gap:7px;padding:11px 12px}
+    .ct .nm{flex:1 1 100%;order:-1;white-space:normal;overflow:visible;text-overflow:clip;
+            font-weight:600;line-height:1.35}
+    .ct .bar{flex:0 0 54px}
+    .ct .pc{flex:1 1 auto;font-size:12px;white-space:normal}
+    .scroll{max-height:none}
+    table{font-size:12.5px}
+    th,td{padding:6px 5px}
+    .wrap{padding:16px 13px 50px}
+  }
 </style>
 </head>
 <body>
