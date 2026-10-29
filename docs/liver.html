@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital Twin Organ — 数字孪生肝脏</title>
+<style>
+  :root{--bg:#0b0e13;--panel:#141922;--line:#2a3340;--ink:#e6edf3;--dim:#8b97a8;
+        --art:#e5484d;--portal:#8b5cf6;--vein:#4a7fd4;--bile:#d9b23a;--acc:#f0b429}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB",sans-serif;
+       padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  header{padding:16px 20px 10px;border-bottom:1px solid var(--line)}
+  h1{margin:10px 0 4px;font-size:19px;font-weight:600}
+  .sub{color:var(--dim);font-size:12.5px}
+  a.lk{color:#58a6ff;text-decoration:none;font-size:14px}
+  main{display:grid;grid-template-columns:minmax(360px,1fr) minmax(360px,1fr);gap:16px;padding:16px 20px 28px}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+  .panel h2{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--dim);
+            text-transform:uppercase;letter-spacing:.08em}
+  .panel .cap{color:var(--dim);font-size:12px;margin:0 0 10px}
+  canvas{display:block;width:100%;border-radius:6px;background:radial-gradient(ellipse at 50% 45%,#1b2230,#0d1117 72%)}
+  .leg{display:flex;gap:14px;margin-top:9px;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
+  .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:9px;margin-top:12px}
+  .stat{background:#0f141c;border:1px solid var(--line);border-radius:6px;padding:9px 11px}
+  .stat .k{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+  .stat .v{font-size:19px;font-variant-numeric:tabular-nums;margin-top:3px}
+  .stat .u{color:var(--dim);font-size:11px;margin-left:3px}
+  .ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+  button{background:#1e2633;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:7px 13px;font-size:13px;cursor:pointer;font-family:inherit}
+  button.on{background:#1f3a29;border-color:#2f6b43;color:#9fe0b4}
+  label{color:var(--dim);font-size:12.5px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:8px}
+  th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  footer{padding:0 20px 34px;color:var(--dim);font-size:12.5px;max-width:1060px}
+  footer code{background:#0f141c;padding:1px 5px;border-radius:3px;font-size:11.5px}
+  @media(max-width:620px){ header,main,footer{padding-left:13px;padding-right:13px} }
+</style>
+</head>
+<body>
+<header>
+  <a class="lk" href="index.html">← 返回器官总览</a>
+  <span style="color:var(--dim)"> · </span>
+  <a class="lk" href="cells.html?organ=liver">肝脏的细胞与分子层 →</a>
+  <h1>数字孪生肝脏 · 灌流与小叶剖面</h1>
+  <div class="sub">双重血供（门静脉 + 肝动脉）· 血液与胆汁逆向流动 · 器官随呼吸位移 · 小叶分区由实测表达驱动</div>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>器官层 — 灌流与呼吸位移</h2>
+    <p class="cap">肝随呼吸作头尾向位移。呼吸频率不是设定值，而是由本项目心率模型拟合的
+       呼吸性窦性心律不齐频率导出（<span id="rr_bpm"></span> 次/分）。</p>
+    <canvas id="organ" width="640" height="560"></canvas>
+    <div class="leg">
+      <span><i class="sw" style="background:#8b5cf6"></i>门静脉（约 75% 血流，富营养）</span>
+      <span><i class="sw" style="background:#e5484d"></i>肝动脉（约 25%，富氧）</span>
+      <span><i class="sw" style="background:#4a7fd4"></i>肝静脉 → 下腔静脉</span>
+    </div>
+    <div class="ctl">
+      <button id="play" class="on">暂停</button>
+      <button id="tgBreath" class="on">呼吸位移</button>
+      <label>流速 <input type="range" id="rate" min="0.25" max="2" step="0.25" value="1"></label>
+      <span id="ratev" style="color:var(--dim);font-variant-numeric:tabular-nums">1.00×</span>
+    </div>
+    <div class="grid" id="stats"></div>
+  </section>
+
+  <section class="panel">
+    <h2>解剖剖面 — 肝小叶</h2>
+    <p class="cap">六角形小叶：六个角是门管区（门静脉小支、肝动脉小支、胆管三联），中心是中央静脉。
+       <b>血液由门管区流向中心，胆汁在毛细胆管内反向流回门管区</b>——这个逆流结构是肝脏的关键解剖特征。</p>
+    <canvas id="lobule" width="640" height="560"></canvas>
+    <div class="leg">
+      <span><i class="sw" style="background:#8b5cf6"></i>窦状隙血流（门管区 → 中央静脉）</span>
+      <span><i class="sw" style="background:#d9b23a"></i>胆汁（中央 → 门管区，逆流）</span>
+      <span><i class="sw" style="background:#f0b429"></i>药物浓度沿窦状隙递减</span>
+    </div>
+    <div class="ctl">
+      <button id="tgBile" class="on">胆汁逆流</button>
+      <button id="tgDrug" class="on">药物浓度梯度</button>
+      <button id="tgZone" class="on">分区着色</button>
+      <label>显示基因
+        <select id="gene" style="background:#1e2633;color:var(--ink);border:1px solid var(--line);
+                border-radius:5px;padding:5px 8px;font-size:13px;font-family:inherit"></select>
+      </label>
+    </div>
+    <table id="ztab"><thead><tr><th>分区</th><th>细胞数</th><th>平均表达</th><th>表达细胞比例</th></tr></thead><tbody></tbody></table>
+  </section>
+</main>
+
+<footer>
+  <b>读图说明。</b>器官层的血流量不是编的：总肝血流由本项目心脏模型实算的心输出量
+  （<span id="co"></span> L/min）乘以肝脏所占比例得到，<b>但那个比例（约 25%）与门静脉/肝动脉的分流比（约 75:25）
+  是教科书量级值，不是本项目实测</b>——页面上的每个数字都在下表标了出处等级。
+  呼吸位移的<b>频率</b>来自真实拟合（RSA 0.18323 Hz），但<b>位移幅度</b>（1–3 cm）是教科书范围。
+  小叶剖面的分区着色与下方表格用的是<b>实测单细胞表达</b>：图谱把肝细胞按小叶位置注释成三种独立细胞类型
+  （门脉周围 57,004 个细胞、中间带 19,907、中央静脉周围 26,491，均来自 24 位 donor），所以梯度可以直接读出，
+  不需要推断。<b>梯度并非对所有基因一致</b>：CYP3A4 中央静脉周围／门脉周围 = 1.37×，CYP1A2 = 2.21×，
+  而 CYP2D6 = 0.74×（方向相反）、CYP2C9 = 1.04×（基本持平）。这与已知的 CYP 区域异质性相符。
+  <br><br>
+  <b>这一页不做什么。</b>没有肝清除率计算，没有药物动力学求解——药物浓度沿窦状隙的递减是按分区表达加权的
+  <b>示意</b>，不是 well-stirred 或 dispersion 模型的解。把表达量换算成清除能力需要绝对丰度标定与 IVIVE 外推，
+  这一层尚未建立，所以此处只呈现<b>定性趋势</b>，不给定量预测。
+  <br><br>
+  <b>数据来源声明。</b>单细胞表达来自 CELLxGENE Census 2025-11-08（人类正常肝脏，10x 系列，<code>is_primary_data=True</code>，
+  2 个数据集 / 126,310 个细胞 / 11 种细胞类型）。呼吸频率导出自 PhysioNet MIT-BIH Normal Sinus Rhythm Database
+  记录 16265，<b>为公开数据占位，不代表任何特定个体</b>（<code>is_user_personal_data=false</code>）。
+  本项目为研究用模拟器，<b>不可用于任何临床给药决策</b>。
+</footer>
+
+<script>
+const HW=640, HH=560;
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+function fit(c,dw,dh){
+  const dpr=window.devicePixelRatio||1, cssW=c.clientWidth||dw, cssH=cssW*dh/dw;
+  c.style.height=cssH+'px';
+  const pw=Math.round(cssW*dpr), ph=Math.round(cssH*dpr);
+  if(c.width!==pw||c.height!==ph){c.width=pw;c.height=ph;}
+  const s=c.width/dw, ctx=c.getContext('2d'); ctx.setTransform(s,0,0,s,0,0); return s;
+}
+const oc=document.getElementById('organ'), ox=oc.getContext('2d');
+const lc=document.getElementById('lobule'), lx=lc.getContext('2d');
+
+let M=null, playing=true, rate=1, breathOn=true, bileOn=true, drugOn=true, zoneOn=true, gene='CYP3A4';
+let t0=performance.now(), tAcc=0;
+
+/* ---------- organ outline, anterior view ----------------------------------
+   Patient's right lobe is the bulky mass on the viewer's left; the left lobe
+   tapers to the viewer's right. The superior border is domed under the
+   diaphragm, the inferior (sharp) border slopes up toward the left lobe.
+   The falciform ligament runs between the lobes; the gallbladder fundus peeks
+   below the inferior border of the right lobe, just right of the midline. */
+function liverPath(x){
+  x.beginPath();
+  x.moveTo(70,268);
+  x.bezierCurveTo(96,170, 206,126, 322,134);       // superior border, right-lobe dome
+  x.bezierCurveTo(424,141, 512,162, 560,200);      // superior border tapering into the left lobe
+  x.bezierCurveTo(584,228, 562,258, 512,276);      // left (viewer-right) tip
+  x.bezierCurveTo(452,296, 402,306, 368,322);      // inferior border of the left lobe
+  x.bezierCurveTo(360,330, 356,338, 348,342);      // interlobar notch at the falciform insertion
+  x.bezierCurveTo(330,372, 286,400, 230,402);      // inferior border of the bulky right lobe
+  x.bezierCurveTo(154,404, 88,352, 70,268);
+  x.closePath();
+}
+const HILUM = [336,330];                            // porta hepatis, inferior aspect
+const IVC   = [330,146];                            // IVC groove, superior aspect
+function drawOrgan(dt){
+  fit(oc,HW,HH); ox.clearRect(0,0,HW,HH);
+  const f = M.respiration.f_hz;
+  const phase = breathOn ? Math.sin(2*Math.PI*f*(tAcc/1000)) : 0;
+  const dy = phase*16;                       // craniocaudal excursion, scaled to the design space
+  const rot = phase*0.016;
+
+  ox.save(); ox.translate(HW/2, HH/2+dy); ox.rotate(rot); ox.translate(-HW/2,-HH/2);
+
+  const tube=(pts,w,col,dark)=>{
+    ox.save(); ox.strokeStyle=col; ox.lineWidth=w; ox.lineCap='round'; ox.lineJoin='round';
+    ox.beginPath(); ox.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++) ox.lineTo(pts[i][0],pts[i][1]);
+    ox.stroke(); ox.strokeStyle=dark; ox.lineWidth=w*0.56; ox.stroke(); ox.restore();
+  };
+
+  /* Vessel topology. Portal vein and hepatic artery reach the liver at the porta
+     hepatis on the inferior aspect; the hepatic veins leave superiorly into the
+     IVC. Extrahepatic segments are drawn FIRST so the parenchyma covers the
+     intrahepatic course — only the stumps stay visible, which is what an anterior
+     view actually shows. */
+  const PV = [[594,392],[520,374],[450,356],[392,342],HILUM];        // portal vein → hilum
+  const HA = [[600,418],[528,404],[458,386],[398,368],[348,344]];    // hepatic artery → hilum
+  const BD = [[566,440],[500,424],[438,404],[380,380],[344,352]];    // common bile duct ← hilum
+  tube(PV,17,'#5b3fa0','#231643');
+  tube(HA,10,'#7b2a2e','#2e1014');
+  tube(BD,8,'#8a6f1e','#2e2408');
+  tube([IVC,[330,96]],19,'#2f4a7a','#101c2f');                       // IVC stump above the liver
+
+  // parenchyma
+  const g=ox.createLinearGradient(90,150,560,350);
+  g.addColorStop(0,'#8a5333'); g.addColorStop(.55,'#7d4a2e'); g.addColorStop(1,'#5f3421');
+  liverPath(ox); ox.fillStyle=g; ox.fill();
+
+  ox.save(); liverPath(ox); ox.clip();
+  // intrahepatic branches, dimmed as if seen through the capsule
+  ox.globalAlpha=.42;
+  tube([HILUM,[300,300],[252,276],[196,262]],11,'#5b3fa0','#2a1b4d');   // right portal branch
+  tube([HILUM,[392,308],[446,290],[492,272]],9,'#5b3fa0','#2a1b4d');    // left portal branch
+  ox.globalAlpha=.5;
+  tube([IVC,[318,196],[300,232],[268,258]],12,'#2f4a7a','#101c2f');     // right hepatic vein
+  tube([IVC,[338,196],[360,228],[398,250]],10,'#2f4a7a','#101c2f');     // middle hepatic vein
+  tube([IVC,[300,190],[252,214],[204,230]],9,'#2f4a7a','#101c2f');      // left hepatic vein
+  ox.globalAlpha=1;
+  /* Falciform ligament — a surface groove, so it reads as a soft shaded crease
+     rather than a full-thickness slash, and it stops at the interlobar notch. */
+  ox.globalAlpha=.34; ox.strokeStyle='#3a2114'; ox.lineWidth=9; ox.lineCap='round';
+  ox.beginPath(); ox.moveTo(380,142); ox.bezierCurveTo(368,206,358,268,350,332); ox.stroke();
+  ox.globalAlpha=.5; ox.strokeStyle='#2a1710'; ox.lineWidth=2.6;
+  ox.beginPath(); ox.moveTo(380,142); ox.bezierCurveTo(368,206,358,268,350,332); ox.stroke();
+  ox.globalAlpha=1;
+  // capsule sheen over the right lobe
+  ox.globalAlpha=.13; ox.fillStyle='#e8c9a8';
+  ox.beginPath(); ox.ellipse(222,212,126,46,-0.2,0,6.283); ox.fill();
+  ox.globalAlpha=1;
+  ox.restore();
+  liverPath(ox); ox.strokeStyle='rgba(255,255,255,.12)'; ox.lineWidth=1.4; ox.stroke();
+
+  // gallbladder fundus, projecting just below the inferior border of the right lobe
+  ox.beginPath(); ox.ellipse(296,388,27,16,-0.30,0,6.283);
+  ox.fillStyle='#5f7a2a'; ox.fill(); ox.strokeStyle='rgba(255,255,255,.14)'; ox.lineWidth=1; ox.stroke();
+
+  ox.save(); ox.font='500 11px -apple-system,sans-serif'; ox.fillStyle='rgba(230,237,243,.66)';
+  ox.textAlign='center'; ox.fillText('下腔静脉',330,86); ox.fillText('胆囊',280,418);
+  ox.textAlign='right';
+  ox.fillText('门静脉',624,388); ox.fillText('肝动脉',630,414); ox.fillText('胆总管',596,456);
+  ox.restore();
+
+  // particles: inflow toward the hilum, hepatic-vein outflow toward the IVC, bile out via the duct
+  const spd = rate*(playing?1:0);
+  advect(ox, PART.pv, PV, 0.0075*spd, '#a78bfa', 3.1);
+  advect(ox, PART.ha, HA, 0.0115*spd, '#e5484d', 2.5);
+  advect(ox, PART.bd, BD, 0.0040*spd, '#d9b23a', 2.3, true);
+  advect(ox, PART.hv, [IVC,[318,196],[300,232],[268,258]], -0.0085*spd, '#7aa2e3', 2.9, true);
+  advect(ox, PART.hv2, [IVC,[338,196],[360,228],[398,250]], -0.0085*spd, '#7aa2e3', 2.7, true);
+  advect(ox, PART.hv3, [IVC,[300,190],[252,214],[204,230]], -0.0085*spd, '#7aa2e3', 2.6, true);
+  advect(ox, PART.ivc, [IVC,[330,96]], -0.0120*spd, '#7aa2e3', 3.2, true);
+  ox.restore();
+
+  // respiration indicator
+  ox.save(); ox.font='500 11px -apple-system,sans-serif'; ox.fillStyle='rgba(139,151,168,.9)';
+  ox.fillText(`呼吸相位 ${phase>=0?'吸气':'呼气'} · ${M.respiration.breaths_per_min} 次/分`,16,HH-14);
+  ox.restore();
+}
+function advect(x, arr, pts, step, col, r, reverse){
+  for(let i=0;i<arr.length;i++){
+    arr[i]=(arr[i]+step+1)%1;
+    const p=polyPoint(pts, reverse? 1-arr[i] : arr[i]);
+    x.beginPath(); x.arc(p[0],p[1],r,0,6.283); x.fillStyle=col; x.globalAlpha=.85; x.fill();
+  }
+  x.globalAlpha=1;
+}
+function polyPoint(pts,u){
+  let tot=0; const seg=[];
+  for(let i=0;i<pts.length-1;i++){const d=Math.hypot(pts[i+1][0]-pts[i][0],pts[i+1][1]-pts[i][1]);seg.push(d);tot+=d;}
+  let tgt=u*tot, acc=0;
+  for(let i=0;i<seg.length;i++){
+    if(acc+seg[i]>=tgt){const t=(tgt-acc)/seg[i];
+      return [lerp(pts[i][0],pts[i+1][0],t), lerp(pts[i][1],pts[i+1][1],t)];}
+    acc+=seg[i];
+  }
+  return pts[pts.length-1];
+}
+const PART={pv:[],ha:[],bd:[],hv:[],hv2:[],hv3:[],ivc:[],sinus:[],bile:[]};
+for(const k of ['pv','ha']) for(let i=0;i<30;i++) PART[k].push(Math.random());
+for(const k of ['hv','hv2','hv3']) for(let i=0;i<16;i++) PART[k].push(Math.random());
+for(let i=0;i<14;i++) PART.ivc.push(Math.random());
+for(let i=0;i<12;i++) PART.bd.push(Math.random());
+
+/* ---------- lobule cross-section ---------- */
+const CX=320, CY=270, R=200;
+const CORNERS=[...Array(6)].map((_,i)=>{
+  const a=-Math.PI/2 + i*Math.PI/3;
+  return [CX+Math.cos(a)*R, CY+Math.sin(a)*R];
+});
+for(let s=0;s<6;s++){ PART.sinus.push(...[...Array(9)].map(()=>({s, u:Math.random()}))); }
+for(let s=0;s<6;s++){ PART.bile.push(...[...Array(6)].map(()=>({s, u:Math.random()}))); }
+
+function zoneColorFor(g, zi){
+  const z=M.zonal_expression[g]; if(!z) return '#8d5433';
+  const v=z.expr[zi], mx=Math.max(...z.expr), mn=Math.min(...z.expr);
+  const t = mx>mn ? (v-mn)/(mx-mn) : 0.5;
+  // pale clay -> saturated amber as expression rises
+  const c0=[120,78,52], c1=[232,166,52];
+  return `rgb(${c0.map((c,i)=>Math.round(lerp(c,c1[i],t))).join(',')})`;
+}
+function drawLobule(){
+  fit(lc,HW,HH); lx.clearRect(0,0,HW,HH);
+  const hex=(rad)=>{ lx.beginPath();
+    for(let i=0;i<6;i++){ const a=-Math.PI/2+i*Math.PI/3;
+      const p=[CX+Math.cos(a)*rad, CY+Math.sin(a)*rad]; i?lx.lineTo(p[0],p[1]):lx.moveTo(p[0],p[1]); }
+    lx.closePath(); };
+
+  /* Three concentric zone bands, painted outer → inner. The hexagon's CORNERS are the
+     portal triads, so the OUTER band is periportal (zone index 0) and the CENTRE, around
+     the central vein, is centrilobular (index 2). Colour encodes the measured expression
+     of the selected gene in that zone. */
+  hex(R);        lx.fillStyle = zoneOn ? zoneColorFor(gene,0) : '#8d5433'; lx.fill();
+  hex(R*0.74);   lx.fillStyle = zoneOn ? zoneColorFor(gene,1) : '#8a5131'; lx.fill();
+  hex(R*0.44);   lx.fillStyle = zoneOn ? zoneColorFor(gene,2) : '#87502f'; lx.fill();
+  hex(R); lx.strokeStyle='rgba(255,255,255,.13)'; lx.lineWidth=1.4; lx.stroke();
+  hex(R*0.74); lx.strokeStyle='rgba(255,255,255,.07)'; lx.lineWidth=1; lx.stroke();
+  hex(R*0.44); lx.stroke();
+
+  // sinusoids: corner (portal triad) -> centre (central vein)
+  lx.save(); lx.strokeStyle='rgba(20,12,8,.42)'; lx.lineWidth=2.6; lx.lineCap='round';
+  for(const c of CORNERS){ lx.beginPath(); lx.moveTo(c[0],c[1]); lx.lineTo(CX,CY); lx.stroke(); }
+  lx.restore();
+
+  // drug concentration along the sinusoid, shown as a fading overlay toward the centre
+  if(drugOn){
+    const dg=lx.createRadialGradient(CX,CY,R*0.12,CX,CY,R);
+    dg.addColorStop(0,'rgba(240,180,41,0.03)'); dg.addColorStop(1,'rgba(240,180,41,0.30)');
+    hex(R); lx.fillStyle=dg; lx.fill();
+  }
+
+  // central vein
+  lx.beginPath(); lx.arc(CX,CY,26,0,6.283);
+  lx.fillStyle='#1d3558'; lx.fill(); lx.strokeStyle='rgba(255,255,255,.2)'; lx.lineWidth=1.4; lx.stroke();
+  lx.save(); lx.font='600 10.5px -apple-system,sans-serif'; lx.fillStyle='rgba(230,237,243,.85)';
+  lx.textAlign='center'; lx.fillText('中央静脉',CX,CY+3.5); lx.restore();
+
+  // portal triads at the corners: portal venule, hepatic arteriole, bile duct
+  for(const c of CORNERS){
+    const trio=[[-9,-6,'#8b5cf6'],[9,-6,'#e5484d'],[0,9,'#d9b23a']];
+    for(const [dx,dy,col] of trio){
+      lx.beginPath(); lx.arc(c[0]+dx,c[1]+dy,5.2,0,6.283);
+      lx.fillStyle=col; lx.fill();
+      lx.strokeStyle='rgba(0,0,0,.45)'; lx.lineWidth=1; lx.stroke();
+    }
+  }
+  lx.save(); lx.font='500 10.5px -apple-system,sans-serif'; lx.fillStyle='rgba(230,237,243,.72)';
+  lx.textAlign='center'; lx.fillText('门管区（门静脉・肝动脉・胆管）',CX,CY-R-18); lx.restore();
+
+  // particles: blood corner→centre, bile centre→corner (counter-current)
+  const spd=rate*(playing?1:0);
+  for(const p of PART.sinus){
+    p.u=(p.u+0.0062*spd)%1;
+    const c=CORNERS[p.s];
+    const x=lerp(c[0],CX,p.u), y=lerp(c[1],CY,p.u);
+    lx.beginPath(); lx.arc(x,y,2.9,0,6.283);
+    lx.fillStyle='#a78bfa'; lx.globalAlpha=.9; lx.fill();
+  }
+  if(bileOn){
+    for(const p of PART.bile){
+      p.u=(p.u+0.0034*spd)%1;
+      const c=CORNERS[p.s];
+      const x=lerp(CX,c[0],p.u), y=lerp(CY,c[1],p.u);
+      // offset the canaliculus slightly off the sinusoid axis
+      const nx=-(c[1]-CY), ny=(c[0]-CX), nl=Math.hypot(nx,ny)||1;
+      lx.beginPath(); lx.arc(x+nx/nl*7, y+ny/nl*7, 2.3, 0, 6.283);
+      lx.fillStyle='#d9b23a'; lx.globalAlpha=.95; lx.fill();
+    }
+  }
+  lx.globalAlpha=1;
+
+  lx.save(); lx.font='500 11px -apple-system,sans-serif'; lx.fillStyle='rgba(139,151,168,.9)';
+  lx.fillText(`${gene} 分区比值（中央/门脉） ${M.zonal_expression[gene].ratio_central_over_periportal}×`,16,HH-14);
+  lx.restore();
+}
+
+/* ---------- readouts ---------- */
+function stat(k,v,u){return `<div class="stat"><div class="k">${k}</div><div class="v">${v}<span class="u">${u}</span></div></div>`;}
+function drawStats(){
+  const q=M.haemodynamics;
+  document.getElementById('stats').innerHTML =
+    stat('总肝血流', q.total_hepatic_flow_mL_min.toFixed(0), 'mL/min') +
+    stat('门静脉', q.portal_flow_mL_min.toFixed(0), 'mL/min') +
+    stat('肝动脉', q.arterial_flow_mL_min.toFixed(0), 'mL/min') +
+    stat('门静脉压', q.portal_pressure_mmHg.join('–'), 'mmHg') +
+    stat('肝动脉压', q.hepatic_artery_pressure_mmHg.toFixed(0), 'mmHg') +
+    stat('窦状隙通过时间', q.sinusoid_transit_s.join('–'), 's') +
+    stat('胆汁流量', q.bile_flow_mL_min.join('–'), 'mL/min') +
+    stat('呼吸频率', M.respiration.breaths_per_min.toFixed(1), '次/分');
+}
+function drawZoneTable(){
+  const z=M.zonal_expression[gene];
+  document.querySelector('#ztab tbody').innerHTML = M.zone_labels.map((lab,i)=>
+    `<tr><td>${lab}</td><td>${M.zone_cell_counts[i].toLocaleString('en-US')}</td>
+     <td>${z.expr[i].toFixed(3)}</td><td>${z.pct[i].toFixed(1)}%</td></tr>`).join('');
+}
+
+/* ---------- loop & controls ---------- */
+function frame(now){
+  const dt=now-t0; t0=now;
+  if(playing) tAcc+=dt*rate;
+  if(M){ drawOrgan(dt); drawLobule(); }
+  requestAnimationFrame(frame);
+}
+fetch('data/liver_model.json').then(r=>r.json()).then(m=>{
+  M=m;
+  document.getElementById('rr_bpm').textContent=m.respiration.breaths_per_min.toFixed(2);
+  document.getElementById('co').textContent=m.haemodynamics.cardiac_output_L_min.toFixed(2);
+  const sel=document.getElementById('gene');
+  sel.innerHTML=Object.keys(m.zonal_expression).map(g=>`<option${g===gene?' selected':''}>${g}</option>`).join('');
+  sel.onchange=e=>{gene=e.target.value; drawZoneTable();};
+  drawStats(); drawZoneTable(); requestAnimationFrame(frame);
+}).catch(e=>{
+  document.getElementById('stats').innerHTML =
+    `<div class="stat" style="grid-column:1/-1;color:#f0883e">数据加载失败：${e}。
+     若在本地直接双击打开此文件，浏览器会阻止读取 data/ 目录；请通过线上地址访问。</div>`;
+});
+const pb=document.getElementById('play');
+pb.onclick=()=>{playing=!playing; pb.textContent=playing?'暂停':'播放'; pb.className=playing?'on':'';};
+const tb=(id,get,set)=>{const b=document.getElementById(id);
+  b.onclick=()=>{set(!get()); b.className=get()?'on':'';};};
+tb('tgBreath',()=>breathOn,v=>breathOn=v);
+tb('tgBile',()=>bileOn,v=>bileOn=v);
+tb('tgDrug',()=>drugOn,v=>drugOn=v);
+tb('tgZone',()=>zoneOn,v=>zoneOn=v);
+document.getElementById('rate').oninput=e=>{rate=+e.target.value;
+  document.getElementById('ratev').textContent=rate.toFixed(2)+'×';};
+</script>
+</body>
+</html>
