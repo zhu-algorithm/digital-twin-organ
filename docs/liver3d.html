@@ -19,7 +19,13 @@
   #app{position:absolute;inset:0}
   #ui{position:absolute;left:12px;top:12px;z-index:10;background:var(--panel);
       border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:min(84vw,320px);
-      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45}
+      backdrop-filter:blur(6px);font-size:12.5px;line-height:1.45;
+      /* The panel is absolutely positioned inside #stage, whose height is capped at
+         min(70vh,660px). With the section controls open its content exceeds that, and it
+         used to spill past the stage and cover the caveat box in the normal flow below —
+         an overlap that bounding-box overflow checks cannot see, because nothing leaves
+         the viewport. Bound it to the stage and scroll it internally instead. */
+      max-height:calc(100% - 24px);overflow-y:auto;overscroll-behavior:contain}
   #ui .row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
   button{background:#16202f;color:var(--ink);border:1px solid var(--line);border-radius:6px;
          padding:5px 9px;font-size:12.5px;cursor:pointer;font-family:inherit;min-height:28px}
