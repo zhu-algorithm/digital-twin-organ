@@ -18,6 +18,23 @@
 
 export const NARROW_PX = 520;
 
+/** Round a length in mm down to 1/2/5 x 10^n so the bar reads cleanly. */
+function niceLength (mm) {
+  const e = Math.floor(Math.log10(Math.max(mm, 1e-9)));
+  const base = Math.pow(10, e);
+  const f = mm / base;
+  const m = f >= 5 ? 5 : (f >= 2 ? 2 : 1);
+  return m * base;
+}
+
+/** mm -> the unit a reader expects at that scale. */
+function formatLength (mm) {
+  if (mm >= 10) return (mm / 10).toPrecision(2).replace(/\.0+$/, '') + ' cm';
+  if (mm >= 1) return mm.toPrecision(2).replace(/\.0+$/, '') + ' mm';
+  if (mm >= 0.001) return (mm * 1000).toPrecision(2).replace(/\.0+$/, '') + ' \u00b5m';
+  return (mm * 1e6).toPrecision(2) + ' nm';
+}
+
 export class HUD {
   constructor (canvas) {
     this.c = canvas;
@@ -143,6 +160,35 @@ export class HUD {
       this._panel(sx, margin, sw, sh, 'stats-panel');
       lines.forEach((l, i) => this._text(
         l, sx + sw - pad, margin + pad + fs + lh * i, '#9fb4cf', fs, 'stats-' + i, 'right'));
+    }
+
+    // ------------------------------------------------- scale bar + tier
+    // The bar length is computed from the camera every frame (mm per CSS pixel
+    // at the orbit target), so it is an independent readout of the real size on
+    // screen. The magnification printed beside it is the tier's DECLARED scene
+    // units per millimetre of tissue. If the declared magnification were wrong
+    // the two would disagree, which is the point of showing both.
+    if (st.mmPerPixel && isFinite(st.mmPerPixel)) {
+      const targetPx = narrow ? 86 : 130;
+      const rawMm = st.mmPerPixel * targetPx;
+      const nice = niceLength(rawMm);
+      const barPx = nice / st.mmPerPixel;
+      const bx2 = margin;
+      const panelTopY = this.h - margin - (pad * 2 + lh * (rows.length + 1.6));
+      const by2 = panelTopY - (narrow ? 30 : 34);
+      const bw2 = Math.min(barPx, this.w - margin * 2);
+      g.strokeStyle = '#dce6f3'; g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(bx2, by2 + 10); g.lineTo(bx2 + bw2, by2 + 10);
+      g.moveTo(bx2, by2 + 5); g.lineTo(bx2, by2 + 15);
+      g.moveTo(bx2 + bw2, by2 + 5); g.lineTo(bx2 + bw2, by2 + 15);
+      g.stroke();
+      this.boxes.push({ label: 'scalebar', x: bx2, y: by2 + 5, w: bw2, h: 10 });
+      this._text(formatLength(nice), bx2, by2 + 2, '#dce6f3', fs, 'scalebar-label');
+      const tierTxt = (st.tier ? st.tier.zh + ' · ' : '')
+        + (st.magnification >= 1000 ? (st.magnification / 1000).toFixed(0) + '000×'
+                                    : st.magnification.toFixed(0) + '×');
+      this._text(tierTxt, bx2 + bw2 + 8, by2 + 14, '#9fb4cf', fs, 'tier-label');
     }
 
     // ------------------------------------------------- provenance footer

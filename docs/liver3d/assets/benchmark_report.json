@@ -1,5 +1,5 @@
 {
- "engine": "chromium",
+ "engine": "vulkan",
  "root": "/work/web",
  "viewports": {
   "desktop": {
@@ -7,19 +7,19 @@
     1440,
     900
    ],
-   "ready_ms": 2475.7000000000007,
+   "ready_ms": 1845.9000000001397,
    "frame_stats": {
-    "frames": 601,
-    "meanFrameMs": 16.665890183028274,
+    "frames": 721,
+    "meanFrameMs": 16.66588072122054,
     "medianFrameMs": 16.69999999999891,
     "p95FrameMs": 16.700000000000728,
-    "fpsMean": 60.002795471336476,
+    "fpsMean": 60.00282953703776,
     "fpsMedian": 59.880239520962
    },
    "probe": {
     "webgl2": true,
-    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
-    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+    "vendor": "Google Inc. (NVIDIA)",
     "programs": 17,
     "programsNotLinked": [],
     "triangles": 137256,
@@ -151,19 +151,72 @@
       "bile_duct|retrograde": 12
      }
     },
-    "hudBoxes": 18,
+    "hudBoxes": 21,
     "hudOverflow": [],
     "view": "organ",
     "gene": "CYP1A2",
     "zonalRatios": {
-     "CYP3A4": 1.368,
-     "CYP1A2": 2.212,
-     "CYP2C9": 1.036,
-     "CYP2D6": 0.742,
-     "CYP2C19": 0.667,
-     "UGT2B7": 0.982,
-     "SLCO1B1": 1.461,
-     "ABCB11": 2.162
+     "ABCB1": 1.7317,
+     "ABCB11": 2.0392,
+     "ABCC2": 1.5409,
+     "ABCC3": 1.2109,
+     "ABCC4": 1.3931,
+     "ABCG2": 2.3506,
+     "ACTB": 1.0393,
+     "ADH1B": 1.2765,
+     "ALDH2": 1.4135,
+     "B2M": 0.9172,
+     "CES1": 0.8041,
+     "CES2": 1.0115,
+     "COMT": 1.4386,
+     "CYP1A2": 3.1083,
+     "CYP2B6": 0.8856,
+     "CYP2C19": 1.38,
+     "CYP2C8": 1.0219,
+     "CYP2C9": 1.0872,
+     "CYP2D6": 0.7771,
+     "CYP2E1": 1.1983,
+     "CYP2J2": 1.674,
+     "CYP3A4": 1.5312,
+     "CYP3A5": 0.8891,
+     "FMO3": 1.7683,
+     "GAPDH": 1.1552,
+     "GSTA1": 1.7218,
+     "GSTM1": 1.7327,
+     "GSTP1": 0.86,
+     "HNF4A": 1.5085,
+     "NAT1": 2.3065,
+     "NAT2": 1.9298,
+     "NR1H4": 1.6694,
+     "NR1I2": 1.3506,
+     "NR1I3": 1.1028,
+     "PPARA": 1.6503,
+     "PPIA": 1.1969,
+     "SLC10A1": 1.854,
+     "SLC15A1": 1.8799,
+     "SLC15A2": 1.8,
+     "SLC22A1": 1.0529,
+     "SLC22A2": 2.6,
+     "SLC22A3": 2.0661,
+     "SLC22A6": 2.5,
+     "SLC22A7": 0.9189,
+     "SLC22A8": 1.5,
+     "SLC47A1": 1.587,
+     "SLC47A2": 3.4857,
+     "SLCO1B1": 1.4927,
+     "SLCO1B3": 1.6053,
+     "SLCO2B1": 1.4432,
+     "SULT1A1": 1.4638,
+     "SULT1E1": 1.9077,
+     "SULT2A1": 1.435,
+     "TBP": 1.4165,
+     "TPMT": 1.6641,
+     "UGT1A1": 0.7058,
+     "UGT1A3": 6,
+     "UGT1A4": 0.5985,
+     "UGT1A9": 0.4162,
+     "UGT2B15": 1.4989,
+     "UGT2B7": 1.2028
     },
     "couinaud": {
      "I caudate": 63,
@@ -174,29 +227,995 @@
      "VI": 273.9,
      "VII": 174.1,
      "VIII": 242.9
+    },
+    "expression": {
+     "cell_types": 171,
+     "genes": 61,
+     "n_cells": 1625338,
+     "n_datasets_used": 33,
+     "census_version": "2025-11-08"
+    },
+    "perCell": {
+     "loaded": 1991,
+     "shards_additional": 6,
+     "seed": 20261030,
+     "sampling": "per-cell-type reservoir sampling (Algorithm R) over the full contiguous-block stream of every liver cell in the Census; quota = clip(round(80 + 0.004*n_cells_of_type), 40, 600)",
+     "cell_type_counts": {
+      "macrophage": 355,
+      "periportal region hepatocyte": 283,
+      "hepatocyte": 233,
+      "hepatic stellate cell": 198,
+      "centrilobular region hepatocyte": 163,
+      "midzonal region hepatocyte": 149,
+      "endothelial cell": 126,
+      "endothelial cell of pericentral hepatic sinusoid": 112,
+      "Kupffer cell": 111,
+      "endothelial cell of hepatic sinusoid": 107,
+      "cholangiocyte": 94,
+      "endothelial cell of periportal hepatic sinusoid": 42,
+      "intrahepatic cholangiocyte": 18
+     }
+    },
+    "zonation": {
+     "genes": 61,
+     "pericentral_high": 45,
+     "periportal_high": 6,
+     "flat": 10,
+     "zone_cell_counts": {
+      "periportal": 57756,
+      "midzonal": 20168,
+      "pericentral": 29214
+     },
+     "zone_donors": {
+      "periportal": 33,
+      "midzonal": 33,
+      "pericentral": 33
+     },
+     "legacy_eight_gene_block": {
+      "CYP3A4": 1.368,
+      "CYP1A2": 2.212,
+      "CYP2C9": 1.036,
+      "CYP2D6": 0.742,
+      "CYP2C19": 0.667,
+      "UGT2B7": 0.982,
+      "SLCO1B1": 1.461,
+      "ABCB11": 2.162
+     }
+    },
+    "cellTier": {
+     "magnification": "3000x (scene mm per tissue mm)",
+     "scale_scene_units_per_um": 3,
+     "field_of_view_um": {
+      "portal_to_central": 493.7,
+      "vertical": 45.8,
+      "across_plates": 264
+     },
+     "dimensions_um": {
+      "hepatocyte": 22,
+      "sinusoid_lumen": 10,
+      "disse": 0.5,
+      "canaliculus": 0.75,
+      "microvillus": 0.5,
+      "kupffer": 13,
+      "stellate_body": 10,
+      "cholangiocyte": 9,
+      "lsec_thickness": 0.3
+     },
+     "plates": 8,
+     "layers": 2,
+     "cells_along_axis": 22,
+     "rendered": {
+      "hepatocytes": 352,
+      "sinusoidal_endothelium": 117,
+      "kupffer": 88,
+      "stellate": 29,
+      "cholangiocytes": 24,
+      "sinusoid_lumens": 14,
+      "canaliculi": 16,
+      "microvilli": 1600
+     },
+     "clickable_cells": 610,
+     "plate_cutaway": {
+      "enabled": true,
+      "hepatocytes_hidden": 44,
+      "hepatocytes_shown": 308,
+      "reason": "the front hepatic plate is hidden so the sinusoid, its endothelial lining, the Kupffer and stellate cells and the canaliculus are visible from outside; the same device as the lobule tier 60-degree sector"
+     },
+     "clickable_bound_to_a_real_census_cell": 610,
+     "composition_source": "published human-liver cell-NUMBER shares (hepatocyte 60%, sinusoidal endothelium 20%, Kupffer 15%, stellate 5%)",
+     "microvillus_density": "SCHEMATIC \u2014 height is real (0.5 um), surface density is not taken from any measurement",
+     "fenestrae": "NOT RENDERED \u2014 sinusoidal endothelial fenestrae are 50-150 nm, below this tier's rendered resolution; the lining is drawn as a continuous sheet",
+     "scaling_claim": "610 cells are rendered. An adult human liver holds of the order of 2e11 hepatocytes. A rendered cell does NOT stand for a block of real cells: it IS the one Census cell that was sampled, and its gene values are that cell's own measurements.",
+     "sinusoid_velocity_um_s": 333.333,
+     "canalicular_velocity_um_s": 2144,
+     "bile_display_gain": 120,
+     "census_type_mapping": {
+      "hepatocyte_zone1": {
+       "census_cell_type": "periportal region hepatocyte",
+       "candidates_tried": [
+        "periportal region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 283
+      },
+      "hepatocyte_zone2": {
+       "census_cell_type": "midzonal region hepatocyte",
+       "candidates_tried": [
+        "midzonal region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 149
+      },
+      "hepatocyte_zone3": {
+       "census_cell_type": "centrilobular region hepatocyte",
+       "candidates_tried": [
+        "centrilobular region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 163
+      },
+      "sinusoidal_endothelium": {
+       "census_cell_type": "endothelial cell of hepatic sinusoid",
+       "candidates_tried": [
+        "endothelial cell of hepatic sinusoid",
+        "endothelial cell of pericentral hepatic sinusoid",
+        "endothelial cell of periportal hepatic sinusoid",
+        "liver sinusoidal endothelial cell",
+        "endothelial cell"
+       ],
+       "fallback_used": false,
+       "available": 107
+      },
+      "kupffer": {
+       "census_cell_type": "Kupffer cell",
+       "candidates_tried": [
+        "Kupffer cell",
+        "macrophage"
+       ],
+       "fallback_used": false,
+       "available": 111
+      },
+      "stellate": {
+       "census_cell_type": "hepatic stellate cell",
+       "candidates_tried": [
+        "hepatic stellate cell"
+       ],
+       "fallback_used": false,
+       "available": 198
+      },
+      "cholangiocyte": {
+       "census_cell_type": "cholangiocyte",
+       "candidates_tried": [
+        "cholangiocyte",
+        "intrahepatic cholangiocyte",
+        "epithelial cell of bile duct"
+       ],
+       "fallback_used": false,
+       "available": 94
+      }
+     }
+    },
+    "cellTierTriangles": 58628,
+    "proteinTiers": [
+     "cell_type",
+     "tissue_homogenate",
+     "subcellular_fraction_absolute",
+     "single_cell"
+    ],
+    "tiers": [
+     {
+      "name": "organ",
+      "units_per_mm": 1,
+      "field_mm": 220
+     },
+     {
+      "name": "segment",
+      "units_per_mm": 1,
+      "field_mm": 80
+     },
+     {
+      "name": "section",
+      "units_per_mm": 1,
+      "field_mm": 200
+     },
+     {
+      "name": "lobule",
+      "units_per_mm": 60,
+      "field_mm": 1.9
+     },
+     {
+      "name": "sinusoid",
+      "units_per_mm": 3000,
+      "field_mm": 0.4
+     },
+     {
+      "name": "cell",
+      "units_per_mm": 3000,
+      "field_mm": 0.075
+     }
+    ],
+    "perCellVerify": {
+     "checked": 547,
+     "max_abs_diff": 4.998e-05,
+     "mismatches": [],
+     "formula": "log1p(count / raw_sum * 1e4)",
+     "note": "the panel recomputes CP10K-log1p in the browser from each cell's own raw counts and raw_sum; this compares that result against the value stored in liver_cells.json for the same cell and gene"
+    },
+    "geneTint": {
+     "gene_index": 13,
+     "max_cp10k_log1p_over_rendered_hepatocytes": 1.9677,
+     "hepatocytes_with_nonzero_count": 46,
+     "hepatocytes_rendered": 352,
+     "scale": "per-instance colour = that one Census cell's own CP10K-log1p for this gene, divided by the maximum over the rendered hepatocytes"
+    },
+    "liveClipDiff": {
+     "pixels": 907200,
+     "changed_by_sectioning": 110793,
+     "organ_pixels_without_section": 157091,
+     "changed_fraction_of_organ": 0.7053
+    },
+    "clipDiag": {
+     "localClippingEnabled": true,
+     "sectionEnabled": true,
+     "sectionGroupVisible": true,
+     "clipMaterials": 7,
+     "materialsWithPlane": 0,
+     "worldPlane": {
+      "normal": [
+       1,
+       0,
+       0
+      ],
+      "constant": 49.35174751281738
+     },
+     "localPlane": {
+      "normal": [
+       1,
+       0,
+       0
+      ],
+      "constant": 49.35174751281738
+     },
+     "capSize": 358.0750403321008,
+     "capVisible": [
+      true,
+      true
+     ],
+     "capWorldPos": [
+      [
+       -49.35,
+       438.76,
+       202.24
+      ],
+      [
+       -49.35,
+       438.76,
+       202.24
+      ]
+     ],
+     "parenchymaMaterialPlanes": 0,
+     "parenchymaVisible": true
+    },
+    "respirationAudit": {
+     "samples": 240,
+     "period_s": 5.4576,
+     "breaths_per_min": 10.99,
+     "face_centroid_peak_to_peak_mm": 19.5849,
+     "declared_excursion_mm": 20,
+     "two_point_separation_mm": 97.657,
+     "interpoint_distance_max_drift_mm": 4.263e-14,
+     "two_point_displacement_max_difference_mm": 3.7495,
+     "rotation_deg": 2.2,
+     "rigid_body": true,
+     "note": "two points on the cut face, 97.7 mm apart, were tracked over one breath. Their separation is preserved to the drift figure above, which is what a rigid translation+rotation does and what any resizing could not do. Their DISPLACEMENT VECTORS differ by up to the second figure, which is the signature of the real 2.2 deg rotation about the hepatocaval confluence \u2014 a pure translation would make that number zero. The face therefore travels WITH the organ, rotation included, and nothing in the scene is being scaled."
+    },
+    "section": {
+     "sagittal": {
+      "report": {
+       "preset": "sagittal",
+       "normal_local": [
+        1,
+        0,
+        0
+       ],
+       "plane_constant_local_mm": 49.3517,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 7774.98,
+        "area_mm2_grid": 7772.97,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1391
+         },
+         {
+          "segment": 3,
+          "area_mm2": 2267.5
+         },
+         {
+          "segment": 4,
+          "area_mm2": 2889.7
+         },
+         {
+          "segment": 5,
+          "area_mm2": 150.6
+         },
+         {
+          "segment": 6,
+          "area_mm2": 64.6
+         },
+         {
+          "segment": 7,
+          "area_mm2": 512.6
+         },
+         {
+          "segment": 8,
+          "area_mm2": 496.9
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         225,
+         1753,
+         2582.5,
+         1578.9,
+         540,
+         277.8,
+         328.7,
+         361.9,
+         109.6,
+         15.7
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 587,
+        "cpu_ms": 130.5
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 23,
+         "rendered": 23,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.4984,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 9,
+         "crossing_against_normal": 14,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 6.5744,
+         "diameter_mm_max": 9.5,
+         "crossing_with_normal": 1,
+         "crossing_against_normal": 3,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.2214,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 4,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 5,
+         "rendered": 5,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.0858,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 3,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        1,
+        0,
+        0
+       ],
+       "preset": "sagittal",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 15942,
+        "implied_area_mm2": 7797.42
+       },
+       "cap_off": {
+        "painted_pixels": 38625,
+        "implied_area_mm2": 18891.94
+       },
+       "solid_only": {
+        "painted_pixels": 38625,
+        "implied_area_mm2": 18891.94
+       },
+       "clip_uniform": [
+        1,
+        0,
+        0,
+        -49.35174751281738
+       ],
+       "cpu_mesh_slice_area_mm2": 7774.98,
+       "cpu_grid_area_mm2": 7772.97,
+       "rendered_over_cpu_ratio": 1.0029,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "coronal": {
+      "report": {
+       "preset": "coronal",
+       "normal_local": [
+        0,
+        0,
+        1
+       ],
+       "plane_constant_local_mm": -199.4641,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 11582.41,
+        "area_mm2_grid": 11578.26,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1774.5
+         },
+         {
+          "segment": 2,
+          "area_mm2": 58.7
+         },
+         {
+          "segment": 4,
+          "area_mm2": 315
+         },
+         {
+          "segment": 5,
+          "area_mm2": 3838.5
+         },
+         {
+          "segment": 8,
+          "area_mm2": 5591.5
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         442.2,
+         2625.6,
+         2099.3,
+         1393,
+         659.3,
+         510.6,
+         792.4,
+         1637.5,
+         1295.2,
+         123.3
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 694,
+        "cpu_ms": 154.7
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 18,
+         "rendered": 18,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.6498,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 7,
+         "crossing_against_normal": 11,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 19,
+         "rendered": 19,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 2.0844,
+         "diameter_mm_max": 8.915,
+         "crossing_with_normal": 15,
+         "crossing_against_normal": 4,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 2.89,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 2.553,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0,
+        0,
+        1
+       ],
+       "preset": "coronal",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 23675,
+        "implied_area_mm2": 11579.72
+       },
+       "cap_off": {
+        "painted_pixels": 28817,
+        "implied_area_mm2": 14094.74
+       },
+       "solid_only": {
+        "painted_pixels": 28817,
+        "implied_area_mm2": 14094.74
+       },
+       "clip_uniform": [
+        0,
+        0,
+        1,
+        199.46409225463867
+       ],
+       "cpu_mesh_slice_area_mm2": 11582.41,
+       "cpu_grid_area_mm2": 11578.26,
+       "rendered_over_cpu_ratio": 0.9998,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "axial": {
+      "report": {
+       "preset": "axial",
+       "normal_local": [
+        0,
+        1,
+        0
+       ],
+       "plane_constant_local_mm": -458.1859,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 14496.68,
+        "area_mm2_grid": 14491.41,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 62.6
+         },
+         {
+          "segment": 2,
+          "area_mm2": 135
+         },
+         {
+          "segment": 3,
+          "area_mm2": 1807.8
+         },
+         {
+          "segment": 4,
+          "area_mm2": 2071.9
+         },
+         {
+          "segment": 5,
+          "area_mm2": 3807.2
+         },
+         {
+          "segment": 6,
+          "area_mm2": 6021.9
+         },
+         {
+          "segment": 8,
+          "area_mm2": 585
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         502.8,
+         3862,
+         3865.9,
+         1715.8,
+         792.4,
+         680.8,
+         1062.4,
+         1531.9,
+         448,
+         29.3
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 812,
+        "cpu_ms": 182.2
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 30,
+         "rendered": 30,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.3972,
+         "diameter_mm_max": 5.4797,
+         "crossing_with_normal": 6,
+         "crossing_against_normal": 24,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 19,
+         "rendered": 19,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 1.8646,
+         "diameter_mm_max": 2.766,
+         "crossing_with_normal": 0,
+         "crossing_against_normal": 19,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 11,
+         "rendered": 11,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.5749,
+         "diameter_mm_max": 2.481,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 9,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 9,
+         "rendered": 9,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.3589,
+         "diameter_mm_max": 2.1716,
+         "crossing_with_normal": 0,
+         "crossing_against_normal": 9,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0,
+        1,
+        0
+       ],
+       "preset": "axial",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 29446,
+        "implied_area_mm2": 14402.39
+       },
+       "cap_off": {
+        "painted_pixels": 31132,
+        "implied_area_mm2": 15227.03
+       },
+       "solid_only": {
+        "painted_pixels": 31132,
+        "implied_area_mm2": 15227.03
+       },
+       "clip_uniform": [
+        0,
+        1,
+        0,
+        458.1859436035156
+       ],
+       "cpu_mesh_slice_area_mm2": 14496.68,
+       "cpu_grid_area_mm2": 14491.41,
+       "rendered_over_cpu_ratio": 0.9935,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "free_oblique": {
+      "report": {
+       "preset": "free",
+       "normal_local": [
+        0.583923,
+        0.342898,
+        0.735836
+       ],
+       "plane_constant_local_mm": -275.0662,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 7612.36,
+        "area_mm2_grid": 7618.41,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1349.9
+         },
+         {
+          "segment": 4,
+          "area_mm2": 322.8
+         },
+         {
+          "segment": 5,
+          "area_mm2": 1277.6
+         },
+         {
+          "segment": 8,
+          "area_mm2": 4668.1
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         52.8,
+         559.5,
+         1541.7,
+         1303,
+         643.7,
+         596.7,
+         860.8,
+         1177.8,
+         780.6,
+         101.7
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 576,
+        "cpu_ms": 126.5
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 10,
+         "rendered": 10,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.5981,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 8,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 10,
+         "rendered": 10,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 2.2836,
+         "diameter_mm_max": 9.3314,
+         "crossing_with_normal": 3,
+         "crossing_against_normal": 7,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.539,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 0,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.368,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 0,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0.583923,
+        0.342898,
+        0.735836
+       ],
+       "preset": "free",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 15496,
+        "implied_area_mm2": 7579.28
+       },
+       "cap_off": {
+        "painted_pixels": 23050,
+        "implied_area_mm2": 11274.03
+       },
+       "solid_only": {
+        "painted_pixels": 23050,
+        "implied_area_mm2": 11274.03
+       },
+       "clip_uniform": [
+        0.5839234422273872,
+        0.3428978074554514,
+        0.7358359241431228,
+        275.0661578384926
+       ],
+       "cpu_mesh_slice_area_mm2": 7612.36,
+       "cpu_grid_area_mm2": 7618.41,
+       "rendered_over_cpu_ratio": 0.9957,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     }
+    },
+    "cellPick": {
+     "attempts": 5,
+     "hits": [
+      {
+       "at": [
+        0.5,
+        0.5
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18141173,
+       "donor_id": "C72",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 9644,
+       "nonzero_genes": 35
+      },
+      {
+       "at": [
+        0.42,
+        0.46
+       ],
+       "cls": "stellate",
+       "cell_type": "hepatic stellate cell",
+       "soma_joinid": 120357097,
+       "donor_id": "Ouchi_CellMet_2019_Human_liver_organoids",
+       "dataset_id": "6725ee8e-ef5b-4e68-8901-61bd14a1fe73",
+       "assay": "10x 3' v2",
+       "disease": "normal",
+       "raw_sum": 2667,
+       "nonzero_genes": 5
+      },
+      {
+       "at": [
+        0.58,
+        0.54
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 10018853,
+       "donor_id": "C63",
+       "dataset_id": "234c23d0-d6cd-4612-a40d-e5811727564b",
+       "assay": "10x 5' v1",
+       "disease": "normal",
+       "raw_sum": 1761,
+       "nonzero_genes": 14
+      },
+      {
+       "at": [
+        0.5,
+        0.38
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18120483,
+       "donor_id": "C70",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 16239,
+       "nonzero_genes": 34
+      },
+      {
+       "at": [
+        0.62,
+        0.42
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 10018853,
+       "donor_id": "C63",
+       "dataset_id": "234c23d0-d6cd-4612-a40d-e5811727564b",
+       "assay": "10x 5' v1",
+       "disease": "normal",
+       "raw_sum": 1761,
+       "nonzero_genes": 14
+      }
+     ]
     }
    },
    "hud_overflow_after_toggles": [],
    "screenshots": {
-    "organ": "out/bench/liver3d_desktop_organ.png",
-    "lobule": "out/bench/liver3d_desktop_lobule.png",
-    "vessels": "out/bench/liver3d_desktop_vessels.png",
-    "couinaud": "out/bench/liver3d_desktop_couinaud.png",
-    "zones": "out/bench/liver3d_desktop_zones.png"
+    "organ": "/work/bench/liver3d_desktop_organ.png",
+    "lobule": "/work/bench/liver3d_desktop_lobule.png",
+    "section": "/work/bench/liver3d_desktop_section.png",
+    "channel_oxygen": "/work/bench/liver3d_desktop_channel_oxygen.png",
+    "channel_cyp": "/work/bench/liver3d_desktop_channel_cyp.png",
+    "channel_clearance": "/work/bench/liver3d_desktop_channel_clearance.png",
+    "sinusoid": "/work/bench/liver3d_desktop_sinusoid.png",
+    "cell": "/work/bench/liver3d_desktop_cell.png",
+    "genetint": "/work/bench/liver3d_desktop_genetint.png",
+    "vessels": "/work/bench/liver3d_desktop_vessels.png",
+    "couinaud": "/work/bench/liver3d_desktop_couinaud.png",
+    "zones": "/work/bench/liver3d_desktop_zones.png"
    },
-   "console": [],
+   "console": [
+    "warning: [.WebGL-0x3ae4012eaa00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x3ae4012eaa00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x3ae4012eaa00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x3ae4012eaa00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+   ],
    "assets_served": [
+    [
+     "liver3d.html",
+     40431
+    ],
     [
      "liver3d/assets/couinaud.json",
      1561
+    ],
+    [
+     "liver3d/assets/couinaud_terminals.json",
+     18311
     ],
     [
      "liver3d/assets/liver.glb",
      3851696
     ],
     [
+     "liver3d/assets/liver_cells.json",
+     1268386
+    ],
+    [
      "liver3d/assets/liver_expression.json",
-     10415
+     139794
     ],
     [
      "liver3d/assets/liver_flow.json",
@@ -207,16 +1226,32 @@
      2476
     ],
     [
+     "liver3d/assets/liver_protein_evidence.json",
+     44745
+    ],
+    [
      "liver3d/assets/liver_vessels.json",
      186513
+    ],
+    [
+     "liver3d/assets/liver_zonation.json",
+     11469
+    ],
+    [
+     "liver3d/js/cells.js",
+     27485
     ],
     [
      "liver3d/js/flow.js",
      10524
     ],
     [
+     "liver3d/js/func.js",
+     7623
+    ],
+    [
      "liver3d/js/hud.js",
-     6260
+     8544
     ],
     [
      "liver3d/js/lobule.js",
@@ -224,23 +1259,27 @@
     ],
     [
      "liver3d/js/main.js",
-     18432
+     40552
     ],
     [
      "liver3d/js/materials.js",
      9726
     ],
     [
+     "liver3d/js/panel.js",
+     15927
+    ],
+    [
      "liver3d/js/respiration.js",
      4864
     ],
     [
-     "liver3d/js/vessels.js",
-     4143
+     "liver3d/js/section.js",
+     33283
     ],
     [
-     "liver3d/liver3d_demo.html",
-     7308
+     "liver3d/js/vessels.js",
+     4143
     ],
     [
      "liver3d/vendor/jsm/controls/OrbitControls.js",
@@ -270,26 +1309,35 @@
      "liver3d/vendor/three/three.module.js",
      662772
     ]
-   ]
+   ],
+   "frame_budget": {
+    "per_frame_render_cost_ms": 16.66588072122054,
+    "frame_time_p95_ms": 16.700000000000728,
+    "budget_60fps_ms": 16.67,
+    "headroom_x_mean": 1.0002471683824197,
+    "headroom_x_p95": 0.9982035928143279,
+    "note": "fpsMean is NOT by itself a user-visible frame rate, so the per-frame render cost and the p95 frame time are reported against the 16.67 ms 60-fps budget instead. Headless Chromium CAN run rAF uncapped, in which case the fps figure is meaningless. vsync_detected is set from THIS viewport's own measurement (per-frame cost within 0.2 ms of the 16.67 ms presentation interval). It is true here: the frame times are pinned to the display refresh, so they are a FLOOR at 60 fps and say nothing about how much headroom remains. The p95 is the 95th percentile of a 0.1 ms-quantised histogram, so viewports that are equally vsynced can still differ by one bin.",
+    "vsync_detected": true
+   }
   },
   "phone390": {
    "viewport": [
     390,
     844
    ],
-   "ready_ms": 839.3000000000029,
+   "ready_ms": 1626.0999999998603,
    "frame_stats": {
-    "frames": 600,
-    "meanFrameMs": 16.666,
-    "medianFrameMs": 16.699999999999818,
+    "frames": 720,
+    "meanFrameMs": 16.666111111111125,
+    "medianFrameMs": 16.69999999999891,
     "p95FrameMs": 16.700000000000728,
-    "fpsMean": 60.00240009600384,
-    "fpsMedian": 59.88023952095874
+    "fpsMean": 60.00200006666884,
+    "fpsMedian": 59.880239520962
    },
    "probe": {
     "webgl2": true,
-    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
-    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+    "vendor": "Google Inc. (NVIDIA)",
     "programs": 17,
     "programsNotLinked": [],
     "triangles": 137256,
@@ -421,19 +1469,72 @@
       "bile_duct|retrograde": 12
      }
     },
-    "hudBoxes": 11,
+    "hudBoxes": 14,
     "hudOverflow": [],
     "view": "organ",
     "gene": "CYP1A2",
     "zonalRatios": {
-     "CYP3A4": 1.368,
-     "CYP1A2": 2.212,
-     "CYP2C9": 1.036,
-     "CYP2D6": 0.742,
-     "CYP2C19": 0.667,
-     "UGT2B7": 0.982,
-     "SLCO1B1": 1.461,
-     "ABCB11": 2.162
+     "ABCB1": 1.7317,
+     "ABCB11": 2.0392,
+     "ABCC2": 1.5409,
+     "ABCC3": 1.2109,
+     "ABCC4": 1.3931,
+     "ABCG2": 2.3506,
+     "ACTB": 1.0393,
+     "ADH1B": 1.2765,
+     "ALDH2": 1.4135,
+     "B2M": 0.9172,
+     "CES1": 0.8041,
+     "CES2": 1.0115,
+     "COMT": 1.4386,
+     "CYP1A2": 3.1083,
+     "CYP2B6": 0.8856,
+     "CYP2C19": 1.38,
+     "CYP2C8": 1.0219,
+     "CYP2C9": 1.0872,
+     "CYP2D6": 0.7771,
+     "CYP2E1": 1.1983,
+     "CYP2J2": 1.674,
+     "CYP3A4": 1.5312,
+     "CYP3A5": 0.8891,
+     "FMO3": 1.7683,
+     "GAPDH": 1.1552,
+     "GSTA1": 1.7218,
+     "GSTM1": 1.7327,
+     "GSTP1": 0.86,
+     "HNF4A": 1.5085,
+     "NAT1": 2.3065,
+     "NAT2": 1.9298,
+     "NR1H4": 1.6694,
+     "NR1I2": 1.3506,
+     "NR1I3": 1.1028,
+     "PPARA": 1.6503,
+     "PPIA": 1.1969,
+     "SLC10A1": 1.854,
+     "SLC15A1": 1.8799,
+     "SLC15A2": 1.8,
+     "SLC22A1": 1.0529,
+     "SLC22A2": 2.6,
+     "SLC22A3": 2.0661,
+     "SLC22A6": 2.5,
+     "SLC22A7": 0.9189,
+     "SLC22A8": 1.5,
+     "SLC47A1": 1.587,
+     "SLC47A2": 3.4857,
+     "SLCO1B1": 1.4927,
+     "SLCO1B3": 1.6053,
+     "SLCO2B1": 1.4432,
+     "SULT1A1": 1.4638,
+     "SULT1E1": 1.9077,
+     "SULT2A1": 1.435,
+     "TBP": 1.4165,
+     "TPMT": 1.6641,
+     "UGT1A1": 0.7058,
+     "UGT1A3": 6,
+     "UGT1A4": 0.5985,
+     "UGT1A9": 0.4162,
+     "UGT2B15": 1.4989,
+     "UGT2B7": 1.2028
     },
     "couinaud": {
      "I caudate": 63,
@@ -444,29 +1545,990 @@
      "VI": 273.9,
      "VII": 174.1,
      "VIII": 242.9
+    },
+    "expression": {
+     "cell_types": 171,
+     "genes": 61,
+     "n_cells": 1625338,
+     "n_datasets_used": 33,
+     "census_version": "2025-11-08"
+    },
+    "perCell": {
+     "loaded": 1991,
+     "shards_additional": 6,
+     "seed": 20261030,
+     "sampling": "per-cell-type reservoir sampling (Algorithm R) over the full contiguous-block stream of every liver cell in the Census; quota = clip(round(80 + 0.004*n_cells_of_type), 40, 600)",
+     "cell_type_counts": {
+      "macrophage": 355,
+      "periportal region hepatocyte": 283,
+      "hepatocyte": 233,
+      "hepatic stellate cell": 198,
+      "centrilobular region hepatocyte": 163,
+      "midzonal region hepatocyte": 149,
+      "endothelial cell": 126,
+      "endothelial cell of pericentral hepatic sinusoid": 112,
+      "Kupffer cell": 111,
+      "endothelial cell of hepatic sinusoid": 107,
+      "cholangiocyte": 94,
+      "endothelial cell of periportal hepatic sinusoid": 42,
+      "intrahepatic cholangiocyte": 18
+     }
+    },
+    "zonation": {
+     "genes": 61,
+     "pericentral_high": 45,
+     "periportal_high": 6,
+     "flat": 10,
+     "zone_cell_counts": {
+      "periportal": 57756,
+      "midzonal": 20168,
+      "pericentral": 29214
+     },
+     "zone_donors": {
+      "periportal": 33,
+      "midzonal": 33,
+      "pericentral": 33
+     },
+     "legacy_eight_gene_block": {
+      "CYP3A4": 1.368,
+      "CYP1A2": 2.212,
+      "CYP2C9": 1.036,
+      "CYP2D6": 0.742,
+      "CYP2C19": 0.667,
+      "UGT2B7": 0.982,
+      "SLCO1B1": 1.461,
+      "ABCB11": 2.162
+     }
+    },
+    "cellTier": {
+     "magnification": "3000x (scene mm per tissue mm)",
+     "scale_scene_units_per_um": 3,
+     "field_of_view_um": {
+      "portal_to_central": 493.7,
+      "vertical": 45.8,
+      "across_plates": 264
+     },
+     "dimensions_um": {
+      "hepatocyte": 22,
+      "sinusoid_lumen": 10,
+      "disse": 0.5,
+      "canaliculus": 0.75,
+      "microvillus": 0.5,
+      "kupffer": 13,
+      "stellate_body": 10,
+      "cholangiocyte": 9,
+      "lsec_thickness": 0.3
+     },
+     "plates": 8,
+     "layers": 2,
+     "cells_along_axis": 22,
+     "rendered": {
+      "hepatocytes": 352,
+      "sinusoidal_endothelium": 117,
+      "kupffer": 88,
+      "stellate": 29,
+      "cholangiocytes": 24,
+      "sinusoid_lumens": 14,
+      "canaliculi": 16,
+      "microvilli": 1600
+     },
+     "clickable_cells": 610,
+     "plate_cutaway": {
+      "enabled": true,
+      "hepatocytes_hidden": 44,
+      "hepatocytes_shown": 308,
+      "reason": "the front hepatic plate is hidden so the sinusoid, its endothelial lining, the Kupffer and stellate cells and the canaliculus are visible from outside; the same device as the lobule tier 60-degree sector"
+     },
+     "clickable_bound_to_a_real_census_cell": 610,
+     "composition_source": "published human-liver cell-NUMBER shares (hepatocyte 60%, sinusoidal endothelium 20%, Kupffer 15%, stellate 5%)",
+     "microvillus_density": "SCHEMATIC \u2014 height is real (0.5 um), surface density is not taken from any measurement",
+     "fenestrae": "NOT RENDERED \u2014 sinusoidal endothelial fenestrae are 50-150 nm, below this tier's rendered resolution; the lining is drawn as a continuous sheet",
+     "scaling_claim": "610 cells are rendered. An adult human liver holds of the order of 2e11 hepatocytes. A rendered cell does NOT stand for a block of real cells: it IS the one Census cell that was sampled, and its gene values are that cell's own measurements.",
+     "sinusoid_velocity_um_s": 333.333,
+     "canalicular_velocity_um_s": 2144,
+     "bile_display_gain": 120,
+     "census_type_mapping": {
+      "hepatocyte_zone1": {
+       "census_cell_type": "periportal region hepatocyte",
+       "candidates_tried": [
+        "periportal region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 283
+      },
+      "hepatocyte_zone2": {
+       "census_cell_type": "midzonal region hepatocyte",
+       "candidates_tried": [
+        "midzonal region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 149
+      },
+      "hepatocyte_zone3": {
+       "census_cell_type": "centrilobular region hepatocyte",
+       "candidates_tried": [
+        "centrilobular region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 163
+      },
+      "sinusoidal_endothelium": {
+       "census_cell_type": "endothelial cell of hepatic sinusoid",
+       "candidates_tried": [
+        "endothelial cell of hepatic sinusoid",
+        "endothelial cell of pericentral hepatic sinusoid",
+        "endothelial cell of periportal hepatic sinusoid",
+        "liver sinusoidal endothelial cell",
+        "endothelial cell"
+       ],
+       "fallback_used": false,
+       "available": 107
+      },
+      "kupffer": {
+       "census_cell_type": "Kupffer cell",
+       "candidates_tried": [
+        "Kupffer cell",
+        "macrophage"
+       ],
+       "fallback_used": false,
+       "available": 111
+      },
+      "stellate": {
+       "census_cell_type": "hepatic stellate cell",
+       "candidates_tried": [
+        "hepatic stellate cell"
+       ],
+       "fallback_used": false,
+       "available": 198
+      },
+      "cholangiocyte": {
+       "census_cell_type": "cholangiocyte",
+       "candidates_tried": [
+        "cholangiocyte",
+        "intrahepatic cholangiocyte",
+        "epithelial cell of bile duct"
+       ],
+       "fallback_used": false,
+       "available": 94
+      }
+     }
+    },
+    "cellTierTriangles": 58628,
+    "proteinTiers": [
+     "cell_type",
+     "tissue_homogenate",
+     "subcellular_fraction_absolute",
+     "single_cell"
+    ],
+    "tiers": [
+     {
+      "name": "organ",
+      "units_per_mm": 1,
+      "field_mm": 220
+     },
+     {
+      "name": "segment",
+      "units_per_mm": 1,
+      "field_mm": 80
+     },
+     {
+      "name": "section",
+      "units_per_mm": 1,
+      "field_mm": 200
+     },
+     {
+      "name": "lobule",
+      "units_per_mm": 60,
+      "field_mm": 1.9
+     },
+     {
+      "name": "sinusoid",
+      "units_per_mm": 3000,
+      "field_mm": 0.4
+     },
+     {
+      "name": "cell",
+      "units_per_mm": 3000,
+      "field_mm": 0.075
+     }
+    ],
+    "perCellVerify": {
+     "checked": 547,
+     "max_abs_diff": 4.998e-05,
+     "mismatches": [],
+     "formula": "log1p(count / raw_sum * 1e4)",
+     "note": "the panel recomputes CP10K-log1p in the browser from each cell's own raw counts and raw_sum; this compares that result against the value stored in liver_cells.json for the same cell and gene"
+    },
+    "geneTint": {
+     "gene_index": 13,
+     "max_cp10k_log1p_over_rendered_hepatocytes": 1.9677,
+     "hepatocytes_with_nonzero_count": 46,
+     "hepatocytes_rendered": 352,
+     "scale": "per-instance colour = that one Census cell's own CP10K-log1p for this gene, divided by the maximum over the rendered hepatocytes"
+    },
+    "liveClipDiff": {
+     "pixels": 705188,
+     "changed_by_sectioning": 109372,
+     "organ_pixels_without_section": 170148,
+     "changed_fraction_of_organ": 0.6428
+    },
+    "clipDiag": {
+     "localClippingEnabled": true,
+     "sectionEnabled": true,
+     "sectionGroupVisible": true,
+     "clipMaterials": 7,
+     "materialsWithPlane": 0,
+     "worldPlane": {
+      "normal": [
+       1,
+       0,
+       0
+      ],
+      "constant": 49.35174751281738
+     },
+     "localPlane": {
+      "normal": [
+       1,
+       0,
+       0
+      ],
+      "constant": 49.35174751281738
+     },
+     "capSize": 358.0750403321008,
+     "capVisible": [
+      true,
+      true
+     ],
+     "capWorldPos": [
+      [
+       -49.35,
+       438.7,
+       202.25
+      ],
+      [
+       -49.35,
+       438.7,
+       202.25
+      ]
+     ],
+     "parenchymaMaterialPlanes": 0,
+     "parenchymaVisible": true
+    },
+    "respirationAudit": {
+     "samples": 240,
+     "period_s": 5.4576,
+     "breaths_per_min": 10.99,
+     "face_centroid_peak_to_peak_mm": 19.5849,
+     "declared_excursion_mm": 20,
+     "two_point_separation_mm": 97.657,
+     "interpoint_distance_max_drift_mm": 4.263e-14,
+     "two_point_displacement_max_difference_mm": 3.7495,
+     "rotation_deg": 2.2,
+     "rigid_body": true,
+     "note": "two points on the cut face, 97.7 mm apart, were tracked over one breath. Their separation is preserved to the drift figure above, which is what a rigid translation+rotation does and what any resizing could not do. Their DISPLACEMENT VECTORS differ by up to the second figure, which is the signature of the real 2.2 deg rotation about the hepatocaval confluence \u2014 a pure translation would make that number zero. The face therefore travels WITH the organ, rotation included, and nothing in the scene is being scaled."
+    },
+    "section": {
+     "sagittal": {
+      "report": {
+       "preset": "sagittal",
+       "normal_local": [
+        1,
+        0,
+        0
+       ],
+       "plane_constant_local_mm": 49.3517,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 7774.98,
+        "area_mm2_grid": 7772.97,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1391
+         },
+         {
+          "segment": 3,
+          "area_mm2": 2267.5
+         },
+         {
+          "segment": 4,
+          "area_mm2": 2889.7
+         },
+         {
+          "segment": 5,
+          "area_mm2": 150.6
+         },
+         {
+          "segment": 6,
+          "area_mm2": 64.6
+         },
+         {
+          "segment": 7,
+          "area_mm2": 512.6
+         },
+         {
+          "segment": 8,
+          "area_mm2": 496.9
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         225,
+         1753,
+         2582.5,
+         1578.9,
+         540,
+         277.8,
+         328.7,
+         361.9,
+         109.6,
+         15.7
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 587,
+        "cpu_ms": 139.8
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 23,
+         "rendered": 23,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.4984,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 9,
+         "crossing_against_normal": 14,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 6.5744,
+         "diameter_mm_max": 9.5,
+         "crossing_with_normal": 1,
+         "crossing_against_normal": 3,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.2214,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 4,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 5,
+         "rendered": 5,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.0858,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 3,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        1,
+        0,
+        0
+       ],
+       "preset": "sagittal",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 15942,
+        "implied_area_mm2": 7797.42
+       },
+       "cap_off": {
+        "painted_pixels": 38623,
+        "implied_area_mm2": 18890.97
+       },
+       "solid_only": {
+        "painted_pixels": 38623,
+        "implied_area_mm2": 18890.97
+       },
+       "clip_uniform": [
+        1,
+        0,
+        0,
+        -49.35174751281738
+       ],
+       "cpu_mesh_slice_area_mm2": 7774.98,
+       "cpu_grid_area_mm2": 7772.97,
+       "rendered_over_cpu_ratio": 1.0029,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "coronal": {
+      "report": {
+       "preset": "coronal",
+       "normal_local": [
+        0,
+        0,
+        1
+       ],
+       "plane_constant_local_mm": -199.4641,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 11582.41,
+        "area_mm2_grid": 11578.26,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1774.5
+         },
+         {
+          "segment": 2,
+          "area_mm2": 58.7
+         },
+         {
+          "segment": 4,
+          "area_mm2": 315
+         },
+         {
+          "segment": 5,
+          "area_mm2": 3838.5
+         },
+         {
+          "segment": 8,
+          "area_mm2": 5591.5
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         442.2,
+         2625.6,
+         2099.3,
+         1393,
+         659.3,
+         510.6,
+         792.4,
+         1637.5,
+         1295.2,
+         123.3
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 694,
+        "cpu_ms": 156.9
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 18,
+         "rendered": 18,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.6498,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 7,
+         "crossing_against_normal": 11,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 19,
+         "rendered": 19,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 2.0844,
+         "diameter_mm_max": 8.915,
+         "crossing_with_normal": 15,
+         "crossing_against_normal": 4,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 2.89,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 2.553,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0,
+        0,
+        1
+       ],
+       "preset": "coronal",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 23675,
+        "implied_area_mm2": 11579.72
+       },
+       "cap_off": {
+        "painted_pixels": 28817,
+        "implied_area_mm2": 14094.74
+       },
+       "solid_only": {
+        "painted_pixels": 28817,
+        "implied_area_mm2": 14094.74
+       },
+       "clip_uniform": [
+        0,
+        0,
+        1,
+        199.46409225463867
+       ],
+       "cpu_mesh_slice_area_mm2": 11582.41,
+       "cpu_grid_area_mm2": 11578.26,
+       "rendered_over_cpu_ratio": 0.9998,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "axial": {
+      "report": {
+       "preset": "axial",
+       "normal_local": [
+        0,
+        1,
+        0
+       ],
+       "plane_constant_local_mm": -458.1859,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 14496.68,
+        "area_mm2_grid": 14491.41,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 62.6
+         },
+         {
+          "segment": 2,
+          "area_mm2": 135
+         },
+         {
+          "segment": 3,
+          "area_mm2": 1807.8
+         },
+         {
+          "segment": 4,
+          "area_mm2": 2071.9
+         },
+         {
+          "segment": 5,
+          "area_mm2": 3807.2
+         },
+         {
+          "segment": 6,
+          "area_mm2": 6021.9
+         },
+         {
+          "segment": 8,
+          "area_mm2": 585
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         502.8,
+         3862,
+         3865.9,
+         1715.8,
+         792.4,
+         680.8,
+         1062.4,
+         1531.9,
+         448,
+         29.3
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 812,
+        "cpu_ms": 181.7
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 30,
+         "rendered": 30,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.3972,
+         "diameter_mm_max": 5.4797,
+         "crossing_with_normal": 6,
+         "crossing_against_normal": 24,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 19,
+         "rendered": 19,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 1.8646,
+         "diameter_mm_max": 2.766,
+         "crossing_with_normal": 0,
+         "crossing_against_normal": 19,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 11,
+         "rendered": 11,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.5749,
+         "diameter_mm_max": 2.481,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 9,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 9,
+         "rendered": 9,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.3589,
+         "diameter_mm_max": 2.1716,
+         "crossing_with_normal": 0,
+         "crossing_against_normal": 9,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0,
+        1,
+        0
+       ],
+       "preset": "axial",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 29446,
+        "implied_area_mm2": 14402.39
+       },
+       "cap_off": {
+        "painted_pixels": 31132,
+        "implied_area_mm2": 15227.03
+       },
+       "solid_only": {
+        "painted_pixels": 31132,
+        "implied_area_mm2": 15227.03
+       },
+       "clip_uniform": [
+        0,
+        1,
+        0,
+        458.1859436035156
+       ],
+       "cpu_mesh_slice_area_mm2": 14496.68,
+       "cpu_grid_area_mm2": 14491.41,
+       "rendered_over_cpu_ratio": 0.9935,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "free_oblique": {
+      "report": {
+       "preset": "free",
+       "normal_local": [
+        0.583923,
+        0.342898,
+        0.735836
+       ],
+       "plane_constant_local_mm": -275.0662,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 7612.36,
+        "area_mm2_grid": 7618.41,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1349.9
+         },
+         {
+          "segment": 4,
+          "area_mm2": 322.8
+         },
+         {
+          "segment": 5,
+          "area_mm2": 1277.6
+         },
+         {
+          "segment": 8,
+          "area_mm2": 4668.1
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         52.8,
+         559.5,
+         1541.7,
+         1303,
+         643.7,
+         596.7,
+         860.8,
+         1177.8,
+         780.6,
+         101.7
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 576,
+        "cpu_ms": 126.8
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 10,
+         "rendered": 10,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.5981,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 8,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 10,
+         "rendered": 10,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 2.2836,
+         "diameter_mm_max": 9.3314,
+         "crossing_with_normal": 3,
+         "crossing_against_normal": 7,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.539,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 0,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.368,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 0,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0.583923,
+        0.342898,
+        0.735836
+       ],
+       "preset": "free",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 15496,
+        "implied_area_mm2": 7579.28
+       },
+       "cap_off": {
+        "painted_pixels": 23050,
+        "implied_area_mm2": 11274.03
+       },
+       "solid_only": {
+        "painted_pixels": 23050,
+        "implied_area_mm2": 11274.03
+       },
+       "clip_uniform": [
+        0.5839234422273872,
+        0.3428978074554514,
+        0.7358359241431228,
+        275.0661578384926
+       ],
+       "cpu_mesh_slice_area_mm2": 7612.36,
+       "cpu_grid_area_mm2": 7618.41,
+       "rendered_over_cpu_ratio": 0.9957,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     }
+    },
+    "cellPick": {
+     "attempts": 5,
+     "hits": [
+      {
+       "at": [
+        0.5,
+        0.5
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18141173,
+       "donor_id": "C72",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 9644,
+       "nonzero_genes": 35
+      },
+      {
+       "at": [
+        0.42,
+        0.46
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18120483,
+       "donor_id": "C70",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 16239,
+       "nonzero_genes": 34
+      },
+      {
+       "at": [
+        0.58,
+        0.54
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18141173,
+       "donor_id": "C72",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 9644,
+       "nonzero_genes": 35
+      },
+      {
+       "at": [
+        0.5,
+        0.38
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 9992446,
+       "donor_id": "C48",
+       "dataset_id": "234c23d0-d6cd-4612-a40d-e5811727564b",
+       "assay": "10x 3' v2",
+       "disease": "normal",
+       "raw_sum": 8828,
+       "nonzero_genes": 20
+      },
+      {
+       "at": [
+        0.62,
+        0.42
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18141173,
+       "donor_id": "C72",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 9644,
+       "nonzero_genes": 35
+      }
+     ]
     }
    },
    "hud_overflow_after_toggles": [],
    "screenshots": {
-    "organ": "out/bench/liver3d_phone390_organ.png",
-    "lobule": "out/bench/liver3d_phone390_lobule.png",
-    "vessels": "out/bench/liver3d_phone390_vessels.png",
-    "couinaud": "out/bench/liver3d_phone390_couinaud.png",
-    "zones": "out/bench/liver3d_phone390_zones.png"
+    "organ": "/work/bench/liver3d_phone390_organ.png",
+    "lobule": "/work/bench/liver3d_phone390_lobule.png",
+    "section": "/work/bench/liver3d_phone390_section.png",
+    "channel_oxygen": "/work/bench/liver3d_phone390_channel_oxygen.png",
+    "channel_cyp": "/work/bench/liver3d_phone390_channel_cyp.png",
+    "channel_clearance": "/work/bench/liver3d_phone390_channel_clearance.png",
+    "sinusoid": "/work/bench/liver3d_phone390_sinusoid.png",
+    "cell": "/work/bench/liver3d_phone390_cell.png",
+    "genetint": "/work/bench/liver3d_phone390_genetint.png",
+    "vessels": "/work/bench/liver3d_phone390_vessels.png",
+    "couinaud": "/work/bench/liver3d_phone390_couinaud.png",
+    "zones": "/work/bench/liver3d_phone390_zones.png"
    },
    "console": [],
    "assets_served": [
     [
+     "liver3d.html",
+     40431
+    ],
+    [
      "liver3d/assets/couinaud.json",
      1561
+    ],
+    [
+     "liver3d/assets/couinaud_terminals.json",
+     18311
     ],
     [
      "liver3d/assets/liver.glb",
      3851696
     ],
     [
+     "liver3d/assets/liver_cells.json",
+     1268386
+    ],
+    [
      "liver3d/assets/liver_expression.json",
-     10415
+     139794
     ],
     [
      "liver3d/assets/liver_flow.json",
@@ -477,16 +2539,32 @@
      2476
     ],
     [
+     "liver3d/assets/liver_protein_evidence.json",
+     44745
+    ],
+    [
      "liver3d/assets/liver_vessels.json",
      186513
+    ],
+    [
+     "liver3d/assets/liver_zonation.json",
+     11469
+    ],
+    [
+     "liver3d/js/cells.js",
+     27485
     ],
     [
      "liver3d/js/flow.js",
      10524
     ],
     [
+     "liver3d/js/func.js",
+     7623
+    ],
+    [
      "liver3d/js/hud.js",
-     6260
+     8544
     ],
     [
      "liver3d/js/lobule.js",
@@ -494,23 +2572,27 @@
     ],
     [
      "liver3d/js/main.js",
-     18432
+     40552
     ],
     [
      "liver3d/js/materials.js",
      9726
     ],
     [
+     "liver3d/js/panel.js",
+     15927
+    ],
+    [
      "liver3d/js/respiration.js",
      4864
     ],
     [
-     "liver3d/js/vessels.js",
-     4143
+     "liver3d/js/section.js",
+     33283
     ],
     [
-     "liver3d/liver3d_demo.html",
-     7308
+     "liver3d/js/vessels.js",
+     4143
     ],
     [
      "liver3d/vendor/jsm/controls/OrbitControls.js",
@@ -540,26 +2622,35 @@
      "liver3d/vendor/three/three.module.js",
      662772
     ]
-   ]
+   ],
+   "frame_budget": {
+    "per_frame_render_cost_ms": 16.666111111111125,
+    "frame_time_p95_ms": 16.700000000000728,
+    "budget_60fps_ms": 16.67,
+    "headroom_x_mean": 1.0002333411113697,
+    "headroom_x_p95": 0.9982035928143279,
+    "note": "fpsMean is NOT by itself a user-visible frame rate, so the per-frame render cost and the p95 frame time are reported against the 16.67 ms 60-fps budget instead. Headless Chromium CAN run rAF uncapped, in which case the fps figure is meaningless. vsync_detected is set from THIS viewport's own measurement (per-frame cost within 0.2 ms of the 16.67 ms presentation interval). It is true here: the frame times are pinned to the display refresh, so they are a FLOOR at 60 fps and say nothing about how much headroom remains. The p95 is the 95th percentile of a 0.1 ms-quantised histogram, so viewports that are equally vsynced can still differ by one bin.",
+    "vsync_detected": true
+   }
   },
   "phone360": {
    "viewport": [
     360,
     800
    ],
-   "ready_ms": 697.1999999999971,
+   "ready_ms": 1622.1999999999534,
    "frame_stats": {
-    "frames": 600,
-    "meanFrameMs": 16.66600000000001,
-    "medianFrameMs": 16.699999999999818,
-    "p95FrameMs": 16.700000000000728,
-    "fpsMean": 60.002400096003804,
-    "fpsMedian": 59.88023952095874
+    "frames": 720,
+    "meanFrameMs": 16.666111111111114,
+    "medianFrameMs": 16.69999999999891,
+    "p95FrameMs": 16.799999999999272,
+    "fpsMean": 60.00200006666888,
+    "fpsMedian": 59.880239520962
    },
    "probe": {
     "webgl2": true,
-    "renderer": "ANGLE (NVIDIA Corporation, NVIDIA A10/PCIe/SSE2, OpenGL ES 3.2)",
-    "vendor": "Google Inc. (NVIDIA Corporation)",
+    "renderer": "ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA A10G (0x00002237)), NVIDIA)",
+    "vendor": "Google Inc. (NVIDIA)",
     "programs": 17,
     "programsNotLinked": [],
     "triangles": 137256,
@@ -691,19 +2782,72 @@
       "bile_duct|retrograde": 12
      }
     },
-    "hudBoxes": 11,
+    "hudBoxes": 14,
     "hudOverflow": [],
     "view": "organ",
     "gene": "CYP1A2",
     "zonalRatios": {
-     "CYP3A4": 1.368,
-     "CYP1A2": 2.212,
-     "CYP2C9": 1.036,
-     "CYP2D6": 0.742,
-     "CYP2C19": 0.667,
-     "UGT2B7": 0.982,
-     "SLCO1B1": 1.461,
-     "ABCB11": 2.162
+     "ABCB1": 1.7317,
+     "ABCB11": 2.0392,
+     "ABCC2": 1.5409,
+     "ABCC3": 1.2109,
+     "ABCC4": 1.3931,
+     "ABCG2": 2.3506,
+     "ACTB": 1.0393,
+     "ADH1B": 1.2765,
+     "ALDH2": 1.4135,
+     "B2M": 0.9172,
+     "CES1": 0.8041,
+     "CES2": 1.0115,
+     "COMT": 1.4386,
+     "CYP1A2": 3.1083,
+     "CYP2B6": 0.8856,
+     "CYP2C19": 1.38,
+     "CYP2C8": 1.0219,
+     "CYP2C9": 1.0872,
+     "CYP2D6": 0.7771,
+     "CYP2E1": 1.1983,
+     "CYP2J2": 1.674,
+     "CYP3A4": 1.5312,
+     "CYP3A5": 0.8891,
+     "FMO3": 1.7683,
+     "GAPDH": 1.1552,
+     "GSTA1": 1.7218,
+     "GSTM1": 1.7327,
+     "GSTP1": 0.86,
+     "HNF4A": 1.5085,
+     "NAT1": 2.3065,
+     "NAT2": 1.9298,
+     "NR1H4": 1.6694,
+     "NR1I2": 1.3506,
+     "NR1I3": 1.1028,
+     "PPARA": 1.6503,
+     "PPIA": 1.1969,
+     "SLC10A1": 1.854,
+     "SLC15A1": 1.8799,
+     "SLC15A2": 1.8,
+     "SLC22A1": 1.0529,
+     "SLC22A2": 2.6,
+     "SLC22A3": 2.0661,
+     "SLC22A6": 2.5,
+     "SLC22A7": 0.9189,
+     "SLC22A8": 1.5,
+     "SLC47A1": 1.587,
+     "SLC47A2": 3.4857,
+     "SLCO1B1": 1.4927,
+     "SLCO1B3": 1.6053,
+     "SLCO2B1": 1.4432,
+     "SULT1A1": 1.4638,
+     "SULT1E1": 1.9077,
+     "SULT2A1": 1.435,
+     "TBP": 1.4165,
+     "TPMT": 1.6641,
+     "UGT1A1": 0.7058,
+     "UGT1A3": 6,
+     "UGT1A4": 0.5985,
+     "UGT1A9": 0.4162,
+     "UGT2B15": 1.4989,
+     "UGT2B7": 1.2028
     },
     "couinaud": {
      "I caudate": 63,
@@ -714,29 +2858,990 @@
      "VI": 273.9,
      "VII": 174.1,
      "VIII": 242.9
+    },
+    "expression": {
+     "cell_types": 171,
+     "genes": 61,
+     "n_cells": 1625338,
+     "n_datasets_used": 33,
+     "census_version": "2025-11-08"
+    },
+    "perCell": {
+     "loaded": 1991,
+     "shards_additional": 6,
+     "seed": 20261030,
+     "sampling": "per-cell-type reservoir sampling (Algorithm R) over the full contiguous-block stream of every liver cell in the Census; quota = clip(round(80 + 0.004*n_cells_of_type), 40, 600)",
+     "cell_type_counts": {
+      "macrophage": 355,
+      "periportal region hepatocyte": 283,
+      "hepatocyte": 233,
+      "hepatic stellate cell": 198,
+      "centrilobular region hepatocyte": 163,
+      "midzonal region hepatocyte": 149,
+      "endothelial cell": 126,
+      "endothelial cell of pericentral hepatic sinusoid": 112,
+      "Kupffer cell": 111,
+      "endothelial cell of hepatic sinusoid": 107,
+      "cholangiocyte": 94,
+      "endothelial cell of periportal hepatic sinusoid": 42,
+      "intrahepatic cholangiocyte": 18
+     }
+    },
+    "zonation": {
+     "genes": 61,
+     "pericentral_high": 45,
+     "periportal_high": 6,
+     "flat": 10,
+     "zone_cell_counts": {
+      "periportal": 57756,
+      "midzonal": 20168,
+      "pericentral": 29214
+     },
+     "zone_donors": {
+      "periportal": 33,
+      "midzonal": 33,
+      "pericentral": 33
+     },
+     "legacy_eight_gene_block": {
+      "CYP3A4": 1.368,
+      "CYP1A2": 2.212,
+      "CYP2C9": 1.036,
+      "CYP2D6": 0.742,
+      "CYP2C19": 0.667,
+      "UGT2B7": 0.982,
+      "SLCO1B1": 1.461,
+      "ABCB11": 2.162
+     }
+    },
+    "cellTier": {
+     "magnification": "3000x (scene mm per tissue mm)",
+     "scale_scene_units_per_um": 3,
+     "field_of_view_um": {
+      "portal_to_central": 493.7,
+      "vertical": 45.8,
+      "across_plates": 264
+     },
+     "dimensions_um": {
+      "hepatocyte": 22,
+      "sinusoid_lumen": 10,
+      "disse": 0.5,
+      "canaliculus": 0.75,
+      "microvillus": 0.5,
+      "kupffer": 13,
+      "stellate_body": 10,
+      "cholangiocyte": 9,
+      "lsec_thickness": 0.3
+     },
+     "plates": 8,
+     "layers": 2,
+     "cells_along_axis": 22,
+     "rendered": {
+      "hepatocytes": 352,
+      "sinusoidal_endothelium": 117,
+      "kupffer": 88,
+      "stellate": 29,
+      "cholangiocytes": 24,
+      "sinusoid_lumens": 14,
+      "canaliculi": 16,
+      "microvilli": 1600
+     },
+     "clickable_cells": 610,
+     "plate_cutaway": {
+      "enabled": true,
+      "hepatocytes_hidden": 44,
+      "hepatocytes_shown": 308,
+      "reason": "the front hepatic plate is hidden so the sinusoid, its endothelial lining, the Kupffer and stellate cells and the canaliculus are visible from outside; the same device as the lobule tier 60-degree sector"
+     },
+     "clickable_bound_to_a_real_census_cell": 610,
+     "composition_source": "published human-liver cell-NUMBER shares (hepatocyte 60%, sinusoidal endothelium 20%, Kupffer 15%, stellate 5%)",
+     "microvillus_density": "SCHEMATIC \u2014 height is real (0.5 um), surface density is not taken from any measurement",
+     "fenestrae": "NOT RENDERED \u2014 sinusoidal endothelial fenestrae are 50-150 nm, below this tier's rendered resolution; the lining is drawn as a continuous sheet",
+     "scaling_claim": "610 cells are rendered. An adult human liver holds of the order of 2e11 hepatocytes. A rendered cell does NOT stand for a block of real cells: it IS the one Census cell that was sampled, and its gene values are that cell's own measurements.",
+     "sinusoid_velocity_um_s": 333.333,
+     "canalicular_velocity_um_s": 2144,
+     "bile_display_gain": 120,
+     "census_type_mapping": {
+      "hepatocyte_zone1": {
+       "census_cell_type": "periportal region hepatocyte",
+       "candidates_tried": [
+        "periportal region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 283
+      },
+      "hepatocyte_zone2": {
+       "census_cell_type": "midzonal region hepatocyte",
+       "candidates_tried": [
+        "midzonal region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 149
+      },
+      "hepatocyte_zone3": {
+       "census_cell_type": "centrilobular region hepatocyte",
+       "candidates_tried": [
+        "centrilobular region hepatocyte",
+        "hepatocyte"
+       ],
+       "fallback_used": false,
+       "available": 163
+      },
+      "sinusoidal_endothelium": {
+       "census_cell_type": "endothelial cell of hepatic sinusoid",
+       "candidates_tried": [
+        "endothelial cell of hepatic sinusoid",
+        "endothelial cell of pericentral hepatic sinusoid",
+        "endothelial cell of periportal hepatic sinusoid",
+        "liver sinusoidal endothelial cell",
+        "endothelial cell"
+       ],
+       "fallback_used": false,
+       "available": 107
+      },
+      "kupffer": {
+       "census_cell_type": "Kupffer cell",
+       "candidates_tried": [
+        "Kupffer cell",
+        "macrophage"
+       ],
+       "fallback_used": false,
+       "available": 111
+      },
+      "stellate": {
+       "census_cell_type": "hepatic stellate cell",
+       "candidates_tried": [
+        "hepatic stellate cell"
+       ],
+       "fallback_used": false,
+       "available": 198
+      },
+      "cholangiocyte": {
+       "census_cell_type": "cholangiocyte",
+       "candidates_tried": [
+        "cholangiocyte",
+        "intrahepatic cholangiocyte",
+        "epithelial cell of bile duct"
+       ],
+       "fallback_used": false,
+       "available": 94
+      }
+     }
+    },
+    "cellTierTriangles": 58628,
+    "proteinTiers": [
+     "cell_type",
+     "tissue_homogenate",
+     "subcellular_fraction_absolute",
+     "single_cell"
+    ],
+    "tiers": [
+     {
+      "name": "organ",
+      "units_per_mm": 1,
+      "field_mm": 220
+     },
+     {
+      "name": "segment",
+      "units_per_mm": 1,
+      "field_mm": 80
+     },
+     {
+      "name": "section",
+      "units_per_mm": 1,
+      "field_mm": 200
+     },
+     {
+      "name": "lobule",
+      "units_per_mm": 60,
+      "field_mm": 1.9
+     },
+     {
+      "name": "sinusoid",
+      "units_per_mm": 3000,
+      "field_mm": 0.4
+     },
+     {
+      "name": "cell",
+      "units_per_mm": 3000,
+      "field_mm": 0.075
+     }
+    ],
+    "perCellVerify": {
+     "checked": 547,
+     "max_abs_diff": 4.998e-05,
+     "mismatches": [],
+     "formula": "log1p(count / raw_sum * 1e4)",
+     "note": "the panel recomputes CP10K-log1p in the browser from each cell's own raw counts and raw_sum; this compares that result against the value stored in liver_cells.json for the same cell and gene"
+    },
+    "geneTint": {
+     "gene_index": 13,
+     "max_cp10k_log1p_over_rendered_hepatocytes": 1.9677,
+     "hepatocytes_with_nonzero_count": 46,
+     "hepatocytes_rendered": 352,
+     "scale": "per-instance colour = that one Census cell's own CP10K-log1p for this gene, divided by the maximum over the rendered hepatocytes"
+    },
+    "liveClipDiff": {
+     "pixels": 617400,
+     "changed_by_sectioning": 92617,
+     "organ_pixels_without_section": 144825,
+     "changed_fraction_of_organ": 0.6395
+    },
+    "clipDiag": {
+     "localClippingEnabled": true,
+     "sectionEnabled": true,
+     "sectionGroupVisible": true,
+     "clipMaterials": 7,
+     "materialsWithPlane": 0,
+     "worldPlane": {
+      "normal": [
+       1,
+       0,
+       0
+      ],
+      "constant": 49.35174751281738
+     },
+     "localPlane": {
+      "normal": [
+       1,
+       0,
+       0
+      ],
+      "constant": 49.35174751281738
+     },
+     "capSize": 358.0750403321008,
+     "capVisible": [
+      true,
+      true
+     ],
+     "capWorldPos": [
+      [
+       -49.35,
+       438.73,
+       202.25
+      ],
+      [
+       -49.35,
+       438.73,
+       202.25
+      ]
+     ],
+     "parenchymaMaterialPlanes": 0,
+     "parenchymaVisible": true
+    },
+    "respirationAudit": {
+     "samples": 240,
+     "period_s": 5.4576,
+     "breaths_per_min": 10.99,
+     "face_centroid_peak_to_peak_mm": 19.5849,
+     "declared_excursion_mm": 20,
+     "two_point_separation_mm": 97.657,
+     "interpoint_distance_max_drift_mm": 4.263e-14,
+     "two_point_displacement_max_difference_mm": 3.7495,
+     "rotation_deg": 2.2,
+     "rigid_body": true,
+     "note": "two points on the cut face, 97.7 mm apart, were tracked over one breath. Their separation is preserved to the drift figure above, which is what a rigid translation+rotation does and what any resizing could not do. Their DISPLACEMENT VECTORS differ by up to the second figure, which is the signature of the real 2.2 deg rotation about the hepatocaval confluence \u2014 a pure translation would make that number zero. The face therefore travels WITH the organ, rotation included, and nothing in the scene is being scaled."
+    },
+    "section": {
+     "sagittal": {
+      "report": {
+       "preset": "sagittal",
+       "normal_local": [
+        1,
+        0,
+        0
+       ],
+       "plane_constant_local_mm": 49.3517,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 7774.98,
+        "area_mm2_grid": 7772.97,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1391
+         },
+         {
+          "segment": 3,
+          "area_mm2": 2267.5
+         },
+         {
+          "segment": 4,
+          "area_mm2": 2889.7
+         },
+         {
+          "segment": 5,
+          "area_mm2": 150.6
+         },
+         {
+          "segment": 6,
+          "area_mm2": 64.6
+         },
+         {
+          "segment": 7,
+          "area_mm2": 512.6
+         },
+         {
+          "segment": 8,
+          "area_mm2": 496.9
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         225,
+         1753,
+         2582.5,
+         1578.9,
+         540,
+         277.8,
+         328.7,
+         361.9,
+         109.6,
+         15.7
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 587,
+        "cpu_ms": 136.6
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 23,
+         "rendered": 23,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.4984,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 9,
+         "crossing_against_normal": 14,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 6.5744,
+         "diameter_mm_max": 9.5,
+         "crossing_with_normal": 1,
+         "crossing_against_normal": 3,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.2214,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 4,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 5,
+         "rendered": 5,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.0858,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 3,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        1,
+        0,
+        0
+       ],
+       "preset": "sagittal",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 15942,
+        "implied_area_mm2": 7797.42
+       },
+       "cap_off": {
+        "painted_pixels": 38623,
+        "implied_area_mm2": 18890.97
+       },
+       "solid_only": {
+        "painted_pixels": 38623,
+        "implied_area_mm2": 18890.97
+       },
+       "clip_uniform": [
+        1,
+        0,
+        0,
+        -49.35174751281738
+       ],
+       "cpu_mesh_slice_area_mm2": 7774.98,
+       "cpu_grid_area_mm2": 7772.97,
+       "rendered_over_cpu_ratio": 1.0029,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "coronal": {
+      "report": {
+       "preset": "coronal",
+       "normal_local": [
+        0,
+        0,
+        1
+       ],
+       "plane_constant_local_mm": -199.4641,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 11582.41,
+        "area_mm2_grid": 11578.26,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1774.5
+         },
+         {
+          "segment": 2,
+          "area_mm2": 58.7
+         },
+         {
+          "segment": 4,
+          "area_mm2": 315
+         },
+         {
+          "segment": 5,
+          "area_mm2": 3838.5
+         },
+         {
+          "segment": 8,
+          "area_mm2": 5591.5
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         442.2,
+         2625.6,
+         2099.3,
+         1393,
+         659.3,
+         510.6,
+         792.4,
+         1637.5,
+         1295.2,
+         123.3
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 694,
+        "cpu_ms": 156.9
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 18,
+         "rendered": 18,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.6498,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 7,
+         "crossing_against_normal": 11,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 19,
+         "rendered": 19,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 2.0844,
+         "diameter_mm_max": 8.915,
+         "crossing_with_normal": 15,
+         "crossing_against_normal": 4,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 2.89,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 6,
+         "rendered": 6,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 2.553,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0,
+        0,
+        1
+       ],
+       "preset": "coronal",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 23675,
+        "implied_area_mm2": 11579.72
+       },
+       "cap_off": {
+        "painted_pixels": 28817,
+        "implied_area_mm2": 14094.74
+       },
+       "solid_only": {
+        "painted_pixels": 28817,
+        "implied_area_mm2": 14094.74
+       },
+       "clip_uniform": [
+        0,
+        0,
+        1,
+        199.46409225463867
+       ],
+       "cpu_mesh_slice_area_mm2": 11582.41,
+       "cpu_grid_area_mm2": 11578.26,
+       "rendered_over_cpu_ratio": 0.9998,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "axial": {
+      "report": {
+       "preset": "axial",
+       "normal_local": [
+        0,
+        1,
+        0
+       ],
+       "plane_constant_local_mm": -458.1859,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 14496.68,
+        "area_mm2_grid": 14491.41,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 62.6
+         },
+         {
+          "segment": 2,
+          "area_mm2": 135
+         },
+         {
+          "segment": 3,
+          "area_mm2": 1807.8
+         },
+         {
+          "segment": 4,
+          "area_mm2": 2071.9
+         },
+         {
+          "segment": 5,
+          "area_mm2": 3807.2
+         },
+         {
+          "segment": 6,
+          "area_mm2": 6021.9
+         },
+         {
+          "segment": 8,
+          "area_mm2": 585
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         502.8,
+         3862,
+         3865.9,
+         1715.8,
+         792.4,
+         680.8,
+         1062.4,
+         1531.9,
+         448,
+         29.3
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 812,
+        "cpu_ms": 181.9
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 30,
+         "rendered": 30,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.3972,
+         "diameter_mm_max": 5.4797,
+         "crossing_with_normal": 6,
+         "crossing_against_normal": 24,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 19,
+         "rendered": 19,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 1.8646,
+         "diameter_mm_max": 2.766,
+         "crossing_with_normal": 0,
+         "crossing_against_normal": 19,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 11,
+         "rendered": 11,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.5749,
+         "diameter_mm_max": 2.481,
+         "crossing_with_normal": 2,
+         "crossing_against_normal": 9,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 9,
+         "rendered": 9,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.3589,
+         "diameter_mm_max": 2.1716,
+         "crossing_with_normal": 0,
+         "crossing_against_normal": 9,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0,
+        1,
+        0
+       ],
+       "preset": "axial",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 29446,
+        "implied_area_mm2": 14402.39
+       },
+       "cap_off": {
+        "painted_pixels": 31132,
+        "implied_area_mm2": 15227.03
+       },
+       "solid_only": {
+        "painted_pixels": 31132,
+        "implied_area_mm2": 15227.03
+       },
+       "clip_uniform": [
+        0,
+        1,
+        0,
+        458.1859436035156
+       ],
+       "cpu_mesh_slice_area_mm2": 14496.68,
+       "cpu_grid_area_mm2": 14491.41,
+       "rendered_over_cpu_ratio": 0.9935,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     },
+     "free_oblique": {
+      "report": {
+       "preset": "free",
+       "normal_local": [
+        0.583923,
+        0.342898,
+        0.735836
+       ],
+       "plane_constant_local_mm": -275.0662,
+       "offset01": 0.5,
+       "capping": {
+        "method": "two-pass stencil (back faces increment, front faces decrement), cap quad painted only where stencil != 0",
+        "solids_capped": [
+         "parenchyma",
+         "gallbladder"
+        ],
+        "cap_quad_geometric_offset_mm": 0,
+        "depth_fight_handling": "polygonOffset per cap, no geometric displacement"
+       },
+       "face": {
+        "area_mm2_mesh_slice": 7612.36,
+        "area_mm2_grid": 7618.41,
+        "cut_segments": [
+         {
+          "segment": 1,
+          "area_mm2": 1349.9
+         },
+         {
+          "segment": 4,
+          "area_mm2": 322.8
+         },
+         {
+          "segment": 5,
+          "area_mm2": 1277.6
+         },
+         {
+          "segment": 8,
+          "area_mm2": 4668.1
+         }
+        ],
+        "zone01_decile_area_mm2": [
+         52.8,
+         559.5,
+         1541.7,
+         1303,
+         643.7,
+         596.7,
+         860.8,
+         1177.8,
+         780.6,
+         101.7
+        ],
+        "grid": 256,
+        "grid_cell_mm": 1.3987,
+        "slice_edge_count": 576,
+        "cpu_ms": 126.4
+       },
+       "lumens": {
+        "portal_vein": {
+         "openings": 10,
+         "rendered": 10,
+         "diameter_mm_min": 1.3972,
+         "diameter_mm_median": 1.5981,
+         "diameter_mm_max": 6.6744,
+         "crossing_with_normal": 8,
+         "crossing_against_normal": 2,
+         "tree_segments_total": 1188,
+         "radius_scale_applied": 1
+        },
+        "hepatic_vein": {
+         "openings": 10,
+         "rendered": 10,
+         "diameter_mm_min": 1.8124,
+         "diameter_mm_median": 2.2836,
+         "diameter_mm_max": 9.3314,
+         "crossing_with_normal": 3,
+         "crossing_against_normal": 7,
+         "tree_segments_total": 973,
+         "radius_scale_applied": 1
+        },
+        "hepatic_artery": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.2214,
+         "diameter_mm_median": 1.539,
+         "diameter_mm_max": 3.3156,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 0,
+         "tree_segments_total": 372,
+         "radius_scale_applied": 1
+        },
+        "bile_duct": {
+         "openings": 4,
+         "rendered": 4,
+         "diameter_mm_min": 1.0858,
+         "diameter_mm_median": 1.368,
+         "diameter_mm_max": 2.9472,
+         "crossing_with_normal": 4,
+         "crossing_against_normal": 0,
+         "tree_segments_total": 370,
+         "radius_scale_applied": 1
+        }
+       }
+      },
+      "cap": {
+       "plane": [
+        0.583923,
+        0.342898,
+        0.735836
+       ],
+       "preset": "free",
+       "orthographic_px": 512,
+       "mm_per_pixel": 0.69937,
+       "cap_on": {
+        "painted_pixels": 15496,
+        "implied_area_mm2": 7579.28
+       },
+       "cap_off": {
+        "painted_pixels": 23050,
+        "implied_area_mm2": 11274.03
+       },
+       "solid_only": {
+        "painted_pixels": 23050,
+        "implied_area_mm2": 11274.03
+       },
+       "clip_uniform": [
+        0.5839234422273872,
+        0.3428978074554514,
+        0.7358359241431228,
+        275.0661578384926
+       ],
+       "cpu_mesh_slice_area_mm2": 7612.36,
+       "cpu_grid_area_mm2": 7618.41,
+       "rendered_over_cpu_ratio": 0.9957,
+       "interpretation": "cap_on renders ONLY the cut face, viewed down the plane normal with an orthographic camera of known scale, so its implied area should match cpu_mesh_slice_area_mm2 \u2014 a number computed on the CPU by intersecting the 137k-triangle parenchyma with the same plane and applying the shoelace formula, which never touches the GPU. solid_only re-renders the clipped solid with the cap hidden: that is what an UNCAPPED cut looks like from the same viewpoint, and the two areas being different is the whole point of capping."
+      }
+     }
+    },
+    "cellPick": {
+     "attempts": 5,
+     "hits": [
+      {
+       "at": [
+        0.5,
+        0.5
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18141173,
+       "donor_id": "C72",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 9644,
+       "nonzero_genes": 35
+      },
+      {
+       "at": [
+        0.42,
+        0.46
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18120483,
+       "donor_id": "C70",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 16239,
+       "nonzero_genes": 34
+      },
+      {
+       "at": [
+        0.58,
+        0.54
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18141173,
+       "donor_id": "C72",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 9644,
+       "nonzero_genes": 35
+      },
+      {
+       "at": [
+        0.5,
+        0.38
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 9992446,
+       "donor_id": "C48",
+       "dataset_id": "234c23d0-d6cd-4612-a40d-e5811727564b",
+       "assay": "10x 3' v2",
+       "disease": "normal",
+       "raw_sum": 8828,
+       "nonzero_genes": 20
+      },
+      {
+       "at": [
+        0.62,
+        0.42
+       ],
+       "cls": "hepatocyte_zone2",
+       "cell_type": "midzonal region hepatocyte",
+       "soma_joinid": 18141173,
+       "donor_id": "C72",
+       "dataset_id": "ddb22b3d-a75c-4dd1-9730-dff7fc8ca530",
+       "assay": "10x 3' v3",
+       "disease": "normal",
+       "raw_sum": 9644,
+       "nonzero_genes": 35
+      }
+     ]
     }
    },
    "hud_overflow_after_toggles": [],
    "screenshots": {
-    "organ": "out/bench/liver3d_phone360_organ.png",
-    "lobule": "out/bench/liver3d_phone360_lobule.png",
-    "vessels": "out/bench/liver3d_phone360_vessels.png",
-    "couinaud": "out/bench/liver3d_phone360_couinaud.png",
-    "zones": "out/bench/liver3d_phone360_zones.png"
+    "organ": "/work/bench/liver3d_phone360_organ.png",
+    "lobule": "/work/bench/liver3d_phone360_lobule.png",
+    "section": "/work/bench/liver3d_phone360_section.png",
+    "channel_oxygen": "/work/bench/liver3d_phone360_channel_oxygen.png",
+    "channel_cyp": "/work/bench/liver3d_phone360_channel_cyp.png",
+    "channel_clearance": "/work/bench/liver3d_phone360_channel_clearance.png",
+    "sinusoid": "/work/bench/liver3d_phone360_sinusoid.png",
+    "cell": "/work/bench/liver3d_phone360_cell.png",
+    "genetint": "/work/bench/liver3d_phone360_genetint.png",
+    "vessels": "/work/bench/liver3d_phone360_vessels.png",
+    "couinaud": "/work/bench/liver3d_phone360_couinaud.png",
+    "zones": "/work/bench/liver3d_phone360_zones.png"
    },
    "console": [],
    "assets_served": [
     [
+     "liver3d.html",
+     40431
+    ],
+    [
      "liver3d/assets/couinaud.json",
      1561
+    ],
+    [
+     "liver3d/assets/couinaud_terminals.json",
+     18311
     ],
     [
      "liver3d/assets/liver.glb",
      3851696
     ],
     [
+     "liver3d/assets/liver_cells.json",
+     1268386
+    ],
+    [
      "liver3d/assets/liver_expression.json",
-     10415
+     139794
     ],
     [
      "liver3d/assets/liver_flow.json",
@@ -747,16 +3852,32 @@
      2476
     ],
     [
+     "liver3d/assets/liver_protein_evidence.json",
+     44745
+    ],
+    [
      "liver3d/assets/liver_vessels.json",
      186513
+    ],
+    [
+     "liver3d/assets/liver_zonation.json",
+     11469
+    ],
+    [
+     "liver3d/js/cells.js",
+     27485
     ],
     [
      "liver3d/js/flow.js",
      10524
     ],
     [
+     "liver3d/js/func.js",
+     7623
+    ],
+    [
      "liver3d/js/hud.js",
-     6260
+     8544
     ],
     [
      "liver3d/js/lobule.js",
@@ -764,23 +3885,27 @@
     ],
     [
      "liver3d/js/main.js",
-     18432
+     40552
     ],
     [
      "liver3d/js/materials.js",
      9726
     ],
     [
+     "liver3d/js/panel.js",
+     15927
+    ],
+    [
      "liver3d/js/respiration.js",
      4864
     ],
     [
-     "liver3d/js/vessels.js",
-     4143
+     "liver3d/js/section.js",
+     33283
     ],
     [
-     "liver3d/liver3d_demo.html",
-     7308
+     "liver3d/js/vessels.js",
+     4143
     ],
     [
      "liver3d/vendor/jsm/controls/OrbitControls.js",
@@ -810,7 +3935,16 @@
      "liver3d/vendor/three/three.module.js",
      662772
     ]
-   ]
+   ],
+   "frame_budget": {
+    "per_frame_render_cost_ms": 16.666111111111114,
+    "frame_time_p95_ms": 16.799999999999272,
+    "budget_60fps_ms": 16.67,
+    "headroom_x_mean": 1.0002333411113704,
+    "headroom_x_p95": 0.9922619047619479,
+    "note": "fpsMean is NOT by itself a user-visible frame rate, so the per-frame render cost and the p95 frame time are reported against the 16.67 ms 60-fps budget instead. Headless Chromium CAN run rAF uncapped, in which case the fps figure is meaningless. vsync_detected is set from THIS viewport's own measurement (per-frame cost within 0.2 ms of the 16.67 ms presentation interval). It is true here: the frame times are pinned to the display refresh, so they are a FLOOR at 60 fps and say nothing about how much headroom remains. The p95 is the 95th percentile of a 0.1 ms-quantised histogram, so viewports that are equally vsynced can still differ by one bin.",
+    "vsync_detected": true
+   }
   }
  },
  "problems": [],

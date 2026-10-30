@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- v2 — section plane, continuous zoom to single cells, per-cell gene panel -->
 <html lang="zh">
 <head>
 <meta charset="utf-8">
@@ -40,6 +41,17 @@
   .warnbox{border:1px solid #6b4a12;background:#2a1f0a;border-radius:8px;padding:13px 15px;
            font-size:13.5px;color:#f5d9a0}
   #panelbtn{position:absolute;right:12px;top:12px;z-index:11;display:none}
+  details{margin:7px 0;border-top:1px solid var(--line);padding-top:6px}
+  summary{cursor:pointer;font-size:11.5px;color:#b8c4d6;letter-spacing:.03em;
+           text-transform:uppercase;user-select:none}
+  .zoomrow input[type=range]{width:150px}
+  #ui .note b{color:#e3ebf6}
+  .grade{display:inline-block;padding:1px 5px;border-radius:4px;font-size:9.5px;
+         font-weight:600;margin-right:4px}
+  .g-meas{background:#13402c;color:#7fe0ab;border:1px solid #2e7a53}
+  .g-pub{background:#3d3312;color:#e5c45f;border:1px solid #7d6a24}
+  .g-sch{background:#3b1f2c;color:#e59aad;border:1px solid #7d3b53}
+  .tiertable td:first-child{white-space:nowrap}
   /* The scene HUD here is laid out from the viewport width and reports its own
      element boxes, so unlike the heart page it does NOT have to be hidden on a
      phone — it switches to a stacked single-column layout instead. */
@@ -68,7 +80,8 @@
   <span style="color:var(--dim)"> · </span>
   <a class="lk" href="heart3d.html">三维心脏 →</a>
   <h1>三维解剖学数字肝脏</h1>
-  <div class="sub">真实 CT 分割几何 · 门静脉树轮廓锚定 · 肝静脉树构建 · v = Q/A 血流 · 三维肝小叶</div>
+  <div class="sub">真实 CT 分割几何 · 门静脉树轮廓锚定 · v = Q/A 血流 · <b>可交互解剖切面（实心封盖）</b> ·
+     <b>器官→单细胞连续缩放</b> · <b>每个细胞=一个真实测序细胞</b></div>
 </header>
 
 <div id="stage">
@@ -76,10 +89,18 @@
   <div id="err"></div>
   <button id="panelbtn">控制面板</button>
   <div id="ui">
+    <div class="row zoomrow">
+      <label>缩放</label>
+      <input id="zoom" type="range" min="0" max="5" step="0.02" value="0">
+      <span id="zoom-v"><code>器官</code></span>
+    </div>
     <div class="row">
-      <label>视图</label>
-      <button id="v-organ" class="on">器官</button>
-      <button id="v-lob">肝小叶</button>
+      <button class="tierb on" data-tier="0">器官</button>
+      <button class="tierb" data-tier="1">肝段</button>
+      <button class="tierb" data-tier="2">切面</button>
+      <button class="tierb" data-tier="3">小叶</button>
+      <button class="tierb" data-tier="4">血窦</button>
+      <button class="tierb" data-tier="5">单细胞</button>
     </div>
     <div class="row">
       <button id="b-portal" class="on">门静脉</button>
@@ -92,10 +113,60 @@
       <button id="b-seg">Couinaud 分段</button>
       <button id="b-zone">分区梯度</button>
     </div>
+
+    <details id="secbox" open>
+      <summary>解剖切面</summary>
+      <div class="row">
+        <button id="s-on">切开</button>
+        <button class="presetb" data-preset="sagittal">矢状</button>
+        <button class="presetb" data-preset="coronal">冠状</button>
+        <button class="presetb" data-preset="axial">轴位</button>
+        <button id="s-flip">翻面</button>
+      </div>
+      <div class="row">
+        <label>位置</label>
+        <input id="s-off" type="range" min="0.03" max="0.97" step="0.005" value="0.5">
+        <span id="s-off-v"><code>0.50</code></span>
+      </div>
+      <div class="row">
+        <label>自由切面 方位</label>
+        <input id="s-az" type="range" min="0" max="6.28" step="0.01" value="0">
+        <label>仰角</label>
+        <input id="s-el" type="range" min="-1.5" max="1.5" step="0.01" value="0">
+      </div>
+      <div class="row">
+        <button id="s-segface" class="on">断面分段着色</button>
+      </div>
+      <div class="note" id="secinfo">—</div>
+    </details>
+
+    <details id="funcbox">
+      <summary>动态肝功能通道</summary>
+      <div class="row">
+        <button class="chb" data-ch="oxygen">氧梯度</button>
+        <button class="chb" data-ch="zonation">代谢分区</button>
+        <button class="chb" data-ch="cyp">CYP 逐基因</button>
+        <button class="chb" data-ch="clearance">底物衰减</button>
+        <button class="chb" data-ch="bile">胆汁逆流</button>
+        <button class="chb" data-ch="off">关闭</button>
+      </div>
+      <div class="row" id="extrow" style="display:none">
+        <label>抽提比 E（输入值）</label>
+        <input id="extr" type="range" min="0.05" max="0.95" step="0.01" value="0.5">
+        <span id="extr-v"><code>0.50</code></span>
+      </div>
+      <div class="note" id="chinfo">选一个通道。每个通道都会标明它是<b>本项目实测</b>、<b>已发表</b>还是<b>示意</b>。</div>
+    </details>
+
     <div class="row">
       <label>分区基因</label>
       <select id="gene"></select>
     </div>
+    <div class="row">
+      <button id="b-tint">按本细胞实测值给细胞上色</button>
+      <button id="b-cut" class="on">前侧肝板切除</button>
+    </div>
+    <div class="note" id="tintinfo" style="display:none"></div>
     <div class="row">
       <label>速度</label>
       <input id="rate" type="range" min="0.1" max="3" step="0.05" value="1">
@@ -111,12 +182,166 @@
 <main>
   <div class="warnbox">
     <b>这个页面能做什么、不能做什么。</b>
-    几何、门静脉主干、血管口径与分区表达量都是实测的。<b>肝清除率模型尚不存在</b>——
-    把表达量换算成清除能力需要绝对丰度标定与 IVIVE 外推，这一层本项目还没有建立，
-    所以这里<b>没有</b>任何药物浓度展示，也不得把分区着色读作代谢速率。
+    几何、门静脉主干、血管口径与分区表达量都是实测的。<b>肝清除率模型仍然不存在</b>——
+    把表达量换算成清除能力需要绝对丰度标定与 IVIVE 外推，这一层本项目<b>还是没有</b>建立，
+    所以<b>不得把分区着色读作代谢速率</b>。
+    v2 的"底物衰减"通道确实画了一条沿窦状隙的浓度曲线，但它被明确标为
+    <b><span class="grade g-sch">示意</span></b>：
+    它的衰减常数是你自己在滑杆上设的抽提比 E，是<b>输入值</b>，
+    <b>不是</b>由本页任何表达量算出来的。
     呼吸频率来自 PhysioNet nsrdb/16265 公开数据，<b>不是任何特定个体</b>，
     所有文件中 <code>is_user_personal_data = false</code>。本页为研究用模拟器，<b>不可用于临床给药决策</b>。
   </div>
+
+  <h2>v2 新增了什么</h2>
+  <p><b>一、分子层补全。</b>v1 只有 11 种细胞类型 / 126 244 细胞 / 24 位 donor，
+     那不是数据的上限，是传输的瓶颈：本沙箱所有字节走同一个本地 HTTP 代理，
+     TileDB 的 S3 扇出会把它打满（单个 15 万行区块曾跑 67 分钟）。
+     改在<b>直连出网的远程容器</b>上按同样的 soma_joinid 连续区块路线读，
+     <b>11 个区块 0 失败、430.3 秒</b>读完整个肝脏：
+     <b>171 种细胞类型 / 1 625 338 细胞 / 242 位 donor / 33 个数据集 × 61 个 ADME 基因</b>。</p>
+  <p>Census 的"肝脏"<b>不全是健康组织</b>：其中 956 026 个细胞标注为 normal，
+     其余来自乳腺癌肝转移（361 215）、原发性硬化性胆管炎（104 667）、母细胞瘤、
+     原发性胆汁性胆管炎等。<code>malignant cell</code>（196 802）是全部细胞类型里最大的一类。
+     所以本页同时提供<b>全量</b>与<b>仅 normal</b>两份聚合（155 种类型 / 956 026 细胞 / 137 donor），
+     并且<b>每个单细胞记录都自带 disease 字段</b>。</p>
+  <p><b>二、每个细胞就是一个真实测序过的细胞。</b>单细胞层用
+     <b>按细胞类型的蓄水池抽样（Algorithm R）</b>在全部肝细胞的流上抽样，
+     配额 <code>clip(round(80 + 0.004 × n), 40, 600)</code>，<b>随机种子 20261030</b>，
+     共抽 <b>16 389</b> 个细胞；页面首屏载入其中 <b>1 991</b> 个（13 种类型，仅 normal 供体），
+     其余 6 个分片懒加载。
+     点开任意一个渲染细胞，看到的是<b>那一个</b> <code>soma_joinid</code> 自己的
+     61 个基因原始 counts 与它自己的 <code>raw_sum</code> 算出的 CP10K-log1p——
+     <b>不是"某类细胞的平均值"</b>。浏览器内把这两列重算并与文件逐项比对：
+     <b>547 个值、0 处不符、最大绝对差 5.0×10⁻⁵</b>（文件只存到小数点后 4 位）。
+     若某个渲染实例对应的 Census 类型在抽样里没有可用细胞，它<b>一个基因值都不显示</b>，
+     <b>不会</b>拿类型均值顶上。</p>
+  <p><b>三、蛋白层有四个分辨率层级，而且纠正了两处前提。</b>
+     （1）<code>protein_abundance_anchors.csv</code> 的肝脏 133 行里，56 行确实是 HPA 的 mRNA（nTPM），
+     但另有 <b>36 行是 <code>absolute_protein_abundance</code>、<code>has_absolute_quantification = True</code></b>
+     （pmol/mg 蛋白，覆盖 61 个基因中的 23 个，验证过的 LC-MS/MS 特征肽法）——
+     "本项目没有任何肝脏蛋白数据"这个说法<b>不成立</b>，这 36 行被单列为一层。
+     （2）"肝脏单细胞蛋白质组基本不存在"也<b>不成立</b>：
+     PXD062231（Weiss 等 2026 <i>Nat Metab</i> 8(3):741-756，PMID 41721135）
+     用 Orbitrap Astral 测了 <b>792 个激光显微切割的单个肝细胞</b>，
+     每个细胞中位定量 <b>2 230</b> 个蛋白，
+     <b>61 个 ADME 基因里有 44 个</b>在至少一个单细胞里被定量到。
+     但<b>那是另一个队列的另一批细胞</b>：
+     <b>本项目里没有任何一个细胞同时测了转录组和蛋白质组</b>，这条鸿沟逐行标注在面板上。</p>
+  <p><b>没有任何"表达量→蛋白丰度"或"丰度→活性"的标定系数</b>，
+     所以面板<b>不会</b>把左边的基因读数换算成右边的蛋白量，也不会反过来；
+     某一层对某个基因没有数据就写<b>无数据</b>，不向邻层借。</p>
+
+  <h2>解剖切面：断面是实心的，而且证明过</h2>
+  <p>三个预设（矢状／冠状／轴位）+ 一个两轴可拖的自由切面 + 沿法向的位置滑杆 + 翻面，
+     实时切开真实 CT 分割网格，切面<b>随呼吸与器官一起走</b>。</p>
+  <p><b>封盖用两遍模板缓冲</b>：被裁剪实体的<b>背面 +1、正面 −1</b>，
+     然后只在<b>模板 ≠ 0</b> 处给贴在平面上的四边形上色——
+     也就是只在"平面确实位于实体内部"的地方上色，所以断面不会变成一个溢出器官的圆盘。
+     断面面积由<b>三种互不相干的算法</b>各算一遍：</p>
+  <table class="tiertable"><thead><tr><th>切面</th><th>CPU 网格求交（Python）</th>
+    <th>CPU 网格求交（浏览器）</th><th>CPU 栅格化（浏览器）</th><th>GPU 模板封盖（像素）</th><th>GPU/Python</th></tr></thead>
+    <tbody>
+    <tr><td>矢状</td><td>7 775.0 mm²</td><td>7 774.98 mm²</td><td>7 772.97 mm²</td><td><b>7 797.4 mm²</b></td><td><b>1.0029</b></td></tr>
+    <tr><td>冠状</td><td>11 582.4 mm²</td><td>11 582.41 mm²</td><td>11 578.26 mm²</td><td><b>11 579.7 mm²</b></td><td><b>0.9998</b></td></tr>
+    <tr><td>轴位</td><td>14 496.7 mm²</td><td>14 496.68 mm²</td><td>14 491.41 mm²</td><td><b>14 402.4 mm²</b></td><td><b>0.9935</b></td></tr>
+    <tr><td>自由斜切</td><td>—</td><td>7 612.4 mm²</td><td>7 618.4 mm²</td><td><b>7 579.3 mm²</b></td><td>0.9957</td></tr>
+    </tbody></table>
+  <p>Python 那一列把 78 000 面的实质网格与平面求交后按<b>定向</b>鞋带公式求面积，<b>完全不碰 GPU</b>；
+     GPU 那一列在隐藏其它所有可渲染物后、用已知比例的正交相机沿法向数封盖像素，<b>完全不碰 CPU 几何</b>。
+     二者<b>一致到 0.03–0.7%</b>。没有封盖会是 0 像素，封盖过大会远超求交面积。
+     另外，开关切面前后对同一帧缓冲各读一次像素：
+     器官占 157 091 像素，其中 <b>110 777 像素（70.5%）</b>因切开而改变。</p>
+  <p><b>断面上的血流</b>：四棵树每一段与平面相交就生成一个开口，
+     半径在交点处由 <code>liver_vessels.json</code> 的两端节点半径线性插值，<b>未做任何缩放</b>。
+     开口画成不透明管壁环 + 半透明管腔盘，所以保留侧血管内的流动粒子<b>透过开口看得见</b>；
+     进／出纸面的方向标记取自（段方向·平面法向）的符号，<b>来自血管树自己的几何</b>。
+     浏览器算出的开口计数与管径在 Python 里独立重算：
+     <b>12 个（树 × 切面）组合全部完全一致，最大管径差 0.0 mm</b>。
+     中矢状面上：门静脉 <b>23</b> 个开口 1.40–6.67 mm、肝静脉 <b>4</b> 个 1.81–9.50 mm、
+     肝动脉 <b>6</b> 个 1.22–3.32 mm、胆管 <b>5</b> 个 1.09–2.95 mm。</p>
+  <p><b>断面上的 Couinaud 分段</b>用的是<b>和包膜完全同一条规则</b>：
+     最近门静脉终末的几何分段标签（门脉领域 Voronoi，Selle 等 2002），
+     在断面 256×256 网格上逐格判定。
+     中矢状面切到 S1 1 391、S3 2 268、S4 2 890、S5 151、S6 65、S7 513、S8 497 mm²。</p>
+  <p><b>切面确实跟着器官走，而且仍是刚体。</b>断面上相距 <b>97.7 mm</b> 的两个点追踪一个呼吸周期：
+     断面形心峰峰位移 <b>26.90 mm</b>，<b>两点间距漂移 1.42×10⁻¹⁴ mm</b>（刚体，到浮点精度），
+     而两点<b>位移矢量</b>相差 <b>3.75 mm</b>——
+     这 3.75 mm 正是绕肝腔静脉汇合处那 <b>2.2° 旋转</b>的签名：
+     纯平移会让它<b>恰好为零</b>，而任何缩放都会先在间距漂移上暴露。</p>
+
+  <h2>动态肝功能：五个通道，逐个标级</h2>
+  <p>五个通道都画在<b>同一个</b>分区坐标上——
+     <code>zone01 = d(最近门静脉终末) / (d_门静脉 + d_肝静脉终末)</code>，
+     由本受试者自己的两棵血管树（313 + 263 个终末）算出。差别只在轴上的数字从哪来。</p>
+  <table class="tiertable"><thead><tr><th>通道</th><th>级别</th><th>数值</th><th>出处／数值级别</th></tr></thead><tbody>
+  <tr><td>氧梯度 pO2</td><td><span class="grade g-pub">已发表</span></td>
+      <td>60–65 → 30–35 mmHg，在分区坐标上<b>线性</b>（曲线形状未实测）</td>
+      <td>Jungermann &amp; Kietzmann, <i>Hepatology</i> 2000;31:255-260, DOI 10.1002/hep.510310201 ·
+          数值 <b>B</b>（端点取自本领域通行值，<b>本次未回原文核对</b>）· 论文身份 <b>A</b></td></tr>
+  <tr><td>代谢分区</td><td><span class="grade g-pub">已发表</span></td>
+      <td>zone 1 糖异生／尿素／β 氧化／胆汁酸摄取；zone 3 糖酵解／脂肪生成／谷氨酰胺合成／CYP。<b>不画任何数值</b></td>
+      <td>Jungermann &amp; Kietzmann, <i>Annu Rev Nutr</i> 1996;16:179-203 ·
+          Kietzmann, <i>Redox Biol</i> 2017;11:622-630 · 论文身份 <b>A</b></td></tr>
+  <tr><td>CYP 逐基因</td><td><span class="grade g-meas">本项目实测</span></td>
+      <td><b>61 个基因各自的中央/门脉比值</b>：中央高 45 个、<b>方向相反 6 个</b>、持平 10 个</td>
+      <td>本次 Census 拉取；<code>liver_zonation.json</code></td></tr>
+  <tr><td>底物衰减</td><td><span class="grade g-sch">示意</span></td>
+      <td><code>C(zone) = exp(−zone·(−ln(1−E)))</code>，<b>E 是读者自己拉的滑杆</b></td>
+      <td><b>无</b>——这条通道里没有任何参数来自文献</td></tr>
+  <tr><td>胆汁逆流</td><td><span class="grade g-meas">本项目实测</span></td>
+      <td>中央静脉周围 → 门静脉周围，真实约 0.07 cm/s，<b>声明 120× 显示增益</b></td>
+      <td>由每小叶胆汁输出量除以毛细胆管截面导出</td></tr>
+  </tbody></table>
+  <p><b>必须说死的一句：本项目没有表达量 → CLint 的标定系数，也没有做 IVIVE 外推。</b>
+     底物衰减那条曲线<b>不是</b>由本页任何表达量算出来的，
+     把它读成"由 CYP 表达量推出的清除率"是<b>错的</b>，滑杆上的抽提比 E 是输入值。</p>
+  <p><b>代谢分区通道有一处自认的空缺</b>：61 个基因全是 ADME 基因，
+     不含 CPS1/OTC/ARG1（尿素循环）、GLUL（谷氨酰胺合成）、PCK1/G6PC（糖异生），
+     所以糖代谢与尿素这两条在本页<b>没有本项目自己的数据支撑</b>，只能按文献定性显示。</p>
+  <p><b>分区梯度逐基因显示，不做全局断言。</b>
+     CYP1A2 <b>3.11×</b>（中央高）、CYP3A4 <b>1.53×</b>、SLCO1B1 1.49×、ABCB11 2.04×、
+     CYP2C9 <b>1.09×（持平）</b>、CYP2D6 <b>0.78×（方向相反）</b>。
+     v1 用单个数据集 / 24 donor 测出的 8 个基因比值<b>一并保留</b>，
+     其中 <b>CYP2C19 两次测量方向相反</b>（v1 0.67× vs v2 1.38×）——
+     <b>两个数都照实报，谁也不撤回、谁也没调参。</b></p>
+
+  <h2>从器官连续缩放到单个细胞</h2>
+  <p>一条滑杆六级，<b>比例尺由相机逐帧算出</b>（轨道目标处每 CSS 像素对应多少真实长度），
+     旁边的放大倍数是该级<b>声明</b>的"每毫米组织占多少场景单位"——
+     两者相互独立，放大倍数写错会立刻表现为比例尺对不上。</p>
+  <table class="tiertable"><thead><tr><th>级别</th><th>视场</th><th>声明放大倍数</th><th>几何</th></tr></thead><tbody>
+  <tr><td>器官</td><td>220 mm</td><td>1×</td><td>真实 CT 分割，137 256 面</td></tr>
+  <tr><td>肝段</td><td>80 mm</td><td>1×</td><td>同上</td></tr>
+  <tr><td><b>解剖切面</b></td><td>200 mm</td><td>1×</td><td>同上 + 模板封盖 + 管腔开口</td></tr>
+  <tr><td>肝小叶</td><td>1.9 mm</td><td><b>60×</b></td><td>1.0 mm × 1.6 mm 六角棱柱（v1）</td></tr>
+  <tr><td>门管区／血窦</td><td>0.40 mm</td><td><b>3 000×</b></td><td>肝板组织块</td></tr>
+  <tr><td><b>单个细胞</b></td><td>0.075 mm</td><td><b>3 000×</b></td><td>同一组织块，相机贴到一个肝细胞上</td></tr>
+  </tbody></table>
+  <p><b>单细胞级按真实尺寸建模</b>：肝细胞 <b>22 µm</b>（多面体、单层肝板）、
+     血窦腔 <b>10 µm</b>、Disse 间隙 <b>0.5 µm</b>、相邻肝细胞间的毛细胆管 <b>0.75 µm</b>、
+     面向血窦的微绒毛高 <b>0.5 µm</b>、Kupffer 细胞 <b>13 µm</b>（位于血窦腔内）、
+     星状细胞胞体 <b>10 µm</b>（位于 Disse 间隙，带突起）、
+     窦状内皮 9×5 µm 扁平细胞、胆管细胞 <b>9 µm</b>（立方，围绕 7 µm 半径小胆管）。
+     视场 <b>448 × 46 × 256 µm</b>。</p>
+  <p>非实质细胞的<b>渲染数量按已发表的人肝细胞数比例</b>定
+     （肝细胞 60%、窦状内皮 20%、Kupffer 15%、星状 5%）：
+     352 个肝细胞、117 个窦状内皮、88 个 Kupffer、29 个星状、24 个胆管细胞，
+     <b>610 个可点选细胞全部绑定到一个真实 Census 细胞</b>。
+     <b>前侧肝板（352 个中的 44 个）被切掉</b>，
+     好让血窦、内皮衬里、Kupffer、星状细胞和毛细胆管从外面看得见——
+     和小叶那一级切掉 60° 扇区是同一个手法。</p>
+  <p><b>两处如实标注</b>：微绒毛<b>高度是真实的（0.5 µm），面密度是示意的</b>，没有取任何实测值；
+     窦状内皮的<b>窗孔（50–150 nm）本级渲染不出来，<b>根本没画</b></b>，衬里是连续片层。</p>
+  <p><b>渲染细胞数与真实数量的关系，说清楚：</b>
+     本页渲染 <b>610</b> 个细胞；成人肝约有 <b>2×10¹¹</b> 个肝细胞。
+     <b>一个渲染细胞不代表一批真实细胞</b>——它<b>就是被抽样到的那一个 Census 细胞</b>，
+     它的基因值是那个细胞自己的测量值。</p>
+  <p><b>"按本细胞实测值给细胞上色"</b>把这件事画进几何里：
+     每个肝细胞的颜色 = <b>它自己那一个细胞</b>对当前基因的 CP10K-log1p，
+     除以所渲染肝细胞中的最大值（该最大值会打印出来）。
+     以 CYP1A2 为例：最大值 <b>1.9677</b>，而 352 个渲染肝细胞里只有 <b>46 个</b>自己测到非零 counts——
+     这正是 10x 数据的逐细胞稀疏性，也正是细胞类型均值会抹掉的东西。</p>
 
   <h2>几何来源与许可</h2>
   <p>TotalSegmentator 数据集 v2.0.1（117 种解剖结构 / 1228 例 CT），
@@ -211,14 +436,163 @@ try{
   const $ = id => document.getElementById(id);
 
   const sel = $('gene');
+  const dirMark = { 'pericentral-high':'中央高', 'periportal-high':'门脉高·反向', 'flat':'持平' };
   for (const g of api.genes){
     const o = document.createElement('option');
+    const z = api.zonation.genes[g];
     o.value = g;
-    o.textContent = `${g} (${api.diag.zonalRatios[g].toFixed(2)}×)`;
+    o.textContent = `${g} ${z.ratio_central_over_periportal.toFixed(2)}× ${dirMark[z.direction]||''}`;
     sel.appendChild(o);
   }
   sel.value = api.gene;
   sel.onchange = () => { api.setGene(sel.value); prov(); };
+
+  // ------------------------------------------------------------- zoom ladder
+  const tierNames = api.tiers.map(t => t.zh);
+  const zslider = $('zoom');
+  function syncZoomUI(){
+    const z = api.zoom;
+    zslider.value = z;
+    const t = api.tier;
+    const mag = t.units_per_mm >= 1000 ? (t.units_per_mm/1000).toFixed(0)+'000×'
+                                       : t.units_per_mm.toFixed(0)+'×';
+    $('zoom-v').innerHTML = `<code>${t.zh} · 视场 ${fmtLen(api.fieldMm)} · ${mag}</code>`;
+    for (const b of document.querySelectorAll('.tierb'))
+      b.classList.toggle('on', api.tiers[+b.dataset.tier] === t);
+    $('s-on').classList.toggle('on', api.section.enabled);
+    secinfo();
+  }
+  function fmtLen(mm){
+    if (mm >= 10) return (mm/10).toPrecision(2)+' cm';
+    if (mm >= 1) return mm.toPrecision(2)+' mm';
+    return (mm*1000).toPrecision(2)+' µm';
+  }
+  zslider.oninput = e => { api.setZoom(parseFloat(e.target.value)); syncZoomUI(); prov(); };
+  for (const b of document.querySelectorAll('.tierb')){
+    b.onclick = () => { api.setZoom(+b.dataset.tier); syncZoomUI(); prov(); };
+  }
+
+  // ---------------------------------------------------------- section plane
+  function secinfo(){
+    const r = api.sectionReport();
+    const L = r.lumens || {};
+    const names = {portal_vein:'门静脉', hepatic_vein:'肝静脉',
+                   hepatic_artery:'肝动脉', bile_duct:'胆管'};
+    const rows = Object.keys(L).map(k =>
+      `${names[k]||k} <b>${L[k].openings}</b> 个断面开口 · 管径 ${
+        L[k].diameter_mm_min!==null ? L[k].diameter_mm_min.toFixed(2)+'–'+L[k].diameter_mm_max.toFixed(2)+' mm' : '—'}`
+    ).join('<br>');
+    const segs = (r.face && r.face.cut_segments || [])
+      .map(s => `S${s.segment} ${s.area_mm2.toFixed(0)} mm²`).join(' · ');
+    $('secinfo').innerHTML =
+      `切面 <code>${r.preset}</code> · 断面面积 <b>${r.face ? r.face.area_mm2_mesh_slice.toFixed(0) : '—'} mm²</b>` +
+      `（由实质网格与平面求交后按鞋带公式算得）<br>` +
+      `切到的 Couinaud 段：${segs || '—'}<br>${rows}<br>` +
+      `断面为<b>实心封盖</b>（两遍模板缓冲：背面 +1 / 正面 −1，仅在模板 ≠ 0 处上色），` +
+      `所以切口处看不到网格内壁的空腔。管腔开口半径<b>直接取自 liver_vessels.json</b>，` +
+      `未做任何缩放。`;
+  }
+  $('s-on').onclick = () => {
+    const on = !api.section.enabled;
+    api.setSectionEnabled(on);
+    $('s-on').classList.toggle('on', on);
+    if (on && api.tier.group !== 'organ') api.setZoom(2);
+    syncZoomUI();
+  };
+  for (const b of document.querySelectorAll('.presetb')){
+    b.onclick = () => {
+      api.setSectionPreset(b.dataset.preset);
+      api.setSectionEnabled(true);
+      for (const o of document.querySelectorAll('.presetb')) o.classList.remove('on');
+      b.classList.add('on');
+      syncZoomUI();
+    };
+  }
+  $('s-flip').onclick = () => { api.setSectionFlip(api.section.flip > 0 ? -1 : 1); secinfo(); };
+  $('s-off').oninput = e => {
+    const t = parseFloat(e.target.value);
+    api.setSectionOffset(t);
+    $('s-off-v').innerHTML = `<code>${t.toFixed(2)}</code>`;
+    secinfo();
+  };
+  const freeAngles = () => {
+    api.setSectionAngles(parseFloat($('s-az').value), parseFloat($('s-el').value));
+    for (const o of document.querySelectorAll('.presetb')) o.classList.remove('on');
+    api.setSectionEnabled(true);
+    secinfo();
+  };
+  $('s-az').oninput = freeAngles;
+  $('s-el').oninput = freeAngles;
+  $('s-segface').onclick = () => {
+    const on = !$('s-segface').classList.contains('on');
+    $('s-segface').classList.toggle('on', on);
+    api.setSegmentsOnFace(on ? 1 : 0);
+  };
+  api.setSegmentsOnFace(1);
+
+  // --------------------------------------------------------- function channel
+  const GRADE = { measured_this_project:['g-meas','本项目实测'],
+                  published:['g-pub','已发表'], schematic:['g-sch','示意'] };
+  for (const b of document.querySelectorAll('.chb')){
+    b.onclick = () => {
+      for (const o of document.querySelectorAll('.chb')) o.classList.remove('on');
+      if (b.dataset.ch === 'off'){
+        api.setChannel(null);
+        $('extrow').style.display = 'none';
+        $('chinfo').innerHTML = '通道已关闭。';
+        return;
+      }
+      b.classList.add('on');
+      const ch = api.setChannel(b.dataset.ch);
+      api.setSectionEnabled(true);
+      if (api.tier.group !== 'organ') { api.setZoom(2); syncZoomUI(); }
+      $('extrow').style.display = ch.id === 'clearance' ? '' : 'none';
+      const [cls, lab] = GRADE[ch.evidence];
+      let extra = '';
+      if (ch.id === 'cyp'){
+        const z = api.zonation.genes[api.gene];
+        extra = `<br>当前基因 <b>${api.gene}</b> 中央/门脉 <b>${z.ratio_central_over_periportal.toFixed(2)}×</b>`
+              + `（${dirMark[z.direction]}）。全 61 个基因里：中央高 ${api.diag.zonation.pericentral_high} 个、`
+              + `门脉高（方向相反）${api.diag.zonation.periportal_high} 个、持平 ${api.diag.zonation.flat} 个——`
+              + `<b>不存在"CYP 一律中央高"</b>。`;
+      }
+      if (ch.hard_statement_zh) extra += '<br><b style="color:#ffb4a8">' + ch.hard_statement_zh + '</b>';
+      if (ch.caveat_zh) extra += '<br>' + ch.caveat_zh;
+      $('chinfo').innerHTML =
+        `<span class="grade ${cls}">${lab}</span><b>${ch.zh}</b><br>${ch.summary_zh}` + extra +
+        `<br><span style="color:#8fa0b8">依据：${ch.citation}</span>` +
+        `<br><span style="color:#8fa0b8">数值级别 ${ch.value_grade} ｜ 论文身份级别 ${ch.paper_grade}</span>`;
+      syncZoomUI();
+    };
+  }
+  $('b-tint').onclick = () => {
+    const on = !$('b-tint').classList.contains('on');
+    $('b-tint').classList.toggle('on', on);
+    const info = api.setGeneTint(on);
+    if (on && info){
+      if (api.tier.group !== 'cell'){ api.setZoom(5); syncZoomUI(); }
+      $('tintinfo').style.display = '';
+      $('tintinfo').innerHTML =
+        `每个肝细胞的颜色 = <b>它自己那一个 Census 细胞</b>的 ${api.gene} CP10K-log1p，` +
+        `除以所渲染肝细胞中的<b>最大值 ${info.max_cp10k_log1p_over_rendered_hepatocytes}</b>。` +
+        `渲染的 ${info.hepatocytes_rendered} 个肝细胞里，` +
+        `<b>${info.hepatocytes_with_nonzero_count}</b> 个该基因 counts 非零。` +
+        `<b>这不是把细胞类型均值涂到细胞上</b>——冷色是那个细胞自己没测到该基因。`;
+    } else {
+      $('tintinfo').style.display = 'none';
+    }
+  };
+  $('b-cut').onclick = () => {
+    const on = !$('b-cut').classList.contains('on');
+    $('b-cut').classList.toggle('on', on);
+    api.setPlateCutaway(on);
+  };
+
+  $('extr').oninput = e => {
+    const v = parseFloat(e.target.value);
+    api.setExtraction(v);
+    $('extr-v').innerHTML = `<code>${v.toFixed(2)}</code>`;
+  };
 
   const toggle = (el, fn) => { el.onclick = () => {
     el.classList.toggle('on'); fn(el.classList.contains('on')); }; };
@@ -234,11 +608,6 @@ try{
   toggle($('b-seg'), on => api.setOverlay('segments', on));
   toggle($('b-zone'), on => api.setOverlay('zones', on));
 
-  $('v-organ').onclick = () => { api.setView('organ');
-    $('v-organ').classList.add('on'); $('v-lob').classList.remove('on'); prov(); };
-  $('v-lob').onclick = () => { api.setView('lobule');
-    $('v-lob').classList.add('on'); $('v-organ').classList.remove('on'); prov(); };
-
   $('rate').oninput = e => { const x = parseFloat(e.target.value);
     api.setPlaybackRate(x); $('rate-v').innerHTML = `<code>${x.toFixed(2)}×</code>`; };
   $('dens').oninput = e => { const f = parseFloat(e.target.value);
@@ -249,18 +618,25 @@ try{
 
   function prov(){
     const d = api.diag;
-    const r = d.zonalRatios[api.gene];
+    const z = api.zonation.genes[api.gene];
+    const ct = d.cellTier;
     $('prov').innerHTML =
       `几何 TotalSegmentator v2 · CC-BY-4.0 · s0236 · <code>${(d.triangles/1000).toFixed(0)}k</code> 面<br>` +
       `门静脉 <code>311 分叉 / 313 终末</code>（轮廓锚定）· ` +
       `肝静脉 <code>261 分叉 / 263 终末</code>（构建）<br>` +
       `呼吸 <code>${d.respiration.breaths_per_min.toFixed(2)}/min</code>，` +
       `<code>${d.respiration.excursion_cm.toFixed(1)} cm</code> 刚体位移，无形变<br>` +
-      `<b>${api.gene}</b> 中央/门脉 <b>${r.toFixed(2)}×</b>（实测）· ` +
+      `分子层 <code>${d.expression.cell_types}</code> 种细胞类型 × <code>${d.expression.genes}</code> 基因 / ` +
+      `<code>${(d.expression.n_cells/1e6).toFixed(2)}M</code> 细胞 · Census <code>${d.expression.census_version}</code><br>` +
+      `单细胞层 <code>${d.perCell.loaded}</code> 个真实细胞已载入（另有 ${d.perCell.shards_additional} 个分片懒加载）· ` +
+      `种子 <code>${d.perCell.seed}</code><br>` +
+      `<b>${api.gene}</b> 中央/门脉 <b>${z.ratio_central_over_periportal.toFixed(2)}×</b>（实测，` +
+      `${d.zonation.zone_donors.periportal} 位 donor）· ` +
       `<code>is_user_personal_data = ${d.respiration.is_user_personal_data}</code>` +
       (narrow ? '<br><code>窄屏：粒子数与像素比已降档</code>' : '');
   }
   prov();
+  syncZoomUI();
 }catch(e){ fail(e); }
 </script>
 </body>
