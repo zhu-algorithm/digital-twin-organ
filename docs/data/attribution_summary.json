@@ -1,0 +1,49 @@
+{
+ "census_version": "2025-11-08",
+ "generated_wall_s": 102.5,
+ "organs": {
+  "kidney": {
+   "datasets": 24,
+   "cells": 1463942,
+   "datasets_with_a_citation": 24
+  },
+  "liver": {
+   "datasets": 33,
+   "cells": 1625338,
+   "datasets_with_a_citation": 33
+  },
+  "heart": {
+   "datasets": 20,
+   "cells": 3104821,
+   "datasets_with_a_citation": 20
+  },
+  "small_intestine": {
+   "datasets": 22,
+   "cells": 1434955,
+   "datasets_with_a_citation": 22
+  },
+  "colon": {
+   "datasets": 25,
+   "cells": 1365592,
+   "datasets_with_a_citation": 25
+  },
+  "stomach": {
+   "datasets": 8,
+   "cells": 557791,
+   "datasets_with_a_citation": 8
+  },
+  "esophagus": {
+   "datasets": 6,
+   "cells": 178410,
+   "datasets_with_a_citation": 6
+  },
+  "lung": {
+   "datasets": 45,
+   "cells": 6167731,
+   "datasets_with_a_citation": 45
+  }
+ },
+ "distinct_datasets_overall": 130,
+ "datasets_without_collection_metadata": 0,
+ "licence_note": "CELLxGENE Discover's data submission policy publishes all released data under CC-BY 4.0. Neither the collection nor the dataset record in the curation API carries a per-dataset licence field, so attribution is to the collection/study."
+}
