@@ -1,0 +1,61 @@
+name: 申请接入私有层 / Request access to the private tier
+description: 申请接入 digital-twin-organ-private（肺部疾病药物发现器官的完整构建）
+title: "[Access] "
+labels: ["access-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        公开站点（八个器官 + 肺）无需申请，直接打开即可：
+        https://zhu-algorithm.github.io/digital-twin-organ/
+
+        **私有层**另含：疾病分组的完整单细胞表达矩阵、靶点证据表、差异表达全表、
+        以及可本地运行的完整构建。接入方式是把你加为私有仓库的协作者，
+        因此**你需要一个 GitHub 账号**。获批后 `git clone` 下来本地打开即可，无需服务器。
+
+        仓库维护者会逐个审阅申请。提交即表示你同意下面的使用条款。
+  - type: input
+    id: github
+    attributes:
+      label: 你的 GitHub 用户名
+      placeholder: "octocat"
+    validations:
+      required: true
+  - type: input
+    id: affiliation
+    attributes:
+      label: 单位 / 课题组
+    validations:
+      required: true
+  - type: textarea
+    id: purpose
+    attributes:
+      label: 用途
+      description: 打算用这些数据做什么？越具体越好。
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 需要哪些部分
+      multiple: true
+      options:
+        - 肺癌单细胞表达矩阵
+        - IPF 单细胞表达矩阵
+        - 靶点证据与药物/试验表
+        - 差异表达全表
+        - 三维肺构建源码
+        - 全部
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 使用条款
+      options:
+        - label: 我已知悉本项目为**研究用模拟器，不可用于任何临床给药或诊断决策**。
+          required: true
+        - label: 我已知悉上游数据各有其许可（CELLxGENE Census 各数据集、TotalSegmentator CC-BY-4.0 等），我将遵守并正确署名。
+          required: true
+        - label: 我不会把获批的私有内容再行公开分发。
+          required: true
