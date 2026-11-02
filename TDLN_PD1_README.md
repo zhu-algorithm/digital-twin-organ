@@ -14,6 +14,8 @@ Repository history and all branches were checked. At reconstruction time the rep
 4. Evaluate regularised logistic regression with stratified, patient-grouped cross-validation.
 5. Write cross-validated predictions, metrics, and a fitted model artifact.
 
+The mechanistic digital-twin layer additionally simulates the tumour–blood–TDLN axis, antigen transport, DC migration, Tpex self-renewal/differentiation, effector export, exhaustion/reinvigoration, anti-PD-1 pharmacokinetics, TDLN exposure, and receptor occupancy. See [`docs/TDLN_MODEL_CARD.md`](docs/TDLN_MODEL_CARD.md) for evidence, verification and the validation ladder.
+
 Grouping is performed at the patient level; cells from one patient never become independent train/test observations.
 
 ## Run
@@ -24,6 +26,7 @@ source .venv/bin/activate
 pip install -e '.[test]'
 tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
 tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts
+tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln_trajectory.csv
 pytest
 ```
 

@@ -6,6 +6,7 @@ from pathlib import Path
 from .data import load_cells, load_labels
 from .features import aggregate_cells
 from .model import train_evaluate
+from .simulator import Dose, simulate
 
 
 def main() -> None:
@@ -19,13 +20,29 @@ def main() -> None:
     train.add_argument("--labels", required=True)
     train.add_argument("--output", required=True)
     train.add_argument("--folds", type=int, default=5)
+    sim = sub.add_parser("simulate")
+    sim.add_argument("--days", type=float, default=42.0)
+    sim.add_argument("--dose-days", default="0,14,28")
+    sim.add_argument("--dose", type=float, default=1.0)
+    sim.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
-    else:
+    elif args.command == "train":
         import pandas as pd
         metrics = train_evaluate(pd.read_csv(args.features), load_labels(args.labels), Path(args.output), args.folds)
         print(json.dumps(metrics, indent=2))
+    else:
+        doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
+        trajectory = simulate(days=args.days, doses=doses)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        trajectory.to_csv(args.output, index=False)
+        print(json.dumps({
+            "final_tumour_change_pct": float(trajectory.tumour_change_pct.iloc[-1]),
+            "peak_pd1_occupancy": float(trajectory.pd1_occupancy.max()),
+            "output": args.output,
+            "research_only": True,
+        }, indent=2))
 
 
 if __name__ == "__main__":
