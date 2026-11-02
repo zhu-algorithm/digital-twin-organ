@@ -55,6 +55,25 @@ def test_training_input_binds_feature_and_parameter_sidecar_hashes(tmp_path):
     assert provenance["parameter_provenance"]["sources"]["systemic"]["sha256"] == "a" * 64
 
 
+def test_training_input_accepts_and_validates_mapping_provenance(tmp_path):
+    features = tmp_path / "hybrid.csv"
+    features.write_text("patient_id,x\np0,1\n")
+    sidecar = tmp_path / "hybrid.csv.parameters.json"
+    source = {"file": "mapping.json", "sha256": "b" * 64,
+              "parameter_class": "FeatureStateMapping"}
+    sidecar.write_text(json.dumps({"schema_version": 1, "sources": {
+        "feature_state_mapping": source,
+    }, "research_only": True}))
+    provenance = _training_input_provenance(str(features))
+    assert provenance["parameter_provenance"]["sources"]["feature_state_mapping"] == source
+    source["parameter_class"] = "TwinParameters"
+    sidecar.write_text(json.dumps({"schema_version": 1, "sources": {
+        "feature_state_mapping": source,
+    }, "research_only": True}))
+    with pytest.raises(ValueError, match="invalid parameter source fingerprint"):
+        _training_input_provenance(str(features))
+
+
 def test_training_input_binds_and_checks_label_free_augmentation_audit(tmp_path):
     features = tmp_path / "hybrid.csv"
     features.write_text("patient_id,x\np0,1\n")

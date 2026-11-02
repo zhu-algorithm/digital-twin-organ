@@ -117,9 +117,16 @@ def _training_input_provenance(feature_path: str) -> dict:
         payload = json.loads(sidecar.read_text())
         if payload.get("schema_version") != 1 or not isinstance(payload.get("sources"), dict):
             raise ValueError("invalid feature parameter-provenance sidecar")
+        expected_classes = {
+            "systemic": "TwinParameters",
+            "spatial": "SpatialParameters",
+            "feature_state_mapping": "FeatureStateMapping",
+        }
         for name, entry in payload["sources"].items():
             digest = entry.get("sha256") if isinstance(entry, dict) else None
-            if (name not in {"systemic", "spatial"} or not isinstance(digest, str)
+            parameter_class = entry.get("parameter_class") if isinstance(entry, dict) else None
+            if (name not in expected_classes or parameter_class != expected_classes.get(name)
+                    or not isinstance(digest, str)
                     or len(digest) != 64
                     or any(character not in "0123456789abcdef" for character in digest.lower())):
                 raise ValueError("invalid parameter source fingerprint in feature sidecar")
