@@ -125,6 +125,30 @@ def _rhs(_: float, y: np.ndarray, p: TwinParameters) -> np.ndarray:
     return np.where((y <= 0.0) & (dydt < 0.0), 0.0, dydt)
 
 
+def _validated_solution_states(values: np.ndarray, rtol: float, atol: float) -> np.ndarray:
+    """Clip only solver-scale drift; reject material violations of state bounds."""
+    states = np.asarray(values, dtype=float)
+    if not np.isfinite(states).all():
+        raise RuntimeError("systemic solver returned non-finite state values")
+    scales = np.maximum(np.max(np.abs(states), axis=1), 1.0)
+    tolerance = 10.0 * (atol + rtol * scales)
+    minima = np.min(states, axis=1)
+    invalid_negative = [
+        STATE_NAMES[index] for index in np.flatnonzero(minima < -tolerance)
+    ]
+    occupancy_index = STATE_NAMES.index("pd1_occupancy")
+    occupancy_max = float(np.max(states[occupancy_index]))
+    invalid_occupancy = occupancy_max > 1.0 + tolerance[occupancy_index]
+    if invalid_negative or invalid_occupancy:
+        raise RuntimeError(
+            "systemic solver violated physical state bounds: "
+            f"negative={invalid_negative}, pd1_occupancy_max={occupancy_max}"
+        )
+    states = np.maximum(states, 0.0)
+    states[occupancy_index] = np.minimum(states[occupancy_index], 1.0)
+    return states
+
+
 def simulate(
     days: float = 42.0,
     doses: tuple[Dose, ...] = (),
@@ -160,7 +184,8 @@ def simulate(
         sol = solve_ivp(_rhs, (start, end), y, args=(p,), t_eval=times, rtol=rtol, atol=atol)
         if not sol.success:
             raise RuntimeError(sol.message)
-        frame = pd.DataFrame(sol.y.T, columns=STATE_NAMES)
+        physical_states = _validated_solution_states(sol.y, rtol, atol)
+        frame = pd.DataFrame(physical_states.T, columns=STATE_NAMES)
         frame.insert(0, "day", sol.t)
         if frames:
             if start in events:
@@ -170,11 +195,9 @@ def simulate(
             else:
                 frame = frame.iloc[1:]
         frames.append(frame)
-        y = sol.y[:, -1]
+        y = physical_states[:, -1]
     out = pd.concat(frames, ignore_index=True)
     out.insert(1, "administered_dose", out.day.map(events).fillna(0.0))
-    for name in STATE_NAMES:
-        out[name] = out[name].clip(lower=0.0)
     out["tumour_change_pct"] = 100.0 * (out.tumour_cells / out.tumour_cells.iloc[0] - 1.0)
     out["tpex_effector_ratio"] = out.tpex_tdln / out.effector_tdln.clip(lower=1.0)
     return out

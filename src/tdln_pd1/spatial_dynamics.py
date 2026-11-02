@@ -176,6 +176,25 @@ def _rhs(
     return np.where((y <= 0) & (dydt < 0), 0.0, dydt)
 
 
+def _validated_spatial_solution(values: np.ndarray, rtol: float, atol: float) -> np.ndarray:
+    """Clip round-off-scale negatives and reject materially nonphysical trajectories."""
+    states = np.asarray(values, dtype=float)
+    if not np.isfinite(states).all():
+        raise RuntimeError("spatial solver returned non-finite state values")
+    scales = np.maximum(np.max(np.abs(states), axis=1), 1.0)
+    tolerance = 10.0 * (atol + rtol * scales)
+    invalid = np.flatnonzero(np.min(states, axis=1) < -tolerance)
+    if len(invalid):
+        coordinates = [
+            f"{SPECIES[index // len(ZONE_NAMES)]}:{ZONE_NAMES[index % len(ZONE_NAMES)]}"
+            for index in invalid
+        ]
+        raise RuntimeError(
+            f"spatial solver violated non-negative state bounds: {coordinates}"
+        )
+    return np.maximum(states, 0.0)
+
+
 def simulate_spatial(
     days: float = 14.0,
     step: float = 0.1,
@@ -220,12 +239,13 @@ def simulate_spatial(
                          t_eval=times, rtol=rtol, atol=atol)
     if not solution.success:
         raise RuntimeError(solution.message)
+    physical_states = _validated_spatial_solution(solution.y, rtol, atol)
     rows = []
     for time_index, day in enumerate(solution.t):
         for species in SPECIES:
             for zone in ZONE_NAMES:
                 rows.append({"day": day, "species": species, "zone": zone,
-                             "amount": max(solution.y[_index(species, zone), time_index], 0.0)})
+                             "amount": physical_states[_index(species, zone), time_index]})
     return pd.DataFrame(rows)
 
 

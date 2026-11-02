@@ -1,5 +1,7 @@
 import numpy as np
 import pytest
+from types import SimpleNamespace
+import tdln_pd1.simulator as simulator_module
 from tdln_pd1.simulator import (Dose, InitialState, STATE_NAMES, TwinParameters,
                                 simulate)
 
@@ -47,3 +49,27 @@ def test_bolus_boundary_is_post_dose_and_auditable():
 def test_dose_at_simulation_endpoint_is_rejected_instead_of_ignored():
     with pytest.raises(ValueError, match="before the simulation endpoint"):
         simulate(days=2, doses=(Dose(2, 1.0),))
+
+
+def test_systemic_solver_cannot_hide_material_state_bound_violations(monkeypatch):
+    def invalid_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(STATE_NAMES), len(t_eval)))
+        values[STATE_NAMES.index("tumour_antigen"), -1] = -1.0
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(simulator_module, "solve_ivp", invalid_solver)
+    with pytest.raises(RuntimeError, match="physical state bounds"):
+        simulate(days=1)
+
+
+def test_systemic_solver_clips_only_tolerance_scale_drift(monkeypatch):
+    def tiny_drift_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(STATE_NAMES), len(t_eval)))
+        values[STATE_NAMES.index("tumour_antigen"), -1] = -1e-10
+        values[STATE_NAMES.index("pd1_occupancy"), -1] = 1.0 + 1e-10
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(simulator_module, "solve_ivp", tiny_drift_solver)
+    out = simulate(days=1)
+    assert out.tumour_antigen.min() == 0.0
+    assert out.pd1_occupancy.max() == 1.0

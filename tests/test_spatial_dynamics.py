@@ -2,6 +2,8 @@ import numpy as np
 
 import pandas as pd
 import pytest
+from types import SimpleNamespace
+import tdln_pd1.spatial_dynamics as spatial_module
 
 from tdln_pd1.simulator import Dose, simulate
 from tdln_pd1.spatial_dynamics import (
@@ -110,3 +112,24 @@ def test_counterfactual_requires_explicit_schedule_and_zero_dose_is_equivalent()
     treated = paired[paired.arm.eq("anti_pd1")].reset_index(drop=True)
     assert np.allclose(control.amount, treated.amount, rtol=1e-6, atol=1e-6)
     assert treated.pd1_occupancy.eq(0).all()
+
+
+def test_spatial_solver_cannot_hide_material_negative_states(monkeypatch):
+    def invalid_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(SPECIES) * len(spatial_module.ZONE_NAMES), len(t_eval)))
+        values[0, -1] = -1.0
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(spatial_module, "solve_ivp", invalid_solver)
+    with pytest.raises(RuntimeError, match="non-negative state bounds"):
+        simulate_spatial(days=1)
+
+
+def test_spatial_solver_clips_only_tolerance_scale_negative_drift(monkeypatch):
+    def tiny_drift_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(SPECIES) * len(spatial_module.ZONE_NAMES), len(t_eval)))
+        values[0, -1] = -1e-10
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(spatial_module, "solve_ivp", tiny_drift_solver)
+    assert simulate_spatial(days=1).amount.min() == 0.0
