@@ -188,7 +188,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
-        aggregate_cells(load_cells(args.cells), args.time_column, baseline_values or None,
+        aggregate_cells(load_cells(args.cells, (args.time_column,) if args.time_column else ()),
+                        args.time_column, baseline_values or None,
                         args.feature_tissue_pattern).to_csv(args.output, index=False)
     elif args.command == "train":
         import pandas as pd
@@ -397,7 +398,9 @@ def main() -> None:
     elif args.command == "qc":
         import pandas as pd
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
-        report = cohort_qc(load_cells(args.cells), pd.read_csv(args.labels),
+        report = cohort_qc(load_cells(
+            args.cells, (args.time_column,) if args.time_column else (),
+        ), pd.read_csv(args.labels),
                            args.time_column, baseline_values or None, args.feature_tissue_pattern)
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)

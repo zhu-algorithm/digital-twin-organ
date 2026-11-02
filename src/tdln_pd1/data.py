@@ -5,11 +5,30 @@ from __future__ import annotations
 from pathlib import Path
 import pandas as pd
 
+from .features import TEMPORAL_COLUMNS
 
-def load_cells(path: str | Path) -> pd.DataFrame:
+
+def _validate_cell_identifiers(frame: pd.DataFrame) -> pd.DataFrame:
+    required = {"patient_id", "cell_type"}
+    if not required.issubset(frame.columns):
+        raise ValueError("cell data must contain patient_id and cell_type")
+    if frame[["patient_id", "cell_type"]].isna().any().any():
+        raise ValueError("patient_id and cell_type must be non-missing")
+    out = frame.copy()
+    for column in ("patient_id", "cell_type"):
+        out[column] = out[column].astype(str).str.strip()
+        if out[column].eq("").any():
+            raise ValueError(f"{column} must be non-empty")
+    return out
+
+
+def load_cells(
+    path: str | Path,
+    metadata_columns: tuple[str, ...] = (),
+) -> pd.DataFrame:
     path = Path(path)
     if path.suffix.lower() == ".csv":
-        return pd.read_csv(path)
+        return _validate_cell_identifiers(pd.read_csv(path))
     if path.suffix.lower() == ".h5ad":
         try:
             import anndata as ad
@@ -19,14 +38,20 @@ def load_cells(path: str | Path) -> pd.DataFrame:
         required = {"patient_id", "cell_type"}
         if not required.issubset(adata.obs.columns):
             raise ValueError("AnnData obs must contain patient_id and cell_type")
+        if adata.obs[["patient_id", "cell_type"]].isna().any().any():
+            raise ValueError("AnnData patient_id and cell_type must be non-missing")
         genes = [g for g in adata.var_names if g in _signature_genes()]
         matrix = adata[:, genes].to_df()
-        matrix.insert(0, "cell_type", adata.obs["cell_type"].astype(str).values)
-        matrix.insert(0, "patient_id", adata.obs["patient_id"].astype(str).values)
-        for column in ("clonotype_id", "tissue"):
+        matrix.insert(0, "cell_type", adata.obs["cell_type"].values)
+        matrix.insert(0, "patient_id", adata.obs["patient_id"].values)
+        metadata = dict.fromkeys(("clonotype_id", "tissue", *TEMPORAL_COLUMNS,
+                                  *metadata_columns))
+        for column in metadata:
             if column in adata.obs:
+                if column in matrix:
+                    raise ValueError(f"AnnData metadata collides with gene column: {column}")
                 matrix.insert(len(matrix.columns), column, adata.obs[column].astype(str).values)
-        return matrix
+        return _validate_cell_identifiers(matrix)
     raise ValueError("input must be .csv or .h5ad")
 
 

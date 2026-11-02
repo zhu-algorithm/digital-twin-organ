@@ -8,7 +8,7 @@ Repository history and all branches were checked. At reconstruction time the rep
 
 ## Pipeline
 
-1. Load cell-level CSV or optional `.h5ad` (`obs.patient_id`, `obs.cell_type`), requiring an explicit baseline slice whenever temporal columns exist.
+1. Load cell-level CSV or optional `.h5ad` (`obs.patient_id`, `obs.cell_type`), preserving tissue, clonotype, recognized temporal fields and any explicitly requested custom time field; both formats require an explicit baseline slice whenever temporal columns exist.
 2. Compute TDLN-restricted patient-level cell fractions and cytotoxic, exhaustion, interferon, Treg, TCF7-memory, and dendritic-activation signatures while retaining paired tissues for TCR sharing.
 3. Join pre-specified binary patient labels.
 4. Select logistic-regression regularization only inside nested, stratified patient-grouped cross-validation and generate one out-of-fold probability per patient.
@@ -47,7 +47,7 @@ tdln-pd1 verify --output artifacts/verification.json
 pytest
 ```
 
-For longitudinal paired-tissue data, use the same temporal and tissue selection for both gates, for example `tdln-pd1 qc ... --time-column timepoint --baseline-values baseline --feature-tissue-pattern 'tdln|lymph'` followed by the same selection in `tdln-pd1 featurize`. Expression features default to the TDLN/lymph-node compartment; `--feature-tissue-pattern all` is an explicit opt-out. Omitting the temporal selection when a recognized time column exists is an error, preventing post-treatment information from leaking into a baseline model. QC also fails if any patient lacks cells in the chosen feature compartment.
+For longitudinal paired-tissue data, use the same temporal and tissue selection for both gates, for example `tdln-pd1 qc ... --time-column timepoint --baseline-values baseline --feature-tissue-pattern 'tdln|lymph'` followed by the same selection in `tdln-pd1 featurize`. Expression features default to the TDLN/lymph-node compartment; `--feature-tissue-pattern all` is an explicit opt-out. Omitting the temporal selection when a recognized time column exists is an error, preventing post-treatment information from leaking into a baseline model. AnnData ingestion preserves these `obs` fields before applying exactly the same gate, including a custom field named by `--time-column`; it may not silently discard time metadata. Missing or empty patient/cell-type identifiers fail during loading in both formats. QC also fails if any patient lacks cells in the chosen feature compartment.
 
 `verify` is a fail-closed numerical qualification gate. It checks finite/non-negative systemic states, scaled zero-dose numerical equivalence, monotone default dose/occupancy direction, endpoint stability under tighter solver tolerances, per-species conservation in the reaction-free spatial network, and the prespecified checkpoint-coupling direction. It writes every measured error and tolerance to JSON and exits non-zero if any invariant fails. Zero-dose schedules restart the adaptive solver at event boundaries, so equivalence uses a documented state-scaled relative tolerance rather than a dimensionally invalid near-zero absolute tolerance. These are software and numerical checks, not biological validation.
 
