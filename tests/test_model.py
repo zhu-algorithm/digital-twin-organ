@@ -270,6 +270,35 @@ def test_external_evaluation_uses_the_locked_decision_threshold():
     assert metrics["specificity"] == 1.0
 
 
+def test_external_evaluation_exposes_center_heterogeneity_without_dropping_sites():
+    predictions = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(10)],
+        "probability": [0.1, 0.8, 0.2, 0.9, 0.15, 0.75, 0.25, 0.85, 0.2, 0.3],
+        "training_overlap": [False] * 10,
+        "overlap_check_available": [True] * 10,
+        "training_feature_reuse": [False] * 10,
+        "feature_reuse_check_available": [True] * 10,
+        "domain_check_available": [True] * 10,
+        "domain_shift_flag": [False] * 10,
+        "decision_threshold": [0.5] * 10,
+    })
+    labels = pd.DataFrame({
+        "patient_id": predictions.patient_id,
+        "response": [0, 1, 0, 1, 0, 1, 0, 1, 0, 0],
+        "center": ["a"] * 4 + ["b"] * 4 + ["single_class"] * 2,
+    })
+    metrics = evaluate_external(predictions, labels, bootstrap=20)
+    stratified = metrics["center_stratified_evaluation"]
+    assert metrics["n_patients"] == 10
+    assert stratified["role"] == "descriptive_center_heterogeneity_not_primary"
+    assert stratified["n_centers"] == 3
+    assert stratified["n_centers_evaluable"] == 2
+    by_center = {row["center"]: row for row in stratified["centers"]}
+    assert by_center["a"]["status"] == "evaluated"
+    assert by_center["single_class"]["status"] == "not_evaluable"
+    assert metrics["bootstrap_design"]["unit"] == "centre"
+
+
 def test_evaluation_rejects_invalid_probabilities_bootstrap_and_threshold():
     with pytest.raises(ValueError, match="finite"):
         evaluate_probabilities([0, 0, 1, 1], [0.1, float("nan"), 0.8, 0.9])

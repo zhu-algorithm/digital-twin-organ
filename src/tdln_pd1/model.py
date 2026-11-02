@@ -356,6 +356,49 @@ def _available_cluster_groups(frame: pd.DataFrame, column: str = "center"):
     return frame[column] if frame[column].nunique() >= 2 else None
 
 
+def _center_stratified_evaluation(
+    data: pd.DataFrame,
+    decision_threshold: float,
+) -> dict | None:
+    """Expose centre heterogeneity without dropping centres from pooled metrics."""
+    if "center" not in data:
+        return None
+    rows = []
+    for center, group in data.groupby(data.center.astype(str), sort=True):
+        row = {
+            "center": center,
+            "n_patients": int(len(group)),
+            "responders": int(group.response.sum()),
+            "response_prevalence": float(group.response.mean()),
+        }
+        if group.response.nunique() == 2:
+            row.update({"status": "evaluated", "metrics": evaluate_probabilities(
+                group.response, group.probability, bootstrap=0,
+                decision_threshold=decision_threshold,
+            )})
+        else:
+            row.update({
+                "status": "not_evaluable",
+                "reason": "centre contains only one response class",
+            })
+        rows.append(row)
+    evaluated = [row for row in rows if row["status"] == "evaluated"]
+    summary = {
+        "role": "descriptive_center_heterogeneity_not_primary",
+        "n_centers": len(rows),
+        "n_centers_evaluable": len(evaluated),
+        "centers": rows,
+    }
+    if evaluated:
+        auc = [row["metrics"]["roc_auc"] for row in evaluated]
+        brier = [row["metrics"]["brier_score"] for row in evaluated]
+        summary["evaluable_center_range"] = {
+            "roc_auc_min": float(min(auc)), "roc_auc_max": float(max(auc)),
+            "brier_score_min": float(min(brier)), "brier_score_max": float(max(brier)),
+        }
+    return summary
+
+
 def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFrame:
     """Apply an immutable fitted artifact to a new cohort without refitting."""
     artifact = joblib.load(model_path)
@@ -488,6 +531,9 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
         sensitivity["status"] = "not_evaluable"
         sensitivity["reason"] = "insufficient in-domain class support"
     metrics["in_domain_sensitivity_analysis"] = sensitivity
+    center_stratified = _center_stratified_evaluation(data, decision_threshold)
+    if center_stratified is not None:
+        metrics["center_stratified_evaluation"] = center_stratified
     return metrics
 
 

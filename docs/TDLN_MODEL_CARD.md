@@ -79,6 +79,8 @@ Command-line locked inference additionally emits a SHA-256 chain-of-custody side
 
 Applicability never changes the primary external-cohort denominator: headline metrics include every submitted patient. The evaluator may additionally report a locked-rule in-domain sensitivity analysis when at least four patients and two patients per class remain, together with its coverage and secondary role. It is marked non-evaluable otherwise. This is a robustness view, not permission to exclude domain-shifted cases from the primary result.
 
+For multicentre external cohorts, pooled metrics remain primary and retain every patient. A descriptive centre table reports sample size, prevalence and metrics for each two-class centre; single-class centres stay visible as non-evaluable rather than disappearing. Across-centre AUC and Brier ranges expose gross heterogeneity but are unstable with small centres and do not establish geographic transportability.
+
 Locked patient predictions include a 95% interval from deterministic patient-level bootstrap refits. The interval holds the fully selected regularization value fixed and therefore quantifies instability under resampling of the development patients. It is not a clinical coverage guarantee and omits distribution shift, measurement error, mechanistic misspecification and uncertainty in how single-cell features map into twin states.
 
 ## Identifiability policy
