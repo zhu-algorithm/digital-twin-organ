@@ -34,6 +34,7 @@ def _local_calibration_diagnostics(result, names, lower, upper, n_observations) 
         if value - low <= tol or high - value <= tol
     ]
     uncertainty = None
+    covariance_payload = None
     dof = int(n_observations - len(names))
     if rank == len(names) and dof > 0:
         residual_variance = float(np.sum(np.asarray(result.fun) ** 2) / dof)
@@ -47,11 +48,16 @@ def _local_calibration_diagnostics(result, names, lower, upper, n_observations) 
             }
             for name, value, error in zip(names, result.x, standard_error)
         }
+        covariance_payload = {
+            "parameter_order": list(names),
+            "log_scale_covariance": covariance.tolist(),
+        }
     return {
         "jacobian_rank": rank,
         "jacobian_condition_number": condition if np.isfinite(condition) else None,
         "parameters_at_search_boundary": boundary,
         "local_parameter_uncertainty": uncertainty,
+        "local_log_parameter_covariance": covariance_payload,
         "uncertainty_note": (
             "Approximate local intervals from the weighted residual Jacobian in log-parameter "
             "space; unavailable when rank deficient or residual degrees of freedom are absent."
@@ -297,4 +303,60 @@ def ensemble(
                      "tumour_change_pct": final.tumour_change_pct,
                      "effector_tumour": final.effector_tumour,
                      "peak_pd1_occupancy": trajectory.pd1_occupancy.max()})
+    return pd.DataFrame(rows)
+
+
+def calibration_ensemble(
+    parameters: TwinParameters,
+    diagnostics: dict,
+    doses: tuple[Dose, ...],
+    days: float,
+    n: int = 100,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Propagate the fitted local log-parameter covariance into endpoints.
+
+    Only fitted coordinates in the saved covariance are sampled; all other
+    mechanistic parameters remain fixed at their calibrated-file values.
+    This is local asymptotic parameter uncertainty, not structural uncertainty.
+    """
+    if not isinstance(n, (int, np.integer)) or n < 2:
+        raise ValueError("calibration ensemble requires n >= 2")
+    if not np.isfinite(days) or days <= 0:
+        raise ValueError("calibration ensemble days must be finite and positive")
+    payload = diagnostics.get("local_log_parameter_covariance")
+    if not isinstance(payload, dict):
+        raise ValueError("calibration diagnostics do not contain estimable covariance")
+    if diagnostics.get("locally_identifiable") is not True:
+        raise ValueError("calibration uncertainty requires locally identifiable parameters")
+    names = payload.get("parameter_order")
+    covariance = np.asarray(payload.get("log_scale_covariance"), dtype=float)
+    available = asdict(parameters)
+    if (not isinstance(names, list) or not names or len(set(names)) != len(names)
+            or any(name not in available for name in names)
+            or covariance.shape != (len(names), len(names))
+            or not np.isfinite(covariance).all()
+            or not np.allclose(covariance, covariance.T, rtol=1e-8, atol=1e-12)):
+        raise ValueError("invalid calibration log-parameter covariance")
+    eigenvalues = np.linalg.eigvalsh(covariance)
+    if eigenvalues.min() < -1e-10 * max(1.0, float(np.abs(eigenvalues).max())):
+        raise ValueError("calibration covariance must be positive semidefinite")
+    rng = np.random.default_rng(seed)
+    log_center = np.log([available[name] for name in names])
+    draws = rng.multivariate_normal(log_center, covariance, size=n, check_valid="raise")
+    rows = []
+    for draw, vector in enumerate(draws):
+        sampled_values = dict(zip(names, np.exp(vector)))
+        sampled_parameters = replace(parameters, **sampled_values)
+        trajectory = simulate(days=days, doses=doses, parameters=sampled_parameters)
+        final = trajectory.iloc[-1]
+        rows.append({
+            "draw": draw,
+            **{f"parameter_{name}": value for name, value in sampled_values.items()},
+            "tumour_cells": float(final.tumour_cells),
+            "tumour_change_pct": float(final.tumour_change_pct),
+            "effector_tumour": float(final.effector_tumour),
+            "tpex_tdln": float(final.tpex_tdln),
+            "peak_pd1_occupancy": float(trajectory.pd1_occupancy.max()),
+        })
     return pd.DataFrame(rows)

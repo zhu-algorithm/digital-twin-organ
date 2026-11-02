@@ -10,7 +10,7 @@ from .data import load_cells, load_labels
 from .features import aggregate_cells
 from .model import evaluate_external, leave_one_site_out, predict_locked, train_evaluate
 from .simulator import Dose, TwinParameters, simulate
-from .assimilation import calibrate, save_calibration
+from .assimilation import calibrate, calibration_ensemble, save_calibration
 from .hybrid import augment_with_twin
 from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spatial_coupled,
                                simulate_spatial_counterfactual)
@@ -29,6 +29,7 @@ from .feature_audit import verify_feature_audit, write_feature_audit
 from .spatial_feature_audit import (
     verify_spatial_feature_audit, write_spatial_feature_audit,
 )
+from .uncertainty_audit import verify_uncertainty_audit, write_uncertainty_audit
 
 
 def _load_parameter_file(path: str | None, parameter_class):
@@ -198,6 +199,15 @@ def main() -> None:
                              help="zero disables; otherwise use an odd integer >=3")
     spatial_cal.add_argument("--profile-fold-range", type=float, default=4.0)
     spatial_cal.add_argument("--output", required=True)
+    uncertainty = sub.add_parser("propagate-uncertainty")
+    uncertainty.add_argument("--parameters", required=True)
+    uncertainty.add_argument("--diagnostics", required=True)
+    uncertainty.add_argument("--days", type=float, default=42.0)
+    uncertainty.add_argument("--dose-days", default="0,14,28")
+    uncertainty.add_argument("--dose", type=float, default=1.0)
+    uncertainty.add_argument("--samples", type=int, default=200)
+    uncertainty.add_argument("--seed", type=int, default=42)
+    uncertainty.add_argument("--output", required=True)
     aug = sub.add_parser("augment-twin")
     aug.add_argument("--features", required=True)
     aug.add_argument("--days", type=float, default=42.0)
@@ -286,6 +296,10 @@ def main() -> None:
     verify_spatial_features.add_argument("--audit", required=True)
     verify_spatial_features.add_argument("--spots", required=True)
     verify_spatial_features.add_argument("--output", required=True)
+    verify_uncertainty = sub.add_parser("verify-uncertainty")
+    verify_uncertainty.add_argument("--audit", required=True)
+    verify_uncertainty.add_argument("--parameters", required=True)
+    verify_uncertainty.add_argument("--diagnostics", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -426,6 +440,51 @@ def main() -> None:
             ),
         )
         print(json.dumps(diagnostics, indent=2))
+    elif args.command == "propagate-uncertainty":
+        parameters, parameter_source = _load_parameter_file(
+            args.parameters, TwinParameters,
+        )
+        diagnostics_path = Path(args.diagnostics)
+        diagnostics = json.loads(diagnostics_path.read_text())
+        doses = tuple(Dose(float(day), args.dose)
+                      for day in args.dose_days.split(",") if day.strip())
+        samples = calibration_ensemble(
+            parameters, diagnostics, doses, args.days, args.samples, args.seed,
+        )
+        output = Path(args.output)
+        output.mkdir(parents=True, exist_ok=True)
+        samples.to_csv(output / "uncertainty_samples.csv", index=False)
+        endpoints = (
+            "tumour_cells", "tumour_change_pct", "effector_tumour",
+            "tpex_tdln", "peak_pd1_occupancy",
+        )
+        summary = {
+            "method": "local_multivariate_log_parameter_normal",
+            "samples": int(len(samples)), "seed": args.seed,
+            "endpoints": {
+                name: {
+                    "median": float(samples[name].median()),
+                    "lower_95": float(samples[name].quantile(0.025)),
+                    "upper_95": float(samples[name].quantile(0.975)),
+                }
+                for name in endpoints
+            },
+            "research_only": True,
+            "limitation": "Local parameter uncertainty only; not a clinical interval.",
+        }
+        (output / "uncertainty_summary.json").write_text(
+            json.dumps(summary, indent=2) + "\n"
+        )
+        diagnostics_source = _source_record(args.diagnostics)
+        write_uncertainty_audit(output, {
+            "parameters": parameter_source,
+            "diagnostics": diagnostics_source,
+        }, {
+            "days": args.days, "dose_days": [dose.day for dose in doses],
+            "dose": args.dose, "samples": args.samples, "seed": args.seed,
+            "sampling": "multivariate_normal_in_fitted_log_parameter_space",
+        })
+        print(json.dumps(summary, indent=2))
     elif args.command == "augment-twin":
         import pandas as pd
         dose_days = tuple(float(day) for day in args.dose_days.split(",") if day.strip())
@@ -748,6 +807,16 @@ def main() -> None:
             "valid": report["valid"],
             "input_sha256": report["input_sha256"],
             "output_sha256": report["output_sha256"],
+            "audit_sha256": report["audit_sha256"],
+        }, indent=2))
+    elif args.command == "verify-uncertainty":
+        report = verify_uncertainty_audit(args.audit, {
+            "parameters": args.parameters, "diagnostics": args.diagnostics,
+        })
+        print(json.dumps({
+            "valid": report["valid"],
+            "verified_inputs": report["verified_inputs"],
+            "verified_outputs": report["verified_outputs"],
             "audit_sha256": report["audit_sha256"],
         }, indent=2))
     else:

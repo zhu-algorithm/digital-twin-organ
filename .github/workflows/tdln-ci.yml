@@ -32,6 +32,8 @@ jobs:
           tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output /tmp/qc.json
           tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --profile-points 5 --output /tmp/calibration
           tdln-pd1 verify-calibration --audit /tmp/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv
+          tdln-pd1 propagate-uncertainty --parameters /tmp/calibration/fitted_parameters.json --diagnostics /tmp/calibration/calibration_diagnostics.json --days 7 --dose-days 0 --samples 8 --output /tmp/uncertainty
+          tdln-pd1 verify-uncertainty --audit /tmp/uncertainty/uncertainty_provenance.json --parameters /tmp/calibration/fitted_parameters.json --diagnostics /tmp/calibration/calibration_diagnostics.json
           tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --max-nfev 80 --profile-points 5 --output /tmp/spatial_calibration
           tdln-pd1 verify-calibration --audit /tmp/spatial_calibration/spatial_calibration_provenance.json --observations examples/spatial_longitudinal_observations.csv
           tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --output /tmp/spatial_cohort_initial.csv

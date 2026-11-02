@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tdln_pd1.assimilation import calibrate, ensemble, validate_observations
+from tdln_pd1.assimilation import (
+    calibrate, calibration_ensemble, ensemble, validate_observations,
+)
 from tdln_pd1.simulator import TwinParameters, simulate
 
 
@@ -109,3 +111,37 @@ def test_uncertainty_ensemble_is_reproducible():
     a = ensemble(TwinParameters(), (), days=2, n=4, seed=7)
     b = ensemble(TwinParameters(), (), days=2, n=4, seed=7)
     pd.testing.assert_frame_equal(a, b)
+
+
+def test_calibration_ensemble_uses_saved_correlated_log_covariance():
+    parameters = TwinParameters(tumour_growth=0.2, killing_rate=2e-8)
+    diagnostics = {"locally_identifiable": True, "local_log_parameter_covariance": {
+        "parameter_order": ["tumour_growth", "killing_rate"],
+        "log_scale_covariance": [[0.01, 0.008], [0.008, 0.01]],
+    }}
+    a = calibration_ensemble(parameters, diagnostics, (), days=2, n=20, seed=7)
+    b = calibration_ensemble(parameters, diagnostics, (), days=2, n=20, seed=7)
+    pd.testing.assert_frame_equal(a, b)
+    assert {"parameter_tumour_growth", "parameter_killing_rate"}.issubset(a)
+    assert a.parameter_tumour_growth.corr(a.parameter_killing_rate) > 0.5
+    assert a.tumour_cells.nunique() > 1
+
+
+def test_calibration_ensemble_rejects_missing_or_invalid_covariance():
+    with pytest.raises(ValueError, match="estimable covariance"):
+        calibration_ensemble(TwinParameters(), {}, (), days=2, n=4)
+    invalid = {"locally_identifiable": True, "local_log_parameter_covariance": {
+        "parameter_order": ["tumour_growth"],
+        "log_scale_covariance": [[-1.0]],
+    }}
+    with pytest.raises(ValueError, match="positive semidefinite"):
+        calibration_ensemble(TwinParameters(), invalid, (), days=2, n=4)
+    nonidentifiable = {
+        "locally_identifiable": False,
+        "local_log_parameter_covariance": {
+            "parameter_order": ["tumour_growth"],
+            "log_scale_covariance": [[0.01]],
+        },
+    }
+    with pytest.raises(ValueError, match="locally identifiable"):
+        calibration_ensemble(TwinParameters(), nonidentifiable, (), days=2, n=4)
