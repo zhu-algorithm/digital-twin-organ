@@ -140,7 +140,20 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     missing = set(required) - set(features.columns)
     if missing:
         raise ValueError(f"missing locked-model features: {sorted(missing)}")
-    probability = artifact["model"].predict_proba(features[required])[:, 1]
+    ensemble = artifact.get("bootstrap_models", [])
+    if ensemble:
+        ensemble_probability = np.column_stack([
+            member.predict_proba(features[required])[:, 1] for member in ensemble
+        ])
+        probability = np.median(ensemble_probability, axis=1)
+        lower = np.percentile(ensemble_probability, 2.5, axis=1)
+        upper = np.percentile(ensemble_probability, 97.5, axis=1)
+        uncertainty_available = True
+    else:
+        probability = artifact["model"].predict_proba(features[required])[:, 1]
+        lower = np.full(len(features), np.nan)
+        upper = np.full(len(features), np.nan)
+        uncertainty_available = False
     threshold = float(artifact.get("threshold", 0.5))
     if not 0.0 < threshold < 1.0:
         raise ValueError("locked-model threshold must fall strictly between 0 and 1")
@@ -148,6 +161,9 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     overlap_check_available = bool(training_hashes)
     overlap = features.patient_id.map(lambda value: _patient_hash(value) in training_hashes)
     return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
+                         "probability_lower_95": lower, "probability_upper_95": upper,
+                         "probability_interval_width": upper - lower,
+                         "uncertainty_available": uncertainty_available,
                          "predicted_response": (probability >= threshold).astype(int),
                          "decision_threshold": threshold,
                          "training_overlap": overlap,
@@ -216,11 +232,19 @@ def leave_one_site_out(
     return metrics, out
 
 
-def train_evaluate(features: pd.DataFrame, labels: pd.DataFrame, output: str | Path, folds: int = 5) -> dict:
+def train_evaluate(
+    features: pd.DataFrame,
+    labels: pd.DataFrame,
+    output: str | Path,
+    folds: int = 5,
+    ensemble_members: int = 50,
+) -> dict:
     features, labels = _align_patients(features, labels)
     data = features.merge(labels, on="patient_id", validate="one_to_one")
     if data["response"].nunique() != 2:
         raise ValueError("training needs both response classes")
+    if ensemble_members < 0:
+        raise ValueError("ensemble_members must be non-negative")
     counts = data["response"].value_counts()
     n_splits = min(folds, int(counts.min()))
     if n_splits < 2:
@@ -274,6 +298,27 @@ def train_evaluate(features: pd.DataFrame, labels: pd.DataFrame, output: str | P
     final_search.fit(X, y, groups=data.patient_id)
     model = final_search.best_estimator_
     final_c = float(final_search.best_params_["classifier__C"])
+    rng = np.random.default_rng(42)
+    bootstrap_models = []
+    attempts = 0
+    while len(bootstrap_models) < ensemble_members and attempts < max(100, ensemble_members * 20):
+        attempts += 1
+        index = rng.integers(0, len(data), len(data))
+        y_bootstrap = y.iloc[index]
+        if y_bootstrap.nunique() < 2:
+            continue
+        member = build_model(cols, c=final_c).fit(X.iloc[index], y_bootstrap)
+        bootstrap_models.append(member)
+    if len(bootstrap_models) != ensemble_members:
+        raise RuntimeError("could not construct requested two-class patient bootstrap ensemble")
+    metrics["prediction_uncertainty"] = {
+        "method": "patient_bootstrap_refit",
+        "members": ensemble_members,
+        "interval": "2.5th to 97.5th percentile",
+        "fixed_selected_C": final_c,
+        "seed": 42,
+        "note": "Model-resampling uncertainty only; excludes cohort shift and structural uncertainty.",
+    }
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     training_hashes = sorted(_patient_hash(value) for value in data.patient_id)
@@ -283,7 +328,9 @@ def train_evaluate(features: pd.DataFrame, labels: pd.DataFrame, output: str | P
                  "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
                  "training_patient_hashes": training_hashes,
                  "training_cohort_fingerprint": cohort_fingerprint,
-                 "artifact_version": 3}, output / "model.joblib")
+                 "bootstrap_models": bootstrap_models,
+                 "uncertainty_method": "patient_bootstrap_refit",
+                 "artifact_version": 4}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
                   "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(

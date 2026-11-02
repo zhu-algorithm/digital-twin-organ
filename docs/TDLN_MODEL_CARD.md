@@ -61,6 +61,8 @@ Regularization strength is selected inside each outer patient-grouped fold using
 
 Patient-set integrity is fail-closed. Training and evaluation require exact, unique patient alignment rather than silently dropping non-matches. Versioned artifacts contain SHA-256 training-identifier hashes and a cohort fingerprint; locked external evaluation rejects any detected training overlap or legacy artifact without an overlap audit. These hashes reduce accidental leakage but are not anonymous when source identifiers are predictable, so artifacts must remain under the cohort's data-governance controls.
 
+Locked patient predictions include a 95% interval from deterministic patient-level bootstrap refits. The interval holds the fully selected regularization value fixed and therefore quantifies instability under resampling of the development patients. It is not a clinical coverage guarantee and omits distribution shift, measurement error, mechanistic misspecification and uncertainty in how single-cell features map into twin states.
+
 ## Identifiability policy
 
 Calibration never silently fits every parameter. The caller must name the fitted parameters, measurement error (`sd`) weights every residual, positive parameters are optimized in log space, and the report raises an identifiability warning when there are fewer than five observations per fitted parameter. This warning is heuristic rather than proof of identifiability; profile likelihood, posterior geometry and independent perturbation data remain required for a defensible calibrated twin.

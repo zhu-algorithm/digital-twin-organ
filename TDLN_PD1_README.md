@@ -30,7 +30,7 @@ source .venv/bin/activate
 pip install -e '.[test]'
 tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
 tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output artifacts/qc.json
-tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts
+tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts --ensemble-members 50
 tdln-pd1 predict --model artifacts/model.joblib --features external_features.csv --output external_predictions.csv
 tdln-pd1 evaluate --predictions external_predictions.csv --labels external_labels.csv --output external_metrics.json
 tdln-pd1 site-cv --features features.csv --labels labels_with_center.csv --output artifacts/site_cv
@@ -78,5 +78,7 @@ Training writes a versioned model artifact with its exact feature schema. `predi
 Training, prediction and evaluation normalize patient identifiers and fail closed on missing, duplicate or mismatched patient sets; no inner join may silently discard a patient. Model artifact version 3 stores SHA-256 hashes of normalized training identifiers plus a whole-cohort fingerprint. Locked prediction emits a per-patient overlap flag, and `evaluate` refuses the `external_locked_model` label if the artifact lacks this audit or any evaluation patient overlaps training. The hashes prevent accidental reuse; they are pseudonymous governance metadata, not anonymization against dictionary attacks on predictable identifiers.
 
 Internal evaluation uses an outer patient-grouped fold for performance estimation and an inner patient-grouped fold to choose `C` from a fixed grid using log loss. If an outer training fold is too small to support two-class inner validation, it records an explicit fixed-`C` fallback instead of presenting it as tuned. The report includes the selected value and train/test size for every outer fold, a prespecified 0.1–0.9 decision curve, and an artifact-level final selection performed only after out-of-fold evaluation is complete.
+
+Artifact version 4 also stores a deterministic patient-bootstrap refit ensemble. Locked prediction reports the ensemble median, 2.5th/97.5th percentiles and interval width for every patient. The final `C` is held fixed across bootstrap members so the interval measures patient-resampling instability rather than mixing in an undocumented tuning procedure. This is model-resampling uncertainty only: it does not cover assay error, population shift, causal ambiguity or mechanistic structural uncertainty.
 
 `site-cv` performs leave-one-center-out evaluation: each centre is predicted only by a model trained on all other centres. Sites whose training or test partition lacks one response class are reported as skipped rather than silently producing invalid AUC estimates. This is a stronger internal transportability check than random folds, but it is still not an independently collected external validation.

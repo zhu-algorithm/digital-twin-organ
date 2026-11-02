@@ -27,6 +27,7 @@ def main() -> None:
     train.add_argument("--labels", required=True)
     train.add_argument("--output", required=True)
     train.add_argument("--folds", type=int, default=5)
+    train.add_argument("--ensemble-members", type=int, default=50)
     predict = sub.add_parser("predict")
     predict.add_argument("--model", required=True)
     predict.add_argument("--features", required=True)
@@ -85,7 +86,8 @@ def main() -> None:
         aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
     elif args.command == "train":
         import pandas as pd
-        metrics = train_evaluate(pd.read_csv(args.features), load_labels(args.labels), Path(args.output), args.folds)
+        metrics = train_evaluate(pd.read_csv(args.features), load_labels(args.labels), Path(args.output),
+                                 args.folds, args.ensemble_members)
         print(json.dumps(metrics, indent=2))
     elif args.command == "predict":
         import pandas as pd
