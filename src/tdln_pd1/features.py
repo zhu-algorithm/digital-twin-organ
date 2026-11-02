@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import numpy as np
 import pandas as pd
 
@@ -61,7 +62,42 @@ def _mean_present(frame: pd.DataFrame, genes: tuple[str, ...]) -> pd.Series:
     present = [g for g in genes if g in frame.columns]
     if not present:
         return pd.Series(np.nan, index=frame.index)
-    return frame[present].apply(pd.to_numeric, errors="coerce").mean(axis=1)
+    return frame[present].mean(axis=1)
+
+
+def _validate_expression_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    """Preserve true missingness but reject corrupt supplied expression values."""
+    out = frame.copy()
+    signature_genes = {gene for genes in SIGNATURES.values() for gene in genes}
+    for gene in sorted(signature_genes.intersection(out.columns)):
+        raw = out[gene]
+        numeric = pd.to_numeric(raw, errors="coerce")
+        invalid = raw.notna() & numeric.isna()
+        if invalid.any():
+            raise ValueError(f"expression values must be numeric or missing: {gene}")
+        if np.isinf(numeric.to_numpy(dtype=float)).any():
+            raise ValueError(f"expression values must be finite or missing: {gene}")
+        out[gene] = numeric
+    return out
+
+
+def _cell_type_feature_names(cell_types: pd.Series) -> dict[str, str]:
+    """Build stable fraction names and reject lossy label canonicalization."""
+    labels = sorted(set(cell_types.astype(str)))
+    mapping = {
+        label: re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")
+        for label in labels
+    }
+    empty = [label for label, canonical in mapping.items() if not canonical]
+    if empty:
+        raise ValueError(f"cell_type cannot form a model feature name: {empty[:10]}")
+    inverse: dict[str, list[str]] = {}
+    for label, canonical in mapping.items():
+        inverse.setdefault(canonical, []).append(label)
+    collisions = {name: values for name, values in inverse.items() if len(values) > 1}
+    if collisions:
+        raise ValueError(f"cell_type labels collide after feature normalization: {collisions}")
+    return mapping
 
 
 def _assigned_clonotypes(series: pd.Series) -> pd.Series:
@@ -84,7 +120,16 @@ def aggregate_cells(
     missing = required - set(cells.columns)
     if missing:
         raise ValueError(f"missing columns: {sorted(missing)}")
-    x = select_baseline_cells(cells, time_column, baseline_values)
+    if cells[["patient_id", "cell_type"]].isna().any().any():
+        raise ValueError("patient_id and cell_type must be non-missing")
+    x = cells.copy()
+    for column in ("patient_id", "cell_type"):
+        x[column] = x[column].astype(str).str.strip()
+        if x[column].eq("").any():
+            raise ValueError(f"{column} must be non-empty")
+    x = select_baseline_cells(x, time_column, baseline_values)
+    x = _validate_expression_columns(x)
+    cell_type_names = _cell_type_feature_names(x["cell_type"])
     for name, genes in SIGNATURES.items():
         x[f"sig_{name}"] = _mean_present(x, genes)
     rows = []
@@ -102,7 +147,7 @@ def aggregate_cells(
         }
         fractions = feature_group["cell_type"].astype(str).value_counts(normalize=True)
         for cell_type, value in fractions.items():
-            safe = cell_type.lower().replace(" ", "_").replace("/", "_")
+            safe = cell_type_names[cell_type]
             row[f"frac_{safe}"] = float(value)
         for name in SIGNATURES:
             row[f"sig_{name}"] = float(feature_group[f"sig_{name}"].mean())

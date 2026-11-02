@@ -24,6 +24,8 @@ Systemic-to-spatial coupling is fail-closed: every supplied timeline row must co
 
 Grouping is performed at the patient level; cells from one patient never become independent train/test observations.
 
+Single-cell expression columns preserve explicit missing values for downstream fold-internal imputation, while supplied non-numeric or infinite signature-gene values fail before aggregation. Negative finite values remain valid because some normalized/scaled assays legitimately produce them. Cell-type fraction names use deterministic normalization, and distinct labels that collapse to the same feature name are rejected rather than overwriting one another; cohort-specific aliases should be harmonized upstream under a recorded ontology map.
+
 ## Run
 
 ```bash

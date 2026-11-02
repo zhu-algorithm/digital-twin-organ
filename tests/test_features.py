@@ -90,3 +90,34 @@ def test_each_patient_must_have_selected_baseline_and_tdln_cells():
     tissue = pd.DataFrame({"patient_id": ["p1"], "cell_type": ["T"], "tissue": ["tumour"]})
     with pytest.raises(ValueError, match="no cells matching"):
         aggregate_cells(tissue)
+
+
+def test_expression_contract_rejects_corrupt_values_but_preserves_missingness():
+    valid = pd.DataFrame({
+        "patient_id": ["p1", "p1"], "cell_type": ["T", "T"],
+        "GZMB": [1.0, float("nan")],
+    })
+    row = aggregate_cells(valid, feature_tissue_pattern="all").iloc[0]
+    assert row.sig_cytotoxic == 1.0
+
+    non_numeric = valid.assign(GZMB=pd.Series([1.0, "bad"], dtype=object))
+    with pytest.raises(ValueError, match="numeric or missing: GZMB"):
+        aggregate_cells(non_numeric, feature_tissue_pattern="all")
+    infinite = valid.copy()
+    infinite.loc[1, "GZMB"] = float("inf")
+    with pytest.raises(ValueError, match="finite or missing: GZMB"):
+        aggregate_cells(infinite, feature_tissue_pattern="all")
+
+
+def test_cell_type_fraction_names_cannot_silently_collide():
+    cells = pd.DataFrame({
+        "patient_id": ["p1", "p1"],
+        "cell_type": ["CD8 T", "CD8/T"],
+    })
+    with pytest.raises(ValueError, match="collide"):
+        aggregate_cells(cells, feature_tissue_pattern="all")
+    with pytest.raises(ValueError, match="non-missing"):
+        aggregate_cells(
+            pd.DataFrame({"patient_id": ["p1"], "cell_type": [None]}),
+            feature_tissue_pattern="all",
+        )

@@ -47,6 +47,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Matched spatial treatment/control counterfactuals with explicit receptor-occupancy provenance and zero-dose equivalence.
 - Fail-closed systemic-to-spatial receptor-occupancy coupling: complete finite timelines, unique times and physical `[0,1]` support are enforced without dropping or clipping invalid observations.
 - TCR clone diversity, dominance and paired TDLN–tumour lineage sharing by unique-clone fraction, TDLN cell-weighted fraction and Jaccard overlap, with a common invalid-assignment filter.
+- Single-cell signature aggregation preserves true missingness but rejects non-numeric/infinite supplied expression, and cell-type label normalization fails on lossy feature-name collisions.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Shared train/validation/prediction matrix validation: numeric finite measurements or explicit missingness only; infinities and string placeholders fail before fitting or inference.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
