@@ -35,6 +35,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Label-free, patient-aligned mechanistic counterfactual feature generation.
 - Per-species mass conservation in the reaction-free spatial transport network.
 - Directional antigen, DC and effector movement across six TDLN zones.
+- TCR clone diversity, dominance and paired TDLN–tumour lineage-sharing features.
 
 ## Required validation ladder
 

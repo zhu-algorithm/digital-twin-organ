@@ -44,5 +44,25 @@ def aggregate_cells(cells: pd.DataFrame) -> pd.DataFrame:
             row[f"frac_{safe}"] = float(value)
         for name in SIGNATURES:
             row[f"sig_{name}"] = float(group[f"sig_{name}"].mean())
+        if "clonotype_id" in group:
+            clones = group["clonotype_id"].dropna().astype(str)
+            clones = clones[~clones.str.lower().isin({"", "nan", "none", "unassigned"})]
+            counts = clones.value_counts()
+            if len(counts):
+                probabilities = counts.to_numpy(dtype=float) / counts.sum()
+                entropy = float(-(probabilities * np.log(probabilities)).sum())
+                row["tcr_clone_richness"] = float(len(counts))
+                row["tcr_simpson_concentration"] = float(np.square(probabilities).sum())
+                row["tcr_normalized_entropy"] = float(entropy / np.log(len(counts))) if len(counts) > 1 else 0.0
+                row["tcr_top_clone_fraction"] = float(probabilities.max())
+            else:
+                row.update({"tcr_clone_richness": 0.0, "tcr_simpson_concentration": np.nan,
+                            "tcr_normalized_entropy": np.nan, "tcr_top_clone_fraction": np.nan})
+            if "tissue" in group:
+                tissue = group["tissue"].astype(str).str.lower()
+                tdln = set(group.loc[tissue.str.contains("tdln|lymph"), "clonotype_id"].dropna().astype(str))
+                tumour = set(group.loc[tissue.str.contains("tumou|tumor"), "clonotype_id"].dropna().astype(str))
+                tdln.discard(""); tumour.discard("")
+                row["tcr_tdln_tumour_shared_fraction"] = float(len(tdln & tumour) / len(tdln)) if tdln else np.nan
         rows.append(row)
     return pd.DataFrame(rows).fillna({"n_cells": 0})

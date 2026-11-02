@@ -23,6 +23,9 @@ def load_cells(path: str | Path) -> pd.DataFrame:
         matrix = adata[:, genes].to_df()
         matrix.insert(0, "cell_type", adata.obs["cell_type"].astype(str).values)
         matrix.insert(0, "patient_id", adata.obs["patient_id"].astype(str).values)
+        for column in ("clonotype_id", "tissue"):
+            if column in adata.obs:
+                matrix.insert(len(matrix.columns), column, adata.obs[column].astype(str).values)
         return matrix
     raise ValueError("input must be .csv or .h5ad")
 
