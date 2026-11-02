@@ -52,7 +52,7 @@ These sources motivate model structure. They do not validate the default numeric
 - TCR clone diversity, dominance and paired TDLN–tumour lineage sharing by unique-clone fraction, TDLN cell-weighted fraction and Jaccard overlap, with a common invalid-assignment filter.
 - Single-cell signature aggregation preserves true missingness but rejects non-numeric/infinite supplied expression, and cell-type label normalization fails on lossy feature-name collisions.
 - Lineage-restricted state features separate CD8/Tpex cytotoxic, exhaustion and TCF7-memory programmes, regulatory-T-cell state and dendritic-cell activation from changing cell composition. Mechanistic initialization prefers these values while retaining a documented global-signature fallback when a lineage is absent.
-- Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
+- Locked-model prediction with feature-schema enforcement, fail-closed `[0,1]` probability validation, calibration intercept/slope, calibration-in-the-large, an equal-frequency reliability curve, ECE and patient/centre bootstrap intervals. Binned calibration remains descriptive and sample-size-sensitive rather than proof of probability validity.
 - Shared train/validation/prediction matrix validation: numeric finite measurements or explicit missingness only; infinities and string placeholders fail before fitting or inference.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
 - Calibration contracts reject empty or duplicate model coordinates and require unique, finite-positive log-space fit parameters, preventing accidental replicate overweighting and degenerate parameter dimensions.

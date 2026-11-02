@@ -44,6 +44,11 @@ def test_probability_evaluation_reports_calibration_and_intervals():
     assert metrics["roc_auc"] == 1.0
     assert metrics["brier_score"] < 0.1
     assert "calibration_slope" in metrics
+    assert len(metrics["calibration_curve"]) == 2
+    assert sum(row["n_patients"] for row in metrics["calibration_curve"]) == 4
+    assert metrics["expected_calibration_error"] == pytest.approx(0.15)
+    assert metrics["calibration_in_the_large"] == pytest.approx(0.0)
+    assert metrics["bootstrap"]["expected_calibration_error"]["valid_draws"] > 0
     assert metrics["bootstrap"]["roc_auc"]["valid_draws"] > 0
     assert metrics["bootstrap"]["log_loss"]["valid_draws"] > 0
     assert metrics["bootstrap"]["sensitivity"]["valid_draws"] > 0
@@ -381,6 +386,16 @@ def test_evaluation_rejects_invalid_probabilities_bootstrap_and_threshold():
         evaluate_probabilities(
             [0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9], decision_threshold=1.0,
         )
+    for invalid in (float("inf"), -0.01, 1.01):
+        with pytest.raises(ValueError, match=r"within \[0, 1\]"):
+            evaluate_probabilities(
+                [0, 0, 1, 1], [0.1, invalid, 0.8, 0.9], bootstrap=0,
+            )
+    for invalid_outcomes in ([0, 0.5, 1, 1], [0, "no", 1, 1]):
+        with pytest.raises(ValueError, match="only 0 and 1"):
+            evaluate_probabilities(
+                invalid_outcomes, [0.1, 0.2, 0.8, 0.9], bootstrap=0,
+            )
 
 
 def test_leave_one_site_out_predicts_each_evaluable_patient_once():

@@ -274,6 +274,27 @@ def _decision_curve(y: np.ndarray, prob: np.ndarray) -> list[dict[str, float]]:
     return rows
 
 
+def _calibration_curve(y: np.ndarray, prob: np.ndarray) -> tuple[list[dict], float]:
+    """Return deterministic equal-frequency bins and their weighted absolute gap."""
+    n_bins = min(5, max(2, int(np.sqrt(len(y)))))
+    ordered = np.argsort(prob, kind="stable")
+    rows = []
+    weighted_gap = 0.0
+    for number, index in enumerate(np.array_split(ordered, n_bins), start=1):
+        mean_probability = float(prob[index].mean())
+        observed = float(y[index].mean())
+        gap = abs(mean_probability - observed)
+        weighted_gap += len(index) / len(y) * gap
+        rows.append({
+            "bin": number,
+            "n_patients": int(len(index)),
+            "mean_probability": mean_probability,
+            "observed_response_rate": observed,
+            "absolute_gap": float(gap),
+        })
+    return rows, float(weighted_gap)
+
+
 def evaluate_probabilities(
     y_true,
     probability,
@@ -283,12 +304,22 @@ def evaluate_probabilities(
     decision_threshold: float = 0.5,
 ) -> dict:
     """Discrimination, calibration and patient- or centre-bootstrap intervals."""
-    y = np.asarray(y_true, dtype=int)
-    prob = np.clip(np.asarray(probability, dtype=float), 1e-7, 1 - 1e-7)
-    if len(y) != len(prob) or len(y) == 0 or set(np.unique(y)) != {0, 1}:
+    raw_outcome = np.asarray(y_true)
+    try:
+        numeric_outcome = raw_outcome.astype(float)
+    except (TypeError, ValueError) as error:
+        raise ValueError("evaluation outcomes must contain only 0 and 1") from error
+    if (not np.isfinite(numeric_outcome).all()
+            or not np.isin(numeric_outcome, (0.0, 1.0)).all()):
+        raise ValueError("evaluation outcomes must contain only 0 and 1")
+    y = numeric_outcome.astype(int)
+    raw_probability = np.asarray(probability, dtype=float)
+    if len(y) != len(raw_probability) or len(y) == 0 or set(np.unique(y)) != {0, 1}:
         raise ValueError("evaluation requires aligned probabilities and both response classes")
-    if not np.isfinite(prob).all():
-        raise ValueError("evaluation probabilities must be finite")
+    if (not np.isfinite(raw_probability).all()
+            or (raw_probability < 0).any() or (raw_probability > 1).any()):
+        raise ValueError("evaluation probabilities must be finite and within [0, 1]")
+    prob = np.clip(raw_probability, 1e-7, 1 - 1e-7)
     if not isinstance(bootstrap, (int, np.integer)) or bootstrap < 0:
         raise ValueError("bootstrap draws must be a non-negative integer")
     if not np.isfinite(decision_threshold) or not 0 < decision_threshold < 1:
@@ -304,6 +335,7 @@ def evaluate_probabilities(
     tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
     logits = np.log(prob / (1 - prob)).reshape(-1, 1)
     calibrator = LogisticRegression(C=1e6, solver="lbfgs").fit(logits, y)
+    calibration_curve, calibration_error = _calibration_curve(y, prob)
     point = {
         "roc_auc": float(roc_auc_score(y, prob)),
         "average_precision": float(average_precision_score(y, prob)),
@@ -314,6 +346,15 @@ def evaluate_probabilities(
         "specificity": float(tn / (tn + fp)) if tn + fp else np.nan,
         "calibration_intercept": float(calibrator.intercept_[0]),
         "calibration_slope": float(calibrator.coef_[0, 0]),
+        "calibration_in_the_large": float(prob.mean() - y.mean()),
+        "expected_calibration_error": calibration_error,
+        "calibration_curve": calibration_curve,
+        "calibration_curve_design": {
+            "method": "equal_frequency",
+            "bins": len(calibration_curve),
+            "maximum_bins": 5,
+            "role": "descriptive_small_cohort_diagnostic",
+        },
         "decision_threshold": float(decision_threshold),
         "decision_curve": _decision_curve(y, prob),
     }
@@ -322,6 +363,7 @@ def evaluate_probabilities(
         draws = {name: [] for name in (
             "roc_auc", "average_precision", "brier_score", "log_loss",
             "balanced_accuracy", "sensitivity", "specificity",
+            "expected_calibration_error", "calibration_in_the_large",
         )}
         unique_groups = np.unique(groups) if groups is not None else None
         for _ in range(bootstrap):
@@ -338,6 +380,11 @@ def evaluate_probabilities(
             draws["average_precision"].append(average_precision_score(y[index], prob[index]))
             draws["brier_score"].append(brier_score_loss(y[index], prob[index]))
             draws["log_loss"].append(log_loss(y[index], prob[index], labels=[0, 1]))
+            _, sampled_calibration_error = _calibration_curve(y[index], prob[index])
+            draws["expected_calibration_error"].append(sampled_calibration_error)
+            draws["calibration_in_the_large"].append(
+                float(prob[index].mean() - y[index].mean())
+            )
             sampled_prediction = prob[index] >= decision_threshold
             sampled_tn, sampled_fp, sampled_fn, sampled_tp = confusion_matrix(
                 y[index], sampled_prediction, labels=[0, 1]
