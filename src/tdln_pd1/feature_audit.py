@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
+from .data import load_cells
+from .features import aggregate_cells
 from .provenance import sha256_file
 
 
@@ -48,6 +51,11 @@ def verify_feature_audit(
             or payload.get("stage") != "label_free_single_cell_featurization"
             or payload.get("labels_used") is not False):
         raise ValueError("unsupported or non-label-free feature audit")
+    settings = payload.get("settings")
+    if (not isinstance(settings, dict) or settings.get("labels_used") is not False
+            or not isinstance(settings.get("baseline_values"), list)
+            or not isinstance(settings.get("minimum_signature_gene_coverage"), (int, float))):
+        raise ValueError("invalid single-cell feature derivation settings")
     for name, path, record in (
         ("cell input", cells, payload.get("input", {})),
         ("feature output", output, payload.get("output", {})),
@@ -55,10 +63,29 @@ def verify_feature_audit(
         if (not path.is_file() or record.get("file") != path.name
                 or record.get("sha256") != sha256_file(path)):
             raise ValueError(f"{name} SHA-256 mismatch")
+    time_column = settings.get("time_column")
+    if time_column is not None and not isinstance(time_column, str):
+        raise ValueError("invalid single-cell time-column setting")
+    pattern = settings.get("feature_tissue_pattern")
+    if pattern is not None and not isinstance(pattern, str):
+        raise ValueError("invalid single-cell tissue-pattern setting")
+    replayed = aggregate_cells(
+        load_cells(cells, (time_column,) if time_column else ()),
+        time_column,
+        tuple(str(value) for value in settings["baseline_values"]) or None,
+        pattern,
+        float(settings["minimum_signature_gene_coverage"]),
+    )
+    replayed_sha = hashlib.sha256(
+        replayed.to_csv(index=False).encode("utf-8")
+    ).hexdigest()
+    if replayed_sha != payload["output"]["sha256"]:
+        raise ValueError("single-cell feature derivation replay mismatch")
     return {
         "valid": True,
         "input_sha256": payload["input"]["sha256"],
         "output_sha256": payload["output"]["sha256"],
         "audit_sha256": sha256_file(audit),
+        "derivation_replayed": True,
         "payload": payload,
     }

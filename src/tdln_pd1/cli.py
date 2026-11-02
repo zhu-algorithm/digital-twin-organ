@@ -1026,6 +1026,7 @@ def main() -> None:
         report = verify_feature_audit(args.audit, args.cells, args.output)
         print(json.dumps({
             "valid": report["valid"],
+            "derivation_replayed": report["derivation_replayed"],
             "input_sha256": report["input_sha256"],
             "output_sha256": report["output_sha256"],
             "audit_sha256": report["audit_sha256"],
@@ -1034,6 +1035,7 @@ def main() -> None:
         report = verify_spatial_feature_audit(args.audit, args.spots, args.output)
         print(json.dumps({
             "valid": report["valid"],
+            "derivation_replayed": report["derivation_replayed"],
             "input_sha256": report["input_sha256"],
             "output_sha256": report["output_sha256"],
             "audit_sha256": report["audit_sha256"],
