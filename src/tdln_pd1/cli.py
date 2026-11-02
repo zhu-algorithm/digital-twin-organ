@@ -25,6 +25,7 @@ from .validation_audit import (verify_prediction_audit, write_evaluation_audit,
                                write_prediction_audit)
 from .calibration_audit import verify_calibration_audit, write_calibration_audit
 from .augmentation_audit import verify_augmentation_audit, write_augmentation_audit
+from .feature_audit import verify_feature_audit, write_feature_audit
 
 
 def _load_parameter_file(path: str | None, parameter_class):
@@ -274,6 +275,10 @@ def main() -> None:
     verify_augmentation.add_argument("--spatial-initial-zones")
     verify_augmentation.add_argument("--systemic-parameters")
     verify_augmentation.add_argument("--spatial-parameters")
+    verify_features = sub.add_parser("verify-features")
+    verify_features.add_argument("--audit", required=True)
+    verify_features.add_argument("--cells", required=True)
+    verify_features.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -281,6 +286,13 @@ def main() -> None:
                         args.time_column, baseline_values or None,
                         args.feature_tissue_pattern,
                         args.min_signature_gene_coverage).to_csv(args.output, index=False)
+        write_feature_audit(args.cells, args.output, {
+            "time_column": args.time_column,
+            "baseline_values": list(baseline_values),
+            "feature_tissue_pattern": args.feature_tissue_pattern,
+            "minimum_signature_gene_coverage": args.min_signature_gene_coverage,
+            "labels_used": False,
+        })
     elif args.command == "train":
         import pandas as pd
         metrics = train_evaluate(
@@ -427,10 +439,20 @@ def main() -> None:
         _write_parameter_provenance(args.output, {
             "systemic": systemic_provenance, "spatial": spatial_provenance,
         })
+        feature_record = _source_record(args.features)
+        feature_audit = Path(f"{args.features}.feature-audit.json")
+        if feature_audit.exists():
+            feature_payload = json.loads(feature_audit.read_text())
+            if (feature_payload.get("stage") != "label_free_single_cell_featurization"
+                    or feature_payload.get("labels_used") is not False
+                    or feature_payload.get("output", {}).get("file") != Path(args.features).name
+                    or feature_payload.get("output", {}).get("sha256") != feature_record["sha256"]):
+                raise ValueError("invalid or mismatched feature derivation audit")
+            feature_record["derivation_audit"] = _source_record(str(feature_audit))
         write_augmentation_audit(
             args.output,
             inputs={
-                "features": _source_record(args.features),
+                "features": feature_record,
                 "spatial_initial_zones": (
                     _source_record(args.spatial_initial_zones)
                     if args.spatial_initial_zones else None
@@ -690,6 +712,14 @@ def main() -> None:
         print(json.dumps({
             "valid": report["valid"],
             "verified_inputs": report["verified_inputs"],
+            "output_sha256": report["output_sha256"],
+            "audit_sha256": report["audit_sha256"],
+        }, indent=2))
+    elif args.command == "verify-features":
+        report = verify_feature_audit(args.audit, args.cells, args.output)
+        print(json.dumps({
+            "valid": report["valid"],
+            "input_sha256": report["input_sha256"],
             "output_sha256": report["output_sha256"],
             "audit_sha256": report["audit_sha256"],
         }, indent=2))

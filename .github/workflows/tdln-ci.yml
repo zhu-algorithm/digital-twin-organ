@@ -28,6 +28,7 @@ jobs:
       - name: Verify end-to-end digital twin pipeline
         run: |
           tdln-pd1 featurize --cells examples/cells.csv --output /tmp/features.csv
+          tdln-pd1 verify-features --audit /tmp/features.csv.feature-audit.json --cells examples/cells.csv --output /tmp/features.csv
           tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output /tmp/qc.json
           tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --profile-points 5 --output /tmp/calibration
           tdln-pd1 verify-calibration --audit /tmp/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv

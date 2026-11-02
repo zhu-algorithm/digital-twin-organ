@@ -35,6 +35,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[test]'
 tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
+tdln-pd1 verify-features --audit examples/features.csv.feature-audit.json --cells examples/cells.csv --output examples/features.csv
 tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output artifacts/qc.json
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --profile-points 7 --output artifacts/calibration
 tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --profile-points 7 --output artifacts/spatial_calibration
@@ -102,6 +103,8 @@ Fitted parameter JSON is executable rather than archival: `simulate --parameters
 
 `augment-twin` also emits `<output>.twin-audit.json`, binding the source single-cell feature table, optional 24-state spatial initialization, fitted parameter files, simulation horizon and dose schedule to the exact hybrid CSV. `verify-augmentation` requires every used input again and is executed before training in CI. This enforces label-free file integrity but does not validate feature biology or counterfactual correctness.
 Training validates that manifest against the supplied hybrid table and embeds the manifest and its own SHA-256 in both metrics and the locked model artifact.
+
+`featurize` emits `<output>.feature-audit.json`, binding the exact raw cell file, baseline values, temporal column, tissue-selection pattern, signature-coverage threshold and label-free declaration to the resulting patient feature CSV. `verify-features` independently re-hashes both sides. When this sidecar is present, `augment-twin` validates it and embeds its fingerprint in the augmentation manifest, extending the integrity chain from raw single-cell input through hybrid features and into the locked model. This detects file or setting substitution; it does not authenticate the upstream assay or annotation process.
 
 Each CLI calibration writes a cryptographic manifest binding the exact longitudinal observation file, fit fields, dose/profile settings and the fitted-parameter, diagnostic and residual outputs. Spatial calibration additionally binds the selected patient initialization and the default systemic parameter manifest used for dose-driven occupancy. `verify-calibration` requires the observation file again, plus `--initial-zones` when one was used, and fails if any bound input or output is missing or replaced. This proves file integrity, not parameter identifiability or biological validity.
 
