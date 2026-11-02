@@ -8,19 +8,28 @@ from pathlib import Path
 from .provenance import sha256_file
 
 
-def write_uncertainty_audit(output_dir, inputs: dict, settings: dict) -> Path:
+def write_uncertainty_audit(
+    output_dir, inputs: dict, settings: dict,
+    stage: str = "systemic_calibration_uncertainty_propagation",
+    output_filenames=("uncertainty_samples.csv", "uncertainty_summary.json"),
+) -> Path:
     output = Path(output_dir)
     outputs = {}
-    for name in ("uncertainty_samples.csv", "uncertainty_summary.json"):
+    if stage not in {
+        "systemic_calibration_uncertainty_propagation",
+        "spatial_calibration_uncertainty_propagation",
+    }:
+        raise ValueError("unsupported uncertainty stage")
+    for name in output_filenames:
         path = output / name
         if not path.is_file():
             raise ValueError(f"uncertainty output missing before audit: {name}")
         outputs[name] = {"file": name, "sha256": sha256_file(path)}
     payload = {
         "schema_version": 1,
-        "stage": "systemic_calibration_uncertainty_propagation",
+        "stage": stage,
         "research_only": True,
-        "inputs": inputs,
+        "inputs": {name: record for name, record in inputs.items() if record is not None},
         "settings": settings,
         "outputs": outputs,
         "limitation": (
@@ -40,7 +49,10 @@ def verify_uncertainty_audit(audit_path, input_paths: dict) -> dict:
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"invalid uncertainty audit: {audit}") from error
     if (not isinstance(payload, dict) or payload.get("schema_version") != 1
-            or payload.get("stage") != "systemic_calibration_uncertainty_propagation"):
+            or payload.get("stage") not in {
+                "systemic_calibration_uncertainty_propagation",
+                "spatial_calibration_uncertainty_propagation",
+            }):
         raise ValueError("unsupported uncertainty audit")
     verified_inputs = []
     for name, record in payload.get("inputs", {}).items():
@@ -62,6 +74,7 @@ def verify_uncertainty_audit(audit_path, input_paths: dict) -> dict:
         raise ValueError("uncertainty audit must bind inputs and outputs")
     return {
         "valid": True,
+        "stage": payload["stage"],
         "verified_inputs": sorted(verified_inputs),
         "verified_outputs": sorted(verified_outputs),
         "audit_sha256": sha256_file(audit),

@@ -56,3 +56,32 @@ def test_uncertainty_audit_detects_input_and_output_replacement(tmp_path):
         verify_uncertainty_audit(audit, {
             "parameters": parameters, "diagnostics": diagnostics,
         })
+
+
+def test_spatial_uncertainty_stage_supports_spatial_output_contract(tmp_path):
+    parameters = tmp_path / "spatial_parameters.json"
+    parameters.write_text("{}\n")
+    diagnostics = tmp_path / "spatial_diagnostics.json"
+    diagnostics.write_text("{}\n")
+    (tmp_path / "spatial_uncertainty_samples.csv").write_text("draw,x\n0,1\n")
+    (tmp_path / "spatial_uncertainty_summary.json").write_text("{}\n")
+    audit = write_uncertainty_audit(
+        tmp_path,
+        inputs={
+            "parameters": {"file": parameters.name,
+                           "sha256": hashlib.sha256(parameters.read_bytes()).hexdigest()},
+            "diagnostics": {"file": diagnostics.name,
+                            "sha256": hashlib.sha256(diagnostics.read_bytes()).hexdigest()},
+            "optional": None,
+        },
+        settings={"paired_control": True},
+        stage="spatial_calibration_uncertainty_propagation",
+        output_filenames=(
+            "spatial_uncertainty_samples.csv", "spatial_uncertainty_summary.json",
+        ),
+    )
+    verified = verify_uncertainty_audit(audit, {
+        "parameters": parameters, "diagnostics": diagnostics,
+    })
+    assert verified["stage"] == "spatial_calibration_uncertainty_propagation"
+    assert "optional" not in verified["payload"]["inputs"]

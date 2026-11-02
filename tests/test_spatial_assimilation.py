@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tdln_pd1.spatial_assimilation import (calibrate_spatial,
-                                           validate_spatial_observations)
+from tdln_pd1.spatial_assimilation import (
+    calibrate_spatial, spatial_calibration_ensemble, validate_spatial_observations,
+)
 from tdln_pd1.spatial_dynamics import SpatialParameters, simulate_spatial
 
 
@@ -89,3 +90,20 @@ def test_spatial_calibration_can_fit_transport_rate():
     )
     assert diagnostics["success"]
     assert fitted.dc_to_sinus == pytest.approx(0.35, rel=0.03)
+
+
+def test_spatial_calibration_ensemble_propagates_correlated_paired_effects():
+    parameters = SpatialParameters(tpex_growth=0.1, checkpoint_growth_gain=4.0)
+    diagnostics = {
+        "locally_identifiable": True,
+        "local_log_parameter_covariance": {
+            "parameter_order": ["tpex_growth", "checkpoint_growth_gain"],
+            "log_scale_covariance": [[0.01, 0.008], [0.008, 0.01]],
+        },
+    }
+    a = spatial_calibration_ensemble(parameters, diagnostics, days=3, n=12, seed=4)
+    b = spatial_calibration_ensemble(parameters, diagnostics, days=3, n=12, seed=4)
+    pd.testing.assert_frame_equal(a, b)
+    assert a.parameter_tpex_growth.corr(a.parameter_checkpoint_growth_gain) > 0.5
+    assert a.pd1_efferent_effector_delta.gt(0).all()
+    assert a.pd1_paracortex_tpex_delta.gt(0).all()

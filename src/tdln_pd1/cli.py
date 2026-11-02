@@ -15,7 +15,9 @@ from .hybrid import augment_with_twin
 from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spatial_coupled,
                                simulate_spatial_counterfactual)
 from .spatial_data import aggregate_spatial_spots
-from .spatial_assimilation import calibrate_spatial, save_spatial_calibration
+from .spatial_assimilation import (
+    calibrate_spatial, save_spatial_calibration, spatial_calibration_ensemble,
+)
 from .sensitivity import global_sensitivity, global_spatial_sensitivity
 from .sensitivity_audit import verify_sensitivity_audit, write_sensitivity_audit
 from .provenance import verify_manifest
@@ -208,6 +210,18 @@ def main() -> None:
     uncertainty.add_argument("--samples", type=int, default=200)
     uncertainty.add_argument("--seed", type=int, default=42)
     uncertainty.add_argument("--output", required=True)
+    spatial_uncertainty = sub.add_parser("propagate-spatial-uncertainty")
+    spatial_uncertainty.add_argument("--parameters", required=True)
+    spatial_uncertainty.add_argument("--diagnostics", required=True)
+    spatial_uncertainty.add_argument("--systemic-parameters")
+    spatial_uncertainty.add_argument("--initial-zones")
+    spatial_uncertainty.add_argument("--patient-id")
+    spatial_uncertainty.add_argument("--days", type=float, default=14.0)
+    spatial_uncertainty.add_argument("--dose-days", default="0")
+    spatial_uncertainty.add_argument("--dose", type=float, default=1.0)
+    spatial_uncertainty.add_argument("--samples", type=int, default=200)
+    spatial_uncertainty.add_argument("--seed", type=int, default=42)
+    spatial_uncertainty.add_argument("--output", required=True)
     aug = sub.add_parser("augment-twin")
     aug.add_argument("--features", required=True)
     aug.add_argument("--days", type=float, default=42.0)
@@ -300,6 +314,12 @@ def main() -> None:
     verify_uncertainty.add_argument("--audit", required=True)
     verify_uncertainty.add_argument("--parameters", required=True)
     verify_uncertainty.add_argument("--diagnostics", required=True)
+    verify_spatial_uncertainty = sub.add_parser("verify-spatial-uncertainty")
+    verify_spatial_uncertainty.add_argument("--audit", required=True)
+    verify_spatial_uncertainty.add_argument("--parameters", required=True)
+    verify_spatial_uncertainty.add_argument("--diagnostics", required=True)
+    verify_spatial_uncertainty.add_argument("--systemic-parameters")
+    verify_spatial_uncertainty.add_argument("--initial-zones")
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -484,6 +504,75 @@ def main() -> None:
             "dose": args.dose, "samples": args.samples, "seed": args.seed,
             "sampling": "multivariate_normal_in_fitted_log_parameter_space",
         })
+        print(json.dumps(summary, indent=2))
+    elif args.command == "propagate-spatial-uncertainty":
+        parameters, parameter_source = _load_parameter_file(
+            args.parameters, SpatialParameters,
+        )
+        systemic_parameters, systemic_source = _load_parameter_file(
+            args.systemic_parameters, TwinParameters,
+        )
+        initial, initial_source = _load_patient_spatial_initial(
+            args.initial_zones, args.patient_id,
+        )
+        diagnostics_path = Path(args.diagnostics)
+        diagnostics = json.loads(diagnostics_path.read_text())
+        doses = tuple(Dose(float(day), args.dose)
+                      for day in args.dose_days.split(",") if day.strip())
+        systemic_trajectory = simulate(
+            days=args.days, doses=doses, parameters=systemic_parameters,
+        )
+        samples = spatial_calibration_ensemble(
+            parameters, diagnostics, args.days, initial, systemic_trajectory,
+            args.samples, args.seed,
+        )
+        output = Path(args.output)
+        output.mkdir(parents=True, exist_ok=True)
+        samples.to_csv(output / "spatial_uncertainty_samples.csv", index=False)
+        endpoints = (
+            "control_efferent_effector", "treated_efferent_effector",
+            "pd1_efferent_effector_delta", "control_paracortex_tpex",
+            "treated_paracortex_tpex", "pd1_paracortex_tpex_delta",
+        )
+        summary = {
+            "method": "paired_spatial_local_multivariate_log_parameter_normal",
+            "samples": int(len(samples)), "seed": args.seed,
+            "checkpoint_mode": "dose_driven_systemic_trajectory",
+            "peak_pd1_occupancy": float(systemic_trajectory.pd1_occupancy.max()),
+            "endpoints": {
+                name: {
+                    "median": float(samples[name].median()),
+                    "lower_95": float(samples[name].quantile(0.025)),
+                    "upper_95": float(samples[name].quantile(0.975)),
+                }
+                for name in endpoints
+            },
+            "research_only": True,
+            "limitation": "Local spatial parameter uncertainty only; not a clinical interval.",
+        }
+        (output / "spatial_uncertainty_summary.json").write_text(
+            json.dumps(summary, indent=2) + "\n"
+        )
+        write_uncertainty_audit(
+            output,
+            inputs={
+                "parameters": parameter_source,
+                "diagnostics": _source_record(args.diagnostics),
+                "systemic_parameters": systemic_source,
+                "initial_zones": initial_source,
+            },
+            settings={
+                "days": args.days, "dose_days": [dose.day for dose in doses],
+                "dose": args.dose, "samples": args.samples, "seed": args.seed,
+                "sampling": "multivariate_normal_in_fitted_log_parameter_space",
+                "paired_control": True,
+            },
+            stage="spatial_calibration_uncertainty_propagation",
+            output_filenames=(
+                "spatial_uncertainty_samples.csv",
+                "spatial_uncertainty_summary.json",
+            ),
+        )
         print(json.dumps(summary, indent=2))
     elif args.command == "augment-twin":
         import pandas as pd
@@ -813,6 +902,23 @@ def main() -> None:
         report = verify_uncertainty_audit(args.audit, {
             "parameters": args.parameters, "diagnostics": args.diagnostics,
         })
+        print(json.dumps({
+            "valid": report["valid"],
+            "verified_inputs": report["verified_inputs"],
+            "verified_outputs": report["verified_outputs"],
+            "audit_sha256": report["audit_sha256"],
+        }, indent=2))
+    elif args.command == "verify-spatial-uncertainty":
+        input_paths = {
+            "parameters": args.parameters, "diagnostics": args.diagnostics,
+        }
+        if args.systemic_parameters:
+            input_paths["systemic_parameters"] = args.systemic_parameters
+        if args.initial_zones:
+            input_paths["initial_zones"] = args.initial_zones
+        report = verify_uncertainty_audit(args.audit, input_paths)
+        if report["stage"] != "spatial_calibration_uncertainty_propagation":
+            raise ValueError("expected spatial uncertainty audit")
         print(json.dumps({
             "valid": report["valid"],
             "verified_inputs": report["verified_inputs"],

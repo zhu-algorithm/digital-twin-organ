@@ -22,6 +22,8 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "verify-spatial-features --audit /tmp/spatial_cohort_initial.csv.spatial-audit.json --spots examples/spatial_spots_cohort.csv",
         "propagate-uncertainty --parameters /tmp/calibration/fitted_parameters.json",
         "verify-uncertainty --audit /tmp/uncertainty/uncertainty_provenance.json",
+        "propagate-spatial-uncertainty --parameters /tmp/spatial_calibration/fitted_spatial_parameters.json",
+        "verify-spatial-uncertainty --audit /tmp/spatial_uncertainty/uncertainty_provenance.json",
     )
     for marker in required:
         assert marker in workflow

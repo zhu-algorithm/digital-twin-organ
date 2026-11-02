@@ -320,10 +320,30 @@ def calibration_ensemble(
     mechanistic parameters remain fixed at their calibrated-file values.
     This is local asymptotic parameter uncertainty, not structural uncertainty.
     """
-    if not isinstance(n, (int, np.integer)) or n < 2:
-        raise ValueError("calibration ensemble requires n >= 2")
     if not np.isfinite(days) or days <= 0:
         raise ValueError("calibration ensemble days must be finite and positive")
+    names, draws = calibration_parameter_draws(parameters, diagnostics, n, seed)
+    rows = []
+    for draw, sampled_values in enumerate(draws):
+        sampled_parameters = replace(parameters, **sampled_values)
+        trajectory = simulate(days=days, doses=doses, parameters=sampled_parameters)
+        final = trajectory.iloc[-1]
+        rows.append({
+            "draw": draw,
+            **{f"parameter_{name}": sampled_values[name] for name in names},
+            "tumour_cells": float(final.tumour_cells),
+            "tumour_change_pct": float(final.tumour_change_pct),
+            "effector_tumour": float(final.effector_tumour),
+            "tpex_tdln": float(final.tpex_tdln),
+            "peak_pd1_occupancy": float(trajectory.pd1_occupancy.max()),
+        })
+    return pd.DataFrame(rows)
+
+
+def calibration_parameter_draws(parameters, diagnostics: dict, n: int, seed: int):
+    """Draw correlated positive dataclass parameters from saved log covariance."""
+    if not isinstance(n, (int, np.integer)) or n < 2:
+        raise ValueError("calibration ensemble requires n >= 2")
     payload = diagnostics.get("local_log_parameter_covariance")
     if not isinstance(payload, dict):
         raise ValueError("calibration diagnostics do not contain estimable covariance")
@@ -343,20 +363,5 @@ def calibration_ensemble(
         raise ValueError("calibration covariance must be positive semidefinite")
     rng = np.random.default_rng(seed)
     log_center = np.log([available[name] for name in names])
-    draws = rng.multivariate_normal(log_center, covariance, size=n, check_valid="raise")
-    rows = []
-    for draw, vector in enumerate(draws):
-        sampled_values = dict(zip(names, np.exp(vector)))
-        sampled_parameters = replace(parameters, **sampled_values)
-        trajectory = simulate(days=days, doses=doses, parameters=sampled_parameters)
-        final = trajectory.iloc[-1]
-        rows.append({
-            "draw": draw,
-            **{f"parameter_{name}": value for name, value in sampled_values.items()},
-            "tumour_cells": float(final.tumour_cells),
-            "tumour_change_pct": float(final.tumour_change_pct),
-            "effector_tumour": float(final.effector_tumour),
-            "tpex_tdln": float(final.tpex_tdln),
-            "peak_pd1_occupancy": float(trajectory.pd1_occupancy.max()),
-        })
-    return pd.DataFrame(rows)
+    vectors = rng.multivariate_normal(log_center, covariance, size=n, check_valid="raise")
+    return names, [dict(zip(names, np.exp(vector))) for vector in vectors]

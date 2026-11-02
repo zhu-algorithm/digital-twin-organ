@@ -15,7 +15,7 @@ from .spatial_dynamics import (SPECIES, ZONE_NAMES, SpatialInitialState,
                                SpatialParameters, simulate_spatial,
                                simulate_spatial_coupled)
 from .assimilation import (_local_calibration_diagnostics, _profile_likelihood,
-                           _validate_fit_parameters)
+                           _validate_fit_parameters, calibration_parameter_draws)
 
 
 DEFAULT_SPATIAL_FIT_PARAMETERS = (
@@ -145,3 +145,54 @@ def save_spatial_calibration(
         json.dumps(diagnostics, indent=2) + "\n"
     )
     compared.to_csv(output / "spatial_calibration_residuals.csv", index=False)
+
+
+def spatial_calibration_ensemble(
+    parameters: SpatialParameters,
+    diagnostics: dict,
+    days: float,
+    initial: SpatialInitialState | pd.DataFrame | None = None,
+    systemic_trajectory: pd.DataFrame | None = None,
+    n: int = 100,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Propagate calibrated spatial covariance into paired checkpoint endpoints."""
+    if not np.isfinite(days) or days <= 0:
+        raise ValueError("spatial calibration ensemble days must be finite and positive")
+    names, draws = calibration_parameter_draws(parameters, diagnostics, n, seed)
+
+    def endpoint(frame, species, zone):
+        selected = frame[frame.species.eq(species) & frame.zone.eq(zone)]
+        return float(selected.amount.iloc[-1])
+
+    rows = []
+    for draw, sampled_values in enumerate(draws):
+        sampled = replace(parameters, **sampled_values)
+        control = simulate_spatial(
+            days=days, parameters=sampled, initial=initial, checkpoint_occupancy=0.0,
+        )
+        treated = (
+            simulate_spatial_coupled(
+                systemic_trajectory, days=days, parameters=sampled, initial=initial,
+            )
+            if systemic_trajectory is not None else
+            simulate_spatial(
+                days=days, parameters=sampled, initial=initial,
+                checkpoint_occupancy=0.8,
+            )
+        )
+        control_effector = endpoint(control, "effector", "efferent_lymph")
+        treated_effector = endpoint(treated, "effector", "efferent_lymph")
+        control_tpex = endpoint(control, "tpex", "paracortex")
+        treated_tpex = endpoint(treated, "tpex", "paracortex")
+        rows.append({
+            "draw": draw,
+            **{f"parameter_{name}": sampled_values[name] for name in names},
+            "control_efferent_effector": control_effector,
+            "treated_efferent_effector": treated_effector,
+            "pd1_efferent_effector_delta": treated_effector - control_effector,
+            "control_paracortex_tpex": control_tpex,
+            "treated_paracortex_tpex": treated_tpex,
+            "pd1_paracortex_tpex_delta": treated_tpex - control_tpex,
+        })
+    return pd.DataFrame(rows)
