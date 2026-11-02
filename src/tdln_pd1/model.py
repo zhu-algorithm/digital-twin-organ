@@ -60,6 +60,25 @@ def _patient_hash(patient_id: str) -> str:
     return hashlib.sha256(patient_id.encode("utf-8")).hexdigest()
 
 
+def _feature_row_hash(row: pd.Series, columns: list[str]) -> str:
+    """Hash one locked-schema feature vector independently of patient identity."""
+    encoded = []
+    for column in columns:
+        value = float(row[column])
+        if np.isnan(value):
+            canonical = "nan"
+        elif np.isposinf(value):
+            canonical = "+inf"
+        elif np.isneginf(value):
+            canonical = "-inf"
+        elif value == 0.0:
+            canonical = "0x0.0p+0"
+        else:
+            canonical = value.hex()
+        encoded.append(f"{column}={canonical}")
+    return hashlib.sha256("\x1f".join(encoded).encode("utf-8")).hexdigest()
+
+
 def _boolean_audit_column(series: pd.Series, name: str) -> pd.Series:
     if pd.api.types.is_bool_dtype(series):
         return series.astype(bool)
@@ -265,6 +284,11 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     training_hashes = set(artifact.get("training_patient_hashes", []))
     overlap_check_available = bool(training_hashes)
     overlap = features.patient_id.map(lambda value: _patient_hash(value) in training_hashes)
+    training_feature_hashes = set(artifact.get("training_feature_row_hashes", []))
+    feature_reuse_check_available = bool(training_feature_hashes)
+    feature_reuse = features[required].apply(
+        lambda row: _feature_row_hash(row, required) in training_feature_hashes, axis=1
+    )
     domain = _domain_diagnostics(features, required, artifact.get("training_domain"))
     return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
                          "probability_lower_95": lower, "probability_upper_95": upper,
@@ -274,6 +298,8 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
                          "decision_threshold": threshold,
                          "training_overlap": overlap,
                          "overlap_check_available": overlap_check_available,
+                         "training_feature_reuse": feature_reuse,
+                         "feature_reuse_check_available": feature_reuse_check_available,
                          "domain_check_available": domain["available"],
                          "domain_max_abs_robust_z": domain["max_abs_z"],
                          "domain_outside_range_fraction": domain["outside_fraction"],
@@ -296,6 +322,19 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     overlap = predictions.loc[overlap_flags, "patient_id"].tolist()
     if overlap:
         raise ValueError(f"external cohort overlaps model training patients: {overlap[:10]}")
+    if "feature_reuse_check_available" not in predictions:
+        raise ValueError("external evaluation requires training-feature reuse fingerprints")
+    reuse_available = _boolean_audit_column(
+        predictions.feature_reuse_check_available, "feature_reuse_check_available"
+    )
+    if not reuse_available.all() or "training_feature_reuse" not in predictions:
+        raise ValueError("external evaluation requires training-feature reuse fingerprints")
+    reuse_flags = _boolean_audit_column(
+        predictions.training_feature_reuse, "training_feature_reuse"
+    )
+    reused = predictions.loc[reuse_flags, "patient_id"].tolist()
+    if reused:
+        raise ValueError(f"external cohort reuses exact training feature rows: {reused[:10]}")
     if "domain_check_available" not in predictions:
         raise ValueError("external evaluation requires locked-model applicability diagnostics")
     domain_available = _boolean_audit_column(
@@ -308,6 +347,8 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     metrics = evaluate_probabilities(data.response, data.probability, bootstrap=bootstrap)
     metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
                     "training_overlap_checked": True, "training_overlap_count": 0,
+                    "training_feature_reuse_checked": True,
+                    "training_feature_reuse_count": 0,
                     "applicability_checked": True,
                     "domain_shift_count": int(domain_flags.sum()),
                     "domain_shift_fraction": float(domain_flags.mean()),
@@ -450,6 +491,12 @@ def train_evaluate(
     output.mkdir(parents=True, exist_ok=True)
     training_hashes = sorted(_patient_hash(value) for value in data.patient_id)
     cohort_fingerprint = hashlib.sha256("\n".join(training_hashes).encode("utf-8")).hexdigest()
+    training_feature_hashes = sorted(
+        _feature_row_hash(row, cols) for _, row in X.iterrows()
+    )
+    training_feature_cohort_fingerprint = hashlib.sha256(
+        "\n".join(training_feature_hashes).encode("utf-8")
+    ).hexdigest()
     training_domain = _training_domain_reference(X, cols)
     joblib.dump({"model": model, "features": cols, "threshold": 0.5,
                  "excluded_features": excluded,
@@ -457,11 +504,13 @@ def train_evaluate(
                  "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
                  "training_patient_hashes": training_hashes,
                  "training_cohort_fingerprint": cohort_fingerprint,
+                 "training_feature_row_hashes": training_feature_hashes,
+                 "training_feature_cohort_fingerprint": training_feature_cohort_fingerprint,
                  "training_domain": training_domain,
                  "training_input_provenance": input_provenance,
                  "bootstrap_models": bootstrap_models,
                  "uncertainty_method": "patient_bootstrap_refit",
-                 "artifact_version": 6}, output / "model.joblib")
+                 "artifact_version": 7}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
                   "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(
