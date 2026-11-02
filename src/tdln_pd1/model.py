@@ -343,7 +343,9 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     if not domain_available.all() or "domain_shift_flag" not in predictions:
         raise ValueError("external evaluation requires locked-model applicability diagnostics")
     domain_flags = _boolean_audit_column(predictions.domain_shift_flag, "domain_shift_flag")
-    data = predictions.merge(labels, on="patient_id", validate="one_to_one")
+    audited_predictions = predictions.copy()
+    audited_predictions["_domain_shift_flag"] = domain_flags.to_numpy(dtype=bool)
+    data = audited_predictions.merge(labels, on="patient_id", validate="one_to_one")
     metrics = evaluate_probabilities(data.response, data.probability, bootstrap=bootstrap)
     metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
                     "training_overlap_checked": True, "training_overlap_count": 0,
@@ -354,6 +356,24 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
                     "domain_shift_fraction": float(domain_flags.mean()),
                     "in_domain_fraction": float((~domain_flags).mean()),
                     "note": "External only if this cohort was never used for fitting, tuning, or feature design."})
+    in_domain = data[~data._domain_shift_flag]
+    class_counts = in_domain.response.value_counts()
+    sensitivity = {
+        "role": "prespecified_sensitivity_analysis_not_primary",
+        "selection_rule": "locked artifact domain_shift_flag == false",
+        "n_patients": int(len(in_domain)),
+        "coverage": float(len(in_domain) / len(data)),
+        "minimum_requirement": "at least 4 patients and at least 2 per response class",
+    }
+    if len(in_domain) >= 4 and len(class_counts) == 2 and int(class_counts.min()) >= 2:
+        sensitivity["status"] = "evaluated"
+        sensitivity["metrics"] = evaluate_probabilities(
+            in_domain.response, in_domain.probability, bootstrap=bootstrap,
+        )
+    else:
+        sensitivity["status"] = "not_evaluable"
+        sensitivity["reason"] = "insufficient in-domain class support"
+    metrics["in_domain_sensitivity_analysis"] = sensitivity
     return metrics
 
 

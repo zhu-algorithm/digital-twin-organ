@@ -72,6 +72,8 @@ Patient-set integrity is fail-closed. Training and evaluation require exact, uni
 
 Artifact version 7 freezes the label-free training support of each model feature, patient-independent hashes of every training feature vector, and the exact training-file hash plus any calibrated-parameter sidecar and its hash. Locked evaluation rejects both patient-ID overlap and exact feature-row reuse after renaming. Every prediction also reports robust distance, range extrapolation, missing-feature fraction and a prespecified applicability flag. These controls expose exact reuse and unsupported extrapolation but cannot detect near-duplicates, shared biospecimens or every form of cohort leakage.
 
+Applicability never changes the primary external-cohort denominator: headline metrics include every submitted patient. The evaluator may additionally report a locked-rule in-domain sensitivity analysis when at least four patients and two patients per class remain, together with its coverage and secondary role. It is marked non-evaluable otherwise. This is a robustness view, not permission to exclude domain-shifted cases from the primary result.
+
 Locked patient predictions include a 95% interval from deterministic patient-level bootstrap refits. The interval holds the fully selected regularization value fixed and therefore quantifies instability under resampling of the development patients. It is not a clinical coverage guarantee and omits distribution shift, measurement error, mechanistic misspecification and uncertainty in how single-cell features map into twin states.
 
 ## Identifiability policy
