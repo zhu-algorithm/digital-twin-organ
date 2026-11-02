@@ -14,7 +14,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--patient-id example_patient",
         "--dose-days 0",
         "verify-sensitivity --audit /tmp/sensitivity/sensitivity_provenance.json",
-        "verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json",
+        "verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters /tmp/calibration/fitted_parameters.json --initial-zones /tmp/spatial_initial.csv",
         "verify-calibration --audit /tmp/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv",
         "verify-calibration --audit /tmp/spatial_calibration/spatial_calibration_provenance.json --observations examples/spatial_longitudinal_observations.csv",
     )

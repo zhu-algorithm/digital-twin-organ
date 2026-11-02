@@ -41,7 +41,10 @@ def write_sensitivity_audit(
     return audit_path
 
 
-def verify_sensitivity_audit(audit_path: str | Path) -> dict:
+def verify_sensitivity_audit(
+    audit_path: str | Path,
+    input_paths: dict[str, str | Path] | None = None,
+) -> dict:
     """Fail closed when a sensitivity result no longer matches its audit."""
     path = Path(audit_path)
     try:
@@ -56,6 +59,25 @@ def verify_sensitivity_audit(audit_path: str | Path) -> dict:
     outputs = payload.get("outputs")
     if not isinstance(outputs, dict) or not outputs:
         raise ValueError("sensitivity audit has no bound outputs")
+    inputs = payload.get("inputs")
+    if not isinstance(inputs, dict):
+        raise ValueError("sensitivity audit has no input records")
+    supplied = input_paths or {}
+    verified_inputs = []
+    for name, record in inputs.items():
+        if record is None:
+            continue
+        if (not isinstance(record, dict) or not isinstance(record.get("file"), str)
+                or not isinstance(record.get("sha256"), str)):
+            raise ValueError(f"invalid sensitivity input record: {name}")
+        if name not in supplied:
+            raise ValueError(f"sensitivity verification requires input path: {name}")
+        target = Path(supplied[name])
+        if target.name != record["file"] or not target.is_file():
+            raise ValueError(f"sensitivity input filename or path mismatch: {name}")
+        if sha256_file(target) != record["sha256"]:
+            raise ValueError(f"sensitivity input SHA-256 mismatch: {name}")
+        verified_inputs.append(name)
     verified = []
     for key, record in outputs.items():
         if (not isinstance(record, dict) or record.get("file") != key
@@ -68,6 +90,7 @@ def verify_sensitivity_audit(audit_path: str | Path) -> dict:
     return {
         "valid": True,
         "stage": payload["stage"],
+        "verified_inputs": sorted(verified_inputs),
         "verified_outputs": sorted(verified),
         "audit_sha256": sha256_file(path),
         "payload": payload,

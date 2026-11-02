@@ -240,6 +240,10 @@ def main() -> None:
     verify.add_argument("--output", required=True)
     verify_sensitivity = sub.add_parser("verify-sensitivity")
     verify_sensitivity.add_argument("--audit", required=True)
+    verify_sensitivity.add_argument("--base-parameters")
+    verify_sensitivity.add_argument("--spatial-parameters")
+    verify_sensitivity.add_argument("--systemic-parameters")
+    verify_sensitivity.add_argument("--initial-zones")
     verify_calibration = sub.add_parser("verify-calibration")
     verify_calibration.add_argument("--audit", required=True)
     verify_calibration.add_argument("--observations", required=True)
@@ -600,9 +604,18 @@ def main() -> None:
         if not report["passed"]:
             raise SystemExit(2)
     elif args.command == "verify-sensitivity":
-        report = verify_sensitivity_audit(args.audit)
+        input_paths = {}
+        for key, value in (
+            ("parameter_source", args.base_parameters or args.spatial_parameters),
+            ("systemic_parameter_source", args.systemic_parameters),
+            ("initial_state_source", args.initial_zones),
+        ):
+            if value:
+                input_paths[key] = value
+        report = verify_sensitivity_audit(args.audit, input_paths)
         print(json.dumps({
             "valid": report["valid"], "stage": report["stage"],
+            "verified_inputs": report["verified_inputs"],
             "verified_outputs": report["verified_outputs"],
             "audit_sha256": report["audit_sha256"],
         }, indent=2))

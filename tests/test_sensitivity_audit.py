@@ -1,3 +1,5 @@
+import hashlib
+
 import pytest
 
 from tdln_pd1.sensitivity_audit import (
@@ -6,18 +8,24 @@ from tdln_pd1.sensitivity_audit import (
 
 
 def test_sensitivity_audit_binds_and_verifies_exact_outputs(tmp_path):
+    parameters = tmp_path / "parameters.json"
+    parameters.write_text("{}\n")
     samples = tmp_path / "samples.csv"
     ranking = tmp_path / "ranking.csv"
     samples.write_text("draw,value\n0,1\n")
     ranking.write_text("parameter,rho\nx,0.5\n")
     audit = write_sensitivity_audit(
         tmp_path, "audit.json", "spatial_sensitivity",
-        inputs={"parameter_source": None}, settings={"seed": 42},
+        inputs={"parameter_source": {
+            "file": parameters.name,
+            "sha256": hashlib.sha256(parameters.read_bytes()).hexdigest(),
+        }}, settings={"seed": 42},
         generated_filenames=(samples.name, ranking.name),
     )
-    verified = verify_sensitivity_audit(audit)
+    verified = verify_sensitivity_audit(audit, {"parameter_source": parameters})
     assert verified["valid"] is True
     assert verified["stage"] == "spatial_sensitivity"
+    assert verified["verified_inputs"] == ["parameter_source"]
     assert verified["verified_outputs"] == ["ranking.csv", "samples.csv"]
     assert len(verified["audit_sha256"]) == 64
 
@@ -32,6 +40,25 @@ def test_sensitivity_audit_detects_posthoc_result_replacement(tmp_path):
     samples.write_text("draw,value\n0,999\n")
     with pytest.raises(ValueError, match="SHA-256 mismatch"):
         verify_sensitivity_audit(audit)
+
+
+def test_sensitivity_audit_requires_and_verifies_declared_inputs(tmp_path):
+    source = tmp_path / "initial.csv"
+    source.write_text("patient_id,amount\np1,1\n")
+    output = tmp_path / "samples.csv"
+    output.write_text("draw,value\n0,1\n")
+    audit = write_sensitivity_audit(
+        tmp_path, "audit.json", "spatial_sensitivity",
+        inputs={"initial_state_source": {
+            "file": source.name,
+            "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        }}, settings={}, generated_filenames=(output.name,),
+    )
+    with pytest.raises(ValueError, match="requires input path"):
+        verify_sensitivity_audit(audit)
+    source.write_text("patient_id,amount\np1,999\n")
+    with pytest.raises(ValueError, match="input SHA-256 mismatch"):
+        verify_sensitivity_audit(audit, {"initial_state_source": source})
 
 
 def test_sensitivity_audit_rejects_missing_output_before_writing(tmp_path):

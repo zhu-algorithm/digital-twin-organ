@@ -51,5 +51,5 @@ jobs:
           tdln-pd1 sensitivity --parameters tumour_growth,killing_rate --days 3 --samples 8 --output /tmp/sensitivity
           tdln-pd1 verify-sensitivity --audit /tmp/sensitivity/sensitivity_provenance.json
           tdln-pd1 spatial-sensitivity --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters /tmp/calibration/fitted_parameters.json --initial-zones /tmp/spatial_initial.csv --patient-id example_patient --parameters antigen_half_saturation,checkpoint_growth_gain --days 3 --dose-days 0 --samples 8 --output /tmp/spatial_sensitivity
-          tdln-pd1 verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json
+          tdln-pd1 verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters /tmp/calibration/fitted_parameters.json --initial-zones /tmp/spatial_initial.csv
           tdln-pd1 verify --output /tmp/verification.json

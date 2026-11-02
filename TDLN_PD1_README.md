@@ -50,7 +50,7 @@ tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patien
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
 tdln-pd1 sensitivity --base-parameters artifacts/calibration/fitted_parameters.json --days 42 --samples 128 --output artifacts/sensitivity
 tdln-pd1 spatial-sensitivity --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters artifacts/calibration/fitted_parameters.json --initial-zones artifacts/spatial_cohort_initial.csv --patient-id example_patient --days 14 --dose-days 0 --dose 1 --samples 128 --output artifacts/spatial_sensitivity
-tdln-pd1 verify-sensitivity --audit artifacts/spatial_sensitivity/spatial_sensitivity_provenance.json
+tdln-pd1 verify-sensitivity --audit artifacts/spatial_sensitivity/spatial_sensitivity_provenance.json --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters artifacts/calibration/fitted_parameters.json --initial-zones artifacts/spatial_cohort_initial.csv
 tdln-pd1 verify --output artifacts/verification.json
 pytest
 ```
@@ -109,7 +109,7 @@ With `--dose-days`, the occupied arm is instead driven by the complete time-vary
 
 Rank rows explicitly carry `estimable`. If an outcome is constant across the sampled design, the correlation is marked non-estimable with neutral numeric placeholders (`rho=0`, `p=1`) rather than emitting an undefined statistic or silently dropping the endpoint.
 
-The spatial screen accepts both an exact fitted `SpatialParameters` JSON and one patient selected from a complete spatial-omics state table. Its provenance file binds the fitted-parameter hash, spatial-state file hash, selected patient, sampling ranges and random seed to cryptographic hashes of the generated samples and rankings.
+The spatial screen accepts both an exact fitted `SpatialParameters` JSON and one patient selected from a complete spatial-omics state table. Its provenance file binds the fitted-parameter hash, spatial-state file hash, selected patient, sampling ranges and random seed to cryptographic hashes of the generated samples and rankings. `verify-sensitivity` requires every non-default parameter or state file again and detects substitution of inputs as well as result tables.
 
 ## Mechanism–ML fusion
 
