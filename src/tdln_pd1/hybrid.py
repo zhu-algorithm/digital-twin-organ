@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import asdict, dataclass, replace
 import re
 import numpy as np
 import pandas as pd
@@ -16,6 +16,38 @@ OUTCOME_TOKENS = (
     "response", "responder", "outcome", "label", "recist",
     "progression_free", "overall_survival", "pfs", "os_months",
 )
+
+
+@dataclass(frozen=True)
+class FeatureStateMapping:
+    """Versionable coefficients connecting assay summaries to model states."""
+
+    signature_intercept: float = 0.5
+    signature_lower_multiplier: float = 0.25
+    immune_upper_multiplier: float = 4.0
+    effector_upper_multiplier: float = 5.0
+    cytotoxic_coefficient: float = 1.0
+    cd8_fraction_coefficient: float = 1.0
+    exhaustion_coefficient: float = 1.0
+    tcf7_coefficient: float = 1.0
+    dendritic_coefficient: float = 1.0
+    treg_fraction_coefficient: float = 4.0
+    antigen_proxy_coefficient: float = 1.0
+
+
+def _validate_mapping(mapping: FeatureStateMapping) -> None:
+    values = asdict(mapping)
+    invalid = [name for name, value in values.items()
+               if not np.isfinite(value) or value <= 0]
+    if invalid:
+        raise ValueError(
+            "feature-state mapping coefficients must be finite and strictly positive: "
+            f"{sorted(invalid)}"
+        )
+    if mapping.signature_lower_multiplier >= min(
+        mapping.immune_upper_multiplier, mapping.effector_upper_multiplier
+    ):
+        raise ValueError("feature-state mapping lower multiplier must be below upper bounds")
 
 
 def _outcome_like_columns(frame: pd.DataFrame) -> list[str]:
@@ -68,7 +100,11 @@ def _fraction(row: pd.Series, names: tuple[str, ...], default: float) -> float:
     return default
 
 
-def initial_state_from_features(row: pd.Series, base: InitialState | None = None) -> InitialState:
+def initial_state_from_features(
+    row: pd.Series,
+    base: InitialState | None = None,
+    mapping: FeatureStateMapping | None = None,
+) -> InitialState:
     """Map measured immune features to initial states with explicit bounded rules.
 
     Signature inputs are finite signed summaries so centered/scaled assays remain
@@ -77,6 +113,8 @@ def initial_state_from_features(row: pd.Series, base: InitialState | None = None
     and inspectable so a calibrated mapping can replace it without changing the simulator.
     """
     base = base or InitialState()
+    mapping = mapping or FeatureStateMapping()
+    _validate_mapping(mapping)
     cytotoxic = _finite_alias(row, ("sig_cytotoxic_cd8_t", "sig_cytotoxic"), 0.0)
     exhaustion = _finite_alias(row, ("sig_exhaustion_cd8_t", "sig_exhaustion"), 0.0)
     tcf7 = _finite_alias(row, ("sig_tcf7_memory_cd8_t", "sig_tcf7_memory"), 0.0)
@@ -87,17 +125,34 @@ def initial_state_from_features(row: pd.Series, base: InitialState | None = None
     cd8_fraction = _fraction(row, ("frac_cd8_t", "frac_cd8_t_cell"), 0.15)
     return replace(
         base,
-        mature_dc_tdln=base.mature_dc_tdln * np.clip(0.5 + dendritic, 0.25, 4.0),
-        tpex_tdln=base.tpex_tdln * np.clip(0.5 + tcf7, 0.25, 4.0),
-        effector_tumour=base.effector_tumour * np.clip(0.5 + cytotoxic + cd8_fraction, 0.25, 5.0),
-        exhausted_tumour=base.exhausted_tumour * np.clip(0.5 + exhaustion, 0.25, 5.0),
-        treg_tdln=base.treg_tdln * np.clip(0.5 + 4.0 * treg_fraction, 0.25, 4.0),
+        mature_dc_tdln=base.mature_dc_tdln * np.clip(
+            mapping.signature_intercept + mapping.dendritic_coefficient * dendritic,
+            mapping.signature_lower_multiplier, mapping.immune_upper_multiplier,
+        ),
+        tpex_tdln=base.tpex_tdln * np.clip(
+            mapping.signature_intercept + mapping.tcf7_coefficient * tcf7,
+            mapping.signature_lower_multiplier, mapping.immune_upper_multiplier,
+        ),
+        effector_tumour=base.effector_tumour * np.clip(
+            mapping.signature_intercept + mapping.cytotoxic_coefficient * cytotoxic
+            + mapping.cd8_fraction_coefficient * cd8_fraction,
+            mapping.signature_lower_multiplier, mapping.effector_upper_multiplier,
+        ),
+        exhausted_tumour=base.exhausted_tumour * np.clip(
+            mapping.signature_intercept + mapping.exhaustion_coefficient * exhaustion,
+            mapping.signature_lower_multiplier, mapping.effector_upper_multiplier,
+        ),
+        treg_tdln=base.treg_tdln * np.clip(
+            mapping.signature_intercept + mapping.treg_fraction_coefficient * treg_fraction,
+            mapping.signature_lower_multiplier, mapping.immune_upper_multiplier,
+        ),
     )
 
 
 def spatial_initial_state_from_features(
     row: pd.Series,
     base: SpatialInitialState | None = None,
+    mapping: FeatureStateMapping | None = None,
 ) -> SpatialInitialState:
     """Map the same measured immune features to bounded six-zone inputs.
 
@@ -106,6 +161,8 @@ def spatial_initial_state_from_features(
     absent, the auditable population default is retained.
     """
     base = base or SpatialInitialState()
+    mapping = mapping or FeatureStateMapping()
+    _validate_mapping(mapping)
     dendritic = _finite_alias(
         row, ("sig_dendritic_activation_dc", "sig_dendritic_activation"), 0.0
     )
@@ -115,11 +172,24 @@ def spatial_initial_state_from_features(
     antigen_proxy = _nonnegative(row, "tumour_antigen_proxy", 0.5)
     return replace(
         base,
-        afferent_antigen=float(base.afferent_antigen * np.clip(0.5 + antigen_proxy, 0.25, 4.0)),
-        afferent_dc=float(base.afferent_dc * np.clip(0.5 + dendritic, 0.25, 4.0)),
-        paracortex_tpex=float(base.paracortex_tpex * np.clip(0.5 + tcf7, 0.25, 4.0)),
+        afferent_antigen=float(base.afferent_antigen * np.clip(
+            mapping.signature_intercept + mapping.antigen_proxy_coefficient * antigen_proxy,
+            mapping.signature_lower_multiplier, mapping.immune_upper_multiplier,
+        )),
+        afferent_dc=float(base.afferent_dc * np.clip(
+            mapping.signature_intercept + mapping.dendritic_coefficient * dendritic,
+            mapping.signature_lower_multiplier, mapping.immune_upper_multiplier,
+        )),
+        paracortex_tpex=float(base.paracortex_tpex * np.clip(
+            mapping.signature_intercept + mapping.tcf7_coefficient * tcf7,
+            mapping.signature_lower_multiplier, mapping.immune_upper_multiplier,
+        )),
         paracortex_effector=float(
-            base.paracortex_effector * np.clip(0.5 + cytotoxic + cd8_fraction, 0.25, 5.0)
+            base.paracortex_effector * np.clip(
+                mapping.signature_intercept + mapping.cytotoxic_coefficient * cytotoxic
+                + mapping.cd8_fraction_coefficient * cd8_fraction,
+                mapping.signature_lower_multiplier, mapping.effector_upper_multiplier,
+            )
         ),
     )
 
@@ -134,11 +204,14 @@ def augment_with_twin(
     spatial_parameters: SpatialParameters | None = None,
     systemic_parameter_draws: tuple[TwinParameters, ...] | None = None,
     spatial_parameter_draws: tuple[SpatialParameters, ...] | None = None,
+    feature_state_mapping: FeatureStateMapping | None = None,
 ) -> pd.DataFrame:
     """Add label-free point and optional calibrated-uncertainty endpoints."""
     if "patient_id" not in features:
         raise ValueError("features need patient_id")
     features = features.copy()
+    mapping = feature_state_mapping or FeatureStateMapping()
+    _validate_mapping(mapping)
     forbidden_features = _outcome_like_columns(features)
     if forbidden_features:
         raise ValueError(
@@ -184,11 +257,11 @@ def augment_with_twin(
     doses = tuple(Dose(day, dose) for day in dose_days)
     rows = []
     for row in features.to_dict(orient="records"):
-        initial = initial_state_from_features(pd.Series(row))
+        initial = initial_state_from_features(pd.Series(row), mapping=mapping)
         spatial_initial = (
             measured_states[measured_states.patient_id.eq(row["patient_id"])]
             if measured_states is not None
-            else spatial_initial_state_from_features(pd.Series(row))
+            else spatial_initial_state_from_features(pd.Series(row), mapping=mapping)
         )
         if measured_states is not None and "zone_observed" in spatial_initial:
             zone_audit = spatial_initial[["zone", "zone_observed"]].drop_duplicates()
@@ -253,6 +326,7 @@ def augment_with_twin(
             "qc_mechanistic_uncertainty_samples": uncertainty_samples,
             "qc_systemic_uncertainty_supplied": int(systemic_parameter_draws is not None),
             "qc_spatial_uncertainty_supplied": int(spatial_parameter_draws is not None),
+            "qc_feature_state_mapping_supplied": int(feature_state_mapping is not None),
         }
         if uncertainty_samples:
             systemic_draws = systemic_parameter_draws or (systemic_parameters,) * uncertainty_samples

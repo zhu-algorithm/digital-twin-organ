@@ -12,7 +12,7 @@ from .model import evaluate_external, leave_one_site_out, predict_locked, train_
 from .simulator import Dose, TwinParameters, simulate
 from .assimilation import (calibrate, calibration_ensemble, calibration_parameter_draws,
                            save_calibration)
-from .hybrid import augment_with_twin
+from .hybrid import FeatureStateMapping, augment_with_twin
 from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spatial_coupled,
                                simulate_spatial_counterfactual)
 from .spatial_data import aggregate_spatial_spots
@@ -237,6 +237,8 @@ def main() -> None:
                      help="patient-zone-species states from spatial-featurize")
     aug.add_argument("--systemic-parameters", help="fitted TwinParameters JSON")
     aug.add_argument("--spatial-parameters", help="fitted SpatialParameters JSON")
+    aug.add_argument("--feature-state-mapping",
+                     help="versioned FeatureStateMapping JSON")
     aug.add_argument("--systemic-diagnostics", help="systemic calibration diagnostics JSON")
     aug.add_argument("--spatial-diagnostics", help="spatial calibration diagnostics JSON")
     aug.add_argument("--uncertainty-samples", type=int, default=0,
@@ -313,6 +315,7 @@ def main() -> None:
     verify_augmentation.add_argument("--spatial-initial-zones")
     verify_augmentation.add_argument("--systemic-parameters")
     verify_augmentation.add_argument("--spatial-parameters")
+    verify_augmentation.add_argument("--feature-state-mapping")
     verify_augmentation.add_argument("--systemic-diagnostics")
     verify_augmentation.add_argument("--spatial-diagnostics")
     verify_features = sub.add_parser("verify-features")
@@ -602,6 +605,9 @@ def main() -> None:
         spatial_parameters, spatial_provenance = _load_parameter_file(
             args.spatial_parameters, SpatialParameters
         )
+        feature_state_mapping, mapping_provenance = _load_parameter_file(
+            args.feature_state_mapping, FeatureStateMapping
+        )
         if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
             raise ValueError("--uncertainty-samples must be 0 or at least 2")
         if (args.systemic_diagnostics or args.spatial_diagnostics) and not args.uncertainty_samples:
@@ -634,11 +640,13 @@ def main() -> None:
                                       systemic_parameters=systemic_parameters,
                                       spatial_parameters=spatial_parameters,
                                       systemic_parameter_draws=systemic_draws,
-                                      spatial_parameter_draws=spatial_draws)
+                                      spatial_parameter_draws=spatial_draws,
+                                      feature_state_mapping=feature_state_mapping)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         augmented.to_csv(args.output, index=False)
         _write_parameter_provenance(args.output, {
             "systemic": systemic_provenance, "spatial": spatial_provenance,
+            "feature_state_mapping": mapping_provenance,
         })
         feature_record = _source_record(args.features)
         feature_audit = Path(f"{args.features}.feature-audit.json")
@@ -671,6 +679,7 @@ def main() -> None:
                 "spatial_initial_zones": spatial_record,
                 "systemic_parameters": systemic_provenance,
                 "spatial_parameters": spatial_provenance,
+                "feature_state_mapping": mapping_provenance,
                 "systemic_diagnostics": (_source_record(args.systemic_diagnostics)
                                            if args.systemic_diagnostics else None),
                 "spatial_diagnostics": (_source_record(args.spatial_diagnostics)
@@ -923,6 +932,7 @@ def main() -> None:
             ("spatial_initial_zones", args.spatial_initial_zones),
             ("systemic_parameters", args.systemic_parameters),
             ("spatial_parameters", args.spatial_parameters),
+            ("feature_state_mapping", args.feature_state_mapping),
             ("systemic_diagnostics", args.systemic_diagnostics),
             ("spatial_diagnostics", args.spatial_diagnostics),
         ):

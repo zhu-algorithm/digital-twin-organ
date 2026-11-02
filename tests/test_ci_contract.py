@@ -21,6 +21,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--systemic-diagnostics /tmp/calibration/calibration_diagnostics.json",
         "--spatial-diagnostics /tmp/spatial_calibration/spatial_calibration_diagnostics.json",
         "--uncertainty-samples 4 --uncertainty-seed 42",
+        "--feature-state-mapping examples/feature_state_mapping.json",
         "verify-features --audit /tmp/features.csv.feature-audit.json --cells examples/cells.csv",
         "verify-spatial-features --audit /tmp/spatial_cohort_initial.csv.spatial-audit.json --spots examples/spatial_spots_cohort.csv",
         "propagate-uncertainty --parameters /tmp/calibration/fitted_parameters.json",

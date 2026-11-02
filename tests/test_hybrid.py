@@ -2,7 +2,8 @@ import pandas as pd
 import pytest
 
 from tdln_pd1.hybrid import (
-    augment_with_twin, initial_state_from_features, spatial_initial_state_from_features,
+    FeatureStateMapping, augment_with_twin, initial_state_from_features,
+    spatial_initial_state_from_features,
 )
 from tdln_pd1.simulator import TwinParameters
 from tdln_pd1.spatial_dynamics import SPECIES, ZONE_NAMES, SpatialParameters
@@ -106,6 +107,29 @@ def test_truly_missing_optional_patient_features_keep_documented_defaults():
     assert absent == missing
 
 
+def test_versioned_feature_state_mapping_controls_both_model_layers():
+    row = pd.Series({"sig_tcf7_memory": 0.5, "sig_cytotoxic": 0.5})
+    default_systemic = initial_state_from_features(row)
+    default_spatial = spatial_initial_state_from_features(row)
+    stronger = FeatureStateMapping(tcf7_coefficient=2.0, cytotoxic_coefficient=2.0)
+    mapped_systemic = initial_state_from_features(row, mapping=stronger)
+    mapped_spatial = spatial_initial_state_from_features(row, mapping=stronger)
+    assert mapped_systemic.tpex_tdln > default_systemic.tpex_tdln
+    assert mapped_systemic.effector_tumour > default_systemic.effector_tumour
+    assert mapped_spatial.paracortex_tpex > default_spatial.paracortex_tpex
+    assert mapped_spatial.paracortex_effector > default_spatial.paracortex_effector
+
+
+def test_feature_state_mapping_validation_fails_closed():
+    row = pd.Series(dtype=float)
+    with pytest.raises(ValueError, match="strictly positive"):
+        initial_state_from_features(row, mapping=FeatureStateMapping(tcf7_coefficient=0))
+    with pytest.raises(ValueError, match="below upper bounds"):
+        spatial_initial_state_from_features(
+            row, mapping=FeatureStateMapping(signature_lower_multiplier=6.0)
+        )
+
+
 def test_twin_augmentation_is_label_free_and_patient_aligned():
     features = pd.DataFrame({
         "patient_id": ["a", "b"], "sig_cytotoxic": [0.2, 1.0],
@@ -120,6 +144,15 @@ def test_twin_augmentation_is_label_free_and_patient_aligned():
     assert out.twin_treatment_tumour_delta.lt(0).all()
     assert out.twin_spatial_efferent_effector_gain.gt(0).all()
     assert out.twin_spatial_treated_paracortex_tpex.gt(0).all()
+
+
+def test_augmentation_records_explicit_mapping_without_leaking_qc_into_model_role():
+    features = pd.DataFrame({"patient_id": ["a"], "sig_tcf7_memory": [0.5]})
+    out = augment_with_twin(
+        features, days=1, dose_days=(0,),
+        feature_state_mapping=FeatureStateMapping(tcf7_coefficient=2.0)
+    )
+    assert out.qc_feature_state_mapping_supplied.item() == 1
 
 
 def test_twin_augmentation_rejects_outcomes_in_patient_features_before_simulation():

@@ -1,0 +1,13 @@
+{
+  "signature_intercept": 0.5,
+  "signature_lower_multiplier": 0.25,
+  "immune_upper_multiplier": 4.0,
+  "effector_upper_multiplier": 5.0,
+  "cytotoxic_coefficient": 1.0,
+  "cd8_fraction_coefficient": 1.0,
+  "exhaustion_coefficient": 1.0,
+  "tcf7_coefficient": 1.0,
+  "dendritic_coefficient": 1.0,
+  "treg_fraction_coefficient": 4.0,
+  "antigen_proxy_coefficient": 1.0
+}

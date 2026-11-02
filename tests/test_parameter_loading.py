@@ -5,6 +5,7 @@ import json
 import pytest
 
 from tdln_pd1.cli import _load_parameter_file, _training_input_provenance
+from tdln_pd1.hybrid import FeatureStateMapping
 from tdln_pd1.simulator import TwinParameters
 
 
@@ -29,6 +30,15 @@ def test_parameter_file_rejects_schema_drift_and_nonpositive_values(tmp_path):
     path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="strictly positive"):
         _load_parameter_file(str(path), TwinParameters)
+
+
+def test_feature_state_mapping_file_is_exact_and_fingerprinted(tmp_path):
+    path = tmp_path / "mapping.json"
+    path.write_text(json.dumps(asdict(FeatureStateMapping())))
+    mapping, provenance = _load_parameter_file(str(path), FeatureStateMapping)
+    assert mapping == FeatureStateMapping()
+    assert provenance["parameter_class"] == "FeatureStateMapping"
+    assert len(provenance["sha256"]) == 64
 
 
 def test_training_input_binds_feature_and_parameter_sidecar_hashes(tmp_path):
