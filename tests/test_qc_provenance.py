@@ -20,6 +20,9 @@ def test_qc_reports_pairing_clonotypes_and_response_balance():
     assert report["passed"]
     assert report["tissue_pairing"]["paired_tdln_tumour_patients"] == 4
     assert report["clonotypes"]["assigned_fraction"] > 0
+    assert report["feature_derivation"] == {
+        "validated": True, "n_patient_rows": 4, "shared_with_featurize": True,
+    }
 
 
 def test_qc_clonotype_assignment_uses_same_placeholder_filter_as_features():
@@ -82,6 +85,29 @@ def test_qc_and_featurization_share_the_tdln_compartment_gate():
     all_tissues = cohort_qc(cells, labels, feature_tissue_pattern="all")
     assert all_tissues["passed"]
     assert all_tissues["feature_compartment"]["n_cells"] == 4
+
+
+def test_qc_executes_expression_and_cell_type_feature_contracts():
+    labels = pd.DataFrame({
+        "patient_id": ["a", "b", "c", "d"], "response": [0, 0, 1, 1],
+    })
+    invalid_expression = pd.DataFrame({
+        "patient_id": ["a", "b", "c", "d"], "cell_type": ["T"] * 4,
+        "GZMB": pd.Series([1.0, 2.0, "bad", 4.0], dtype=object),
+    })
+    report = cohort_qc(invalid_expression, labels, feature_tissue_pattern="all")
+    assert not report["passed"]
+    assert any("feature derivation failed" in error and "numeric" in error
+               for error in report["errors"])
+    assert report["feature_derivation"]["validated"] is False
+
+    colliding_types = pd.DataFrame({
+        "patient_id": ["a", "a", "b", "c", "d"],
+        "cell_type": ["CD8 T", "CD8/T", "T", "T", "T"],
+    })
+    report = cohort_qc(colliding_types, labels, feature_tissue_pattern="all")
+    assert not report["passed"]
+    assert any("collide" in error for error in report["errors"])
 
 
 def test_manifest_hash_verification_detects_tampering(tmp_path: Path):

@@ -69,6 +69,8 @@ Install `.[single-cell,test]` to read `.h5ad` directly.
 
 `qc` is the mandatory pre-training gate for imported cohorts. It checks cryptographic provenance, licensing/source metadata, patient matching, duplicate labels, binary outcomes, class balance, cell counts, signature-gene coverage, paired TDLN–tumour samples and clonotype assignment. A failed gate exits non-zero so CI and workflow systems cannot silently continue.
 
+QC also executes the same `aggregate_cells` transformation used by `featurize`, with the identical baseline and tissue-compartment arguments. Its report records whether feature derivation was validated and the resulting patient-row count. Invalid expression values, identifier failures, cell-type feature-name collisions or any other aggregation contract can therefore not pass QC and fail only later during feature construction.
+
 Patient and outcome contracts are shared by training, site validation and locked external evaluation: identifiers must be present, non-empty and unique, while every response must be explicitly observed and equal to integer 0 or 1. Missing outcomes are never treated as a third class or silently removed.
 
 ## Interpretation and limitations

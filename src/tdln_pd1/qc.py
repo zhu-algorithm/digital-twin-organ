@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .features import SIGNATURES, _assigned_clonotypes, select_baseline_cells
+from .features import (SIGNATURES, _assigned_clonotypes, aggregate_cells,
+                       select_baseline_cells)
 
 
 def cohort_qc(
@@ -29,6 +30,17 @@ def cohort_qc(
     if labels.patient_id.isna().any():
         errors.append("label patient_id must be non-missing")
     raw_cell_count = len(cells)
+    derived_features = None
+    derivation_error = None
+    try:
+        # Execute the exact downstream transformation as part of the gate. This
+        # prevents QC from passing data that later fail expression, identifier,
+        # cell-type naming, temporal or tissue-compartment contracts.
+        derived_features = aggregate_cells(
+            cells, time_column, baseline_values, feature_tissue_pattern,
+        )
+    except ValueError as error:
+        derivation_error = f"feature derivation failed: {error}"
     try:
         cells = select_baseline_cells(cells, time_column, baseline_values)
     except ValueError as error:
@@ -86,6 +98,8 @@ def cohort_qc(
     if "clonotype_id" in cells:
         assigned = _assigned_clonotypes(cells.clonotype_id)
         clonotype_report["assigned_fraction"] = float(len(assigned) / len(cells)) if len(cells) else 0.0
+    if derivation_error is not None:
+        errors.append(derivation_error)
     return {
         "passed": not errors, "errors": errors, "warnings": warnings,
         "n_cells": int(len(cells)), "n_cells_raw": int(raw_cell_count),
@@ -94,6 +108,11 @@ def cohort_qc(
                                "baseline_values": list(baseline_values or ())},
         "feature_compartment": {"pattern": feature_tissue_pattern,
                                 "n_cells": int(feature_cell_count)},
+        "feature_derivation": {
+            "validated": derived_features is not None,
+            "n_patient_rows": int(len(derived_features)) if derived_features is not None else 0,
+            "shared_with_featurize": True,
+        },
         "n_cell_patients": len(cell_patients),
         "n_label_patients": len(label_patients), "n_matched_patients": len(matched),
         "cells_per_patient": {"min": int(counts.min()) if len(counts) else 0,

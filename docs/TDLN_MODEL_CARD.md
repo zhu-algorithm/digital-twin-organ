@@ -57,6 +57,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Fold-internal regularization selection for every evaluable held-out centre, with explicit fixed-value fallback when inner tuning is impossible.
 - Cross-version-safe grouped splitting that rejects any candidate train/validation partition lacking both response classes and reduces fold count before fallback.
 - Fail-closed cohort QC and SHA-256 provenance verification before training.
+- Cohort QC executes the exact downstream single-cell aggregation path and records its patient-row result, preventing a report-only gate from diverging from featurization semantics.
 - Reproducible browser dashboard export: six-zone spatial states and treated/control trajectories are generated directly from the executable model and checked byte-for-structure in CI.
 - A machine-readable, fail-closed verification report covering zero-dose limits, default dose direction, tightened-tolerance convergence, finite/non-negative states, spatial mass conservation and coupled checkpoint direction.
 
