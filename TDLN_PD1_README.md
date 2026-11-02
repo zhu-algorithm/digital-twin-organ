@@ -27,6 +27,7 @@ pip install -e '.[test]'
 tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
 tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts
 tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln_trajectory.csv
+tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output artifacts/calibration
 pytest
 ```
 
@@ -39,3 +40,7 @@ Install `.[single-cell,test]` to read `.h5ad` directly.
 - Small cohorts should report uncertainty and avoid feature/model selection outside nested cross-validation.
 - Batch, cancer type, treatment regimen, sampling time, tissue site, and centre are likely confounders and should be added as cohort metadata when available.
 - This software is research-only and is not a medical device.
+
+## Patient/cohort data assimilation
+
+Calibration observations use long format: `day,variable,value,sd`. Variables must be explicit simulator states or documented derived endpoints. Positive parameters are fitted in log space with uncertainty-weighted robust residuals. The output includes fitted parameters, residuals, weighted RMSE, an identifiability warning, and an AIC-like diagnostic. Parameter-uncertainty ensembles propagate log-normal uncertainty into tumour and immune outcome intervals. The bundled observation file is synthetic and exists only to verify recovery of a known parameter.

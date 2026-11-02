@@ -7,6 +7,7 @@ from .data import load_cells, load_labels
 from .features import aggregate_cells
 from .model import train_evaluate
 from .simulator import Dose, simulate
+from .assimilation import calibrate, save_calibration
 
 
 def main() -> None:
@@ -25,6 +26,12 @@ def main() -> None:
     sim.add_argument("--dose-days", default="0,14,28")
     sim.add_argument("--dose", type=float, default=1.0)
     sim.add_argument("--output", required=True)
+    cal = sub.add_parser("calibrate")
+    cal.add_argument("--observations", required=True)
+    cal.add_argument("--fit", required=True, help="comma-separated TwinParameters fields")
+    cal.add_argument("--dose-days", default="")
+    cal.add_argument("--dose", type=float, default=1.0)
+    cal.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
@@ -32,7 +39,7 @@ def main() -> None:
         import pandas as pd
         metrics = train_evaluate(pd.read_csv(args.features), load_labels(args.labels), Path(args.output), args.folds)
         print(json.dumps(metrics, indent=2))
-    else:
+    elif args.command == "simulate":
         doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
         trajectory = simulate(days=args.days, doses=doses)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -43,6 +50,15 @@ def main() -> None:
             "output": args.output,
             "research_only": True,
         }, indent=2))
+    else:
+        import pandas as pd
+        doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
+        fitted, diagnostics, compared = calibrate(
+            pd.read_csv(args.observations), doses=doses,
+            fit_parameters=tuple(name.strip() for name in args.fit.split(",") if name.strip()),
+        )
+        save_calibration(args.output, fitted, diagnostics, compared)
+        print(json.dumps(diagnostics, indent=2))
 
 
 if __name__ == "__main__":

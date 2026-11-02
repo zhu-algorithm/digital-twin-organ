@@ -28,6 +28,8 @@ These sources motivate model structure. They do not validate the default numeric
 - Dose coalescing invariance for simultaneous boluses.
 - Lymph-node microanatomy zone coverage and deterministic cell-zone mapping.
 - Existing single-cell feature and prediction tests remain passing.
+- Synthetic-truth parameter recovery for longitudinal data assimilation.
+- Deterministic uncertainty propagation under a fixed random seed.
 
 ## Required validation ladder
 
@@ -38,3 +40,7 @@ These sources motivate model structure. They do not validate the default numeric
 5. **Prospective validation:** preregistered protocol and uncertainty-aware predictions.
 
 Until steps 2–5 are completed with real data, default trajectories are demonstrations of model behaviour, not estimates of a patient outcome.
+
+## Identifiability policy
+
+Calibration never silently fits every parameter. The caller must name the fitted parameters, measurement error (`sd`) weights every residual, positive parameters are optimized in log space, and the report raises an identifiability warning when there are fewer than five observations per fitted parameter. This warning is heuristic rather than proof of identifiability; profile likelihood, posterior geometry and independent perturbation data remain required for a defensible calibrated twin.
