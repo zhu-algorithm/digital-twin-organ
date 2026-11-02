@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from .data import load_cells, load_labels
 from .features import aggregate_cells
-from .model import evaluate_external, predict_locked, train_evaluate
+from .model import evaluate_external, leave_one_site_out, predict_locked, train_evaluate
 from .simulator import Dose, simulate
 from .assimilation import calibrate, save_calibration
 from .hybrid import augment_with_twin
@@ -33,6 +33,12 @@ def main() -> None:
     evaluate.add_argument("--labels", required=True)
     evaluate.add_argument("--output", required=True)
     evaluate.add_argument("--bootstrap", type=int, default=500)
+    site_cv = sub.add_parser("site-cv")
+    site_cv.add_argument("--features", required=True)
+    site_cv.add_argument("--labels", required=True)
+    site_cv.add_argument("--site-column", default="center")
+    site_cv.add_argument("--bootstrap", type=int, default=500)
+    site_cv.add_argument("--output", required=True)
     sim = sub.add_parser("simulate")
     sim.add_argument("--days", type=float, default=42.0)
     sim.add_argument("--dose-days", default="0,14,28")
@@ -83,6 +89,15 @@ def main() -> None:
         metrics = evaluate_external(pd.read_csv(args.predictions), load_labels(args.labels), args.bootstrap)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         Path(args.output).write_text(json.dumps(metrics, indent=2) + "\n")
+        print(json.dumps(metrics, indent=2))
+    elif args.command == "site-cv":
+        import pandas as pd
+        metrics, predictions = leave_one_site_out(pd.read_csv(args.features), pd.read_csv(args.labels),
+                                                  args.site_column, args.bootstrap)
+        output = Path(args.output)
+        output.mkdir(parents=True, exist_ok=True)
+        predictions.to_csv(output / "site_cv_predictions.csv", index=False)
+        (output / "site_cv_metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
         print(json.dumps(metrics, indent=2))
     elif args.command == "simulate":
         doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())

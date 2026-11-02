@@ -1,0 +1,9 @@
+patient_id,response,center
+p0,0,center_a
+p1,0,center_a
+p4,1,center_a
+p5,1,center_a
+p2,0,center_b
+p3,0,center_b
+p6,1,center_b
+p7,1,center_b

@@ -38,6 +38,7 @@ These sources motivate model structure. They do not validate the default numeric
 - TCR clone diversity, dominance and paired TDLN–tumour lineage-sharing features.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
+- Leave-one-centre-out transportability evaluation with explicit reporting of non-evaluable sites.
 
 ## Required validation ladder
 

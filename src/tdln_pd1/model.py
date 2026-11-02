@@ -90,6 +90,44 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     return metrics
 
 
+def leave_one_site_out(
+    features: pd.DataFrame,
+    labels: pd.DataFrame,
+    site_column: str = "center",
+    bootstrap: int = 500,
+) -> tuple[dict, pd.DataFrame]:
+    """Train on all other sites and predict each held-out site exactly once."""
+    if site_column not in labels:
+        raise ValueError(f"labels need site column: {site_column}")
+    data = features.merge(labels[["patient_id", "response", site_column]], on="patient_id", validate="one_to_one")
+    if data[site_column].isna().any() or data[site_column].nunique() < 2:
+        raise ValueError("site evaluation needs at least two non-missing sites")
+    cols = [column for column in features.columns if column != "patient_id"]
+    predictions = []
+    skipped = []
+    for site in sorted(data[site_column].astype(str).unique()):
+        test = data[data[site_column].astype(str) == site]
+        train = data[data[site_column].astype(str) != site]
+        if train.response.nunique() < 2 or test.response.nunique() < 2:
+            skipped.append(site)
+            continue
+        model = build_model(cols).fit(train[cols], train.response.astype(int))
+        probability = model.predict_proba(test[cols])[:, 1]
+        predictions.append(pd.DataFrame({"patient_id": test.patient_id, site_column: site,
+                                         "response": test.response.astype(int),
+                                         "probability": probability,
+                                         "predicted_response": (probability >= 0.5).astype(int)}))
+    if not predictions:
+        raise ValueError("no site could be evaluated with both classes in train and test")
+    out = pd.concat(predictions, ignore_index=True)
+    metrics = evaluate_probabilities(out.response, out.probability, bootstrap=bootstrap)
+    metrics.update({"n_patients": int(len(out)), "n_sites_evaluated": int(out[site_column].nunique()),
+                    "skipped_sites": skipped, "site_column": site_column,
+                    "evaluation_type": "leave_one_site_out",
+                    "note": "Stronger internal transportability check; not independent external validation."})
+    return metrics, out
+
+
 def train_evaluate(features: pd.DataFrame, labels: pd.DataFrame, output: str | Path, folds: int = 5) -> dict:
     data = features.merge(labels, on="patient_id", validate="one_to_one")
     if data["response"].nunique() != 2:

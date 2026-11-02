@@ -28,6 +28,7 @@ jobs:
           tdln-pd1 train --features /tmp/hybrid.csv --labels examples/labels.csv --output /tmp/model --folds 2
           tdln-pd1 predict --model /tmp/model/model.joblib --features /tmp/hybrid.csv --output /tmp/predictions.csv
           tdln-pd1 evaluate --predictions /tmp/predictions.csv --labels examples/labels.csv --output /tmp/external_metrics.json --bootstrap 20
+          tdln-pd1 site-cv --features /tmp/hybrid.csv --labels examples/labels_multicenter.csv --bootstrap 20 --output /tmp/site_cv
           tdln-pd1 simulate --days 7 --dose-days 0 --output /tmp/trajectory.csv
           tdln-pd1 simulate-spatial --days 3 --output /tmp/spatial.csv
           tdln-pd1 sensitivity --parameters tumour_growth,killing_rate --days 3 --samples 8 --output /tmp/sensitivity

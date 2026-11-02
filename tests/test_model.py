@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 from tdln_pd1.model import (evaluate_external, evaluate_probabilities,
-                            predict_locked, train_evaluate)
+                            leave_one_site_out, predict_locked, train_evaluate)
 
 
 def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
@@ -37,3 +37,15 @@ def test_locked_prediction_and_external_evaluation(tmp_path: Path):
     assert metrics["evaluation_type"] == "external_locked_model"
     with pytest.raises(ValueError):
         predict_locked(tmp_path / "model.joblib", pd.DataFrame({"patient_id": ["z"]}))
+
+
+def test_leave_one_site_out_predicts_each_evaluable_patient_once():
+    patient = [f"p{i}" for i in range(12)]
+    features = pd.DataFrame({"patient_id": patient, "x": [0.1, 1.1, 0.2, 1.2] * 3})
+    labels = pd.DataFrame({"patient_id": patient, "response": [0, 1, 0, 1] * 3,
+                           "center": ["a"] * 4 + ["b"] * 4 + ["c"] * 4})
+    metrics, predictions = leave_one_site_out(features, labels, bootstrap=10)
+    assert metrics["n_sites_evaluated"] == 3
+    assert metrics["evaluation_type"] == "leave_one_site_out"
+    assert predictions.patient_id.nunique() == 12
+    assert not predictions.patient_id.duplicated().any()
