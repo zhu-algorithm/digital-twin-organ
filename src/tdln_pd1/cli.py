@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from .data import load_cells, load_labels
 from .features import aggregate_cells
-from .model import train_evaluate
+from .model import evaluate_external, predict_locked, train_evaluate
 from .simulator import Dose, simulate
 from .assimilation import calibrate, save_calibration
 from .hybrid import augment_with_twin
@@ -23,6 +23,15 @@ def main() -> None:
     train.add_argument("--labels", required=True)
     train.add_argument("--output", required=True)
     train.add_argument("--folds", type=int, default=5)
+    predict = sub.add_parser("predict")
+    predict.add_argument("--model", required=True)
+    predict.add_argument("--features", required=True)
+    predict.add_argument("--output", required=True)
+    evaluate = sub.add_parser("evaluate")
+    evaluate.add_argument("--predictions", required=True)
+    evaluate.add_argument("--labels", required=True)
+    evaluate.add_argument("--output", required=True)
+    evaluate.add_argument("--bootstrap", type=int, default=500)
     sim = sub.add_parser("simulate")
     sim.add_argument("--days", type=float, default=42.0)
     sim.add_argument("--dose-days", default="0,14,28")
@@ -51,6 +60,19 @@ def main() -> None:
     elif args.command == "train":
         import pandas as pd
         metrics = train_evaluate(pd.read_csv(args.features), load_labels(args.labels), Path(args.output), args.folds)
+        print(json.dumps(metrics, indent=2))
+    elif args.command == "predict":
+        import pandas as pd
+        predictions = predict_locked(args.model, pd.read_csv(args.features))
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        predictions.to_csv(args.output, index=False)
+        print(json.dumps({"n_patients": len(predictions), "output": args.output,
+                          "model_refit": False}, indent=2))
+    elif args.command == "evaluate":
+        import pandas as pd
+        metrics = evaluate_external(pd.read_csv(args.predictions), load_labels(args.labels), args.bootstrap)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(json.dumps(metrics, indent=2) + "\n")
         print(json.dumps(metrics, indent=2))
     elif args.command == "simulate":
         doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())

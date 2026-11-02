@@ -36,6 +36,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Per-species mass conservation in the reaction-free spatial transport network.
 - Directional antigen, DC and effector movement across six TDLN zones.
 - TCR clone diversity, dominance and paired TDLN–tumour lineage-sharing features.
+- Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 
 ## Required validation ladder
 
@@ -46,6 +47,8 @@ These sources motivate model structure. They do not validate the default numeric
 5. **Prospective validation:** preregistered protocol and uncertainty-aware predictions.
 
 Until steps 2–5 are completed with real data, default trajectories are demonstrations of model behaviour, not estimates of a patient outcome.
+
+The prediction report labels internal cross-validation separately from locked external evaluation. Discrimination alone is insufficient: Brier score, log loss, calibration intercept/slope, sensitivity/specificity and bootstrap intervals are emitted together. The software cannot prove that a supplied cohort is independent; cohort provenance and analysis preregistration remain governance requirements.
 
 ## Identifiability policy
 
