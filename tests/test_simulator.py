@@ -18,10 +18,20 @@ def test_simulator_rejects_nonphysical_parameters_and_initial_states():
         simulate(days=1, parameters=TwinParameters(tumour_growth=-0.1))
     with pytest.raises(ValueError, match="tumour_capacity"):
         simulate(days=1, parameters=TwinParameters(tumour_capacity=0))
+    with pytest.raises(ValueError, match="naive_homeostasis_setpoint"):
+        simulate(days=1, parameters=TwinParameters(naive_homeostasis_setpoint=0))
     with pytest.raises(ValueError, match="tumour_cells"):
         simulate(days=1, initial=InitialState(tumour_cells=-1))
     with pytest.raises(ValueError, match="pd1_occupancy"):
         simulate(days=1, initial=InitialState(pd1_occupancy=1.1))
+
+
+def test_explicit_systemic_turnover_parameters_change_the_expected_states():
+    baseline = simulate(days=5)
+    faster_tpex_loss = simulate(days=5, parameters=TwinParameters(tpex_death=0.20))
+    faster_treg_loss = simulate(days=5, parameters=TwinParameters(treg_death=0.20))
+    assert faster_tpex_loss.tpex_tdln.iloc[-1] < baseline.tpex_tdln.iloc[-1]
+    assert faster_treg_loss.treg_tdln.iloc[-1] < baseline.treg_tdln.iloc[-1]
 
 
 def test_antibody_reaches_tdln_and_binds_pd1():

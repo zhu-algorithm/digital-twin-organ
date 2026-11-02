@@ -18,6 +18,8 @@ The same measured 24-state initialization can be run as matched untreated and an
 
 The systemic and spatial layers are coupled through the simulated TDLN PD-1 receptor occupancy trajectory. Occupancy increases the hypothesised Tpex expansion and differentiation reaction rates but never alters conservative transport terms. The coupling gains are explicit parameters, default to zero effect at zero occupancy, and require calibration; the directional response is a software invariant, not clinical validation.
 
+Systemic naive-CD8 homeostasis, Tpex and exhausted-cell loss, Treg induction/loss, and the spatial antigen half-saturation constant are explicit, serializable parameters rather than hidden equation literals. This makes them available to fingerprints, sensitivity analysis and selected-parameter calibration. Their defaults preserve the historical reference trajectory; they are hypotheses, not fitted biological constants.
+
 ## Evidence anchors
 
 - Four-compartment QSP precedent (blood, peripheral tissue, tumour, TDLN) and explicit antigen/APC/T-cell/checkpoint modules: [Jusko et al., 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11138134/) and [Milberg et al., 2019](https://pmc.ncbi.nlm.nih.gov/articles/PMC6677731/).

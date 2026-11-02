@@ -33,6 +33,7 @@ class SpatialParameters:
     dc_yield: float = 2.0e4
     dc_death: float = 0.18
     priming_rate: float = 1.0e-7
+    antigen_half_saturation: float = 0.2
     tpex_growth: float = 0.10
     tpex_differentiation: float = 0.12
     checkpoint_growth_gain: float = 4.0
@@ -167,7 +168,7 @@ def _rhs(
             raise ValueError("checkpoint_occupancy callable must return finite values")
         if not 0.0 <= occupancy <= 1.0:
             raise ValueError("checkpoint_occupancy callable must return values within [0, 1]")
-        growth = (p.tpex_growth * tpex * antigen / (0.2 + antigen)
+        growth = (p.tpex_growth * tpex * antigen / (p.antigen_half_saturation + antigen)
                   * (1.0 + p.checkpoint_growth_gain * occupancy))
         differentiation = (p.tpex_differentiation * tpex
                            * (1.0 + p.checkpoint_differentiation_gain * occupancy))
@@ -226,6 +227,8 @@ def simulate_spatial(
             "spatial parameters must be finite and non-negative: "
             f"{sorted(invalid_parameters)}"
         )
+    if p.antigen_half_saturation <= 0:
+        raise ValueError("antigen_half_saturation must be strictly positive")
     times = np.unique(np.append(np.arange(0.0, days, step), days))
     if not callable(checkpoint_occupancy):
         try:

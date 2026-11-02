@@ -43,6 +43,12 @@ class TwinParameters:
     antibody_tdln_loss: float = 0.12
     occupancy_on: float = 1.4
     occupancy_off: float = 0.18
+    naive_homeostasis_rate: float = 0.015
+    naive_homeostasis_setpoint: float = 2.0e6
+    tpex_death: float = 0.05
+    exhausted_death: float = 0.04
+    treg_induction: float = 0.03
+    treg_death: float = 0.05
 
 
 @dataclass(frozen=True)
@@ -81,6 +87,8 @@ def _validate_model_inputs(parameters: TwinParameters, initial: InitialState) ->
         )
     if parameters.tumour_capacity <= 0:
         raise ValueError("tumour_capacity must be strictly positive")
+    if parameters.naive_homeostasis_setpoint <= 0:
+        raise ValueError("naive_homeostasis_setpoint must be strictly positive")
 
     initial_values = asdict(initial)
     invalid_initial = [
@@ -109,14 +117,14 @@ def _rhs(_: float, y: np.ndarray, p: TwinParameters) -> np.ndarray:
         p.tumour_growth * cancer * (1.0 - cancer / p.tumour_capacity) - killing,
         p.antigen_release * cancer - p.antigen_clearance * antigen - p.dc_migration * antigen,
         p.dc_migration * antigen * 1.0e5 - p.dc_turnover * dc,
-        -priming + 0.015 * (2.0e6 - naive),
-        priming + p.tpex_self_renewal * tpex * suppression - tpex_diff - 0.05 * tpex,
+        -priming + p.naive_homeostasis_rate * (p.naive_homeostasis_setpoint - naive),
+        priming + p.tpex_self_renewal * tpex * suppression - tpex_diff - p.tpex_death * tpex,
         tpex_diff - p.effector_egress * eff_ln - p.effector_death * eff_ln,
         p.effector_egress * eff_ln + p.reinvigoration_rate * occupancy * tex
         - infiltration - p.exhaustion_rate * (1.0 - occupancy) * eff_tum - p.effector_death * eff_tum,
         p.exhaustion_rate * (1.0 - occupancy) * eff_tum
-        - p.reinvigoration_rate * occupancy * tex - 0.04 * tex,
-        0.03 * dc - 0.05 * treg,
+        - p.reinvigoration_rate * occupancy * tex - p.exhausted_death * tex,
+        p.treg_induction * dc - p.treg_death * treg,
         -p.antibody_clearance * ab_plasma - p.antibody_tdln_exchange * (ab_plasma - ab_ln),
         p.antibody_tdln_exchange * (ab_plasma - ab_ln) - p.antibody_tdln_loss * ab_ln,
         p.occupancy_on * ab_ln * (1.0 - occupancy) - p.occupancy_off * occupancy,

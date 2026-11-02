@@ -26,6 +26,17 @@ def test_spatial_model_rejects_nonphysical_parameters_and_initial_states():
         simulate_spatial(days=1, initial=SpatialInitialState(afferent_dc=-1))
     with pytest.raises(ValueError, match="tpex_growth"):
         simulate_spatial(days=1, parameters=SpatialParameters(tpex_growth=float("nan")))
+    with pytest.raises(ValueError, match="antigen_half_saturation"):
+        simulate_spatial(days=1, parameters=SpatialParameters(antigen_half_saturation=0))
+
+
+def test_antigen_half_saturation_is_an_explicit_mechanistic_control():
+    baseline = simulate_spatial(days=4)
+    weak_antigen_sensitivity = simulate_spatial(
+        days=4, parameters=SpatialParameters(antigen_half_saturation=2.0)
+    )
+    selector = lambda frame: frame[(frame.species == "tpex") & (frame.zone == "paracortex")]
+    assert selector(weak_antigen_sensitivity).amount.iloc[-1] < selector(baseline).amount.iloc[-1]
 
 
 def test_antigen_reaches_sinus_and_dc_reaches_paracortex():
