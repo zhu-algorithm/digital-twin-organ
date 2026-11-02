@@ -142,6 +142,7 @@ def main() -> None:
     featurize.add_argument("--time-column")
     featurize.add_argument("--baseline-values", default="")
     featurize.add_argument("--feature-tissue-pattern", default="tdln|lymph")
+    featurize.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
     train = sub.add_parser("train")
     train.add_argument("--features", required=True)
     train.add_argument("--labels", required=True)
@@ -253,6 +254,7 @@ def main() -> None:
     qc.add_argument("--time-column")
     qc.add_argument("--baseline-values", default="")
     qc.add_argument("--feature-tissue-pattern", default="tdln|lymph")
+    qc.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
     verify = sub.add_parser("verify")
     verify.add_argument("--output", required=True)
     verify_sensitivity = sub.add_parser("verify-sensitivity")
@@ -277,7 +279,8 @@ def main() -> None:
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
         aggregate_cells(load_cells(args.cells, (args.time_column,) if args.time_column else ()),
                         args.time_column, baseline_values or None,
-                        args.feature_tissue_pattern).to_csv(args.output, index=False)
+                        args.feature_tissue_pattern,
+                        args.min_signature_gene_coverage).to_csv(args.output, index=False)
     elif args.command == "train":
         import pandas as pd
         metrics = train_evaluate(
@@ -634,7 +637,9 @@ def main() -> None:
         report = cohort_qc(load_cells(
             args.cells, (args.time_column,) if args.time_column else (),
         ), pd.read_csv(args.labels),
-                           args.time_column, baseline_values or None, args.feature_tissue_pattern)
+                           args.time_column, baseline_values or None,
+                           args.feature_tissue_pattern,
+                           args.min_signature_gene_coverage)
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)
             report["passed"] = report["passed"] and report["provenance"]["valid"]

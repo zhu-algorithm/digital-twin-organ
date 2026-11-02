@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 
 from .features import (MIN_SIGNATURE_GENE_COVERAGE, SIGNATURES, _assigned_clonotypes,
-                       aggregate_cells, select_baseline_cells, signature_gene_coverage)
+                       _validate_signature_coverage_threshold, aggregate_cells,
+                       select_baseline_cells, signature_gene_coverage)
 
 
 def cohort_qc(
@@ -15,7 +16,14 @@ def cohort_qc(
     time_column: str | None = None,
     baseline_values: tuple[str, ...] | None = None,
     feature_tissue_pattern: str | None = r"tdln|lymph",
+    min_signature_gene_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
 ) -> dict:
+    try:
+        min_signature_gene_coverage = _validate_signature_coverage_threshold(
+            min_signature_gene_coverage
+        )
+    except ValueError as error:
+        return {"passed": False, "errors": [str(error)], "warnings": []}
     required_cells = {"patient_id", "cell_type"}
     required_labels = {"patient_id", "response"}
     errors, warnings = [], []
@@ -38,6 +46,7 @@ def cohort_qc(
         # cell-type naming, temporal or tissue-compartment contracts.
         derived_features = aggregate_cells(
             cells, time_column, baseline_values, feature_tissue_pattern,
+            min_signature_gene_coverage,
         )
     except ValueError as error:
         derivation_error = f"feature derivation failed: {error}"
@@ -87,7 +96,9 @@ def cohort_qc(
     missing_genes = sorted(set(signature_genes) - set(cells.columns))
     if len(present_genes) < 3:
         warnings.append("fewer than three configured signature genes are present")
-    signature_coverage = signature_gene_coverage(cells.columns)
+    signature_coverage = signature_gene_coverage(
+        cells.columns, min_signature_gene_coverage,
+    )
     unusable_signatures = sorted(
         name for name, record in signature_coverage.items() if not record["usable"]
     )
@@ -130,6 +141,6 @@ def cohort_qc(
         "response_counts": {str(key): int(value) for key, value in response_counts.items()},
         "signature_genes_present": present_genes, "signature_genes_missing": missing_genes,
         "signature_gene_coverage": signature_coverage,
-        "minimum_signature_gene_coverage": MIN_SIGNATURE_GENE_COVERAGE,
+        "minimum_signature_gene_coverage": float(min_signature_gene_coverage),
         "tissue_pairing": tissue_report, "clonotypes": clonotype_report,
     }

@@ -40,6 +40,23 @@ def test_qc_clonotype_assignment_uses_same_placeholder_filter_as_features():
     assert report["clonotypes"]["assigned_fraction"] == 0.5
 
 
+def test_qc_and_featurization_share_configurable_signature_coverage():
+    cells = pd.DataFrame({
+        "patient_id": ["a", "b", "c", "d"], "cell_type": ["CD8 T"] * 4,
+        "GZMB": [1.0, 2.0, 3.0, 4.0],
+    })
+    labels = pd.DataFrame({
+        "patient_id": ["a", "b", "c", "d"], "response": [0, 0, 1, 1],
+    })
+    report = cohort_qc(
+        cells, labels, feature_tissue_pattern="all",
+        min_signature_gene_coverage=0.25,
+    )
+    assert report["passed"]
+    assert report["minimum_signature_gene_coverage"] == 0.25
+    assert report["signature_gene_coverage"]["cytotoxic"]["usable"] is True
+
+
 def test_qc_fails_on_missing_outcome_or_patient_identity():
     cells = pd.DataFrame({"patient_id": ["p1", "p2"], "cell_type": ["T", "T"]})
     missing_outcome = pd.DataFrame({"patient_id": ["p1", "p2"],

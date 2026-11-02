@@ -150,6 +150,17 @@ def test_incomplete_signature_gene_panels_are_explicitly_missing_and_audited():
     assert pd.isna(row.sig_cytotoxic)
     assert pd.isna(row.sig_cytotoxic_cd8_t)
     assert row.qc_sig_cytotoxic_gene_coverage == 0.25
+    permissive = aggregate_cells(
+        cells, feature_tissue_pattern="all", min_signature_gene_coverage=0.25,
+    ).iloc[0]
+    assert permissive.sig_cytotoxic == 3.0
+    assert permissive.qc_min_signature_gene_coverage == 0.25
+    for invalid in (0, 1.1, float("nan"), "invalid"):
+        with pytest.raises(ValueError, match="minimum signature gene coverage"):
+            aggregate_cells(
+                cells, feature_tissue_pattern="all",
+                min_signature_gene_coverage=invalid,
+            )
 
 
 def test_cell_type_fraction_names_cannot_silently_collide():

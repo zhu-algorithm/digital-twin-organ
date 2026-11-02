@@ -69,14 +69,29 @@ def select_baseline_cells(
     return selected
 
 
-def _mean_present(frame: pd.DataFrame, genes: tuple[str, ...]) -> pd.Series:
+def _validate_signature_coverage_threshold(value: float) -> float:
+    try:
+        threshold = float(value)
+    except (TypeError, ValueError) as error:
+        raise ValueError("minimum signature gene coverage must be numeric") from error
+    if not np.isfinite(threshold) or not 0 < threshold <= 1:
+        raise ValueError("minimum signature gene coverage must fall within (0, 1]")
+    return threshold
+
+
+def _mean_present(
+    frame: pd.DataFrame, genes: tuple[str, ...], minimum_coverage: float,
+) -> pd.Series:
     present = [g for g in genes if g in frame.columns]
-    if len(present) / len(genes) < MIN_SIGNATURE_GENE_COVERAGE:
+    if len(present) / len(genes) < minimum_coverage:
         return pd.Series(np.nan, index=frame.index)
     return frame[present].mean(axis=1)
 
 
-def signature_gene_coverage(columns) -> dict[str, dict]:
+def signature_gene_coverage(
+    columns, minimum_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
+) -> dict[str, dict]:
+    minimum_coverage = _validate_signature_coverage_threshold(minimum_coverage)
     available = set(columns)
     return {
         name: {
@@ -85,7 +100,7 @@ def signature_gene_coverage(columns) -> dict[str, dict]:
             "fraction": float(sum(gene in available for gene in genes) / len(genes)),
             "usable": bool(
                 sum(gene in available for gene in genes) / len(genes)
-                >= MIN_SIGNATURE_GENE_COVERAGE
+                >= minimum_coverage
             ),
         }
         for name, genes in SIGNATURES.items()
@@ -137,12 +152,16 @@ def aggregate_cells(
     time_column: str | None = None,
     baseline_values: tuple[str, ...] | None = None,
     feature_tissue_pattern: str | None = r"tdln|lymph",
+    min_signature_gene_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
 ) -> pd.DataFrame:
     """Aggregate long cell rows into one leakage-safe row per patient.
 
     Required columns are patient_id and cell_type. Gene columns are optional;
     absent signatures are retained as NaN for downstream imputation.
     """
+    min_signature_gene_coverage = _validate_signature_coverage_threshold(
+        min_signature_gene_coverage
+    )
     required = {"patient_id", "cell_type"}
     missing = required - set(cells.columns)
     if missing:
@@ -157,9 +176,9 @@ def aggregate_cells(
     x = select_baseline_cells(x, time_column, baseline_values)
     x = _validate_expression_columns(x)
     cell_type_names = _cell_type_feature_names(x["cell_type"])
-    coverage = signature_gene_coverage(x.columns)
+    coverage = signature_gene_coverage(x.columns, min_signature_gene_coverage)
     for name, genes in SIGNATURES.items():
-        x[f"sig_{name}"] = _mean_present(x, genes)
+        x[f"sig_{name}"] = _mean_present(x, genes, min_signature_gene_coverage)
     rows = []
     for patient, group in x.groupby("patient_id", sort=True):
         feature_group = group
@@ -172,6 +191,7 @@ def aggregate_cells(
                 )
         row: dict[str, float | str] = {
             "patient_id": patient, "n_cells": len(feature_group), "n_cells_total_selected": len(group),
+            "qc_min_signature_gene_coverage": min_signature_gene_coverage,
         }
         fractions = feature_group["cell_type"].astype(str).value_counts(normalize=True)
         for cell_type, value in fractions.items():
