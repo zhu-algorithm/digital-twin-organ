@@ -86,4 +86,658 @@ def _feature_row_hash(row: pd.Series, columns: list[str]) -> str:
 
 
 def _boolean_audit_column(series: pd.Series, name: str) -> pd.Series:
-    if pd.api.types.is_bm·ó›h‘éì¶»§q«^wfÆVæ6RÒfÆöB‡’æÖVâ‚’¢f÷"F‡&W6†öÆB–âçæ&ævRƒãÂãÂã“ ¢&VF–7F–öâÒ&ö"ãÒF‡&W6†öÆ@¢GÒfÆöB†çç7VÒ‡&VF–7F–öâb‡’ÓÒ’’¢gÒfÆöB†çç7VÒ‡&VF–7F–öâb‡’ÓÒ’’¢öFG2ÒF‡&W6†öÆBòƒãÒF‡&W6†öÆB¢&÷w2æVæB‡°¢'F‡&W6†öÆB#¢&÷VæB†fÆöB‡F‡&W6†öÆB’Â’À¢&ÖöFVÅöæWEö&VæVf—B#¢fÆöB‡GòÆVâ‡’’ÒgòÆVâ‡’’¢öFG2’À¢'G&VEöÆÅöæWEö&VæVf—B#¢fÆöB‡&WfÆVæ6RÒƒãÒ&WfÆVæ6R’¢öFG2’À¢'G&VEöæöæUöæWEö&VæVf—B#¢ãÀ¢Ò¢&WGW&â&÷w0  ¦FVbWfÇVFU÷&ö&&–Æ—F–W2€¢•÷G'VRÀ¢&ö&&–Æ—G’À¢&ö÷G7G&¢–çBÒSÀ¢6VVC¢–çBÒC"À¢&ö÷G7G&öw&÷W3ÔæöæRÀ¢FV6—6–öå÷F‡&W6†öÆC¢fÆöBÒãRÀ¢’ÓâF–7C ¢""$F—67&–Ö–æF–öâÂ6Æ–'&F–öâæBF–VçBÒ÷"6VçG&RÖ&ö÷G7G&–çFW'fÇ2â"" ¢’Òçæ6'&’‡•÷G'VRÂGG—SÖ–çB¢&ö"Òçæ6Æ—†çæ6'&’‡&ö&&–Æ—G’ÂGG—SÖfÆöB’ÂRÓrÂÒRÓr¢–bÆVâ‡’’ÒÆVâ‡&ö"’÷"ÆVâ‡’’ÓÒ÷"6WB†ççVæ—VR‡’’’Ò³ÂÓ ¢&—6RfÇVTW'&÷"‚&WfÇVF–öâ&WV—&W2Æ–væVB&ö&&–Æ—F–W2æB&÷F‚&W7öç6R6Æ76W2"¢–bæ÷Bçæ—6f–æ—FR‡&ö"’æÆÂ‚“ ¢&—6RfÇVTW'&÷"‚&WfÇVF–öâ&ö&&–Æ—F–W2×W7B&Rf–æ—FR"¢–bæ÷B—6–ç7Fæ6R†&ö÷G7G&Â†–çBÂçæ–çFVvW"’’÷"&ö÷G7G&Â ¢&—6RfÇVTW'&÷"‚&&ö÷G7G&G&w2×W7B&RæöâÖæVvF—fR–çFVvW""¢–bæ÷Bçæ—6f–æ—FR†FV6—6–öå÷F‡&W6†öÆB’÷"æ÷BÂFV6—6–öå÷F‡&W6†öÆBÂ ¢&—6RfÇVTW'&÷"‚&FV6—6–öâF‡&W6†öÆB×W7BfÆÂ7G&–7FÇ’&WGvVVâæB"¢w&÷W2ÒæöæP¢–b&ö÷G7G&öw&÷W2—2æ÷BæöæS ¢w&÷W2Òçæ6'&’†&ö÷G7G&öw&÷W2¢–bÆVâ†w&÷W2’ÒÆVâ‡’“ ¢&—6RfÇVTW'&÷"‚&&ö÷G7G&w&÷W2×W7BÆ–vâöæR×FòÖöæRv—F‚÷WF6öÖW2"¢–bBæ—6æ†w&÷W2’æç’‚’÷"ÆVâ†ççVæ—VR†w&÷W2’’Â# ¢&—6RfÇVTW'&÷"‚&6ÇW7FW"&ö÷G7G&&WV—&W2BÆV7BGvòæöâÖÖ—76–ærw&÷W2"¢&VBÒ&ö"ãÒFV6—6–öå÷F‡&W6†öÆ@¢FâÂgÂfâÂGÒ6öægW6–öåöÖG&—‚‡’Â&VBÂÆ&VÇ3Õ³ÂÒ’ç&fVÂ‚¢Æöv—G2ÒçæÆör‡&ö"òƒÒ&ö"’’ç&W6†R‚ÓÂ¢6Æ–'&F÷"ÒÆöv—7F–5&Vw&W76–öâ„3ÓSbÂ6öÇfW#Ò&Æ&fw2"’æf—B†Æöv—G2Â’¢ö–çBÒ°¢'&ö5öV2#¢fÆöB‡&ö5öV5÷66÷&R‡’Â&ö"’’À¢&fW&vU÷&V6—6–öâ#¢fÆöB†fW&vU÷&V6—6–öå÷66÷&R‡’Â&ö"’’À¢&'&–W%÷66÷&R#¢fÆöB†'&–W%÷66÷&UöÆ÷72‡’Â&ö"’’À¢&ÆöuöÆ÷72#¢fÆöB†ÆöuöÆ÷72‡’Â&ö"’’À¢&&Ææ6VEö67W&7’#¢fÆöB†&Ææ6VEö67W&7•÷66÷&R‡’Â&VB’’À¢'6Vç6—F—f—G’#¢fÆöB‡Gò‡G²fâ’’–bG²fâVÇ6RçææâÀ¢'7V6–f–6—G’#¢fÆöB‡Fâò‡Fâ²g’’–bFâ²gVÇ6RçææâÀ¢&6Æ–'&F–öåö–çFW&6WB#¢fÆöB†6Æ–'&F÷"æ–çFW&6WEõ³Ò’À¢&6Æ–'&F–öå÷6Æ÷R#¢fÆöB†6Æ–'&F÷"æ6öVeõ³ÂÒ’À¢&FV6—6–öå÷F‡&W6†öÆB#¢fÆöB†FV6—6–öå÷F‡&W6†öÆB’À¢&FV6—6–öåö7W'fR#¢öFV6—6–öåö7W'fR‡’Â&ö"’À¢Ð¢–b&ö÷G7G& ¢&ærÒçç&æFöÒæFVfVÇE÷&ær‡6VVB¢G&w2Ò¶æÖS¢µÒf÷"æÖR–â€¢'&ö5öV2"Â&fW&vU÷&V6—6–öâ"Â&'&–W%÷66÷&R"Â&ÆöuöÆ÷72"À¢&&Ææ6VEö67W&7’"Â'6Vç6—F—f—G’"Â'7V6–f–6—G’"À¢—Ð¢Væ—VUöw&÷W2ÒççVæ—VR†w&÷W2’–bw&÷W2—2æ÷BæöæRVÇ6RæöæP¢f÷"ò–â&ævR†&ö÷G7G&“ ¢–bVæ—VUöw&÷W2—2æöæS ¢–æFW‚Ò&æræ–çFVvW'2ƒÂÆVâ‡’’ÂÆVâ‡’’¢VÇ6S ¢6×ÆVEöw&÷W2Ò&æræ6†ö–6R‡Væ—VUöw&÷W2ÂÆVâ‡Væ—VUöw&÷W2’Â&WÆ6SÕG'VR¢–æFW‚Òçæ6öæ6FVæFR…°¢çæfÆFæöç¦W&ò†w&÷W2ÓÒw&÷W’f÷"w&÷W–â6×ÆVEöw&÷W0¢Ò¢–bÆVâ†ççVæ—VR‡•¶–æFW…Ò’’Â# ¢6öçF–çVP¢G&w5²'&ö5öV2%ÒæVæB‡&ö5öV5÷66÷&R‡•¶–æFW…ÒÂ&ö%¶–æFW…Ò’¢G&w5²&fW&vU÷&V6—6–öâ%ÒæVæB†fW&vU÷&V6—6–öå÷66÷&R‡•¶–æFW…ÒÂ&ö%¶–æFW…Ò’¢G&w5²&'&–W%÷66÷&R%ÒæVæB†'&–W%÷66÷&UöÆ÷72‡•¶–æFW…ÒÂ&ö%¶–æFW…Ò’¢G&w5²&ÆöuöÆ÷72%ÒæVæB†ÆöuöÆ÷72‡•¶–æFW…ÒÂ&ö%¶–æFW…ÒÂÆ&VÇ3Õ³ÂÒ’¢6×ÆVE÷&VF–7F–öâÒ&ö%¶–æFW…ÒãÒFV6—6–öå÷F‡&W6†öÆ@¢6×ÆVE÷FâÂ6×ÆVEögÂ6×ÆVEöfâÂ6×ÆVE÷GÒ6öægW6–öåöÖG&—‚€¢•¶–æFW…ÒÂ6×ÆVE÷&VF–7F–öâÂÆ&VÇ3Õ³ÂÐ¢’ç&fVÂ‚¢G&w5²&&Ææ6VEö67W&7’%ÒæVæB€¢&Ææ6VEö67W&7•÷66÷&R‡•¶–æFW…ÒÂ6×ÆVE÷&VF–7F–öâ¢¢G&w5²'6Vç6—F—f—G’%ÒæVæB€¢6×ÆVE÷Gò‡6×ÆVE÷G²6×ÆVEöfâ¢¢G&w5²'7V6–f–6—G’%ÒæVæB€¢6×ÆVE÷Fâò‡6×ÆVE÷Fâ²6×ÆVEög¢¢ö–çE²&&ö÷G7G&%ÒÒ°¢æÖS¢²&Æ÷vW%ó“R#¢fÆöB†ççW&6VçF–ÆR‡fÇVW2Â"ãR’’À¢'WW%ó“R#¢fÆöB†ççW&6VçF–ÆR‡fÇVW2Â“rãR’’À¢'fÆ–EöG&w2#¢ÆVâ‡fÇVW2—Ð¢f÷"æÖRÂfÇVW2–âG&w2æ—FV×2‚’–bfÇVW0¢Ð¢ö–çE²&&ö÷G7G&öFW6–vâ%ÒÒ°¢'Væ—B#¢&6VçG&R"–bw&÷W2—2æ÷BæöæRVÇ6R'F–VçB"À¢'&WVW7FVEöG&w2#¢–çB†&ö÷G7G&’À¢&w&÷W2#¢–çB†ÆVâ‡Væ—VUöw&÷W2’’–bVæ—VUöw&÷W2—2æ÷BæöæRVÇ6R–çB†ÆVâ‡’’’À¢'6VVB#¢–çB‡6VVB’À¢&æ÷FR#¢€¢$VçF—&R6VçG&W2vW&R6×ÆVBv—F‚&WÆ6VÖVçC²ÆÂF–VçG2–âV6‚6×ÆVB ¢&6VçG&RvW&R&WF–æVBÂ–æ6ÇVF–ær&WVFVB6VçG&W2â ¢–bw&÷W2—2æ÷BæöæRVÇ6P¢%F–VçG2vW&R6×ÆVBv—F‚&WÆ6VÖVçBâ ¢’À¢Ð¢&WGW&âö–ç@  ¦FVböf–Æ&ÆUö6ÇW7FW%öw&÷W2†g&ÖS¢BäFFg&ÖRÂ6öÇVÖã¢7G"Ò&6VçFW""“ ¢""%W6RFV6Æ&VB6ÇW7FW"öæÇ’v†VâBÆV7BGvò6ö×ÆWFRw&÷W2&R&W6VçBâ"" ¢–b6öÇVÖâæ÷B–âg&ÖS ¢&WGW&âæöæP¢–bg&ÖU¶6öÇVÖåÒæ—6æ‚’æç’‚“ ¢&—6RfÇVTW'&÷"†b'¶6öÇVÖçÒ×W7B&R6ö×ÆWFRv†Vâ7WÆ–VBf÷"6ÇW7FW&VBWfÇVF–öâ"¢&WGW&âg&ÖU¶6öÇVÖåÒ–bg&ÖU¶6öÇVÖåÒæçVæ—VR‚’ãÒ"VÇ6RæöæP  ¦FVbö6VçFW%÷7G&F–f–VEöWfÇVF–öâ€¢FF¢BäFFg&ÖRÀ¢FV6—6–öå÷F‡&W6†öÆC¢fÆöBÀ¢6VçFW%ö6öÇVÖã¢7G"Ò&6VçFW""À¢’ÓâF–7BÂæöæS ¢""$W‡÷6R6VçG&R†WFW&övVæV—G’v—F†÷WBG&÷–ær6VçG&W2g&öÒööÆVBÖWG&–72â"" ¢–b6VçFW%ö6öÇVÖâæ÷B–âFF ¢&WGW&âæöæP¢&÷w2ÒµÐ¢æ÷&ÖÆ—¦VEö6VçFW'2ÒFF¶6VçFW%ö6öÇVÖåÒæ7G—R‡7G"¢f÷"6VçFW"Âw&÷W–âFFæw&÷W'’†æ÷&ÖÆ—¦VEö6VçFW'2Â6÷'CÕG'VR“ ¢&÷rÒ°¢&6VçFW"#¢6VçFW"À¢&å÷F–VçG2#¢–çB†ÆVâ†w&÷W’’À¢'&W7öæFW'2#¢–çB†w&÷Wç&W7öç6Rç7VÒ‚’’À¢'&W7öç6U÷&WfÆVæ6R#¢fÆöB†w&÷Wç&W7öç6RæÖVâ‚’’À¢Ð¢–bw&÷Wç&W7öç6RæçVæ—VR‚’ÓÒ# ¢&÷rçWFFR‡²'7FGW2#¢&WfÇVFVB"Â&ÖWG&–72#¢WfÇVFU÷&ö&&–Æ—F–W2€¢w&÷Wç&W7öç6RÂw&÷Wç&ö&&–Æ—G’Â&ö÷G7G&ÓÀ¢FV6—6–öå÷F‡&W6†öÆCÖFV6—6–öå÷F‡&W6†öÆBÀ¢—Ò¢VÇ6S ¢&÷rçWFFR‡°¢'7FGW2#¢&æ÷EöWfÇV&ÆR"À¢'&V6öâ#¢&6VçG&R6öçF–ç2öæÇ’öæR&W7öç6R6Æ72"À¢Ò¢&÷w2æVæB‡&÷r¢WfÇVFVBÒ·&÷rf÷"&÷r–â&÷w2–b&÷u²'7FGW2%ÒÓÒ&WfÇVFVB%Ð¢7VÖÖ'’Ò°¢'&öÆR#¢&FW67&—F—fUö6VçFW%ö†WFW&övVæV—G•öæ÷E÷&–Ö'’"À¢&åö6VçFW'2#¢ÆVâ‡&÷w2’À¢&åö6VçFW'5öWfÇV&ÆR#¢ÆVâ†WfÇVFVB’À¢&6VçFW'2#¢&÷w2À¢Ð¢–bWfÇVFVC ¢V2Ò·&÷u²&ÖWG&–72%Õ²'&ö5öV2%Òf÷"&÷r–âWfÇVFVEÐ¢'&–W"Ò·&÷u²&ÖWG&–72%Õ²&'&–W%÷66÷&R%Òf÷"&÷r–âWfÇVFVEÐ¢7VÖÖ'•²&WfÇV&ÆUö6VçFW%÷&ævR%ÒÒ°¢'&ö5öV5öÖ–â#¢fÆöB†Ö–â†V2’’Â'&ö5öV5öÖ‚#¢fÆöB†Ö‚†V2’’À¢&'&–W%÷66÷&UöÖ–â#¢fÆöB†Ö–â†'&–W"’’Â&'&–W%÷66÷&UöÖ‚#¢fÆöB†Ö‚†'&–W"’’À¢Ð¢&WGW&â7VÖÖ'  ¦FVb&VF–7EöÆö6¶VB†ÖöFVÅ÷Fƒ¢7G"ÂF‚ÂfVGW&W3¢BäFFg&ÖR’ÓâBäFFg&ÖS ¢""$Ç’â–Ö×WF&ÆRf—GFVB'F–f7BFòæWr6ö†÷'Bv—F†÷WB&Vf—GF–ærâ"" ¢'F–f7BÒ¦ö&Æ–"æÆöB†ÖöFVÅ÷F‚¢fVGW&W2Òöæ÷&ÖÆ—6U÷F–VçEö–G2†fVGW&W2Â&fVGW&W2"¢&WV—&VBÒ'F–f7E²&fVGW&W2%Ð¢Ö—76–ærÒ6WB‡&WV—&VB’Ò6WB†fVGW&W2æ6öÇVÖç2¢–bÖ—76–æs ¢&—6RfÇVTW'&÷"†b&Ö—76–ærÆö6¶VBÖÖöFVÂfVGW&W3¢·6÷'FVB†Ö—76–ær—Ò"¢Vç6VÖ&ÆRÒ'F–f7BævWB‚&&ö÷G7G&öÖöFVÇ2"ÂµÒ¢–bVç6VÖ&ÆS ¢Vç6VÖ&ÆU÷&ö&&–Æ—G’Òçæ6öÇVÖå÷7F6²…°¢ÖVÖ&W"ç&VF–7E÷&ö&†fVGW&W5·&WV—&VEÒ•³¢ÂÒf÷"ÖVÖ&W"–âVç6VÖ&ÆP¢Ò¢&ö&&–Æ—G’ÒçæÖVF–â†Vç6VÖ&ÆU÷&ö&&–Æ—G’Â†—3Ó¢Æ÷vW"ÒççW&6VçF–ÆR†Vç6VÖ&ÆU÷&ö&&–Æ—G’Â"ãRÂ†—3Ó¢WW"ÒççW&6VçF–ÆR†Vç6VÖ&ÆU÷&ö&&–Æ—G’Â“rãRÂ†—3Ó¢Væ6W'F–çG•öf–Æ&ÆRÒG'VP¢VÇ6S ¢&ö&&–Æ—G’Ò'F–f7E²&ÖöFVÂ%Òç&VF–7E÷&ö&†fVGW&W5·&WV—&VEÒ•³¢ÂÐ¢Æ÷vW"ÒçægVÆÂ†ÆVâ†fVGW&W2’Âçææâ¢WW"ÒçægVÆÂ†ÆVâ†fVGW&W2’Âçææâ¢Væ6W'F–çG•öf–Æ&ÆRÒfÇ6P¢F‡&W6†öÆBÒfÆöB†'F–f7BævWB‚'F‡&W6†öÆB"ÂãR’¢–bæ÷BãÂF‡&W6†öÆBÂã ¢&—6RfÇVTW'&÷"‚&Æö6¶VBÖÖöFVÂF‡&W6†öÆB×W7BfÆÂ7G&–7FÇ’&WGvVVâæB"¢G&–æ–æuö†6†W2Ò6WB†'F–f7BævWB‚'G&–æ–æu÷F–VçEö†6†W2"ÂµÒ’¢÷fW&Æö6†V6µöf–Æ&ÆRÒ&ööÂ‡G&–æ–æuö†6†W2¢÷fW&ÆÒfVGW&W2çF–VçEö–BæÖ†ÆÖ&FfÇVS¢÷F–VçEö†6‚‡fÇVR’–âG&–æ–æuö†6†W2¢G&–æ–æuöfVGW&Uö†6†W2Ò6WB†'F–f7BævWB‚'G&–æ–æuöfVGW&U÷&÷uö†6†W2"ÂµÒ’¢fVGW&U÷&WW6Uö6†V6µöf–Æ&ÆRÒ&ööÂ‡G&–æ–æuöfVGW&Uö†6†W2¢fVGW&U÷&WW6RÒfVGW&W5·&WV—&VEÒæÇ’€¢ÆÖ&F&÷s¢öfVGW&U÷&÷uö†6‚‡&÷rÂ&WV—&VB’–âG&–æ–æuöfVGW&Uö†6†W2Â†—3Ó¢¢FöÖ–âÒöFöÖ–åöF–væ÷7F–72†fVGW&W2Â&WV—&VBÂ'F–f7BævWB‚'G&–æ–æuöFöÖ–â"’¢&WGW&âBäFFg&ÖR‡²'F–VçEö–B#¢fVGW&W2çF–VçEö–BÂ'&ö&&–Æ—G’#¢&ö&&–Æ—G’À¢'&ö&&–Æ—G•öÆ÷vW%ó“R#¢Æ÷vW"Â'&ö&&–Æ—G•÷WW%ó“R#¢WW"À¢'&ö&&–Æ—G•ö–çFW'fÅ÷v–GF‚#¢WW"ÒÆ÷vW"À¢'Væ6W'F–çG•öf–Æ&ÆR#¢Væ6W'F–çG•öf–Æ&ÆRÀ¢'&VF–7FVE÷&W7öç6R#¢‡&ö&&–Æ—G’ãÒF‡&W6†öÆB’æ7G—R†–çB’À¢&FV6—6–öå÷F‡&W6†öÆB#¢F‡&W6†öÆBÀ¢'G&–æ–æuö÷fW&Æ#¢÷fW&ÆÀ¢&÷fW&Æö6†V6µöf–Æ&ÆR#¢÷fW&Æö6†V6µöf–Æ&ÆRÀ¢'G&–æ–æuöfVGW&U÷&WW6R#¢fVGW&U÷&WW6RÀ¢&fVGW&U÷&WW6Uö6†V6µöf–Æ&ÆR#¢fVGW&U÷&WW6Uö6†V6µöf–Æ&ÆRÀ¢&FöÖ–åö6†V6µöf–Æ&ÆR#¢FöÖ–å²&f–Æ&ÆR%ÒÀ¢&FöÖ–åöÖ…ö'5÷&ö'W7E÷¢#¢FöÖ–å²&Ö…ö'5÷¢%ÒÀ¢&FöÖ–åö÷WG6–FU÷&ævUög&7F–öâ#¢FöÖ–å²&÷WG6–FUög&7F–öâ%ÒÀ¢&FöÖ–åöÖ—76–æuöfVGW&Uög&7F–öâ#¢FöÖ–å²&Ö—76–æuög&7F–öâ%ÒÀ¢&FöÖ–å÷6†–gEöfÆr#¢FöÖ–å²&fÆr%×Ò  ¦FVbWfÇVFUöW‡FW&æÂ‡&VF–7F–öç3¢BäFFg&ÖRÂÆ&VÇ3¢BäFFg&ÖRÂ&ö÷G7G&¢–çBÒS’ÓâF–7C ¢&VF–7F–öç2ÂÆ&VÇ2ÒöÆ–vå÷F–VçG2‡&VF–7F–öç2ÂÆ&VÇ2¢–b&÷fW&Æö6†V6µöf–Æ&ÆR"æ÷B–â&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚&W‡FW&æÂWfÇVF–öâ&WV—&W2ÖöFVÂ'F–f7Bv—F‚G&–æ–ærÖ÷fW&Æf–ævW'&–çG2"¢6†V6µöf–Æ&ÆRÒö&ööÆVåöVF—Eö6öÇVÖâ€¢&VF–7F–öç2æ÷fW&Æö6†V6µöf–Æ&ÆRÂ&÷fW&Æö6†V6µöf–Æ&ÆR ¢¢–bæ÷B6†V6µöf–Æ&ÆRæÆÂ‚“ ¢&—6RfÇVTW'&÷"‚&W‡FW&æÂWfÇVF–öâ&WV—&W2ÖöFVÂ'F–f7Bv—F‚G&–æ–ærÖ÷fW&Æf–ævW'&–çG2"¢–b'G&–æ–æuö÷fW&Æ"æ÷B–â&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚'&VF–7F–öç2æVVBG&–æ–æuö÷fW&ÆVF—B6öÇVÖâ"¢÷fW&ÆöfÆw2Òö&ööÆVåöVF—Eö6öÇVÖâ‡&VF–7F–öç2çG&–æ–æuö÷fW&ÆÂ'G&–æ–æuö÷fW&Æ"¢÷fW&ÆÒ&VF–7F–öç2æÆö5¶÷fW&ÆöfÆw2Â'F–VçEö–B%ÒçFöÆ—7B‚¢–b÷fW&Æ ¢&—6RfÇVTW'&÷"†b&W‡FW&æÂ6ö†÷'B÷fW&Æ2ÖöFVÂG&–æ–ærF–VçG3¢¶÷fW&Æ³£×Ò"¢–b&fVGW&U÷&WW6Uö6†V6µöf–Æ&ÆR"æ÷B–â&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚&W‡FW&æÂWfÇVF–öâ&WV—&W2G&–æ–ærÖfVGW&R&WW6Rf–ævW'&–çG2"¢&WW6Uöf–Æ&ÆRÒö&ööÆVåöVF—Eö6öÇVÖâ€¢&VF–7F–öç2æfVGW&U÷&WW6Uö6†V6µöf–Æ&ÆRÂ&fVGW&U÷&WW6Uö6†V6µöf–Æ&ÆR ¢¢–bæ÷B&WW6Uöf–Æ&ÆRæÆÂ‚’÷"'G&–æ–æuöfVGW&U÷&WW6R"æ÷B–â&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚&W‡FW&æÂWfÇVF–öâ&WV—&W2G&–æ–ærÖfVGW&R&WW6Rf–ævW'&–çG2"¢&WW6UöfÆw2Òö&ööÆVåöVF—Eö6öÇVÖâ€¢&VF–7F–öç2çG&–æ–æuöfVGW&U÷&WW6RÂ'G&–æ–æuöfVGW&U÷&WW6R ¢¢&WW6VBÒ&VF–7F–öç2æÆö5·&WW6UöfÆw2Â'F–VçEö–B%ÒçFöÆ—7B‚¢–b&WW6VC ¢&—6RfÇVTW'&÷"†b&W‡FW&æÂ6ö†÷'B&WW6W2W†7BG&–æ–ærfVGW&R&÷w3¢·&WW6VE³£×Ò"¢–b&FöÖ–åö6†V6µöf–Æ&ÆR"æ÷B–â&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚&W‡FW&æÂWfÇVF–öâ&WV—&W2Æö6¶VBÖÖöFVÂÆ–6&–Æ—G’F–væ÷7F–72"¢FöÖ–åöf–Æ&ÆRÒö&ööÆVåöVF—Eö6öÇVÖâ€¢&VF–7F–öç2æFöÖ–åö6†V6µöf–Æ&ÆRÂ&FöÖ–åö6†V6µöf–Æ&ÆR ¢¢–bæ÷BFöÖ–åöf–Æ&ÆRæÆÂ‚’÷"&FöÖ–å÷6†–gEöfÆr"æ÷B–â&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚&W‡FW&æÂWfÇVF–öâ&WV—&W2Æö6¶VBÖÖöFVÂÆ–6&–Æ—G’F–væ÷7F–72"¢FöÖ–åöfÆw2Òö&ööÆVåöVF—Eö6öÇVÖâ‡&VF–7F–öç2æFöÖ–å÷6†–gEöfÆrÂ&FöÖ–å÷6†–gEöfÆr"¢–b&FV6—6–öå÷F‡&W6†öÆB"æ÷B–â&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚&Æö6¶VB&VF–7F–öç2æVVBFV6—6–öå÷F‡&W6†öÆB"¢F‡&W6†öÆG2ÒBçFõöçVÖW&–2‡&VF–7F–öç2æFV6—6–öå÷F‡&W6†öÆBÂW'&÷'3Ò&6öW&6R"¢–b†æ÷Bçæ—6f–æ—FR‡F‡&W6†öÆG2’æÆÂ‚’÷"F‡&W6†öÆG2æçVæ—VR‚’Ò¢÷"æ÷BÂfÆöB‡F‡&W6†öÆG2æ–Æö5³Ò’Â“ ¢&—6RfÇVTW'&÷"‚&Æö6¶VB&VF–7F–öç2æVVBöæRfÆ–BFV6—6–öå÷F‡&W6†öÆB"¢FV6—6–öå÷F‡&W6†öÆBÒfÆöB‡F‡&W6†öÆG2æ–Æö5³Ò¢VF—FVE÷&VF–7F–öç2Ò&VF–7F–öç2æ6÷’‚¢VF—FVE÷&VF–7F–öç5²%öFöÖ–å÷6†–gEöfÆr%ÒÒFöÖ–åöfÆw2çFõöçV×’†GG—SÖ&ööÂ¢FFÒVF—FVE÷&VF–7F–öç2æÖW&vR†Æ&VÇ2ÂöãÒ'F–VçEö–B"ÂfÆ–FFSÒ&öæU÷FõööæR"¢6VçG&Uöw&÷W2Òöf–Æ&ÆUö6ÇW7FW%öw&÷W2†FF¢ÖWG&–72ÒWfÇVFU÷&ö&&–Æ—F–W2€¢FFç&W7öç6RÂFFç&ö&&–Æ—G’Â&ö÷G7G&Ö&ö÷G7G&À¢&ö÷G7G&öw&÷W3Ö6VçG&Uöw&÷W2À¢FV6—6–öå÷F‡&W6†öÆCÖFV6—6–öå÷F‡&W6†öÆBÀ¢¢ÖWG&–72çWFFR‡²&å÷F–VçG2#¢–çB†ÆVâ†FF’’Â&WfÇVF–öå÷G—R#¢&W‡FW&æÅöÆö6¶VEöÖöFVÂ"À¢'G&–æ–æuö÷fW&Æö6†V6¶VB#¢G'VRÂ'G&–æ–æuö÷fW&Æö6÷VçB#¢À¢'G&–æ–æuöfVGW&U÷&WW6Uö6†V6¶VB#¢G'VRÀ¢'G&–æ–æuöfVGW&U÷&WW6Uö6÷VçB#¢À¢&Æ–6&–Æ—G•ö6†V6¶VB#¢G'VRÀ¢&FöÖ–å÷6†–gEö6÷VçB#¢–çB†FöÖ–åöfÆw2ç7VÒ‚’’À¢&FöÖ–å÷6†–gEög&7F–öâ#¢fÆöB†FöÖ–åöfÆw2æÖVâ‚’’À¢&–åöFöÖ–åög&7F–öâ#¢fÆöB‚‡æFöÖ–åöfÆw2’æÖVâ‚’’À¢&æ÷FR#¢$W‡FW&æÂöæÇ’–bF†—26ö†÷'Bv2æWfW"W6VBf÷"f—GF–ærÂGVæ–ærÂ÷"fVGW&RFW6–vââ'Ò¢–åöFöÖ–âÒFF·æFFåöFöÖ–å÷6†–gEöfÆuÐ¢6Æ75ö6÷VçG2Ò–åöFöÖ–âç&W7öç6RçfÇVUö6÷VçG2‚¢6Vç6—F—f—G’Ò°¢'&öÆR#¢'&W7V6–f–VE÷6Vç6—F—f—G•öæÇ—6—5öæ÷E÷&–Ö'’"À¢'6VÆV7F–öå÷'VÆR#¢&Æö6¶VB'F–f7BFöÖ–å÷6†–gEöfÆrÓÒfÇ6R"À¢&å÷F–VçG2#¢–çB†ÆVâ†–åöFöÖ–â’’À¢&6÷fW&vR#¢fÆöB†ÆVâ†–åöFöÖ–â’òÆVâ†FF’’À¢&Ö–æ–×VÕ÷&WV—&VÖVçB#¢&BÆV7BBF–VçG2æBBÆV7B"W"&W7öç6R6Æ72"À¢Ð¢–bÆVâ†–åöFöÖ–â’ãÒBæBÆVâ†6Æ75ö6÷VçG2’ÓÒ"æB–çB†6Æ75ö6÷VçG2æÖ–â‚’’ãÒ# ¢6Vç6—F—f—G•²'7FGW2%ÒÒ&WfÇVFVB ¢6Vç6—F—f—G•²&ÖWG&–72%ÒÒWfÇVFU÷&ö&&–Æ—F–W2€¢–åöFöÖ–âç&W7öç6RÂ–åöFöÖ–âç&ö&&–Æ—G’Â&ö÷G7G&Ö&ö÷G7G&À¢&ö÷G7G&öw&÷W3Õöf–Æ&ÆUö6ÇW7FW%öw&÷W2†–åöFöÖ–â’À¢FV6—6–öå÷F‡&W6†öÆCÖFV6—6–öå÷F‡&W6†öÆBÀ¢¢VÇ6S ¢6Vç6—F—f—G•²'7FGW2%ÒÒ&æ÷EöWfÇV&ÆR ¢6Vç6—F—f—G•²'&V6öâ%ÒÒ&–ç7Vff–6–VçB–âÖFöÖ–â6Æ727W÷'B ¢ÖWG&–75²&–åöFöÖ–å÷6Vç6—F—f—G•öæÇ—6—2%ÒÒ6Vç6—F—f—G¢6VçFW%÷7G&F–f–VBÒö6VçFW%÷7G&F–f–VEöWfÇVF–öâ†FFÂFV6—6–öå÷F‡&W6†öÆB¢–b6VçFW%÷7G&F–f–VB—2æ÷BæöæS ¢ÖWG&–75²&6VçFW%÷7G&F–f–VEöWfÇVF–öâ%ÒÒ6VçFW%÷7G&F–f–V@¢&WGW&âÖWG&–70  ¦FVbÆVfUööæU÷6—FUö÷WB€¢fVGW&W3¢BäFFg&ÖRÀ¢Æ&VÇ3¢BäFFg&ÖRÀ¢6—FUö6öÇVÖã¢7G"Ò&6VçFW""À¢&ö÷G7G&¢–çBÒSÀ¢’ÓâGWÆU¶F–7BÂBäFFg&ÖUÓ ¢""%G&–âöâÆÂ÷F†W"6—FW2æB&VF–7BV6‚†VÆBÖ÷WB6—FRW†7FÇ’öæ6Râ"" ¢fVGW&W2ÂÆ&VÇ2ÒöÆ–vå÷F–VçG2†fVGW&W2ÂÆ&VÇ2¢–b6—FUö6öÇVÖâæ÷B–âÆ&VÇ3 ¢&—6RfÇVTW'&÷"†b&Æ&VÇ2æVVB6—FR6öÇVÖã¢·6—FUö6öÇVÖçÒ"¢FFÒfVGW&W2æÖW&vR†Æ&VÇ5µ²'F–VçEö–B"Â'&W7öç6R"Â6—FUö6öÇVÖåÕÒÂöãÒ'F–VçEö–B"ÂfÆ–FFSÒ&öæU÷FõööæR"¢–bFF·6—FUö6öÇVÖåÒæ—6æ‚’æç’‚’÷"FF·6—FUö6öÇVÖåÒæçVæ—VR‚’Â# ¢&—6RfÇVTW'&÷"‚'6—FRWfÇVF–öâæVVG2BÆV7BGvòæöâÖÖ—76–ær6—FW2"¢6öÇ2ÂW†6ÇVFVBÒ÷6VÆV7EöÖöFVÅöfVGW&W2†fVGW&W2ÂÆ&VÇ2¢&VF–7F–öç2ÒµÐ¢6¶—VBÒµÐ¢GVæ–ærÒµÐ¢f÷"6—FUö–æFW‚Â6—FR–âVçVÖW&FR‡6÷'FVB†FF·6—FUö6öÇVÖåÒæ7G—R‡7G"’çVæ—VR‚’’Â7F'CÓ“ ¢FW7BÒFF¶FF·6—FUö6öÇVÖåÒæ7G—R‡7G"’ÓÒ6—FUÐ¢G&–âÒFF¶FF·6—FUö6öÇVÖåÒæ7G—R‡7G"’Ò6—FUÐ¢26–ævÆRÖ6Æ72†VÆBÖ÷WB6VçG&R6ææ÷B7W÷'B6VçG&R×7V6–f–2T2À¢2'WB—G2F–VçG2&VÖ–âfÆ–BG&ç7÷'F&–Æ—G’FW7G2f÷"&÷W ¢266÷&–ær'VÆW2æBF†RööÆVBæÇ—6—2âG&÷–ærF†B6VçG&Rv÷VÆ@¢26öæF—F–öâWfÇVF–öâöâ—G2÷WF6öÖW2æB6âÖ¶RW&f÷&Öæ6RÆöö°¢2'F–f–6–ÆÇ’ff÷W&&ÆRâöæÇ’âVçW6&ÆRG&–æ–ær'F—F–öâÖ¶W0¢2&VF–7F–öâ–×÷76–&ÆRà¢–bG&–âç&W7öç6RæçVæ—VR‚’Â# ¢6¶—VBæVæB‡6—FR¢6öçF–çVP¢•÷G&–âÒG&–âç&W7öç6Ræ7G—R†–çB¢–ææW%ö7bÂ–ææW%÷7Æ—G2Ò÷6fUöw&÷W÷7Æ—G2€¢•÷G&–âÂG&–âçF–VçEö–BÂ2Â²6—FUö–æFW‚À¢¢–b–ææW%ö7b—2æ÷BæöæS ¢6V&6‚Òw&–E6V&6„5b€¢'V–ÆEöÖöFVÂ†6öÇ2’Â²&6Æ76–f–W%õô2#¢Æ—7B„DTdTÅEô5ôu$”B—ÒÀ¢66÷&–æsÒ&æVuöÆöuöÆ÷72"Â7cÖ–ææW%ö7bÂ&Vf—CÕG'VRÂW'&÷%÷66÷&SÒ'&—6R"À¢¢6V&6‚æf—B‡G&–å¶6öÇ5ÒÂ•÷G&–â¢ÖöFVÂÒ6V&6‚æ&W7EöW7F–ÖF÷%ð¢6VÆV7FVEö2ÒfÆöB‡6V&6‚æ&W7E÷&×5õ²&6Æ76–f–W%õô2%Ò¢ÖöFRÒ&æW7FVEöw&–E÷6V&6‚ ¢VÇ6S ¢ÖöFVÂÒ'V–ÆEöÖöFVÂ†6öÇ2’æf—B‡G&–å¶6öÇ5ÒÂ•÷G&–â¢6VÆV7FVEö2Òã ¢ÖöFRÒ&f—†VEô5ö–ææW%ö7eöæ÷EöWfÇV&ÆR ¢&ö&&–Æ—G’ÒÖöFVÂç&VF–7E÷&ö&‡FW7E¶6öÇ5Ò•³¢ÂÐ¢&VF–7F–öç2æVæB‡BäFFg&ÖR‡²'F–VçEö–B#¢FW7BçF–VçEö–BÂ6—FUö6öÇVÖã¢6—FRÀ¢'&W7öç6R#¢FW7Bç&W7öç6Ræ7G—R†–çB’À¢'&ö&&–Æ—G’#¢&ö&&–Æ—G’À¢'6VÆV7FVEô2#¢6VÆV7FVEö2À¢'&VF–7FVE÷&W7öç6R#¢‡&ö&&–Æ—G’ãÒãR’æ7G—R†–çB—Ò’¢GVæ–æræVæB‡²&†VÆEö÷WE÷6—FR#¢6—FRÂ&–ææW%÷7Æ—G2#¢–ææW%÷7Æ—G2À¢'6VÆV7FVEô2#¢6VÆV7FVEö2Â&ÖöFR#¢ÖöFRÀ¢&å÷G&–â#¢–çB†ÆVâ‡G&–â’’Â&å÷FW7B#¢–çB†ÆVâ‡FW7B’—Ò¢–bæ÷B&VF–7F–öç3 ¢&—6RfÇVTW'&÷"‚&æò6—FR6÷VÆB&RWfÇVFVBv—F‚&÷F‚6Æ76W2–âG&–âæBFW7B"¢÷WBÒBæ6öæ6B‡&VF–7F–öç2Â–væ÷&Uö–æFWƒÕG'VR¢ÖWG&–72ÒWfÇVFU÷&ö&&–Æ—F–W2€¢÷WBç&W7öç6RÂ÷WBç&ö&&–Æ—G’Â&ö÷G7G&Ö&ö÷G7G&À¢&ö÷G7G&öw&÷W3Ö÷WE·6—FUö6öÇVÖåÒÀ¢¢ÖWG&–72çWFFR‡²&å÷F–VçG2#¢–çB†ÆVâ†÷WB’’Â&å÷6—FW5öWfÇVFVB#¢–çB†÷WE·6—FUö6öÇVÖåÒæçVæ—VR‚’’À¢'6¶—VE÷6—FW2#¢6¶—VBÂ'6—FUö6öÇVÖâ#¢6—FUö6öÇVÖâÀ¢&WfÇVF–öå÷G—R#¢&ÆVfUööæU÷6—FUö÷WB"À¢'6—FUö‡—W'&ÖWFW%÷6VÆV7F–öâ#¢GVæ–ærÀ¢'6VÆV7F–öåöÖWG&–2#¢&æVvF—fUöÆöuöÆ÷72"À¢$5öw&–B#¢Æ—7B„DTdTÅEô5ôu$”B’À¢&fVGW&U÷66†VÖ#¢²&–æ6ÇVFVB#¢6öÇ2Â&W†6ÇVFVB#¢W†6ÇVFVGÒÀ¢&æ÷FR#¢%7G&öævW"–çFW&æÂG&ç7÷'F&–Æ—G’6†V6³²æ÷B–æFWVæFVçBW‡FW&æÂfÆ–FF–öââ'Ò¢ÖWG&–75²&6VçFW%÷7G&F–f–VEöWfÇVF–öâ%ÒÒö6VçFW%÷7G&F–f–VEöWfÇVF–öâ€¢FV6—6–öå÷F‡&W6†öÆCÓãRÀ¢FFÖ÷WBÀ¢6VçFW%ö6öÇVÖã×6—FUö6öÇVÖâÀ¢¢&WGW&âÖWG&–72Â÷W@  ¦FVbG&–åöWfÇVFR€¢fVGW&W3¢BäFFg&ÖRÀ¢Æ&VÇ3¢BäFFg&ÖRÀ¢÷WGWC¢7G"ÂF‚À¢föÆG3¢–çBÒRÀ¢Vç6VÖ&ÆUöÖVÖ&W'3¢–çBÒSÀ¢–çWE÷&÷fVææ6S¢F–7BÂæöæRÒæöæRÀ¢’ÓâF–7C ¢fVGW&W2ÂÆ&VÇ2ÒöÆ–vå÷F–VçG2†fVGW&W2ÂÆ&VÇ2¢FFÒfVGW&W2æÖW&vR†Æ&VÇ2ÂöãÒ'F–VçEö–B"ÂfÆ–FFSÒ&öæU÷FõööæR"¢–bFF²'&W7öç6R%ÒæçVæ—VR‚’Ò# ¢&—6RfÇVTW'&÷"‚'G&–æ–æræVVG2&÷F‚&W7öç6R6Æ76W2"¢–bVç6VÖ&ÆUöÖVÖ&W'2Â ¢&—6RfÇVTW'&÷"‚&Vç6VÖ&ÆUöÖVÖ&W'2×W7B&RæöâÖæVvF—fR"¢6÷VçG2ÒFF²'&W7öç6R%ÒçfÇVUö6÷VçG2‚¢å÷7Æ—G2ÒÖ–â†föÆG2Â–çB†6÷VçG2æÖ–â‚’’¢–bå÷7Æ—G2Â# ¢&—6RfÇVTW'&÷"‚&V6‚6Æ72æVVG2BÆV7BGvòF–VçG2"¢6öÇ2ÂW†6ÇVFVBÒ÷6VÆV7EöÖöFVÅöfVGW&W2†fVGW&W2ÂÆ&VÇ2¢‚Â’ÒFF¶6öÇ5ÒÂFF²'&W7öç6R%Òæ7G—R†–çB¢÷WFW%ö7bÂå÷7Æ—G2Ò÷6fUöw&÷W÷7Æ—G2‡’ÂFFçF–VçEö–BÂå÷7Æ—G2ÂC"¢–b÷WFW%ö7b—2æöæS ¢&—6RfÇVTW'&÷"‚&6÷VÆBæ÷B6öç7G'V7Bw&÷WVB÷WFW"föÆG2v—F‚&÷F‚6Æ76W2"¢&ö"ÒçægVÆÂ†ÆVâ†FF’Âçææâ¢föÆEö–BÒçægVÆÂ†ÆVâ†FF’ÂÓÂGG—SÖ–çB¢6VÆV7FVEö2ÒçægVÆÂ†ÆVâ†FF’Âçææâ¢GVæ–ærÒµÐ¢f÷"föÆBÂ‡G&–åö–æFW‚ÂFW7Eö–æFW‚’–âVçVÖW&FR€¢÷WFW%ö7bÂ7F'CÓ¢“ ¢•÷G&–âÒ’æ–Æö5·G&–åö–æFW…Ð¢–ææW%ö7bÂ–ææW%÷7Æ—G2Ò÷6fUöw&÷W÷7Æ—G2€¢•÷G&–âÂFFçF–VçEö–Bæ–Æö5·G&–åö–æFW…ÒÂ2ÂföÆBÀ¢¢–b–ææW%ö7b—2æ÷BæöæS ¢6V&6‚Òw&–E6V&6„5b€¢'V–ÆEöÖöFVÂ†6öÇ2’Â²&6Æ76–f–W%õô2#¢Æ—7B„DTdTÅEô5ôu$”B—ÒÀ¢66÷&–æsÒ&æVuöÆöuöÆ÷72"Â7cÖ–ææW%ö7bÂ&Vf—CÕG'VRÂW'&÷%÷66÷&SÒ'&—6R"À¢¢6V&6‚æf—B…‚æ–Æö5·G&–åö–æFW…ÒÂ•÷G&–â¢f—GFVBÒ6V&6‚æ&W7EöW7F–ÖF÷%ð¢&W7Eö2ÒfÆöB‡6V&6‚æ&W7E÷&×5õ²&6Æ76–f–W%õô2%Ò¢ÖöFRÒ&æW7FVEöw&–E÷6V&6‚ ¢VÇ6S ¢f—GFVBÒ'V–ÆEöÖöFVÂ†6öÇ2’æf—B…‚æ–Æö5·G&–åö–æFW…ÒÂ•÷G&–â¢&W7Eö2Òã ¢ÖöFRÒ&f—†VEô5ö–ææW%ö7eöæ÷EöWfÇV&ÆR ¢&ö%·FW7Eö–æFW…ÒÒf—GFVBç&VF–7E÷&ö&…‚æ–Æö5·FW7Eö–æFW…Ò•³¢ÂÐ¢föÆEö–E·FW7Eö–æFW…ÒÒföÆ@¢6VÆV7FVEö5·FW7Eö–æFW…ÒÒ&W7Eö0¢GVæ–æræVæB‡²&föÆB#¢föÆBÂ&–ææW%÷7Æ—G2#¢–ææW%÷7Æ—G2Â'6VÆV7FVEô2#¢&W7Eö2À¢&ÖöFR#¢ÖöFRÂ&å÷G&–â#¢–çB†ÆVâ‡G&–åö–æFW‚’’Â&å÷FW7B#¢–çB†ÆVâ‡FW7Eö–æFW‚’—Ò¢–bçæ—6æâ‡&ö"’æç’‚’÷"†föÆEö–BÂ’æç’‚“ ¢&—6R'VçF–ÖTW'&÷"‚&÷WFW"7&÷72×fÆ–FF–öâF–Bæ÷B&VF–7BWfW'’F–VçBW†7FÇ’öæ6R"¢ÖWG&–72ÒWfÇVFU÷&ö&&–Æ—F–W2‡’Â&ö"¢ÖWG&–72çWFFR‡²&å÷F–VçG2#¢–çB†ÆVâ†FF’’Â&å÷7Æ—G2#¢å÷7Æ—G2À¢&‡—W'&ÖWFW%÷6VÆV7F–öâ#¢GVæ–ærÀ¢'6VÆV7F–öåöÖWG&–2#¢&æVvF—fUöÆöuöÆ÷72"À¢$5öw&–B#¢Æ—7B„DTdTÅEô5ôu$”B’À¢&fVGW&U÷66†VÖ#¢²&–æ6ÇVFVB#¢6öÇ2Â&W†6ÇVFVB#¢W†6ÇVFVGÒÀ¢&WfÇVF–öå÷G—R#¢&–çFW&æÅö7&÷75÷fÆ–FF–öâ"À¢&æ÷FR#¢$æW7FVBF–VçBÖÆWfVÂ7&÷72×fÆ–FF–öã²æ÷BW‡FW&æÂ÷"6Æ–æ–6ÂfÆ–FF–öââ'Ò¢ÖWG&–75²'G&–æ–æuö–çWE÷&÷fVææ6R%ÒÒ–çWE÷&÷fVææ6P¢f–æÅö7bÂf–æÅ÷7Æ—G2Ò÷6fUöw&÷W÷7Æ—G2‡’ÂFFçF–VçEö–BÂÖ–âƒRÂ–çB†6÷VçG2æÖ–â‚’’’ÂC"¢–bf–æÅö7b—2æöæS ¢&—6RfÇVTW'&÷"‚&6÷VÆBæ÷B6öç7G'V7Bw&÷WVBf–æÂ×6VÆV7F–öâföÆG2v—F‚&÷F‚6Æ76W2"¢f–æÅ÷6V&6‚Òw&–E6V&6„5b€¢'V–ÆEöÖöFVÂ†6öÇ2’Â²&6Æ76–f–W%õô2#¢Æ—7B„DTdTÅEô5ôu$”B—ÒÀ¢66÷&–æsÒ&æVuöÆöuöÆ÷72"Â7cÖf–æÅö7bÂ&Vf—CÕG'VRÂW'&÷%÷66÷&SÒ'&—6R"À¢¢f–æÅ÷6V&6‚æf—B…‚Â’¢ÖöFVÂÒf–æÅ÷6V&6‚æ&W7EöW7F–ÖF÷%ð¢f–æÅö2ÒfÆöB†f–æÅ÷6V&6‚æ&W7E÷&×5õ²&6Æ76–f–W%õô2%Ò¢&ærÒçç&æFöÒæFVfVÇE÷&ærƒC"¢&ö÷G7G&öÖöFVÇ2ÒµÐ¢GFV×G2Ò ¢v†–ÆRÆVâ†&ö÷G7G&öÖöFVÇ2’ÂVç6VÖ&ÆUöÖVÖ&W'2æBGFV×G2ÂÖ‚ƒÂVç6VÖ&ÆUöÖVÖ&W'2¢#“ ¢GFV×G2³Ò¢–æFW‚Ò&æræ–çFVvW'2ƒÂÆVâ†FF’ÂÆVâ†FF’¢•ö&ö÷G7G&Ò’æ–Æö5¶–æFW…Ð¢–b•ö&ö÷G7G&æçVæ—VR‚’Â# ¢6öçF–çVP¢ÖVÖ&W"Ò'V–ÆEöÖöFVÂ†6öÇ2Â3Öf–æÅö2’æf—B…‚æ–Æö5¶–æFW…ÒÂ•ö&ö÷G7G&¢&ö÷G7G&öÖöFVÇ2æVæB†ÖVÖ&W"¢–bÆVâ†&ö÷G7G&öÖöFVÇ2’ÒVç6VÖ&ÆUöÖVÖ&W'3 ¢&—6R'VçF–ÖTW'&÷"‚&6÷VÆBæ÷B6öç7G'V7B&WVW7FVBGvòÖ6Æ72F–VçB&ö÷G7G&Vç6VÖ&ÆR"¢ÖWG&–75²'&VF–7F–öå÷Væ6W'F–çG’%ÒÒ°¢&ÖWF†öB#¢'F–VçEö&ö÷G7G&÷&Vf—B"À¢&ÖVÖ&W'2#¢Vç6VÖ&ÆUöÖVÖ&W'2À¢&–çFW'fÂ#¢#"ãWF‚Fò“rãWF‚W&6VçF–ÆR"À¢&f—†VE÷6VÆV7FVEô2#¢f–æÅö2À¢'6VVB#¢C"À¢&æ÷FR#¢$ÖöFVÂ×&W6×Æ–ærVæ6W'F–çG’öæÇ“²W†6ÇVFW26ö†÷'B6†–gBæB7G'V7GW&ÂVæ6W'F–çG’â"À¢Ð¢÷WGWBÒF‚†÷WGWB¢÷WGWBæÖ¶F—"‡&VçG3ÕG'VRÂW†—7Eöö³ÕG'VR¢G&–æ–æuö†6†W2Ò6÷'FVB…÷F–VçEö†6‚‡fÇVR’f÷"fÇVR–âFFçF–VçEö–B¢6ö†÷'Eöf–ævW'&–çBÒ†6†Æ–"ç6†#Sb‚%Æâ"æ¦ö–â‡G&–æ–æuö†6†W2’æVæ6öFR‚'WFbÓ‚"’’æ†W†F–vW7B‚¢G&–æ–æuöfVGW&Uö†6†W2Ò6÷'FVB€¢öfVGW&U÷&÷uö†6‚‡&÷rÂ6öÇ2’f÷"òÂ&÷r–â‚æ—FW'&÷w2‚¢¢G&–æ–æuöfVGW&Uö6ö†÷'Eöf–ævW'&–çBÒ†6†Æ–"ç6†#Sb€¢%Æâ"æ¦ö–â‡G&–æ–æuöfVGW&Uö†6†W2’æVæ6öFR‚'WFbÓ‚"¢’æ†W†F–vW7B‚¢G&–æ–æuöFöÖ–âÒ÷G&–æ–æuöFöÖ–å÷&VfW&Væ6R…‚Â6öÇ2¢¦ö&Æ–"æGV×‡²&ÖöFVÂ#¢ÖöFVÂÂ&fVGW&W2#¢6öÇ2Â'F‡&W6†öÆB#¢ãRÀ¢&W†6ÇVFVEöfVGW&W2#¢W†6ÇVFVBÀ¢'G&–æ–æu÷F–VçG2#¢–çB†ÆVâ†FF’’Â'6VÆV7FVEô2#¢f–æÅö2À¢'6VÆV7F–öåöÖWG&–2#¢&æVvF—fUöÆöuöÆ÷72"Â$5öw&–B#¢Æ—7B„DTdTÅEô5ôu$”B’À¢'G&–æ–æu÷F–VçEö†6†W2#¢G&–æ–æuö†6†W2À¢'G&–æ–æuö6ö†÷'Eöf–ævW'&–çB#¢6ö†÷'Eöf–ævW'&–çBÀ¢'G&–æ–æuöfVGW&U÷&÷uö†6†W2#¢G&–æ–æuöfVGW&Uö†6†W2À¢'G&–æ–æuöfVGW&Uö6ö†÷'Eöf–ævW'&–çB#¢G&–æ–æuöfVGW&Uö6ö†÷'Eöf–ævW'&–çBÀ¢'G&–æ–æuöFöÖ–â#¢G&–æ–æuöFöÖ–âÀ¢'G&–æ–æuö–çWE÷&÷fVææ6R#¢–çWE÷&÷fVææ6RÀ¢&&ö÷G7G&öÖöFVÇ2#¢&ö÷G7G&öÖöFVÇ2À¢'Væ6W'F–çG•öÖWF†öB#¢'F–VçEö&ö÷G7G&÷&Vf—B"À¢&'F–f7E÷fW'6–öâ#¢wÒÂ÷WGWBò&ÖöFVÂæ¦ö&Æ–""¢†÷WGWBò&ÖWG&–72æ§6öâ"’çw&—FU÷FW‡B†§6öâæGV×2†ÖWG&–72Â–æFVçCÓ"’²%Æâ"¢BäFFg&ÖR‡²'F–VçEö–B#¢FF²'F–VçEö–B%ÒÂ'&W7öç6R#¢’Â'&ö&&–Æ—G’#¢&ö"À¢&÷WFW%öföÆB#¢föÆEö–BÂ&föÆE÷6VÆV7FVEô2#¢6VÆV7FVEö7Ò’çFõö77b€¢÷WGWBò&7e÷&VF–7F–öç2æ77b"Â–æFWƒÔfÇ6P¢¢&WGW&âÖWG&–70 
+    if pd.api.types.is_bool_dtype(series):
+        return series.astype(bool)
+    normalized = series.astype(str).str.strip().str.lower()
+    if not normalized.isin({"true", "false"}).all():
+        raise ValueError(f"{name} must contain only true/false values")
+    return normalized.eq("true")
+
+
+def _select_model_features(
+    features: pd.DataFrame,
+    labels: pd.DataFrame,
+) -> tuple[list[str], dict[str, str]]:
+    """Audit feature roles and reject common forms of target leakage."""
+    candidates = [column for column in features.columns if column != "patient_id"]
+    forbidden = [
+        column for column in candidates
+        if any(token in re.sub(r"[^a-z0-9]+", "_", column.lower())
+               for token in FORBIDDEN_FEATURE_TOKENS)
+    ]
+    if forbidden:
+        raise ValueError(f"forbidden outcome-like feature columns: {sorted(forbidden)}")
+    non_numeric = [column for column in candidates
+                   if not pd.api.types.is_numeric_dtype(features[column])]
+    if non_numeric:
+        raise ValueError(
+            "model features must be numeric; keep metadata in the label/cohort table: "
+            f"{sorted(non_numeric)}"
+        )
+    excluded = {
+        column: "technical cell-count/QC feature"
+        for column in candidates
+        if column == "n_cells" or column.startswith("n_cells_") or column.startswith("qc_")
+    }
+    included = [column for column in candidates if column not in excluded]
+    if not included:
+        raise ValueError("no eligible biological or mechanistic model features remain")
+    response = labels.set_index("patient_id").loc[features.patient_id, "response"].to_numpy(dtype=float)
+    copied = []
+    for column in included:
+        values = pd.to_numeric(features[column], errors="coerce").to_numpy(dtype=float)
+        if np.isfinite(values).all() and (
+            np.allclose(values, response, rtol=0.0, atol=1e-12)
+            or np.allclose(values, 1.0 - response, rtol=0.0, atol=1e-12)
+        ):
+            copied.append(column)
+    if copied:
+        raise ValueError(f"features exactly copy or invert the response labels: {sorted(copied)}")
+    return included, excluded
+
+
+def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
+    prep = ColumnTransformer([
+        ("numeric", Pipeline([
+            ("impute", SimpleImputer(strategy="median", keep_empty_features=True)),
+            ("scale", StandardScaler()),
+        ]), feature_columns)
+    ])
+    return Pipeline([("prep", prep), ("classifier", LogisticRegression(
+        C=c, max_iter=2000, class_weight="balanced", solver="liblinear", random_state=42,
+    ))])
+
+
+def _safe_group_splits(
+    y: pd.Series,
+    groups: pd.Series,
+    maximum_splits: int,
+    seed: int,
+) -> tuple[list[tuple[np.ndarray, np.ndarray]] | None, int]:
+    """Return grouped stratified splits only when every partition has both classes."""
+    labels = np.asarray(y, dtype=int)
+    group_values = np.asarray(groups)
+    for n_splits in range(min(maximum_splits, int(pd.Series(labels).value_counts().min())), 1, -1):
+        if len(np.unique(group_values)) == len(group_values):
+            # One patient-level row per group: ordinary stratification is exactly
+            # group-safe and avoids version-dependent singleton-group heuristics.
+            splitter = StratifiedKFold(
+                n_splits=n_splits, shuffle=True, random_state=seed,
+            )
+            splits = list(splitter.split(np.zeros((len(labels), 1)), labels))
+        else:
+            splitter = StratifiedGroupKFold(
+                n_splits=n_splits, shuffle=True, random_state=seed,
+            )
+            splits = list(splitter.split(np.zeros((len(labels), 1)), labels, group_values))
+        if all(len(np.unique(labels[train])) == 2 and len(np.unique(labels[test])) == 2
+               for train, test in splits):
+            return splits, n_splits
+    return None, 0
+
+
+def _training_domain_reference(features: pd.DataFrame, columns: list[str]) -> dict:
+    """Persist label-free training support for locked-model applicability checks."""
+    reference = {}
+    for column in columns:
+        values = pd.to_numeric(features[column], errors="coerce").to_numpy(dtype=float)
+        finite = values[np.isfinite(values)]
+        if not len(finite):
+            raise ValueError(f"model feature has no finite training values: {column}")
+        q1, median, q3 = np.percentile(finite, [25, 50, 75])
+        robust_scale = float((q3 - q1) / 1.349)
+        if robust_scale <= 1e-12:
+            robust_scale = float(np.std(finite))
+        reference[column] = {
+            "median": float(median), "robust_scale": max(robust_scale, 1e-12),
+            "minimum": float(np.min(finite)), "maximum": float(np.max(finite)),
+            "missing_fraction": float(1.0 - len(finite) / len(values)),
+        }
+    return {
+        "method": "robust_z_and_training_range", "features": reference,
+        "thresholds": {
+            "max_abs_robust_z": DOMAIN_MAX_ABS_Z,
+            "max_outside_training_range_fraction": DOMAIN_MAX_OUTSIDE_FRACTION,
+            "max_missingness_increase": DOMAIN_MAX_MISSINGNESS_INCREASE,
+        },
+        "note": "Applicability diagnostic only; not proof of cohort transportability.",
+    }
+
+
+def _domain_diagnostics(features: pd.DataFrame, required: list[str], reference: dict | None) -> dict:
+    if not reference or set(reference.get("features", {})) != set(required):
+        n = len(features)
+        return {"available": np.zeros(n, dtype=bool), "max_abs_z": np.full(n, np.nan),
+                "outside_fraction": np.full(n, np.nan), "missing_fraction": np.full(n, np.nan),
+                "flag": np.zeros(n, dtype=bool)}
+    matrix = features[required].apply(pd.to_numeric, errors="coerce").to_numpy(dtype=float)
+    missing = ~np.isfinite(matrix)
+    medians = np.array([reference["features"][c]["median"] for c in required])
+    scales = np.array([reference["features"][c]["robust_scale"] for c in required])
+    minima = np.array([reference["features"][c]["minimum"] for c in required])
+    maxima = np.array([reference["features"][c]["maximum"] for c in required])
+    training_missing = np.array([reference["features"][c]["missing_fraction"] for c in required])
+    filled = np.where(missing, medians, matrix)
+    max_abs_z = np.max(np.abs((filled - medians) / scales), axis=1)
+    outside_fraction = ((((matrix < minima) | (matrix > maxima)) & ~missing).mean(axis=1))
+    missing_fraction = missing.mean(axis=1)
+    thresholds = reference["thresholds"]
+    flag = ((max_abs_z > thresholds["max_abs_robust_z"])
+            | (outside_fraction > thresholds["max_outside_training_range_fraction"])
+            | (missing_fraction > float(training_missing.mean())
+               + thresholds["max_missingness_increase"]))
+    return {"available": np.ones(len(features), dtype=bool), "max_abs_z": max_abs_z,
+            "outside_fraction": outside_fraction, "missing_fraction": missing_fraction,
+            "flag": flag}
+
+
+def _decision_curve(y: np.ndarray, prob: np.ndarray) -> list[dict[str, float]]:
+    """Decision-curve net benefit across prespecified probability thresholds."""
+    rows = []
+    prevalence = float(y.mean())
+    for threshold in np.arange(0.1, 1.0, 0.1):
+        prediction = prob >= threshold
+        tp = float(np.sum(prediction & (y == 1)))
+        fp = float(np.sum(prediction & (y == 0)))
+        odds = threshold / (1.0 - threshold)
+        rows.append({
+            "threshold": round(float(threshold), 1),
+            "model_net_benefit": float(tp / len(y) - fp / len(y) * odds),
+            "treat_all_net_benefit": float(prevalence - (1.0 - prevalence) * odds),
+            "treat_none_net_benefit": 0.0,
+        })
+    return rows
+
+
+def evaluate_probabilities(
+    y_true,
+    probability,
+    bootstrap: int = 500,
+    seed: int = 42,
+    bootstrap_groups=None,
+    decision_threshold: float = 0.5,
+) -> dict:
+    """Discrimination, calibration and patient- or centre-bootstrap intervals."""
+    y = np.asarray(y_true, dtype=int)
+    prob = np.clip(np.asarray(probability, dtype=float), 1e-7, 1 - 1e-7)
+    if len(y) != len(prob) or len(y) == 0 or set(np.unique(y)) != {0, 1}:
+        raise ValueError("evaluation requires aligned probabilities and both response classes")
+    if not np.isfinite(prob).all():
+        raise ValueError("evaluation probabilities must be finite")
+    if not isinstance(bootstrap, (int, np.integer)) or bootstrap < 0:
+        raise ValueError("bootstrap draws must be a non-negative integer")
+    if not np.isfinite(decision_threshold) or not 0 < decision_threshold < 1:
+        raise ValueError("decision threshold must fall strictly between 0 and 1")
+    groups = None
+    if bootstrap_groups is not None:
+        groups = np.asarray(bootstrap_groups)
+        if len(groups) != len(y):
+            raise ValueError("bootstrap groups must align one-to-one with outcomes")
+        if pd.isna(groups).any() or len(np.unique(groups)) < 2:
+            raise ValueError("cluster bootstrap requires at least two non-missing groups")
+    pred = prob >= decision_threshold
+    tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
+    logits = np.log(prob / (1 - prob)).reshape(-1, 1)
+    calibrator = LogisticRegression(C=1e6, solver="lbfgs").fit(logits, y)
+    point = {
+        "roc_auc": float(roc_auc_score(y, prob)),
+        "average_precision": float(average_precision_score(y, prob)),
+        "brier_score": float(brier_score_loss(y, prob)),
+        "log_loss": float(log_loss(y, prob)),
+        "balanced_accuracy": float(balanced_accuracy_score(y, pred)),
+        "sensitivity": float(tp / (tp + fn)) if tp + fn else np.nan,
+        "specificity": float(tn / (tn + fp)) if tn + fp else np.nan,
+        "calibration_intercept": float(calibrator.intercept_[0]),
+        "calibration_slope": float(calibrator.coef_[0, 0]),
+        "decision_threshold": float(decision_threshold),
+        "decision_curve": _decision_curve(y, prob),
+    }
+    if bootstrap:
+        rng = np.random.default_rng(seed)
+        draws = {name: [] for name in (
+            "roc_auc", "average_precision", "brier_score", "log_loss",
+            "balanced_accuracy", "sensitivity", "specificity",
+        )}
+        unique_groups = np.unique(groups) if groups is not None else None
+        for _ in range(bootstrap):
+            if unique_groups is None:
+                index = rng.integers(0, len(y), len(y))
+            else:
+                sampled_groups = rng.choice(unique_groups, len(unique_groups), replace=True)
+                index = np.concatenate([
+                    np.flatnonzero(groups == group) for group in sampled_groups
+                ])
+            if len(np.unique(y[index])) < 2:
+                continue
+            draws["roc_auc"].append(roc_auc_score(y[index], prob[index]))
+            draws["average_precision"].append(average_precision_score(y[index], prob[index]))
+            draws["brier_score"].append(brier_score_loss(y[index], prob[index]))
+            draws["log_loss"].append(log_loss(y[index], prob[index], labels=[0, 1]))
+            sampled_prediction = prob[index] >= decision_threshold
+            sampled_tn, sampled_fp, sampled_fn, sampled_tp = confusion_matrix(
+                y[index], sampled_prediction, labels=[0, 1]
+            ).ravel()
+            draws["balanced_accuracy"].append(
+                balanced_accuracy_score(y[index], sampled_prediction)
+            )
+            draws["sensitivity"].append(
+                sampled_tp / (sampled_tp + sampled_fn)
+            )
+            draws["specificity"].append(
+                sampled_tn / (sampled_tn + sampled_fp)
+            )
+        point["bootstrap"] = {
+            name: {"lower_95": float(np.percentile(values, 2.5)),
+                   "upper_95": float(np.percentile(values, 97.5)),
+                   "valid_draws": len(values)}
+            for name, values in draws.items() if values
+        }
+        point["bootstrap_design"] = {
+            "unit": "centre" if groups is not None else "patient",
+            "requested_draws": int(bootstrap),
+            "groups": int(len(unique_groups)) if unique_groups is not None else int(len(y)),
+            "seed": int(seed),
+            "note": (
+                "Entire centres were sampled with replacement; all patients in each sampled "
+                "centre were retained, including repeated centres."
+                if groups is not None else
+                "Patients were sampled with replacement."
+            ),
+        }
+    return point
+
+
+def _available_cluster_groups(frame: pd.DataFrame, column: str = "center"):
+    """Use a declared cluster only when at least two complete groups are present."""
+    if column not in frame:
+        return None
+    if frame[column].isna().any():
+        raise ValueError(f"{column} must be complete when supplied for clustered evaluation")
+    return frame[column] if frame[column].nunique() >= 2 else None
+
+
+def _center_stratified_evaluation(
+    data: pd.DataFrame,
+    decision_threshold: float,
+    center_column: str = "center",
+) -> dict | None:
+    """Expose centre heterogeneity without dropping centres from pooled metrics."""
+    if center_column not in data:
+        return None
+    rows = []
+    normalized_centers = data[center_column].astype(str)
+    for center, group in data.groupby(normalized_centers, sort=True):
+        row = {
+            "center": center,
+            "n_patients": int(len(group)),
+            "responders": int(group.response.sum()),
+            "response_prevalence": float(group.response.mean()),
+        }
+        if group.response.nunique() == 2:
+            row.update({"status": "evaluated", "metrics": evaluate_probabilities(
+                group.response, group.probability, bootstrap=0,
+                decision_threshold=decision_threshold,
+            )})
+        else:
+            row.update({
+                "status": "not_evaluable",
+                "reason": "centre contains only one response class",
+            })
+        rows.append(row)
+    evaluated = [row for row in rows if row["status"] == "evaluated"]
+    summary = {
+        "role": "descriptive_center_heterogeneity_not_primary",
+        "n_centers": len(rows),
+        "n_centers_evaluable": len(evaluated),
+        "centers": rows,
+    }
+    if evaluated:
+        auc = [row["metrics"]["roc_auc"] for row in evaluated]
+        brier = [row["metrics"]["brier_score"] for row in evaluated]
+        summary["evaluable_center_range"] = {
+            "roc_auc_min": float(min(auc)), "roc_auc_max": float(max(auc)),
+            "brier_score_min": float(min(brier)), "brier_score_max": float(max(brier)),
+        }
+    return summary
+
+
+def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFrame:
+    """Apply an immutable fitted artifact to a new cohort without refitting."""
+    artifact = joblib.load(model_path)
+    features = _normalise_patient_ids(features, "features")
+    required = artifact["features"]
+    missing = set(required) - set(features.columns)
+    if missing:
+        raise ValueError(f"missing locked-model features: {sorted(missing)}")
+    ensemble = artifact.get("bootstrap_models", [])
+    if ensemble:
+        ensemble_probability = np.column_stack([
+            member.predict_proba(features[required])[:, 1] for member in ensemble
+        ])
+        probability = np.median(ensemble_probability, axis=1)
+        lower = np.percentile(ensemble_probability, 2.5, axis=1)
+        upper = np.percentile(ensemble_probability, 97.5, axis=1)
+        uncertainty_available = True
+    else:
+        probability = artifact["model"].predict_proba(features[required])[:, 1]
+        lower = np.full(len(features), np.nan)
+        upper = np.full(len(features), np.nan)
+        uncertainty_available = False
+    threshold = float(artifact.get("threshold", 0.5))
+    if not 0.0 < threshold < 1.0:
+        raise ValueError("locked-model threshold must fall strictly between 0 and 1")
+    training_hashes = set(artifact.get("training_patient_hashes", []))
+    overlap_check_available = bool(training_hashes)
+    overlap = features.patient_id.map(lambda value: _patient_hash(value) in training_hashes)
+    training_feature_hashes = set(artifact.get("training_feature_row_hashes", []))
+    feature_reuse_check_available = bool(training_feature_hashes)
+    feature_reuse = features[required].apply(
+        lambda row: _feature_row_hash(row, required) in training_feature_hashes, axis=1
+    )
+    domain = _domain_diagnostics(features, required, artifact.get("training_domain"))
+    return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
+                         "probability_lower_95": lower, "probability_upper_95": upper,
+                         "probability_interval_width": upper - lower,
+                         "uncertainty_available": uncertainty_available,
+                         "predicted_response": (probability >= threshold).astype(int),
+                         "decision_threshold": threshold,
+                         "training_overlap": overlap,
+                         "overlap_check_available": overlap_check_available,
+                         "training_feature_reuse": feature_reuse,
+                         "feature_reuse_check_available": feature_reuse_check_available,
+                         "domain_check_available": domain["available"],
+                         "domain_max_abs_robust_z": domain["max_abs_z"],
+                         "domain_outside_range_fraction": domain["outside_fraction"],
+                         "domain_missing_feature_fraction": domain["missing_fraction"],
+                         "domain_shift_flag": domain["flag"]})
+
+
+def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap: int = 500) -> dict:
+    predictions, labels = _align_patients(predictions, labels)
+    if "overlap_check_available" not in predictions:
+        raise ValueError("external evaluation requires a model artifact with training-overlap fingerprints")
+    check_available = _boolean_audit_column(
+        predictions.overlap_check_available, "overlap_check_available"
+    )
+    if not check_available.all():
+        raise ValueError("external evaluation requires a model artifact with training-overlap fingerprints")
+    if "training_overlap" not in predictions:
+        raise ValueError("predictions need training_overlap audit column")
+    overlap_flags = _boolean_audit_column(predictions.training_overlap, "training_overlap")
+    overlap = predictions.loc[overlap_flags, "patient_id"].tolist()
+    if overlap:
+        raise ValueError(f"external cohort overlaps model training patients: {overlap[:10]}")
+    if "feature_reuse_check_available" not in predictions:
+        raise ValueError("external evaluation requires training-feature reuse fingerprints")
+    reuse_available = _boolean_audit_column(
+        predictions.feature_reuse_check_available, "feature_reuse_check_available"
+    )
+    if not reuse_available.all() or "training_feature_reuse" not in predictions:
+        raise ValueError("external evaluation requires training-feature reuse fingerprints")
+    reuse_flags = _boolean_audit_column(
+        predictions.training_feature_reuse, "training_feature_reuse"
+    )
+    reused = predictions.loc[reuse_flags, "patient_id"].tolist()
+    if reused:
+        raise ValueError(f"external cohort reuses exact training feature rows: {reused[:10]}")
+    if "domain_check_available" not in predictions:
+        raise ValueError("external evaluation requires locked-model applicability diagnostics")
+    domain_available = _boolean_audit_column(
+        predictions.domain_check_available, "domain_check_available"
+    )
+    if not domain_available.all() or "domain_shift_flag" not in predictions:
+        raise ValueError("external evaluation requires locked-model applicability diagnostics")
+    domain_flags = _boolean_audit_column(predictions.domain_shift_flag, "domain_shift_flag")
+    if "decision_threshold" not in predictions:
+        raise ValueError("locked predictions need decision_threshold")
+    thresholds = pd.to_numeric(predictions.decision_threshold, errors="coerce")
+    if (not np.isfinite(thresholds).all() or thresholds.nunique() != 1
+            or not 0 < float(thresholds.iloc[0]) < 1):
+        raise ValueError("locked predictions need one valid decision_threshold")
+    decision_threshold = float(thresholds.iloc[0])
+    audited_predictions = predictions.copy()
+    audited_predictions["_domain_shift_flag"] = domain_flags.to_numpy(dtype=bool)
+    data = audited_predictions.merge(labels, on="patient_id", validate="one_to_one")
+    centre_groups = _available_cluster_groups(data)
+    metrics = evaluate_probabilities(
+        data.response, data.probability, bootstrap=bootstrap,
+        bootstrap_groups=centre_groups,
+        decision_threshold=decision_threshold,
+    )
+    metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
+                    "training_overlap_checked": True, "training_overlap_count": 0,
+                    "training_feature_reuse_checked": True,
+                    "training_feature_reuse_count": 0,
+                    "applicability_checked": True,
+                    "domain_shift_count": int(domain_flags.sum()),
+                    "domain_shift_fraction": float(domain_flags.mean()),
+                    "in_domain_fraction": float((~domain_flags).mean()),
+                    "note": "External only if this cohort was never used for fitting, tuning, or feature design."})
+    in_domain = data[~data._domain_shift_flag]
+    class_counts = in_domain.response.value_counts()
+    sensitivity = {
+        "role": "prespecified_sensitivity_analysis_not_primary",
+        "selection_rule": "locked artifact domain_shift_flag == false",
+        "n_patients": int(len(in_domain)),
+        "coverage": float(len(in_domain) / len(data)),
+        "minimum_requirement": "at least 4 patients and at least 2 per response class",
+    }
+    if len(in_domain) >= 4 and len(class_counts) == 2 and int(class_counts.min()) >= 2:
+        sensitivity["status"] = "evaluated"
+        sensitivity["metrics"] = evaluate_probabilities(
+            in_domain.response, in_domain.probability, bootstrap=bootstrap,
+            bootstrap_groups=_available_cluster_groups(in_domain),
+            decision_threshold=decision_threshold,
+        )
+    else:
+        sensitivity["status"] = "not_evaluable"
+        sensitivity["reason"] = "insufficient in-domain class support"
+    metrics["in_domain_sensitivity_analysis"] = sensitivity
+    center_stratified = _center_stratified_evaluation(data, decision_threshold)
+    if center_stratified is not None:
+        metrics["center_stratified_evaluation"] = center_stratified
+    return metrics
+
+
+def leave_one_site_out(
+    features: pd.DataFrame,
+    labels: pd.DataFrame,
+    site_column: str = "center",
+    bootstrap: int = 500,
+) -> tuple[dict, pd.DataFrame]:
+    """Train on all other sites and predict each held-out site exactly once."""
+    features, labels = _align_patients(features, labels)
+    if site_column not in labels:
+        raise ValueError(f"labels need site column: {site_column}")
+    data = features.merge(labels[["patient_id", "response", site_column]], on="patient_id", validate="one_to_one")
+    if data[site_column].isna().any() or data[site_column].nunique() < 2:
+        raise ValueError("site evaluation needs at least two non-missing sites")
+    cols, excluded = _select_model_features(features, labels)
+    predictions = []
+    skipped = []
+    tuning = []
+    for site_index, site in enumerate(sorted(data[site_column].astype(str).unique()), start=1):
+        test = data[data[site_column].astype(str) == site]
+        train = data[data[site_column].astype(str) != site]
+        # A single-class held-out centre cannot support a centre-specific AUC,
+        # but its patients remain valid transportability tests for proper
+        # scoring rules and the pooled analysis. Dropping that centre would
+        # condition evaluation on its outcomes and can make performance look
+        # artificially favourable. Only an unusable training partition makes
+        # prediction impossible.
+        if train.response.nunique() < 2:
+            skipped.append(site)
+            continue
+        y_train = train.response.astype(int)
+        inner_cv, inner_splits = _safe_group_splits(
+            y_train, train.patient_id, 3, 100 + site_index,
+        )
+        if inner_cv is not None:
+            search = GridSearchCV(
+                build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
+                scoring="neg_log_loss", cv=inner_cv, refit=True, error_score="raise",
+            )
+            search.fit(train[cols], y_train)
+            model = search.best_estimator_
+            selected_c = float(search.best_params_["classifier__C"])
+            mode = "nested_grid_search"
+        else:
+            model = build_model(cols).fit(train[cols], y_train)
+            selected_c = 1.0
+            mode = "fixed_C_inner_cv_not_evaluable"
+        probability = model.predict_proba(test[cols])[:, 1]
+        predictions.append(pd.DataFrame({"patient_id": test.patient_id, site_column: site,
+                                         "response": test.response.astype(int),
+                                         "probability": probability,
+                                         "selected_C": selected_c,
+                                         "predicted_response": (probability >= 0.5).astype(int)}))
+        tuning.append({"held_out_site": site, "inner_splits": inner_splits,
+                       "selected_C": selected_c, "mode": mode,
+                       "n_train": int(len(train)), "n_test": int(len(test))})
+    if not predictions:
+        raise ValueError("no site could be evaluated with both classes in train and test")
+    out = pd.concat(predictions, ignore_index=True)
+    metrics = evaluate_probabilities(
+        out.response, out.probability, bootstrap=bootstrap,
+        bootstrap_groups=out[site_column],
+    )
+    metrics.update({"n_patients": int(len(out)), "n_sites_evaluated": int(out[site_column].nunique()),
+                    "skipped_sites": skipped, "site_column": site_column,
+                    "evaluation_type": "leave_one_site_out",
+                    "site_hyperparameter_selection": tuning,
+                    "selection_metric": "negative_log_loss",
+                    "C_grid": list(DEFAULT_C_GRID),
+                    "feature_schema": {"included": cols, "excluded": excluded},
+                    "note": "Stronger internal transportability check; not independent external validation."})
+    metrics["center_stratified_evaluation"] = _center_stratified_evaluation(
+        decision_threshold=0.5,
+        data=out,
+        center_column=site_column,
+    )
+    return metrics, out
+
+
+def train_evaluate(
+    features: pd.DataFrame,
+    labels: pd.DataFrame,
+    output: str | Path,
+    folds: int = 5,
+    ensemble_members: int = 50,
+    input_provenance: dict | None = None,
+) -> dict:
+    features, labels = _align_patients(features, labels)
+    data = features.merge(labels, on="patient_id", validate="one_to_one")
+    if data["response"].nunique() != 2:
+        raise ValueError("training needs both response classes")
+    if ensemble_members < 0:
+        raise ValueError("ensemble_members must be non-negative")
+    counts = data["response"].value_counts()
+    n_splits = min(folds, int(counts.min()))
+    if n_splits < 2:
+        raise ValueError("each class needs at least two patients")
+    cols, excluded = _select_model_features(features, labels)
+    X, y = data[cols], data["response"].astype(int)
+    outer_cv, n_splits = _safe_group_splits(y, data.patient_id, n_splits, 42)
+    if outer_cv is None:
+        raise ValueError("could not construct grouped outer folds with both classes")
+    prob = np.full(len(data), np.nan)
+    fold_id = np.full(len(data), -1, dtype=int)
+    selected_c = np.full(len(data), np.nan)
+    tuning = []
+    for fold, (train_index, test_index) in enumerate(
+        outer_cv, start=1
+    ):
+        y_train = y.iloc[train_index]
+        inner_cv, inner_splits = _safe_group_splits(
+            y_train, data.patient_id.iloc[train_index], 3, fold,
+        )
+        if inner_cv is not None:
+            search = GridSearchCV(
+                build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
+                scoring="neg_log_loss", cv=inner_cv, refit=True, error_score="raise",
+            )
+            search.fit(X.iloc[train_index], y_train)
+            fitted = search.best_estimator_
+            best_c = float(search.best_params_["classifier__C"])
+            mode = "nested_grid_search"
+        else:
+            fitted = build_model(cols).fit(X.iloc[train_index], y_train)
+            best_c = 1.0
+            mode = "fixed_C_inner_cv_not_evaluable"
+        prob[test_index] = fitted.predict_proba(X.iloc[test_index])[:, 1]
+        fold_id[test_index] = fold
+        selected_c[test_index] = best_c
+        tuning.append({"fold": fold, "inner_splits": inner_splits, "selected_C": best_c,
+                       "mode": mode, "n_train": int(len(train_index)), "n_test": int(len(test_index))})
+    if np.isnan(prob).any() or (fold_id < 1).any():
+        raise RuntimeError("outer cross-validation did not predict every patient exactly once")
+    metrics = evaluate_probabilities(y, prob)
+    metrics.update({"n_patients": int(len(data)), "n_splits": n_splits,
+                    "hyperparameter_selection": tuning,
+                    "selection_metric": "negative_log_loss",
+                    "C_grid": list(DEFAULT_C_GRID),
+                    "feature_schema": {"included": cols, "excluded": excluded},
+                    "evaluation_type": "internal_cross_validation",
+                    "note": "Nested patient-level cross-validation; not external or clinical validation."})
+    metrics["training_input_provenance"] = input_provenance
+    final_cv, final_splits = _safe_group_splits(y, data.patient_id, min(5, int(counts.min())), 42)
+    if final_cv is None:
+        raise ValueError("could not construct grouped final-selection folds with both classes")
+    final_search = GridSearchCV(
+        build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
+        scoring="neg_log_loss", cv=final_cv, refit=True, error_score="raise",
+    )
+    final_search.fit(X, y)
+    model = final_search.best_estimator_
+    final_c = float(final_search.best_params_["classifier__C"])
+    rng = np.random.default_rng(42)
+    bootstrap_models = []
+    attempts = 0
+    while len(bootstrap_models) < ensemble_members and attempts < max(100, ensemble_members * 20):
+        attempts += 1
+        index = rng.integers(0, len(data), len(data))
+        y_bootstrap = y.iloc[index]
+        if y_bootstrap.nunique() < 2:
+            continue
+        member = build_model(cols, c=final_c).fit(X.iloc[index], y_bootstrap)
+        bootstrap_models.append(member)
+    if len(bootstrap_models) != ensemble_members:
+        raise RuntimeError("could not construct requested two-class patient bootstrap ensemble")
+    metrics["prediction_uncertainty"] = {
+        "method": "patient_bootstrap_refit",
+        "members": ensemble_members,
+        "interval": "2.5th to 97.5th percentile",
+        "fixed_selected_C": final_c,
+        "seed": 42,
+        "note": "Model-resampling uncertainty only; excludes cohort shift and structural uncertainty.",
+    }
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    training_hashes = sorted(_patient_hash(value) for value in data.patient_id)
+    cohort_fingerprint = hashlib.sha256("\n".join(training_hashes).encode("utf-8")).hexdigest()
+    training_feature_hashes = sorted(
+        _feature_row_hash(row, cols) for _, row in X.iterrows()
+    )
+    training_feature_cohort_fingerprint = hashlib.sha256(
+        "\n".join(training_feature_hashes).encode("utf-8")
+    ).hexdigest()
+    training_domain = _training_domain_reference(X, cols)
+    joblib.dump({"model": model, "features": cols, "threshold": 0.5,
+                 "excluded_features": excluded,
+                 "training_patients": int(len(data)), "selected_C": final_c,
+                 "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
+                 "training_patient_hashes": training_hashes,
+                 "training_cohort_fingerprint": cohort_fingerprint,
+                 "training_feature_row_hashes": training_feature_hashes,
+                 "training_feature_cohort_fingerprint": training_feature_cohort_fingerprint,
+                 "training_domain": training_domain,
+                 "training_input_provenance": input_provenance,
+                 "bootstrap_models": bootstrap_models,
+                 "uncertainty_method": "patient_bootstrap_refit",
+                 "artifact_version": 7}, output / "model.joblib")
+    (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
+    pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
+                  "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(
+        output / "cv_predictions.csv", index=False
+    )
+    return metrics
