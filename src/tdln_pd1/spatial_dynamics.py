@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Callable
 import numpy as np
 import pandas as pd
@@ -99,6 +99,15 @@ def initial_vector(initial: SpatialInitialState | pd.DataFrame | None = None) ->
             y[_index(row.species, row.zone)] = row.amount
         return y
     initial = initial or SpatialInitialState()
+    invalid = [
+        name for name, value in asdict(initial).items()
+        if not np.isfinite(value) or value < 0
+    ]
+    if invalid:
+        raise ValueError(
+            "spatial initial states must be finite and non-negative: "
+            f"{sorted(invalid)}"
+        )
     y = np.zeros(len(SPECIES) * len(ZONE_NAMES), dtype=float)
     y[_index("antigen", "afferent_lymph")] = initial.afferent_antigen
     y[_index("mature_dc", "afferent_lymph")] = initial.afferent_dc
@@ -142,6 +151,8 @@ def _rhs(
         tpex = max(y[_index("tpex", "paracortex")], 0.0)
         priming = p.priming_rate * dc * antigen
         occupancy = checkpoint_occupancy(time) if callable(checkpoint_occupancy) else checkpoint_occupancy
+        if not np.isfinite(occupancy):
+            raise ValueError("checkpoint_occupancy callable must return finite values")
         occupancy = float(np.clip(occupancy, 0.0, 1.0))
         growth = (p.tpex_growth * tpex * antigen / (0.2 + antigen)
                   * (1.0 + p.checkpoint_growth_gain * occupancy))
@@ -174,6 +185,15 @@ def simulate_spatial(
     if not np.isfinite(rtol) or not np.isfinite(atol) or rtol <= 0 or atol <= 0:
         raise ValueError("solver tolerances must be finite and positive")
     p = parameters or SpatialParameters()
+    invalid_parameters = [
+        name for name, value in asdict(p).items()
+        if not np.isfinite(value) or value < 0
+    ]
+    if invalid_parameters:
+        raise ValueError(
+            "spatial parameters must be finite and non-negative: "
+            f"{sorted(invalid_parameters)}"
+        )
     times = np.unique(np.append(np.arange(0.0, days, step), days))
     if not callable(checkpoint_occupancy) and not 0.0 <= checkpoint_occupancy <= 1.0:
         raise ValueError("checkpoint_occupancy must fall within [0, 1]")

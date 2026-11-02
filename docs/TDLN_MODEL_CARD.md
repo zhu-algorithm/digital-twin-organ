@@ -31,6 +31,7 @@ These sources motivate model structure. They do not validate the default numeric
 ## Verification completed
 
 - State schema and finite/non-negative trajectories.
+- Fail-closed finite/non-negative parameter and initial-state domains before numerical integration.
 - Explicit antibody transfer to TDLN and increased receptor occupancy.
 - Higher tumour effector abundance after anti-PD-1 exposure in the default scenario.
 - Dose coalescing invariance for simultaneous boluses.

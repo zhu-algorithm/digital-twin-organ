@@ -67,6 +67,35 @@ class Dose:
     amount: float
 
 
+def _validate_model_inputs(parameters: TwinParameters, initial: InitialState) -> None:
+    """Reject non-physical parameter and initial-state domains before integration."""
+    parameter_values = asdict(parameters)
+    invalid_parameters = [
+        name for name, value in parameter_values.items()
+        if not np.isfinite(value) or value < 0
+    ]
+    if invalid_parameters:
+        raise ValueError(
+            "systemic parameters must be finite and non-negative: "
+            f"{sorted(invalid_parameters)}"
+        )
+    if parameters.tumour_capacity <= 0:
+        raise ValueError("tumour_capacity must be strictly positive")
+
+    initial_values = asdict(initial)
+    invalid_initial = [
+        name for name, value in initial_values.items()
+        if not np.isfinite(value) or value < 0
+    ]
+    if invalid_initial:
+        raise ValueError(
+            "systemic initial states must be finite and non-negative: "
+            f"{sorted(invalid_initial)}"
+        )
+    if initial.pd1_occupancy > 1:
+        raise ValueError("initial pd1_occupancy must fall within [0, 1]")
+
+
 def _rhs(_: float, y: np.ndarray, p: TwinParameters) -> np.ndarray:
     (cancer, antigen, dc, naive, tpex, eff_ln, eff_tum, tex, treg,
      ab_plasma, ab_ln, occupancy) = np.maximum(y, 0.0)
@@ -111,6 +140,7 @@ def simulate(
         raise ValueError("days and step must be finite and positive")
     if not np.isfinite(rtol) or not np.isfinite(atol) or rtol <= 0 or atol <= 0:
         raise ValueError("solver tolerances must be finite and positive")
+    _validate_model_inputs(p, init)
     if any(not np.isfinite(d.day) or not np.isfinite(d.amount)
            or d.day < 0 or d.day > days or d.amount < 0 for d in doses):
         raise ValueError("doses must have non-negative amount and fall within simulation")

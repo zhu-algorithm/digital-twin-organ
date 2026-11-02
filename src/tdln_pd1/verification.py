@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from .simulator import Dose, STATE_NAMES, simulate
-from .spatial_dynamics import SPECIES, simulate_spatial, simulate_spatial_coupled
+from .simulator import Dose, STATE_NAMES, TwinParameters, simulate
+from .spatial_dynamics import (SPECIES, SpatialParameters, simulate_spatial,
+                               simulate_spatial_coupled)
 
 
 def _relative_error(a: float, b: float) -> float:
@@ -21,6 +22,22 @@ def verify_twin() -> dict:
     finite_nonnegative = bool(np.isfinite(array).all() and (array >= 0).all())
     checks.append({"name": "systemic_finite_nonnegative", "passed": finite_nonnegative,
                    "minimum_state": float(array.min())})
+
+    rejected = []
+    for layer, call in (
+        ("systemic", lambda: simulate(days=1, parameters=TwinParameters(tumour_growth=-0.1))),
+        ("spatial", lambda: simulate_spatial(
+            days=1, parameters=SpatialParameters(antigen_decay=-0.1),
+        )),
+    ):
+        try:
+            call()
+        except ValueError:
+            rejected.append(layer)
+    checks.append({"name": "input_parameter_domain_guards",
+                   "passed": set(rejected) == {"systemic", "spatial"},
+                   "rejected_invalid_layers": rejected,
+                   "expected": "negative parameters rejected before integration"})
 
     zero = simulate(days=21, doses=(Dose(0, 0.0), Dose(14, 0.0)))
     zero_difference = np.abs(zero.loc[:, STATE_NAMES].to_numpy() - array)

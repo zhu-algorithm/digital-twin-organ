@@ -1,5 +1,7 @@
 import numpy as np
-from tdln_pd1.simulator import Dose, STATE_NAMES, simulate
+import pytest
+from tdln_pd1.simulator import (Dose, InitialState, STATE_NAMES, TwinParameters,
+                                simulate)
 
 
 def test_simulator_is_nonnegative_and_has_expected_schema():
@@ -7,6 +9,17 @@ def test_simulator_is_nonnegative_and_has_expected_schema():
     assert set(STATE_NAMES).issubset(out.columns)
     assert np.isfinite(out[list(STATE_NAMES)].to_numpy()).all()
     assert (out[list(STATE_NAMES)] >= 0).all().all()
+
+
+def test_simulator_rejects_nonphysical_parameters_and_initial_states():
+    with pytest.raises(ValueError, match="tumour_growth"):
+        simulate(days=1, parameters=TwinParameters(tumour_growth=-0.1))
+    with pytest.raises(ValueError, match="tumour_capacity"):
+        simulate(days=1, parameters=TwinParameters(tumour_capacity=0))
+    with pytest.raises(ValueError, match="tumour_cells"):
+        simulate(days=1, initial=InitialState(tumour_cells=-1))
+    with pytest.raises(ValueError, match="pd1_occupancy"):
+        simulate(days=1, initial=InitialState(pd1_occupancy=1.1))
 
 
 def test_antibody_reaches_tdln_and_binds_pd1():

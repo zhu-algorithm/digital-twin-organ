@@ -5,7 +5,7 @@ import pytest
 
 from tdln_pd1.simulator import Dose, simulate
 from tdln_pd1.spatial_dynamics import (
-    SPECIES, simulate_spatial, simulate_spatial_coupled,
+    SPECIES, SpatialInitialState, SpatialParameters, simulate_spatial, simulate_spatial_coupled,
     simulate_spatial_counterfactual, spatial_summary,
 )
 
@@ -15,6 +15,15 @@ def test_transport_only_conserves_each_species():
     totals = trajectory.groupby(["day", "species"]).amount.sum().unstack()
     for species in SPECIES:
         assert np.allclose(totals[species], totals[species].iloc[0], rtol=1e-7, atol=1e-7)
+
+
+def test_spatial_model_rejects_nonphysical_parameters_and_initial_states():
+    with pytest.raises(ValueError, match="antigen_decay"):
+        simulate_spatial(days=1, parameters=SpatialParameters(antigen_decay=-0.1))
+    with pytest.raises(ValueError, match="afferent_dc"):
+        simulate_spatial(days=1, initial=SpatialInitialState(afferent_dc=-1))
+    with pytest.raises(ValueError, match="tpex_growth"):
+        simulate_spatial(days=1, parameters=SpatialParameters(tpex_growth=float("nan")))
 
 
 def test_antigen_reaches_sinus_and_dc_reaches_paracortex():
@@ -52,6 +61,8 @@ def test_coupling_rejects_invalid_or_incomplete_occupancy():
         simulate_spatial_coupled(pd.DataFrame({"day": [0, 1], "pd1_occupancy": [0, 0.5]}), days=2)
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         simulate_spatial(days=2, checkpoint_occupancy=1.1)
+    with pytest.raises(ValueError, match="finite"):
+        simulate_spatial(days=2, checkpoint_occupancy=lambda _: float("nan"))
 
 
 def test_matched_spatial_counterfactual_has_auditable_occupancy_and_effect():
