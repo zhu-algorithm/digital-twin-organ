@@ -132,8 +132,10 @@ def augment_with_twin(
     spatial_states: pd.DataFrame | None = None,
     systemic_parameters: TwinParameters | None = None,
     spatial_parameters: SpatialParameters | None = None,
+    systemic_parameter_draws: tuple[TwinParameters, ...] | None = None,
+    spatial_parameter_draws: tuple[SpatialParameters, ...] | None = None,
 ) -> pd.DataFrame:
-    """Add per-patient treated/control mechanistic endpoints without using labels."""
+    """Add label-free point and optional calibrated-uncertainty endpoints."""
     if "patient_id" not in features:
         raise ValueError("features need patient_id")
     features = features.copy()
@@ -147,6 +149,18 @@ def augment_with_twin(
     features["patient_id"] = features.patient_id.astype(str).str.strip()
     if features.patient_id.eq("").any() or features.patient_id.duplicated().any():
         raise ValueError("features must have one row per patient")
+    for name, draws in (
+        ("systemic_parameter_draws", systemic_parameter_draws),
+        ("spatial_parameter_draws", spatial_parameter_draws),
+    ):
+        if draws is not None and len(draws) == 0:
+            raise ValueError(f"{name} must be non-empty when supplied")
+    if (systemic_parameter_draws is not None and spatial_parameter_draws is not None
+            and len(systemic_parameter_draws) != len(spatial_parameter_draws)):
+        raise ValueError("systemic and spatial parameter draw counts must match")
+    uncertainty_samples = max(
+        len(systemic_parameter_draws or ()), len(spatial_parameter_draws or ()),
+    )
     measured_states = None
     if spatial_states is not None:
         if "patient_id" not in spatial_states:
@@ -171,9 +185,6 @@ def augment_with_twin(
     rows = []
     for row in features.to_dict(orient="records"):
         initial = initial_state_from_features(pd.Series(row))
-        control = simulate(days=days, initial=initial, parameters=systemic_parameters)
-        treated = simulate(days=days, doses=doses, initial=initial,
-                           parameters=systemic_parameters)
         spatial_initial = (
             measured_states[measured_states.patient_id.eq(row["patient_id"])]
             if measured_states is not None
@@ -194,40 +205,71 @@ def augment_with_twin(
         else:
             spatial_zone_coverage = np.nan
         spatial_days = min(days, 14.0)
-        spatial_control = simulate_spatial_coupled(
-            control, days=spatial_days, initial=spatial_initial,
-            parameters=spatial_parameters,
-        )
-        spatial_treated = simulate_spatial_coupled(
-            treated, days=spatial_days, initial=spatial_initial,
-            parameters=spatial_parameters,
-        )
-        c, t = control.iloc[-1], treated.iloc[-1]
+
         def endpoint(frame: pd.DataFrame, species: str, zone: str) -> float:
             selected = frame[(frame.species == species) & (frame.zone == zone)]
             return float(selected.amount.iloc[-1])
 
-        control_exit = endpoint(spatial_control, "effector", "efferent_lymph")
-        treated_exit = endpoint(spatial_treated, "effector", "efferent_lymph")
-        rows.append({
+        def run_pair(
+            systemic: TwinParameters | None,
+            spatial: SpatialParameters | None,
+        ) -> dict[str, float]:
+            control = simulate(days=days, initial=initial, parameters=systemic)
+            treated = simulate(days=days, doses=doses, initial=initial, parameters=systemic)
+            spatial_control = simulate_spatial_coupled(
+                control, days=spatial_days, initial=spatial_initial, parameters=spatial,
+            )
+            spatial_treated = simulate_spatial_coupled(
+                treated, days=spatial_days, initial=spatial_initial, parameters=spatial,
+            )
+            c, t = control.iloc[-1], treated.iloc[-1]
+            control_exit = endpoint(spatial_control, "effector", "efferent_lymph")
+            treated_exit = endpoint(spatial_treated, "effector", "efferent_lymph")
+            return {
+                "twin_control_tumour_cells": c.tumour_cells,
+                "twin_treated_tumour_cells": t.tumour_cells,
+                "twin_treatment_tumour_delta": t.tumour_cells - c.tumour_cells,
+                "twin_treated_effector_tumour": t.effector_tumour,
+                "twin_treated_tpex_tdln": t.tpex_tdln,
+                "twin_treated_tpex_effector_ratio": t.tpex_effector_ratio,
+                "twin_peak_pd1_occupancy": treated.pd1_occupancy.max(),
+                "twin_effector_gain": t.effector_tumour - c.effector_tumour,
+                "twin_spatial_control_efferent_effector": control_exit,
+                "twin_spatial_treated_efferent_effector": treated_exit,
+                "twin_spatial_efferent_effector_gain": treated_exit - control_exit,
+                "twin_spatial_treated_paracortex_tpex": endpoint(
+                    spatial_treated, "tpex", "paracortex"
+                ),
+            }
+
+        point = run_pair(systemic_parameters, spatial_parameters)
+        result = {
             "patient_id": row["patient_id"],
-            "twin_control_tumour_cells": c.tumour_cells,
-            "twin_treated_tumour_cells": t.tumour_cells,
-            "twin_treatment_tumour_delta": t.tumour_cells - c.tumour_cells,
-            "twin_treated_effector_tumour": t.effector_tumour,
-            "twin_treated_tpex_tdln": t.tpex_tdln,
-            "twin_treated_tpex_effector_ratio": t.tpex_effector_ratio,
-            "twin_peak_pd1_occupancy": treated.pd1_occupancy.max(),
-            "twin_effector_gain": t.effector_tumour - c.effector_tumour,
-            "twin_spatial_control_efferent_effector": control_exit,
-            "twin_spatial_treated_efferent_effector": treated_exit,
-            "twin_spatial_efferent_effector_gain": treated_exit - control_exit,
-            "twin_spatial_treated_paracortex_tpex": endpoint(
-                spatial_treated, "tpex", "paracortex"
-            ),
+            **point,
             "qc_spatial_initialization_measured": int(measured_states is not None),
             "qc_spatial_zone_coverage": spatial_zone_coverage,
             "qc_systemic_parameters_supplied": int(systemic_parameters is not None),
             "qc_spatial_parameters_supplied": int(spatial_parameters is not None),
-        })
+            "qc_mechanistic_uncertainty_samples": uncertainty_samples,
+            "qc_systemic_uncertainty_supplied": int(systemic_parameter_draws is not None),
+            "qc_spatial_uncertainty_supplied": int(spatial_parameter_draws is not None),
+        }
+        if uncertainty_samples:
+            systemic_draws = systemic_parameter_draws or (systemic_parameters,) * uncertainty_samples
+            spatial_draws = spatial_parameter_draws or (spatial_parameters,) * uncertainty_samples
+            ensemble = [run_pair(systemic, spatial)
+                        for systemic, spatial in zip(systemic_draws, spatial_draws)]
+            for name in (
+                "twin_treatment_tumour_delta", "twin_effector_gain",
+                "twin_spatial_efferent_effector_gain", "twin_treated_tpex_tdln",
+            ):
+                values = np.asarray([draw[name] for draw in ensemble], dtype=float)
+                lower, median, upper = np.quantile(values, (0.025, 0.5, 0.975))
+                result.update({
+                    f"{name}_uncertainty_median": median,
+                    f"{name}_uncertainty_lower_95": lower,
+                    f"{name}_uncertainty_upper_95": upper,
+                    f"{name}_uncertainty_width_95": upper - lower,
+                })
+        rows.append(result)
     return features.merge(pd.DataFrame(rows), on="patient_id", validate="one_to_one")

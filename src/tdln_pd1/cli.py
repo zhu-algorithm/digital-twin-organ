@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict, fields
+from dataclasses import asdict, fields, replace
 import hashlib
 import json
 from pathlib import Path
@@ -10,7 +10,8 @@ from .data import load_cells, load_labels
 from .features import aggregate_cells
 from .model import evaluate_external, leave_one_site_out, predict_locked, train_evaluate
 from .simulator import Dose, TwinParameters, simulate
-from .assimilation import calibrate, calibration_ensemble, save_calibration
+from .assimilation import (calibrate, calibration_ensemble, calibration_parameter_draws,
+                           save_calibration)
 from .hybrid import augment_with_twin
 from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spatial_coupled,
                                simulate_spatial_counterfactual)
@@ -236,6 +237,11 @@ def main() -> None:
                      help="patient-zone-species states from spatial-featurize")
     aug.add_argument("--systemic-parameters", help="fitted TwinParameters JSON")
     aug.add_argument("--spatial-parameters", help="fitted SpatialParameters JSON")
+    aug.add_argument("--systemic-diagnostics", help="systemic calibration diagnostics JSON")
+    aug.add_argument("--spatial-diagnostics", help="spatial calibration diagnostics JSON")
+    aug.add_argument("--uncertainty-samples", type=int, default=0,
+                     help="0 disables; otherwise requires at least 2 correlated draws")
+    aug.add_argument("--uncertainty-seed", type=int, default=42)
     aug.add_argument("--output", required=True)
     spatial = sub.add_parser("simulate-spatial")
     spatial.add_argument("--days", type=float, default=14.0)
@@ -307,6 +313,8 @@ def main() -> None:
     verify_augmentation.add_argument("--spatial-initial-zones")
     verify_augmentation.add_argument("--systemic-parameters")
     verify_augmentation.add_argument("--spatial-parameters")
+    verify_augmentation.add_argument("--systemic-diagnostics")
+    verify_augmentation.add_argument("--spatial-diagnostics")
     verify_features = sub.add_parser("verify-features")
     verify_features.add_argument("--audit", required=True)
     verify_features.add_argument("--cells", required=True)
@@ -594,10 +602,39 @@ def main() -> None:
         spatial_parameters, spatial_provenance = _load_parameter_file(
             args.spatial_parameters, SpatialParameters
         )
+        if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
+            raise ValueError("--uncertainty-samples must be 0 or at least 2")
+        if (args.systemic_diagnostics or args.spatial_diagnostics) and not args.uncertainty_samples:
+            raise ValueError("diagnostics require --uncertainty-samples of at least 2")
+        if args.systemic_diagnostics and systemic_parameters is None:
+            raise ValueError("--systemic-diagnostics requires --systemic-parameters")
+        if args.spatial_diagnostics and spatial_parameters is None:
+            raise ValueError("--spatial-diagnostics requires --spatial-parameters")
+        if args.uncertainty_samples and not (
+            args.systemic_diagnostics or args.spatial_diagnostics
+        ):
+            raise ValueError("uncertainty sampling requires at least one diagnostics file")
+        systemic_draws = spatial_draws = None
+        if args.systemic_diagnostics:
+            diagnostics = json.loads(Path(args.systemic_diagnostics).read_text())
+            _, draws = calibration_parameter_draws(
+                systemic_parameters, diagnostics, args.uncertainty_samples,
+                args.uncertainty_seed,
+            )
+            systemic_draws = tuple(replace(systemic_parameters, **draw) for draw in draws)
+        if args.spatial_diagnostics:
+            diagnostics = json.loads(Path(args.spatial_diagnostics).read_text())
+            _, draws = calibration_parameter_draws(
+                spatial_parameters, diagnostics, args.uncertainty_samples,
+                args.uncertainty_seed + 1,
+            )
+            spatial_draws = tuple(replace(spatial_parameters, **draw) for draw in draws)
         augmented = augment_with_twin(pd.read_csv(args.features), args.days, dose_days,
                                       args.dose, spatial_states,
                                       systemic_parameters=systemic_parameters,
-                                      spatial_parameters=spatial_parameters)
+                                      spatial_parameters=spatial_parameters,
+                                      systemic_parameter_draws=systemic_draws,
+                                      spatial_parameter_draws=spatial_draws)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         augmented.to_csv(args.output, index=False)
         _write_parameter_provenance(args.output, {
@@ -634,10 +671,17 @@ def main() -> None:
                 "spatial_initial_zones": spatial_record,
                 "systemic_parameters": systemic_provenance,
                 "spatial_parameters": spatial_provenance,
+                "systemic_diagnostics": (_source_record(args.systemic_diagnostics)
+                                           if args.systemic_diagnostics else None),
+                "spatial_diagnostics": (_source_record(args.spatial_diagnostics)
+                                          if args.spatial_diagnostics else None),
             },
             settings={
                 "days": args.days, "dose_days": list(dose_days),
                 "dose": args.dose, "labels_used": False,
+                "uncertainty_samples": args.uncertainty_samples,
+                "uncertainty_seed": args.uncertainty_seed,
+                "cross_layer_sampling": "independent_no_joint_covariance",
             },
         )
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
@@ -879,6 +923,8 @@ def main() -> None:
             ("spatial_initial_zones", args.spatial_initial_zones),
             ("systemic_parameters", args.systemic_parameters),
             ("spatial_parameters", args.spatial_parameters),
+            ("systemic_diagnostics", args.systemic_diagnostics),
+            ("spatial_diagnostics", args.spatial_diagnostics),
         ):
             if value:
                 input_paths[key] = value

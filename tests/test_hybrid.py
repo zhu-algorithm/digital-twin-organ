@@ -166,3 +166,44 @@ def test_spatial_hybrid_fails_closed_on_patient_mismatch_or_outcome_column():
     states["response"] = [0, 1]
     with pytest.raises(ValueError, match="outcome-free"):
         augment_with_twin(features, days=1, spatial_states=states)
+
+
+def test_hybrid_exposes_reproducible_label_free_mechanistic_uncertainty():
+    features = pd.DataFrame({"patient_id": ["a"], "sig_tcf7_memory": [0.5]})
+    systemic = (
+        TwinParameters(tumour_growth=0.12),
+        TwinParameters(tumour_growth=0.18),
+        TwinParameters(tumour_growth=0.24),
+    )
+    spatial = (
+        SpatialParameters(effector_to_medulla=0.12),
+        SpatialParameters(effector_to_medulla=0.18),
+        SpatialParameters(effector_to_medulla=0.24),
+    )
+    first = augment_with_twin(
+        features, days=2, dose_days=(0,),
+        systemic_parameter_draws=systemic, spatial_parameter_draws=spatial,
+    )
+    second = augment_with_twin(
+        features, days=2, dose_days=(0,),
+        systemic_parameter_draws=systemic, spatial_parameter_draws=spatial,
+    )
+    uncertainty = [name for name in first
+                   if name.startswith("twin_") and "_uncertainty_" in name]
+    assert len(uncertainty) == 16
+    assert first[uncertainty].equals(second[uncertainty])
+    assert first.filter(like="_uncertainty_width_95").ge(0).all().all()
+    assert first.qc_mechanistic_uncertainty_samples.item() == 3
+    assert not any("response" in name or "outcome" in name for name in uncertainty)
+
+
+def test_hybrid_uncertainty_draw_contract_fails_closed():
+    features = pd.DataFrame({"patient_id": ["a"]})
+    with pytest.raises(ValueError, match="non-empty"):
+        augment_with_twin(features, days=1, systemic_parameter_draws=())
+    with pytest.raises(ValueError, match="counts must match"):
+        augment_with_twin(
+            features, days=1,
+            systemic_parameter_draws=(TwinParameters(), TwinParameters()),
+            spatial_parameter_draws=(SpatialParameters(),),
+        )

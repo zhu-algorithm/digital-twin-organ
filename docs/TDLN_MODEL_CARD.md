@@ -20,6 +20,8 @@ The same measured 24-state initialization can be run as matched untreated and an
 
 The systemic and spatial layers are coupled through the simulated TDLN PD-1 receptor occupancy trajectory. Occupancy increases the hypothesised Tpex expansion and differentiation reaction rates but never alters conservative transport terms. The coupling gains are explicit parameters, default to zero effect at zero occupancy, and require calibration; the directional response is a software invariant, not clinical validation.
 
+Patient-level hybrid augmentation can propagate identifiable calibration covariance into label-free tumour-effect, effector-gain, spatial-egress and Tpex summaries. It exposes the median, 95% bounds and width beside the point counterfactual so prediction can represent mechanistic instability rather than silently treating fitted parameters as exact. Systemic and spatial parameters are sampled independently because a joint cross-layer covariance is not available. These local asymptotic intervals omit structural error, assay error and distribution shift and are not clinical confidence intervals.
+
 Systemic naive-CD8 homeostasis, Tpex and exhausted-cell loss, Treg induction/loss, and the spatial antigen half-saturation constant are explicit, serializable parameters rather than hidden equation literals. This makes them available to fingerprints, sensitivity analysis and selected-parameter calibration. Their defaults preserve the historical reference trajectory; they are hypotheses, not fitted biological constants.
 
 ## Evidence anchors
