@@ -1,0 +1,38 @@
+# TDLN PD-1 response baseline
+
+This branch adds a runnable, leakage-aware baseline for converting TDLN single-cell data into patient-level immune features and predicting binary anti-PD-1 response. It preserves the original organ visualisation on `main`.
+
+## What was actually found
+
+Repository history and all branches were checked. At reconstruction time the repository had only `main`; no TDLN/PD-1 training implementation or matching commit existed. The existing project contains organ visualisation, CELLxGENE-derived expression summaries, and attribution rows for immune-checkpoint datasets. Those rows are provenance, not a labelled TDLN response cohort. This implementation is consequently a new baseline, not a recovered validated clinical model.
+
+## Pipeline
+
+1. Load cell-level CSV or optional `.h5ad` (`obs.patient_id`, `obs.cell_type`).
+2. Compute patient-level cell fractions and cytotoxic, exhaustion, interferon, Treg, TCF7-memory, and dendritic-activation signatures.
+3. Join pre-specified binary patient labels.
+4. Evaluate regularised logistic regression with stratified, patient-grouped cross-validation.
+5. Write cross-validated predictions, metrics, and a fitted model artifact.
+
+Grouping is performed at the patient level; cells from one patient never become independent train/test observations.
+
+## Run
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e '.[test]'
+tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
+tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts
+pytest
+```
+
+Install `.[single-cell,test]` to read `.h5ad` directly.
+
+## Interpretation and limitations
+
+- The included demo is synthetic and proves software execution only.
+- No clinical-performance claim is made. External cohorts, protocol harmonisation, class definitions, calibration, confidence intervals, and prospective validation are required before translational use.
+- Small cohorts should report uncertainty and avoid feature/model selection outside nested cross-validation.
+- Batch, cancer type, treatment regimen, sampling time, tissue site, and centre are likely confounders and should be added as cohort metadata when available.
+- This software is research-only and is not a medical device.

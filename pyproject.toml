@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tdln-pd1"
+version = "0.1.0"
+description = "Reproducible baseline for TDLN single-cell features and PD-1 response prediction"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "scikit-learn>=1.3",
+  "joblib>=1.3",
+]
+
+[project.optional-dependencies]
+single-cell = ["anndata>=0.10"]
+test = ["pytest>=7.4"]
+
+[project.scripts]
+tdln-pd1 = "tdln_pd1.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
