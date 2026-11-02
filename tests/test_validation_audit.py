@@ -29,6 +29,7 @@ def test_prediction_and_evaluation_audits_bind_every_file(tmp_path: Path):
     verified = verify_prediction_audit(predictions)
     assert verified["payload"]["model_refit"] is False
     assert verified["payload"]["patient_count"] == 1
+    assert verified["payload"]["decision_threshold"] == 0.5
 
     labels = tmp_path / "labels.csv"
     labels.write_text("patient_id,response\np1,1\n")

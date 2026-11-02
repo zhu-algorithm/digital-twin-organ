@@ -151,6 +151,7 @@ def test_external_audit_parses_csv_boole_but_rejects_ambiguous_values():
         "domain_shift_flag": ["false", "False"],
         "feature_reuse_check_available": ["true", "True"],
         "training_feature_reuse": ["false", "False"],
+        "decision_threshold": [0.5, 0.5],
     })
     labels = pd.DataFrame({"patient_id": ["a", "b"], "response": [0, 1]})
     assert evaluate_external(predictions, labels, bootstrap=0)["training_overlap_count"] == 0
@@ -209,6 +210,7 @@ def test_external_primary_analysis_keeps_domain_shifted_patients():
         "feature_reuse_check_available": [True] * 6,
         "domain_check_available": [True] * 6,
         "domain_shift_flag": [True, False, False, False, False, False],
+        "decision_threshold": [0.5] * 6,
     })
     labels = pd.DataFrame({"patient_id": predictions.patient_id,
                            "response": [0, 0, 0, 1, 1, 1]})
@@ -220,6 +222,37 @@ def test_external_primary_analysis_keeps_domain_shifted_patients():
     assert sensitivity["status"] == "evaluated"
     assert sensitivity["n_patients"] == 5
     assert sensitivity["coverage"] == pytest.approx(5 / 6)
+
+
+def test_external_evaluation_uses_the_locked_decision_threshold():
+    predictions = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(6)],
+        "probability": [0.1, 0.2, 0.3, 0.55, 0.65, 0.9],
+        "training_overlap": [False] * 6,
+        "overlap_check_available": [True] * 6,
+        "training_feature_reuse": [False] * 6,
+        "feature_reuse_check_available": [True] * 6,
+        "domain_check_available": [True] * 6,
+        "domain_shift_flag": [False] * 6,
+        "decision_threshold": [0.7] * 6,
+    })
+    labels = pd.DataFrame({"patient_id": predictions.patient_id,
+                           "response": [0, 0, 0, 1, 1, 1]})
+    metrics = evaluate_external(predictions, labels, bootstrap=0)
+    assert metrics["decision_threshold"] == 0.7
+    assert metrics["sensitivity"] == pytest.approx(1 / 3)
+    assert metrics["specificity"] == 1.0
+
+
+def test_evaluation_rejects_invalid_probabilities_bootstrap_and_threshold():
+    with pytest.raises(ValueError, match="finite"):
+        evaluate_probabilities([0, 0, 1, 1], [0.1, float("nan"), 0.8, 0.9])
+    with pytest.raises(ValueError, match="non-negative integer"):
+        evaluate_probabilities([0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9], bootstrap=-1)
+    with pytest.raises(ValueError, match="strictly"):
+        evaluate_probabilities(
+            [0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9], decision_threshold=1.0,
+        )
 
 
 def test_leave_one_site_out_predicts_each_evaluable_patient_once():

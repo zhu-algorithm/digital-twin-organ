@@ -45,6 +45,7 @@ def write_prediction_audit(
         "model_refit": False,
         "patient_count": int(patient_count),
         "artifact_version": int(artifact["artifact_version"]),
+        "decision_threshold": float(artifact.get("threshold", 0.5)),
         "training_cohort_fingerprint": artifact["training_cohort_fingerprint"],
         "training_feature_cohort_fingerprint": artifact[
             "training_feature_cohort_fingerprint"

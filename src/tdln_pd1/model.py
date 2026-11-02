@@ -249,12 +249,19 @@ def evaluate_probabilities(
     bootstrap: int = 500,
     seed: int = 42,
     bootstrap_groups=None,
+    decision_threshold: float = 0.5,
 ) -> dict:
     """Discrimination, calibration and patient- or centre-bootstrap intervals."""
     y = np.asarray(y_true, dtype=int)
     prob = np.clip(np.asarray(probability, dtype=float), 1e-7, 1 - 1e-7)
     if len(y) != len(prob) or len(y) == 0 or set(np.unique(y)) != {0, 1}:
         raise ValueError("evaluation requires aligned probabilities and both response classes")
+    if not np.isfinite(prob).all():
+        raise ValueError("evaluation probabilities must be finite")
+    if not isinstance(bootstrap, (int, np.integer)) or bootstrap < 0:
+        raise ValueError("bootstrap draws must be a non-negative integer")
+    if not np.isfinite(decision_threshold) or not 0 < decision_threshold < 1:
+        raise ValueError("decision threshold must fall strictly between 0 and 1")
     groups = None
     if bootstrap_groups is not None:
         groups = np.asarray(bootstrap_groups)
@@ -262,7 +269,7 @@ def evaluate_probabilities(
             raise ValueError("bootstrap groups must align one-to-one with outcomes")
         if pd.isna(groups).any() or len(np.unique(groups)) < 2:
             raise ValueError("cluster bootstrap requires at least two non-missing groups")
-    pred = prob >= 0.5
+    pred = prob >= decision_threshold
     tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
     logits = np.log(prob / (1 - prob)).reshape(-1, 1)
     calibrator = LogisticRegression(C=1e6, solver="lbfgs").fit(logits, y)
@@ -276,6 +283,7 @@ def evaluate_probabilities(
         "specificity": float(tn / (tn + fp)) if tn + fp else np.nan,
         "calibration_intercept": float(calibrator.intercept_[0]),
         "calibration_slope": float(calibrator.coef_[0, 0]),
+        "decision_threshold": float(decision_threshold),
         "decision_curve": _decision_curve(y, prob),
     }
     if bootstrap:
@@ -412,6 +420,13 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     if not domain_available.all() or "domain_shift_flag" not in predictions:
         raise ValueError("external evaluation requires locked-model applicability diagnostics")
     domain_flags = _boolean_audit_column(predictions.domain_shift_flag, "domain_shift_flag")
+    if "decision_threshold" not in predictions:
+        raise ValueError("locked predictions need decision_threshold")
+    thresholds = pd.to_numeric(predictions.decision_threshold, errors="coerce")
+    if (not np.isfinite(thresholds).all() or thresholds.nunique() != 1
+            or not 0 < float(thresholds.iloc[0]) < 1):
+        raise ValueError("locked predictions need one valid decision_threshold")
+    decision_threshold = float(thresholds.iloc[0])
     audited_predictions = predictions.copy()
     audited_predictions["_domain_shift_flag"] = domain_flags.to_numpy(dtype=bool)
     data = audited_predictions.merge(labels, on="patient_id", validate="one_to_one")
@@ -419,6 +434,7 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     metrics = evaluate_probabilities(
         data.response, data.probability, bootstrap=bootstrap,
         bootstrap_groups=centre_groups,
+        decision_threshold=decision_threshold,
     )
     metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
                     "training_overlap_checked": True, "training_overlap_count": 0,
@@ -443,6 +459,7 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
         sensitivity["metrics"] = evaluate_probabilities(
             in_domain.response, in_domain.probability, bootstrap=bootstrap,
             bootstrap_groups=_available_cluster_groups(in_domain),
+            decision_threshold=decision_threshold,
         )
     else:
         sensitivity["status"] = "not_evaluable"
