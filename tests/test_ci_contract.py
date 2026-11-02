@@ -15,6 +15,8 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--dose-days 0",
         "verify-sensitivity --audit /tmp/sensitivity/sensitivity_provenance.json",
         "verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json",
+        "verify-calibration --audit /tmp/calibration/calibration_provenance.json",
+        "verify-calibration --audit /tmp/spatial_calibration/spatial_calibration_provenance.json",
     )
     for marker in required:
         assert marker in workflow

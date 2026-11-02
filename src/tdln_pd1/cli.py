@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import fields
+from dataclasses import asdict, fields
 import hashlib
 import json
 from pathlib import Path
@@ -23,6 +23,7 @@ from .qc import cohort_qc
 from .verification import verify_twin
 from .validation_audit import (verify_prediction_audit, write_evaluation_audit,
                                write_prediction_audit)
+from .calibration_audit import verify_calibration_audit, write_calibration_audit
 
 
 def _load_parameter_file(path: str | None, parameter_class):
@@ -83,6 +84,12 @@ def _load_patient_spatial_initial(path: str | None, patient_id: str | None):
         "patient_id": selected_id,
         "rows": int(len(selected)),
     }
+
+
+def _source_record(path: str) -> dict:
+    source = Path(path)
+    return {"file": source.name,
+            "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}
 
 
 def _training_input_provenance(feature_path: str) -> dict:
@@ -233,6 +240,8 @@ def main() -> None:
     verify.add_argument("--output", required=True)
     verify_sensitivity = sub.add_parser("verify-sensitivity")
     verify_sensitivity.add_argument("--audit", required=True)
+    verify_calibration = sub.add_parser("verify-calibration")
+    verify_calibration.add_argument("--audit", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -307,22 +316,29 @@ def main() -> None:
             profile_fold_range=args.profile_fold_range,
         )
         save_calibration(args.output, fitted, diagnostics, compared)
+        fit_names = tuple(name.strip() for name in args.fit.split(",") if name.strip())
+        write_calibration_audit(
+            args.output, "calibration_provenance.json", "systemic_calibration",
+            inputs={"observations": _source_record(args.observations)},
+            settings={
+                "fit_parameters": list(fit_names),
+                "dose_days": [dose.day for dose in doses],
+                "dose_amounts": [dose.amount for dose in doses],
+                "profile_points": args.profile_points,
+                "profile_fold_range": args.profile_fold_range,
+            },
+            generated_filenames=(
+                "fitted_parameters.json", "calibration_diagnostics.json",
+                "calibration_residuals.csv",
+            ),
+        )
         print(json.dumps(diagnostics, indent=2))
     elif args.command == "calibrate-spatial":
         import pandas as pd
         observations = pd.read_csv(args.observations)
-        initial = None
-        if args.initial_zones:
-            states = pd.read_csv(args.initial_zones)
-            if "patient_id" not in states:
-                raise ValueError("initial zone states need patient_id")
-            patients = states.patient_id.astype(str).unique().tolist()
-            patient_id = args.patient_id or (patients[0] if len(patients) == 1 else None)
-            if patient_id is None:
-                raise ValueError("--patient-id is required when initial states contain multiple patients")
-            initial = states[states.patient_id.astype(str).eq(str(patient_id))]
-            if initial.empty:
-                raise ValueError(f"patient not found in initial zone states: {patient_id}")
+        initial, initial_provenance = _load_patient_spatial_initial(
+            args.initial_zones, args.patient_id
+        )
         doses = tuple(Dose(float(day), args.dose)
                       for day in args.dose_days.split(",") if day.strip())
         systemic = None
@@ -337,6 +353,26 @@ def main() -> None:
             profile_fold_range=args.profile_fold_range,
         )
         save_spatial_calibration(args.output, fitted, diagnostics, compared)
+        fit_names = tuple(name.strip() for name in args.fit.split(",") if name.strip())
+        write_calibration_audit(
+            args.output, "spatial_calibration_provenance.json", "spatial_calibration",
+            inputs={"observations": _source_record(args.observations),
+                    "initial_state_source": initial_provenance},
+            settings={
+                "fit_parameters": list(fit_names),
+                "dose_days": [dose.day for dose in doses],
+                "dose_amounts": [dose.amount for dose in doses],
+                "systemic_parameters": asdict(TwinParameters()) if doses else None,
+                "max_nfev": args.max_nfev,
+                "profile_points": args.profile_points,
+                "profile_fold_range": args.profile_fold_range,
+            },
+            generated_filenames=(
+                "fitted_spatial_parameters.json",
+                "spatial_calibration_diagnostics.json",
+                "spatial_calibration_residuals.csv",
+            ),
+        )
         print(json.dumps(diagnostics, indent=2))
     elif args.command == "augment-twin":
         import pandas as pd
@@ -563,6 +599,13 @@ def main() -> None:
             raise SystemExit(2)
     elif args.command == "verify-sensitivity":
         report = verify_sensitivity_audit(args.audit)
+        print(json.dumps({
+            "valid": report["valid"], "stage": report["stage"],
+            "verified_outputs": report["verified_outputs"],
+            "audit_sha256": report["audit_sha256"],
+        }, indent=2))
+    elif args.command == "verify-calibration":
+        report = verify_calibration_audit(args.audit)
         print(json.dumps({
             "valid": report["valid"], "stage": report["stage"],
             "verified_outputs": report["verified_outputs"],
