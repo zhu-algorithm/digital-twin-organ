@@ -48,6 +48,7 @@ tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patien
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
 tdln-pd1 sensitivity --base-parameters artifacts/calibration/fitted_parameters.json --days 42 --samples 128 --output artifacts/sensitivity
 tdln-pd1 spatial-sensitivity --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json --initial-zones artifacts/spatial_cohort_initial.csv --patient-id example_patient --days 14 --checkpoint-occupancy 0.8 --samples 128 --output artifacts/spatial_sensitivity
+tdln-pd1 verify-sensitivity --audit artifacts/spatial_sensitivity/spatial_sensitivity_provenance.json
 tdln-pd1 verify --output artifacts/verification.json
 pytest
 ```
@@ -94,11 +95,11 @@ Fitted parameter JSON is executable rather than archival: `simulate --parameters
 
 `sensitivity` uses seeded Latin-hypercube sampling over log-scaled parameter ranges and ranks monotonic influence on final tumour cells, tumour effectors, TDLN Tpex and peak PD-1 occupancy using Spearman correlations. These are screening statistics, not Sobol variance-decomposition indices or causal effects. The full sampled design is saved so every ranking is reproducible and inspectable.
 
-The systemic screen can center its ranges on an exact fitted `TwinParameters` JSON. Its report directory includes a provenance record with the parameter-file SHA-256 and the complete sampling design configuration.
+The systemic screen can center its ranges on an exact fitted `TwinParameters` JSON. Its report directory includes a provenance record with the parameter-file SHA-256, complete sampling design configuration, and hashes of the exact sample and ranking tables. The audit verifier fails if either result table is subsequently replaced.
 
 `spatial-sensitivity` applies the same seeded screening design to the six-zone model. Every parameter draw runs a matched zero-occupancy and prespecified-occupancy pair from the same initial state. Rankings cover untreated endpoints, occupied endpoints and the paired PD-1 effect on paracortical Tpex and efferent effectors. This separates general spatial dynamics from the model-implied checkpoint contrast, but remains a screening analysis rather than evidence of a clinical treatment effect.
 
-The spatial screen accepts both an exact fitted `SpatialParameters` JSON and one patient selected from a complete spatial-omics state table. Its provenance file binds the fitted-parameter hash, spatial-state file hash, selected patient, sampling ranges and random seed to the generated samples and rankings.
+The spatial screen accepts both an exact fitted `SpatialParameters` JSON and one patient selected from a complete spatial-omics state table. Its provenance file binds the fitted-parameter hash, spatial-state file hash, selected patient, sampling ranges and random seed to cryptographic hashes of the generated samples and rankings.
 
 ## Mechanism–ML fusion
 

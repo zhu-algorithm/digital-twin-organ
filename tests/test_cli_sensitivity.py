@@ -53,10 +53,13 @@ def test_spatial_sensitivity_cli_binds_fitted_parameters_and_patient_state(
     ])
     main()
     provenance = json.loads((output / "spatial_sensitivity_provenance.json").read_text())
-    assert provenance["parameter_source"]["parameter_class"] == "SpatialParameters"
-    assert provenance["initial_state_source"]["patient_id"] == "p1"
-    assert provenance["sampled_parameters"] == [
+    assert provenance["inputs"]["parameter_source"]["parameter_class"] == "SpatialParameters"
+    assert provenance["inputs"]["initial_state_source"]["patient_id"] == "p1"
+    assert provenance["settings"]["sampled_parameters"] == [
         "antigen_half_saturation", "checkpoint_growth_gain",
     ]
+    assert set(provenance["outputs"]) == {
+        "spatial_sensitivity_samples.csv", "spatial_sensitivity_ranking.csv",
+    }
     assert (output / "spatial_sensitivity_samples.csv").is_file()
     assert (output / "spatial_sensitivity_ranking.csv").is_file()

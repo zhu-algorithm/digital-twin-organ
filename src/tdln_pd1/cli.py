@@ -17,6 +17,7 @@ from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spa
 from .spatial_data import aggregate_spatial_spots
 from .spatial_assimilation import calibrate_spatial, save_spatial_calibration
 from .sensitivity import global_sensitivity, global_spatial_sensitivity
+from .sensitivity_audit import verify_sensitivity_audit, write_sensitivity_audit
 from .provenance import verify_manifest
 from .qc import cohort_qc
 from .verification import verify_twin
@@ -225,6 +226,8 @@ def main() -> None:
     qc.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     verify = sub.add_parser("verify")
     verify.add_argument("--output", required=True)
+    verify_sensitivity = sub.add_parser("verify-sensitivity")
+    verify_sensitivity.add_argument("--audit", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -438,13 +441,17 @@ def main() -> None:
         output.mkdir(parents=True, exist_ok=True)
         samples.to_csv(output / "sensitivity_samples.csv", index=False)
         ranking.to_csv(output / "sensitivity_ranking.csv", index=False)
-        (output / "sensitivity_provenance.json").write_text(json.dumps({
-            "schema_version": 1, "parameter_source": parameter_provenance,
-            "sampled_parameters": list(names), "days": args.days,
-            "dose_days": [dose.day for dose in doses], "dose": args.dose,
-            "samples": args.samples, "fold_range": args.fold_range,
-            "seed": args.seed, "research_only": True,
-        }, indent=2) + "\n")
+        write_sensitivity_audit(
+            output, "sensitivity_provenance.json", "systemic_sensitivity",
+            inputs={"parameter_source": parameter_provenance},
+            settings={
+                "sampled_parameters": list(names), "days": args.days,
+                "dose_days": [dose.day for dose in doses], "dose": args.dose,
+                "samples": args.samples, "fold_range": args.fold_range,
+                "seed": args.seed,
+            },
+            generated_filenames=("sensitivity_samples.csv", "sensitivity_ranking.csv"),
+        )
         top = ranking.groupby("outcome", sort=False).first().reset_index()
         print(json.dumps({"samples": len(samples), "parameters": len(names),
                           "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
@@ -468,14 +475,23 @@ def main() -> None:
         output.mkdir(parents=True, exist_ok=True)
         samples.to_csv(output / "spatial_sensitivity_samples.csv", index=False)
         ranking.to_csv(output / "spatial_sensitivity_ranking.csv", index=False)
-        (output / "spatial_sensitivity_provenance.json").write_text(json.dumps({
-            "schema_version": 1, "parameter_source": parameter_provenance,
-            "initial_state_source": initial_provenance,
-            "sampled_parameters": list(names), "days": args.days,
-            "checkpoint_occupancy": args.checkpoint_occupancy,
-            "samples": args.samples, "fold_range": args.fold_range,
-            "seed": args.seed, "research_only": True,
-        }, indent=2) + "\n")
+        write_sensitivity_audit(
+            output, "spatial_sensitivity_provenance.json", "spatial_sensitivity",
+            inputs={
+                "parameter_source": parameter_provenance,
+                "initial_state_source": initial_provenance,
+            },
+            settings={
+                "sampled_parameters": list(names), "days": args.days,
+                "checkpoint_occupancy": args.checkpoint_occupancy,
+                "samples": args.samples, "fold_range": args.fold_range,
+                "seed": args.seed,
+            },
+            generated_filenames=(
+                "spatial_sensitivity_samples.csv",
+                "spatial_sensitivity_ranking.csv",
+            ),
+        )
         top = ranking.groupby("outcome", sort=False).first().reset_index()
         print(json.dumps({
             "samples": len(samples), "parameters": len(names),
@@ -498,6 +514,13 @@ def main() -> None:
         print(json.dumps(report, indent=2))
         if not report["passed"]:
             raise SystemExit(2)
+    elif args.command == "verify-sensitivity":
+        report = verify_sensitivity_audit(args.audit)
+        print(json.dumps({
+            "valid": report["valid"], "stage": report["stage"],
+            "verified_outputs": report["verified_outputs"],
+            "audit_sha256": report["audit_sha256"],
+        }, indent=2))
     else:
         report = verify_twin()
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
