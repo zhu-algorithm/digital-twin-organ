@@ -23,7 +23,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert predictions.outer_fold.ge(1).all()
     assert predictions.fold_selected_C.isin([0.01, 0.1, 1.0, 10.0, 100.0]).all()
     artifact = joblib.load(tmp_path / "model.joblib")
-    assert artifact["artifact_version"] == 4
+    assert artifact["artifact_version"] == 5
     assert artifact["selected_C"] in artifact["C_grid"]
     assert len(artifact["training_patient_hashes"]) == 8
     assert len(artifact["training_cohort_fingerprint"]) == 64
@@ -33,6 +33,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert "n_cells" not in artifact["features"]
     assert artifact["excluded_features"]["n_cells"] == "technical cell-count/QC feature"
     assert metrics["feature_schema"]["included"] == ["sig_exhaustion", "frac_cd8_t"]
+    assert set(artifact["training_domain"]["features"]) == {"sig_exhaustion", "frac_cd8_t"}
 
 
 def test_probability_evaluation_reports_calibration_and_intervals():
@@ -63,10 +64,14 @@ def test_locked_prediction_and_external_evaluation(tmp_path: Path):
     assert predictions.probability_upper_95.ge(predictions.probability).all()
     assert predictions.probability_interval_width.ge(0).all()
     assert not predictions.training_overlap.any()
+    assert predictions.domain_check_available.all()
+    assert not predictions.domain_shift_flag.any()
     metrics = evaluate_external(predictions, external_labels, bootstrap=10)
     assert metrics["evaluation_type"] == "external_locked_model"
     assert metrics["training_overlap_checked"] is True
     assert metrics["training_overlap_count"] == 0
+    assert metrics["applicability_checked"] is True
+    assert metrics["domain_shift_count"] == 0
     assert predictions.decision_threshold.eq(0.5).all()
     with pytest.raises(ValueError):
         predict_locked(tmp_path / "model.joblib", pd.DataFrame({"patient_id": ["z"]}))
@@ -111,11 +116,37 @@ def test_external_audit_parses_csv_boole_but_rejects_ambiguous_values():
         "patient_id": ["a", "b"], "probability": [0.2, 0.8],
         "training_overlap": ["false", "False"],
         "overlap_check_available": ["true", "True"],
+        "domain_check_available": ["true", "True"],
+        "domain_shift_flag": ["false", "False"],
     })
     labels = pd.DataFrame({"patient_id": ["a", "b"], "response": [0, 1]})
     assert evaluate_external(predictions, labels, bootstrap=0)["training_overlap_count"] == 0
     predictions.loc[0, "training_overlap"] = "unknown"
     with pytest.raises(ValueError, match="true/false"):
+        evaluate_external(predictions, labels, bootstrap=0)
+
+
+def test_locked_prediction_flags_out_of_domain_patients(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    features = pd.DataFrame({"patient_id": patients,
+                             "x": [0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4]})
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+    external = pd.DataFrame({"patient_id": ["near", "far"], "x": [0.5, 100.0]})
+    predictions = predict_locked(tmp_path / "model.joblib", external)
+    assert predictions.domain_check_available.all()
+    assert not predictions.loc[predictions.patient_id.eq("near"), "domain_shift_flag"].item()
+    assert predictions.loc[predictions.patient_id.eq("far"), "domain_shift_flag"].item()
+    assert predictions.loc[predictions.patient_id.eq("far"), "domain_max_abs_robust_z"].item() > 4
+
+
+def test_external_evaluation_rejects_missing_domain_audit():
+    predictions = pd.DataFrame({
+        "patient_id": ["a", "b"], "probability": [0.2, 0.8],
+        "training_overlap": [False, False], "overlap_check_available": [True, True],
+    })
+    labels = pd.DataFrame({"patient_id": ["a", "b"], "response": [0, 1]})
+    with pytest.raises(ValueError, match="applicability"):
         evaluate_external(predictions, labels, bootstrap=0)
 
 

@@ -25,6 +25,9 @@ FORBIDDEN_FEATURE_TOKENS = (
     "response", "responder", "outcome", "label", "recist",
     "progression_free", "overall_survival", "pfs", "os_months",
 )
+DOMAIN_MAX_ABS_Z = 4.0
+DOMAIN_MAX_OUTSIDE_FRACTION = 0.2
+DOMAIN_MAX_MISSINGNESS_INCREASE = 0.2
 
 
 def _normalise_patient_ids(frame: pd.DataFrame, name: str) -> pd.DataFrame:
@@ -120,6 +123,61 @@ def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
     ))])
 
 
+def _training_domain_reference(features: pd.DataFrame, columns: list[str]) -> dict:
+    """Persist label-free training support for locked-model applicability checks."""
+    reference = {}
+    for column in columns:
+        values = pd.to_numeric(features[column], errors="coerce").to_numpy(dtype=float)
+        finite = values[np.isfinite(values)]
+        if not len(finite):
+            raise ValueError(f"model feature has no finite training values: {column}")
+        q1, median, q3 = np.percentile(finite, [25, 50, 75])
+        robust_scale = float((q3 - q1) / 1.349)
+        if robust_scale <= 1e-12:
+            robust_scale = float(np.std(finite))
+        reference[column] = {
+            "median": float(median), "robust_scale": max(robust_scale, 1e-12),
+            "minimum": float(np.min(finite)), "maximum": float(np.max(finite)),
+            "missing_fraction": float(1.0 - len(finite) / len(values)),
+        }
+    return {
+        "method": "robust_z_and_training_range", "features": reference,
+        "thresholds": {
+            "max_abs_robust_z": DOMAIN_MAX_ABS_Z,
+            "max_outside_training_range_fraction": DOMAIN_MAX_OUTSIDE_FRACTION,
+            "max_missingness_increase": DOMAIN_MAX_MISSINGNESS_INCREASE,
+        },
+        "note": "Applicability diagnostic only; not proof of cohort transportability.",
+    }
+
+
+def _domain_diagnostics(features: pd.DataFrame, required: list[str], reference: dict | None) -> dict:
+    if not reference or set(reference.get("features", {})) != set(required):
+        n = len(features)
+        return {"available": np.zeros(n, dtype=bool), "max_abs_z": np.full(n, np.nan),
+                "outside_fraction": np.full(n, np.nan), "missing_fraction": np.full(n, np.nan),
+                "flag": np.zeros(n, dtype=bool)}
+    matrix = features[required].apply(pd.to_numeric, errors="coerce").to_numpy(dtype=float)
+    missing = ~np.isfinite(matrix)
+    medians = np.array([reference["features"][c]["median"] for c in required])
+    scales = np.array([reference["features"][c]["robust_scale"] for c in required])
+    minima = np.array([reference["features"][c]["minimum"] for c in required])
+    maxima = np.array([reference["features"][c]["maximum"] for c in required])
+    training_missing = np.array([reference["features"][c]["missing_fraction"] for c in required])
+    filled = np.where(missing, medians, matrix)
+    max_abs_z = np.max(np.abs((filled - medians) / scales), axis=1)
+    outside_fraction = ((((matrix < minima) | (matrix > maxima)) & ~missing).mean(axis=1))
+    missing_fraction = missing.mean(axis=1)
+    thresholds = reference["thresholds"]
+    flag = ((max_abs_z > thresholds["max_abs_robust_z"])
+            | (outside_fraction > thresholds["max_outside_training_range_fraction"])
+            | (missing_fraction > float(training_missing.mean())
+               + thresholds["max_missingness_increase"]))
+    return {"available": np.ones(len(features), dtype=bool), "max_abs_z": max_abs_z,
+            "outside_fraction": outside_fraction, "missing_fraction": missing_fraction,
+            "flag": flag}
+
+
 def _decision_curve(y: np.ndarray, prob: np.ndarray) -> list[dict[str, float]]:
     """Decision-curve net benefit across prespecified probability thresholds."""
     rows = []
@@ -207,6 +265,7 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     training_hashes = set(artifact.get("training_patient_hashes", []))
     overlap_check_available = bool(training_hashes)
     overlap = features.patient_id.map(lambda value: _patient_hash(value) in training_hashes)
+    domain = _domain_diagnostics(features, required, artifact.get("training_domain"))
     return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
                          "probability_lower_95": lower, "probability_upper_95": upper,
                          "probability_interval_width": upper - lower,
@@ -214,7 +273,12 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
                          "predicted_response": (probability >= threshold).astype(int),
                          "decision_threshold": threshold,
                          "training_overlap": overlap,
-                         "overlap_check_available": overlap_check_available})
+                         "overlap_check_available": overlap_check_available,
+                         "domain_check_available": domain["available"],
+                         "domain_max_abs_robust_z": domain["max_abs_z"],
+                         "domain_outside_range_fraction": domain["outside_fraction"],
+                         "domain_missing_feature_fraction": domain["missing_fraction"],
+                         "domain_shift_flag": domain["flag"]})
 
 
 def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap: int = 500) -> dict:
@@ -232,10 +296,22 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     overlap = predictions.loc[overlap_flags, "patient_id"].tolist()
     if overlap:
         raise ValueError(f"external cohort overlaps model training patients: {overlap[:10]}")
+    if "domain_check_available" not in predictions:
+        raise ValueError("external evaluation requires locked-model applicability diagnostics")
+    domain_available = _boolean_audit_column(
+        predictions.domain_check_available, "domain_check_available"
+    )
+    if not domain_available.all() or "domain_shift_flag" not in predictions:
+        raise ValueError("external evaluation requires locked-model applicability diagnostics")
+    domain_flags = _boolean_audit_column(predictions.domain_shift_flag, "domain_shift_flag")
     data = predictions.merge(labels, on="patient_id", validate="one_to_one")
     metrics = evaluate_probabilities(data.response, data.probability, bootstrap=bootstrap)
     metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
                     "training_overlap_checked": True, "training_overlap_count": 0,
+                    "applicability_checked": True,
+                    "domain_shift_count": int(domain_flags.sum()),
+                    "domain_shift_fraction": float(domain_flags.mean()),
+                    "in_domain_fraction": float((~domain_flags).mean()),
                     "note": "External only if this cohort was never used for fitting, tuning, or feature design."})
     return metrics
 
@@ -372,15 +448,17 @@ def train_evaluate(
     output.mkdir(parents=True, exist_ok=True)
     training_hashes = sorted(_patient_hash(value) for value in data.patient_id)
     cohort_fingerprint = hashlib.sha256("\n".join(training_hashes).encode("utf-8")).hexdigest()
+    training_domain = _training_domain_reference(X, cols)
     joblib.dump({"model": model, "features": cols, "threshold": 0.5,
                  "excluded_features": excluded,
                  "training_patients": int(len(data)), "selected_C": final_c,
                  "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
                  "training_patient_hashes": training_hashes,
                  "training_cohort_fingerprint": cohort_fingerprint,
+                 "training_domain": training_domain,
                  "bootstrap_models": bootstrap_models,
                  "uncertainty_method": "patient_bootstrap_refit",
-                 "artifact_version": 4}, output / "model.joblib")
+                 "artifact_version": 5}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
                   "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(

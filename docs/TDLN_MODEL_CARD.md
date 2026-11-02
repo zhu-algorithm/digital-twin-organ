@@ -63,6 +63,8 @@ Feature roles are audited before fitting. Technical cell-count/QC columns are ex
 
 Patient-set integrity is fail-closed. Training and evaluation require exact, unique patient alignment rather than silently dropping non-matches. Versioned artifacts contain SHA-256 training-identifier hashes and a cohort fingerprint; locked external evaluation rejects any detected training overlap or legacy artifact without an overlap audit. These hashes reduce accidental leakage but are not anonymous when source identifiers are predictable, so artifacts must remain under the cohort's data-governance controls.
 
+Artifact version 5 also freezes the label-free training support of each model feature: median, robust scale, observed finite range and missingness. Every locked prediction reports robust distance, range extrapolation, missing-feature fraction and a prespecified applicability flag; external evaluation fails when this audit is unavailable and reports in-domain coverage. This exposes unsupported extrapolation but does not prove biological transportability and must not be used to remove difficult patients after looking at their outcomes.
+
 Locked patient predictions include a 95% interval from deterministic patient-level bootstrap refits. The interval holds the fully selected regularization value fixed and therefore quantifies instability under resampling of the development patients. It is not a clinical coverage guarantee and omits distribution shift, measurement error, mechanistic misspecification and uncertainty in how single-cell features map into twin states.
 
 ## Identifiability policy
