@@ -51,7 +51,7 @@ tdln-pd1 augment-twin --features examples/features.csv --spatial-initial-zones a
 tdln-pd1 verify-augmentation --audit artifacts/hybrid_features.csv.twin-audit.json --output artifacts/hybrid_features.csv --features examples/features.csv --spatial-initial-zones artifacts/spatial_cohort_initial.csv --systemic-parameters artifacts/calibration/fitted_parameters.json --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json
 tdln-pd1 train --features artifacts/hybrid_features.csv --labels examples/labels.csv --output artifacts --ensemble-members 50
 tdln-pd1 predict --model artifacts/model.joblib --features external_hybrid_features.csv --output external_predictions.csv
-tdln-pd1 evaluate --predictions external_predictions.csv --labels external_labels.csv --output external_metrics.json
+tdln-pd1 evaluate --predictions external_predictions.csv --model artifacts/model.joblib --features external_hybrid_features.csv --labels external_labels.csv --output external_metrics.json
 tdln-pd1 site-cv --features artifacts/hybrid_features.csv --labels labels_with_center.csv --output artifacts/site_cv
 tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --parameters artifacts/calibration/fitted_parameters.json --output artifacts/tdln_trajectory.csv
 tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --output artifacts/spatial_initial.csv
@@ -138,6 +138,8 @@ The spatial screen accepts both an exact fitted `SpatialParameters` JSON and one
 `augment-twin` maps each patient's measured dendritic, cytotoxic, exhaustion, TCF7-memory and immune-cell-fraction features to bounded initial states, runs matched untreated and anti-PD-1 counterfactuals, and appends mechanistic endpoints. These include receptor occupancy, Tpex/effector states and treated-minus-control tumour/effector effects. The mapping is explicit in `hybrid.py`; response labels are not accepted or used during augmentation. The resulting hybrid table can be supplied to the existing `train` command.
 
 The assay-to-state bridge is a strict `FeatureStateMapping` JSON rather than an untracked set of literals. It controls signature intercepts, lower/upper state multipliers and lineage-specific coefficients shared by the systemic and spatial initializers. `examples/feature_state_mapping.json` reproduces the historical defaults. A supplied mapping is schema-checked, fingerprinted in both parameter and augmentation sidecars, independently reverified before training in CI, and marked only through a model-excluded `qc_` field. These coefficients still require cohort-specific calibration against quantitative cell/state measurements; versioning them does not make their defaults biological measurements.
+
+Locked inference emits prediction-audit schema version 3. External `evaluate` requires the exact `--model` and `--features` used by `predict`, verifies their fingerprints, reruns `predict_locked`, checks the complete prediction CSV and patient count, and records `prediction_derivation_replayed=true` in the metric report. A probability file cannot therefore be evaluated under a valid-looking audit without reproducing it from the bound locked model. This is deterministic inference integrity, not proof that the cohort is independent or clinically representative.
 
 The bridge can be fitted from long-form paired measurements (`patient_id,target,value,sd` plus the same patient feature columns) rather than edited by hand:
 

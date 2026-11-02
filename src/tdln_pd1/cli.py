@@ -178,6 +178,8 @@ def main() -> None:
     predict.add_argument("--output", required=True)
     evaluate = sub.add_parser("evaluate")
     evaluate.add_argument("--predictions", required=True)
+    evaluate.add_argument("--model", required=True)
+    evaluate.add_argument("--features", required=True)
     evaluate.add_argument("--labels", required=True)
     evaluate.add_argument("--output", required=True)
     evaluate.add_argument("--bootstrap", type=int, default=500)
@@ -392,7 +394,7 @@ def main() -> None:
     elif args.command == "evaluate":
         import pandas as pd
         prediction_audit = verify_prediction_audit(
-            args.predictions, args.prediction_audit,
+            args.predictions, args.prediction_audit, args.model, args.features,
         )
         metrics = evaluate_external(pd.read_csv(args.predictions), load_labels(args.labels), args.bootstrap)
         metrics["validation_chain"] = {
@@ -400,6 +402,7 @@ def main() -> None:
             "model_sha256": prediction_audit["payload"]["inputs"]["model"]["sha256"],
             "features_sha256": prediction_audit["payload"]["inputs"]["features"]["sha256"],
             "integrity_verified": True,
+            "prediction_derivation_replayed": prediction_audit["derivation_replayed"],
         }
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         Path(args.output).write_text(json.dumps(metrics, indent=2) + "\n")

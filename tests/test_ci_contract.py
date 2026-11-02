@@ -25,6 +25,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "mapping_calibration/mapping_calibration_provenance.json",
         "--feature-state-mapping /tmp/mapping_calibration/fitted_feature_state_mapping.json",
         "--mapping-diagnostics /tmp/mapping_calibration/mapping_calibration_diagnostics.json",
+        "evaluate --predictions /tmp/predictions.csv --model /tmp/model/model.joblib --features /tmp/external_smoke.csv",
         "verify-features --audit /tmp/features.csv.feature-audit.json --cells examples/cells.csv",
         "verify-spatial-features --audit /tmp/spatial_cohort_initial.csv.spatial-audit.json --spots examples/spatial_spots_cohort.csv",
         "spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --time-column sampling_day --baseline-values 0",

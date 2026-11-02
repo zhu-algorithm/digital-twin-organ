@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 import joblib
+import pandas as pd
 
+from .model import predict_locked
 from .provenance import sha256_file
 
 
@@ -42,7 +45,7 @@ def write_prediction_audit(
             or artifact["point_prediction_method"] != "full_cohort_locked_model"):
         raise ValueError("locked model lacks the version 8 point-prediction contract")
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "stage": "locked_prediction",
         "research_only": True,
         "model_refit": False,
@@ -77,12 +80,14 @@ def write_prediction_audit(
 def verify_prediction_audit(
     predictions_path: str | Path,
     audit_path: str | Path | None = None,
+    model_path: str | Path | None = None,
+    features_path: str | Path | None = None,
 ) -> dict:
-    """Fail closed if a prediction file no longer matches its locked audit."""
+    """Re-run locked inference and fail if any bound input or output differs."""
     predictions_path = Path(predictions_path)
     audit_path = Path(audit_path) if audit_path else Path(f"{predictions_path}.audit.json")
     payload = _load_json(audit_path)
-    if payload.get("schema_version") != 2 or payload.get("stage") != "locked_prediction":
+    if payload.get("schema_version") != 3 or payload.get("stage") != "locked_prediction":
         raise ValueError("unsupported locked-prediction audit schema")
     if payload.get("model_refit") is not False:
         raise ValueError("prediction audit does not attest locked inference")
@@ -93,8 +98,24 @@ def verify_prediction_audit(
         raise ValueError("prediction file SHA-256 does not match locked-prediction audit")
     if recorded.get("file") != predictions_path.name:
         raise ValueError("prediction filename does not match locked-prediction audit")
+    if model_path is None or features_path is None:
+        raise ValueError("prediction replay requires the locked model and feature table")
+    model_path, features_path = Path(model_path), Path(features_path)
+    for name, path in (("model", model_path), ("features", features_path)):
+        record = payload.get("inputs", {}).get(name, {})
+        if (record.get("file") != path.name or not path.is_file()
+                or record.get("sha256") != sha256_file(path)):
+            raise ValueError(f"prediction replay {name} SHA-256 mismatch")
+    replayed = predict_locked(model_path, pd.read_csv(features_path))
+    if len(replayed) != payload.get("patient_count"):
+        raise ValueError("prediction replay patient count mismatch")
+    replayed_sha = hashlib.sha256(
+        replayed.to_csv(index=False).encode("utf-8")
+    ).hexdigest()
+    if replayed_sha != recorded["sha256"]:
+        raise ValueError("locked prediction derivation replay mismatch")
     return {"payload": payload, "audit_sha256": sha256_file(audit_path),
-            "audit_file": audit_path.name}
+            "audit_file": audit_path.name, "derivation_replayed": True}
 
 
 def write_evaluation_audit(

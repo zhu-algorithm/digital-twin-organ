@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import joblib
+import pandas as pd
 import pytest
 
 from tdln_pd1.validation_audit import (verify_prediction_audit,
@@ -24,15 +25,20 @@ def _files(tmp_path: Path):
     return model, features, predictions
 
 
-def test_prediction_and_evaluation_audits_bind_every_file(tmp_path: Path):
+def test_prediction_and_evaluation_audits_bind_every_file(tmp_path: Path, monkeypatch):
     model, features, predictions = _files(tmp_path)
+    monkeypatch.setattr(
+        "tdln_pd1.validation_audit.predict_locked",
+        lambda *_: pd.DataFrame({"patient_id": ["p1"], "probability": [0.7]}),
+    )
     audit_path = write_prediction_audit(model, features, predictions, 1)
-    verified = verify_prediction_audit(predictions)
+    verified = verify_prediction_audit(predictions, model_path=model, features_path=features)
     assert verified["payload"]["model_refit"] is False
     assert verified["payload"]["patient_count"] == 1
     assert verified["payload"]["decision_threshold"] == 0.5
-    assert verified["payload"]["schema_version"] == 2
+    assert verified["payload"]["schema_version"] == 3
     assert verified["payload"]["point_prediction_method"] == "full_cohort_locked_model"
+    assert verified["derivation_replayed"] is True
 
     labels = tmp_path / "labels.csv"
     labels.write_text("patient_id,response\np1,1\n")
@@ -52,7 +58,7 @@ def test_prediction_audit_rejects_posthoc_file_replacement(tmp_path: Path):
     write_prediction_audit(model, features, predictions, 1)
     predictions.write_text("patient_id,probability\np1,0.1\n")
     with pytest.raises(ValueError, match="SHA-256"):
-        verify_prediction_audit(predictions)
+        verify_prediction_audit(predictions, model_path=model, features_path=features)
 
 
 def test_prediction_audit_requires_versioned_training_fingerprints(tmp_path: Path):
@@ -60,3 +66,10 @@ def test_prediction_audit_requires_versioned_training_fingerprints(tmp_path: Pat
     joblib.dump({"artifact_version": 1}, model)
     with pytest.raises(ValueError, match="fingerprints"):
         write_prediction_audit(model, features, predictions, 1)
+
+
+def test_prediction_audit_requires_replay_inputs(tmp_path: Path):
+    model, features, predictions = _files(tmp_path)
+    write_prediction_audit(model, features, predictions, 1)
+    with pytest.raises(ValueError, match="requires the locked model"):
+        verify_prediction_audit(predictions)
