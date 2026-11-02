@@ -17,6 +17,10 @@ def _spots():
 
 def test_spatial_spots_aggregate_to_auditable_zone_states():
     states = aggregate_spatial_spots(_spots(), "area")
+    assert len(states) == 24
+    observed = states[["zone", "zone_observed"]].drop_duplicates().set_index("zone")
+    assert observed.zone_observed.sum() == 2
+    assert not observed.loc["medulla", "zone_observed"]
     amount = states.set_index(["species", "zone"]).amount
     assert amount[("antigen", "afferent_lymph")] == 1.0
     assert amount[("tpex", "paracortex")] == 11.0
@@ -25,6 +29,15 @@ def test_spatial_spots_aggregate_to_auditable_zone_states():
     day_zero = trajectory[trajectory.day.eq(0)].set_index(["species", "zone"]).amount
     assert day_zero[("tpex", "paracortex")] == 11.0
     assert day_zero[("effector", "paracortex")] == 25.0
+
+
+def test_spatial_simulator_rejects_an_implicit_partial_state_grid():
+    partial = pd.DataFrame({
+        "species": ["tpex", "effector"], "zone": ["paracortex"] * 2,
+        "amount": [10.0, 5.0],
+    })
+    with pytest.raises(ValueError, match="complete species-zone grid"):
+        simulate_spatial(days=1, initial=partial)
 
 
 def test_spatial_ingestion_fails_closed_on_anatomy_and_abundance_errors():

@@ -91,6 +91,14 @@ def initial_vector(initial: SpatialInitialState | pd.DataFrame | None = None) ->
         invalid_zones = sorted(set(x.zone) - set(ZONE_NAMES))
         if invalid_species or invalid_zones:
             raise ValueError(f"invalid initial species={invalid_species}, zones={invalid_zones}")
+        expected = {(species, zone) for species in SPECIES for zone in ZONE_NAMES}
+        supplied = set(zip(x.species, x.zone))
+        missing_pairs = sorted(expected - supplied)
+        if missing_pairs:
+            raise ValueError(
+                "zone initial state must explicitly contain the complete species-zone grid; "
+                f"missing={missing_pairs[:10]}"
+            )
         x["amount"] = pd.to_numeric(x.amount, errors="coerce")
         if not np.isfinite(x.amount).all() or x.amount.lt(0).any():
             raise ValueError("zone initial amounts must be finite and non-negative")

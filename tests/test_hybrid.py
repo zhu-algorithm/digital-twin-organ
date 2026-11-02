@@ -5,7 +5,21 @@ from tdln_pd1.hybrid import (
     augment_with_twin, initial_state_from_features, spatial_initial_state_from_features,
 )
 from tdln_pd1.simulator import TwinParameters
-from tdln_pd1.spatial_dynamics import SpatialParameters
+from tdln_pd1.spatial_dynamics import SPECIES, ZONE_NAMES, SpatialParameters
+
+
+def _complete_spatial_state(patient_id: str, tpex: float, effector: float) -> pd.DataFrame:
+    rows = []
+    for species in SPECIES:
+        for zone in ZONE_NAMES:
+            amount = 0.0
+            if species == "tpex" and zone == "paracortex":
+                amount = tpex
+            elif species == "effector" and zone == "paracortex":
+                amount = effector
+            rows.append({"patient_id": patient_id, "species": species, "zone": zone,
+                         "amount": amount, "zone_observed": zone == "paracortex"})
+    return pd.DataFrame(rows)
 
 
 def test_feature_mapping_changes_biologically_linked_states():
@@ -60,18 +74,17 @@ def test_duplicate_patient_is_rejected():
 
 def test_measured_spatial_states_drive_hybrid_endpoints_without_labels():
     features = pd.DataFrame({"patient_id": ["a", "b"], "sig_tcf7_memory": [0.2, 0.2]})
-    states = pd.DataFrame({
-        "patient_id": ["a", "a", "b", "b"],
-        "species": ["tpex", "effector", "tpex", "effector"],
-        "zone": ["paracortex"] * 4,
-        "amount": [1.0e4, 5.0e3, 2.0e5, 8.0e4],
-    })
+    states = pd.concat([
+        _complete_spatial_state("a", 1.0e4, 5.0e3),
+        _complete_spatial_state("b", 2.0e5, 8.0e4),
+    ], ignore_index=True)
     out = augment_with_twin(
         features, days=3, dose_days=(0,), spatial_states=states,
         systemic_parameters=TwinParameters(tumour_growth=0.15),
         spatial_parameters=SpatialParameters(effector_to_medulla=0.2),
     )
     assert out.qc_spatial_initialization_measured.eq(1).all()
+    assert out.qc_spatial_zone_coverage.eq(1 / 6).all()
     assert out.qc_systemic_parameters_supplied.eq(1).all()
     assert out.qc_spatial_parameters_supplied.eq(1).all()
     assert "response" not in out

@@ -131,6 +131,20 @@ def augment_with_twin(
             if measured_states is not None
             else spatial_initial_state_from_features(pd.Series(row))
         )
+        if measured_states is not None and "zone_observed" in spatial_initial:
+            zone_audit = spatial_initial[["zone", "zone_observed"]].drop_duplicates()
+            if zone_audit.zone.duplicated().any():
+                raise ValueError("zone_observed must be consistent across species within each zone")
+            if pd.api.types.is_bool_dtype(zone_audit.zone_observed):
+                observed_flag = zone_audit.zone_observed
+            else:
+                normalized = zone_audit.zone_observed.astype(str).str.strip().str.lower()
+                if not normalized.isin({"true", "false"}).all():
+                    raise ValueError("zone_observed must contain only true/false values")
+                observed_flag = normalized.eq("true")
+            spatial_zone_coverage = float(observed_flag.mean())
+        else:
+            spatial_zone_coverage = np.nan
         spatial_days = min(days, 14.0)
         spatial_control = simulate_spatial_coupled(
             control, days=spatial_days, initial=spatial_initial,
@@ -164,6 +178,7 @@ def augment_with_twin(
                 spatial_treated, "tpex", "paracortex"
             ),
             "qc_spatial_initialization_measured": int(measured_states is not None),
+            "qc_spatial_zone_coverage": spatial_zone_coverage,
             "qc_systemic_parameters_supplied": int(systemic_parameters is not None),
             "qc_spatial_parameters_supplied": int(spatial_parameters is not None),
         })

@@ -52,8 +52,20 @@ def aggregate_spatial_spots(spots: pd.DataFrame, weight_column: str | None = Non
     weighted = x.loc[:, list(SPECIES)].multiply(weight, axis=0)
     weighted["patient_id"] = x.patient_id
     weighted["zone"] = x.zone
-    out = weighted.groupby(["patient_id", "zone"], sort=True, as_index=False).sum()
-    return out.melt(id_vars=["patient_id", "zone"], value_vars=list(SPECIES),
-                    var_name="species", value_name="amount").sort_values(
+    observed = weighted.groupby(["patient_id", "zone"], sort=True, as_index=False).sum()
+    patients = sorted(observed.patient_id.unique())
+    zones = [zone.name for zone in ZONES]
+    complete_index = pd.MultiIndex.from_product(
+        [patients, zones], names=["patient_id", "zone"]
+    )
+    observed_index = pd.MultiIndex.from_frame(observed[["patient_id", "zone"]])
+    out = observed.set_index(["patient_id", "zone"]).reindex(
+        complete_index, fill_value=0.0,
+    ).reset_index()
+    out["zone_observed"] = pd.MultiIndex.from_frame(
+        out[["patient_id", "zone"]]
+    ).isin(observed_index)
+    return out.melt(id_vars=["patient_id", "zone", "zone_observed"],
+                    value_vars=list(SPECIES), var_name="species", value_name="amount").sort_values(
         ["patient_id", "species", "zone"], ignore_index=True
     )

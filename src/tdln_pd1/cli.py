@@ -377,8 +377,11 @@ def main() -> None:
         states = aggregate_spatial_spots(pd.read_csv(args.spots), args.weight_column)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         states.to_csv(args.output, index=False)
+        observed_zones = states.loc[states.zone_observed].groupby("patient_id").zone.nunique()
         print(json.dumps({"patients": int(states.patient_id.nunique()),
-                          "zones_observed": int(states.zone.nunique()),
+                          "zones_in_state_grid": int(states.zone.nunique()),
+                          "minimum_observed_zones": int(observed_zones.min()),
+                          "maximum_observed_zones": int(observed_zones.max()),
                           "species": int(states.species.nunique()),
                           "output": args.output, "labels_used": False}, indent=2))
     elif args.command == "sensitivity":
