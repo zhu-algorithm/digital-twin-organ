@@ -23,7 +23,7 @@ SCHEMA_VERSION = 1
 
 def _sample(frame, days: np.ndarray, columns: tuple[str, ...]) -> list[dict[str, float]]:
     return [
-        {"day": float(day), **{name: round(float(np.interp(day, frame.day, frame[name])), 6)
+        {"day": float(day), **{name: round(float(np.interp(day, frame.day, frame[name])), 3)
                                 for name in columns}}
         for day in days
     ]
@@ -47,7 +47,7 @@ def build_dashboard_data() -> dict:
                     day,
                     species_frame[species_frame.zone == zone.name].day,
                     species_frame[species_frame.zone == zone.name].amount,
-                )), 6)
+                )), 3)
                 for zone in ZONES
             }
         spatial_records.append({"day": float(day), "values": values})
