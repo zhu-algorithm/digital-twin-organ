@@ -9,7 +9,7 @@ Repository history and all branches were checked. At reconstruction time the rep
 ## Pipeline
 
 1. Load cell-level CSV or optional `.h5ad` (`obs.patient_id`, `obs.cell_type`), preserving tissue, clonotype, recognized temporal fields and any explicitly requested custom time field; both formats require an explicit baseline slice whenever temporal columns exist.
-2. Compute TDLN-restricted patient-level cell fractions and cytotoxic, exhaustion, interferon, Treg, TCF7-memory, and dendritic-activation signatures while retaining paired tissues for TCR sharing.
+2. Compute TDLN-restricted patient-level cell fractions and cytotoxic, exhaustion, interferon, Treg, TCF7-memory, and dendritic-activation signatures while retaining paired tissues for TCR sharing. TCR features use one fail-closed assignment filter and report unique-clone sharing, TDLN cell-weighted sharing and set Jaccard overlap; missing/unassigned placeholders can never count as shared lineages.
 3. Join pre-specified binary patient labels.
 4. Select logistic-regression regularization only inside nested, stratified patient-grouped cross-validation and generate one out-of-fold probability per patient.
 5. Write cross-validated predictions, metrics, and a fitted model artifact.

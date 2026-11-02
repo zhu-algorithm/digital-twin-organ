@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .features import SIGNATURES, select_baseline_cells
+from .features import SIGNATURES, _assigned_clonotypes, select_baseline_cells
 
 
 def cohort_qc(
@@ -78,9 +78,8 @@ def cohort_qc(
         tissue_report["paired_tdln_tumour_patients"] = int(sum(v["tdln"] and v["tumour"] for v in flags))
     clonotype_report = {"available": "clonotype_id" in cells, "assigned_fraction": None}
     if "clonotype_id" in cells:
-        clone = cells.clonotype_id.dropna().astype(str)
-        assigned = ~clone.str.lower().isin({"", "nan", "none", "unassigned"})
-        clonotype_report["assigned_fraction"] = float(assigned.mean()) if len(clone) else 0.0
+        assigned = _assigned_clonotypes(cells.clonotype_id)
+        clonotype_report["assigned_fraction"] = float(len(assigned) / len(cells)) if len(cells) else 0.0
     return {
         "passed": not errors, "errors": errors, "warnings": warnings,
         "n_cells": int(len(cells)), "n_cells_raw": int(raw_cell_count),

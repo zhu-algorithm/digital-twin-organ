@@ -32,9 +32,26 @@ def test_tcr_clonality_and_cross_tissue_sharing():
     assert row.tcr_clone_richness == 4
     assert row.tcr_top_clone_fraction == 0.5
     assert row.tcr_tdln_tumour_shared_fraction == pytest.approx(1 / 3)
+    assert row.tcr_tdln_tumour_shared_cell_fraction == pytest.approx(1 / 2)
+    assert row.tcr_tdln_tumour_jaccard == pytest.approx(1 / 4)
     assert 0 < row.tcr_simpson_concentration < 1
     assert row.n_cells == 4
     assert row.n_cells_total_selected == 6
+
+
+def test_unassigned_clonotype_placeholders_never_create_false_sharing():
+    cells = pd.DataFrame({
+        "patient_id": ["p1"] * 8,
+        "cell_type": ["T"] * 8,
+        "tissue": ["TDLN"] * 4 + ["tumour"] * 4,
+        "clonotype_id": ["a", "a", "unassigned", "NA",
+                         "b", "None", "nan", "N/A"],
+    })
+    row = aggregate_cells(cells).iloc[0]
+    assert row.tcr_clone_richness == 2
+    assert row.tcr_tdln_tumour_shared_fraction == 0.0
+    assert row.tcr_tdln_tumour_shared_cell_fraction == 0.0
+    assert row.tcr_tdln_tumour_jaccard == 0.0
 
 
 def test_temporal_input_requires_explicit_baseline_and_excludes_post_treatment():

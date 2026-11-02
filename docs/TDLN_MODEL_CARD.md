@@ -45,7 +45,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Directional antigen, DC and effector movement across six TDLN zones.
 - Validated spatial-omics aggregation and exact day-zero initialization of all zone/species states.
 - Matched spatial treatment/control counterfactuals with explicit receptor-occupancy provenance and zero-dose equivalence.
-- TCR clone diversity, dominance and paired TDLN–tumour lineage-sharing features.
+- TCR clone diversity, dominance and paired TDLN–tumour lineage sharing by unique-clone fraction, TDLN cell-weighted fraction and Jaccard overlap, with a common invalid-assignment filter.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
 - Leave-one-centre-out transportability evaluation with explicit reporting of non-evaluable sites.

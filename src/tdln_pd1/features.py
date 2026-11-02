@@ -14,6 +14,7 @@ SIGNATURES = {
     "dendritic_activation": ("CD80", "CD86", "CCR7", "HLA-DRA"),
 }
 TEMPORAL_COLUMNS = ("sampling_day", "timepoint", "visit", "collection_timepoint")
+UNASSIGNED_CLONOTYPES = {"", "nan", "none", "unassigned", "na", "n/a"}
 
 
 def select_baseline_cells(
@@ -63,6 +64,11 @@ def _mean_present(frame: pd.DataFrame, genes: tuple[str, ...]) -> pd.Series:
     return frame[present].apply(pd.to_numeric, errors="coerce").mean(axis=1)
 
 
+def _assigned_clonotypes(series: pd.Series) -> pd.Series:
+    clones = series.dropna().astype(str).str.strip()
+    return clones[~clones.str.lower().isin(UNASSIGNED_CLONOTYPES)]
+
+
 def aggregate_cells(
     cells: pd.DataFrame,
     time_column: str | None = None,
@@ -101,8 +107,7 @@ def aggregate_cells(
         for name in SIGNATURES:
             row[f"sig_{name}"] = float(feature_group[f"sig_{name}"].mean())
         if "clonotype_id" in group:
-            clones = group["clonotype_id"].dropna().astype(str)
-            clones = clones[~clones.str.lower().isin({"", "nan", "none", "unassigned"})]
+            clones = _assigned_clonotypes(group["clonotype_id"])
             counts = clones.value_counts()
             if len(counts):
                 probabilities = counts.to_numpy(dtype=float) / counts.sum()
@@ -116,9 +121,23 @@ def aggregate_cells(
                             "tcr_normalized_entropy": np.nan, "tcr_top_clone_fraction": np.nan})
             if "tissue" in group:
                 tissue = group["tissue"].astype(str).str.lower()
-                tdln = set(group.loc[tissue.str.contains("tdln|lymph"), "clonotype_id"].dropna().astype(str))
-                tumour = set(group.loc[tissue.str.contains("tumou|tumor"), "clonotype_id"].dropna().astype(str))
-                tdln.discard(""); tumour.discard("")
-                row["tcr_tdln_tumour_shared_fraction"] = float(len(tdln & tumour) / len(tdln)) if tdln else np.nan
+                tdln_clones = _assigned_clonotypes(
+                    group.loc[tissue.str.contains("tdln|lymph"), "clonotype_id"]
+                )
+                tumour_clones = _assigned_clonotypes(
+                    group.loc[tissue.str.contains("tumou|tumor"), "clonotype_id"]
+                )
+                tdln, tumour = set(tdln_clones), set(tumour_clones)
+                shared = tdln & tumour
+                union = tdln | tumour
+                row["tcr_tdln_tumour_shared_fraction"] = (
+                    float(len(shared) / len(tdln)) if tdln else np.nan
+                )
+                row["tcr_tdln_tumour_shared_cell_fraction"] = (
+                    float(tdln_clones.isin(shared).mean()) if len(tdln_clones) else np.nan
+                )
+                row["tcr_tdln_tumour_jaccard"] = (
+                    float(len(shared) / len(union)) if union else np.nan
+                )
         rows.append(row)
     return pd.DataFrame(rows).fillna({"n_cells": 0})

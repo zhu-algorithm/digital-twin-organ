@@ -22,6 +22,17 @@ def test_qc_reports_pairing_clonotypes_and_response_balance():
     assert report["clonotypes"]["assigned_fraction"] > 0
 
 
+def test_qc_clonotype_assignment_uses_same_placeholder_filter_as_features():
+    cells = pd.DataFrame({
+        "patient_id": ["p1", "p1", "p2", "p2"],
+        "cell_type": ["T"] * 4,
+        "clonotype_id": ["a", "NA", "b", "unassigned"],
+    })
+    labels = pd.DataFrame({"patient_id": ["p1", "p2"], "response": [0, 1]})
+    report = cohort_qc(cells, labels, feature_tissue_pattern="all")
+    assert report["clonotypes"]["assigned_fraction"] == 0.5
+
+
 def test_qc_fails_on_ambiguous_timepoints_and_reports_explicit_baseline_selection():
     cells = pd.DataFrame({
         "patient_id": ["a", "a", "b", "b", "c", "c", "d", "d"],
