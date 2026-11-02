@@ -56,6 +56,34 @@ def _write_parameter_provenance(output: str, sources: dict) -> None:
         }, indent=2) + "\n")
 
 
+def _load_patient_spatial_initial(path: str | None, patient_id: str | None):
+    """Load one patient's complete zone state and bind it to its source file."""
+    if not path:
+        if patient_id is not None:
+            raise ValueError("--patient-id requires --initial-zones")
+        return None, None
+    import pandas as pd
+    source = Path(path)
+    states = pd.read_csv(source)
+    if "patient_id" not in states:
+        raise ValueError("initial zone states need patient_id")
+    patients = states.patient_id.astype(str).unique().tolist()
+    selected_id = str(patient_id) if patient_id is not None else (
+        patients[0] if len(patients) == 1 else None
+    )
+    if selected_id is None:
+        raise ValueError("--patient-id is required when initial states contain multiple patients")
+    selected = states[states.patient_id.astype(str).eq(selected_id)].copy()
+    if selected.empty:
+        raise ValueError(f"patient not found in initial zone states: {selected_id}")
+    return selected, {
+        "file": source.name,
+        "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "patient_id": selected_id,
+        "rows": int(len(selected)),
+    }
+
+
 def _training_input_provenance(feature_path: str) -> dict:
     source = Path(feature_path)
     provenance = {
@@ -168,6 +196,7 @@ def main() -> None:
     spatial_features.add_argument("--output", required=True)
     sens = sub.add_parser("sensitivity")
     sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
+    sens.add_argument("--base-parameters", help="fitted TwinParameters JSON")
     sens.add_argument("--days", type=float, default=42.0)
     sens.add_argument("--dose-days", default="0,14,28")
     sens.add_argument("--dose", type=float, default=1.0)
@@ -177,6 +206,9 @@ def main() -> None:
     sens.add_argument("--output", required=True)
     spatial_sens = sub.add_parser("spatial-sensitivity")
     spatial_sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
+    spatial_sens.add_argument("--spatial-parameters", help="fitted SpatialParameters JSON")
+    spatial_sens.add_argument("--initial-zones", help="long patient-zone-species state CSV")
+    spatial_sens.add_argument("--patient-id", help="patient to select from --initial-zones")
     spatial_sens.add_argument("--days", type=float, default=14.0)
     spatial_sens.add_argument("--checkpoint-occupancy", type=float, default=0.8)
     spatial_sens.add_argument("--samples", type=int, default=128)
@@ -396,12 +428,23 @@ def main() -> None:
         from .sensitivity import DEFAULT_PARAMETERS
         names = tuple(name.strip() for name in args.parameters.split(",") if name.strip()) or DEFAULT_PARAMETERS
         doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
-        samples, ranking = global_sensitivity(names=names, days=args.days, doses=doses,
+        base_parameters, parameter_provenance = _load_parameter_file(
+            args.base_parameters, TwinParameters
+        )
+        samples, ranking = global_sensitivity(parameters=base_parameters, names=names,
+                                              days=args.days, doses=doses,
                                               n=args.samples, fold_range=args.fold_range, seed=args.seed)
         output = Path(args.output)
         output.mkdir(parents=True, exist_ok=True)
         samples.to_csv(output / "sensitivity_samples.csv", index=False)
         ranking.to_csv(output / "sensitivity_ranking.csv", index=False)
+        (output / "sensitivity_provenance.json").write_text(json.dumps({
+            "schema_version": 1, "parameter_source": parameter_provenance,
+            "sampled_parameters": list(names), "days": args.days,
+            "dose_days": [dose.day for dose in doses], "dose": args.dose,
+            "samples": args.samples, "fold_range": args.fold_range,
+            "seed": args.seed, "research_only": True,
+        }, indent=2) + "\n")
         top = ranking.groupby("outcome", sort=False).first().reset_index()
         print(json.dumps({"samples": len(samples), "parameters": len(names),
                           "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
@@ -410,14 +453,29 @@ def main() -> None:
         from .sensitivity import DEFAULT_SPATIAL_PARAMETERS
         names = (tuple(name.strip() for name in args.parameters.split(",") if name.strip())
                  or DEFAULT_SPATIAL_PARAMETERS)
+        base_parameters, parameter_provenance = _load_parameter_file(
+            args.spatial_parameters, SpatialParameters
+        )
+        initial, initial_provenance = _load_patient_spatial_initial(
+            args.initial_zones, args.patient_id
+        )
         samples, ranking = global_spatial_sensitivity(
-            names=names, days=args.days, checkpoint_occupancy=args.checkpoint_occupancy,
+            parameters=base_parameters, initial=initial, names=names, days=args.days,
+            checkpoint_occupancy=args.checkpoint_occupancy,
             n=args.samples, fold_range=args.fold_range, seed=args.seed,
         )
         output = Path(args.output)
         output.mkdir(parents=True, exist_ok=True)
         samples.to_csv(output / "spatial_sensitivity_samples.csv", index=False)
         ranking.to_csv(output / "spatial_sensitivity_ranking.csv", index=False)
+        (output / "spatial_sensitivity_provenance.json").write_text(json.dumps({
+            "schema_version": 1, "parameter_source": parameter_provenance,
+            "initial_state_source": initial_provenance,
+            "sampled_parameters": list(names), "days": args.days,
+            "checkpoint_occupancy": args.checkpoint_occupancy,
+            "samples": args.samples, "fold_range": args.fold_range,
+            "seed": args.seed, "research_only": True,
+        }, indent=2) + "\n")
         top = ranking.groupby("outcome", sort=False).first().reset_index()
         print(json.dumps({
             "samples": len(samples), "parameters": len(names),

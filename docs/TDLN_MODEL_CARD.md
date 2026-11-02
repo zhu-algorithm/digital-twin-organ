@@ -103,6 +103,8 @@ Global sensitivity screening samples configurable positive parameter ranges on a
 
 The six-zone layer has a separate paired sensitivity screen. Each sampled spatial parameter vector is run from the same initial state at zero and prespecified PD-1 occupancy; untreated endpoints, occupied endpoints and within-draw deltas are ranked separately. The paired delta isolates the simulator's checkpoint-response mechanism from baseline transport variation, but fixed occupancy is not a pharmacokinetic or patient-level causal estimate.
 
+Sensitivity ranges can be centered on exact fitted systemic or spatial parameter files. The spatial screen can additionally use one measured patient-level 24-state initialization. Machine-readable provenance binds source-file SHA-256 values, the selected patient, sampled fields, ranges, occupancy, sample count and seed to each analysis directory; this records the analysis inputs but does not establish that a fitted parameter set transfers between cohorts.
+
 ## Mechanism–ML boundary
 
 Single-cell features initialize selected immune states through bounded, documented rules. For every patient, the same initial state is simulated under treated and untreated schedules, producing counterfactual deltas. Outcome labels are joined only after this transformation. This ordering prevents the most direct form of target leakage, but it does not remove cohort confounding or guarantee transportability; nested model selection and locked external validation are still required.
