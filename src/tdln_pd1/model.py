@@ -94,6 +94,30 @@ def _boolean_audit_column(series: pd.Series, name: str) -> pd.Series:
     return normalized.eq("true")
 
 
+def _validate_model_matrix(
+    frame: pd.DataFrame,
+    columns: list[str],
+    context: str,
+) -> None:
+    """Require numeric, finite-or-missing measurements before sklearn sees them."""
+    non_numeric = [
+        column for column in columns
+        if not pd.api.types.is_numeric_dtype(frame[column])
+    ]
+    if non_numeric:
+        raise ValueError(f"{context} model features must be numeric: {sorted(non_numeric)}")
+    non_finite = []
+    for column in columns:
+        values = frame[column].to_numpy(dtype=float)
+        if np.isinf(values).any():
+            non_finite.append(column)
+    if non_finite:
+        raise ValueError(
+            f"{context} model features may be finite or missing, but not infinite: "
+            f"{sorted(non_finite)}"
+        )
+
+
 def _select_model_features(
     features: pd.DataFrame,
     labels: pd.DataFrame,
@@ -122,6 +146,7 @@ def _select_model_features(
     included = [column for column in candidates if column not in excluded]
     if not included:
         raise ValueError("no eligible biological or mechanistic model features remain")
+    _validate_model_matrix(features, included, "training")
     response = labels.set_index("patient_id").loc[features.patient_id, "response"].to_numpy(dtype=float)
     copied = []
     for column in included:
@@ -409,6 +434,7 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     missing = set(required) - set(features.columns)
     if missing:
         raise ValueError(f"missing locked-model features: {sorted(missing)}")
+    _validate_model_matrix(features, required, "prediction")
     ensemble = artifact.get("bootstrap_models", [])
     if ensemble:
         ensemble_probability = np.column_stack([

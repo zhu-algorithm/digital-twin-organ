@@ -47,6 +47,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Matched spatial treatment/control counterfactuals with explicit receptor-occupancy provenance and zero-dose equivalence.
 - TCR clone diversity, dominance and paired TDLN–tumour lineage sharing by unique-clone fraction, TDLN cell-weighted fraction and Jaccard overlap, with a common invalid-assignment filter.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
+- Shared train/validation/prediction matrix validation: numeric finite measurements or explicit missingness only; infinities and string placeholders fail before fitting or inference.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
 - Leave-one-centre-out transportability evaluation retains every predictable held-out patient. Single-class held-out centres remain in pooled proper-score and threshold analyses while their centre-specific discrimination is explicitly non-evaluable; only centres whose complementary training partition cannot fit a two-class model are skipped.
 - Fold-internal regularization selection for every evaluable held-out centre, with explicit fixed-value fallback when inner tuning is impossible.

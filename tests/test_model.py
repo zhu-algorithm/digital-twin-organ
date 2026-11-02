@@ -168,6 +168,33 @@ def test_non_numeric_metadata_must_not_enter_model_matrix(tmp_path: Path):
         train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
 
 
+def test_model_matrix_rejects_infinite_measurements_but_allows_missing_values(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    features = pd.DataFrame({
+        "patient_id": patients,
+        "x": [0.1, 0.2, float("nan"), 0.4, 1.1, 1.2, 1.3, 1.4],
+    })
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+    missing = pd.DataFrame({"patient_id": ["external"], "x": [float("nan")]})
+    assert predict_locked(tmp_path / "model.joblib", missing).probability.notna().all()
+
+    infinite = features.copy()
+    infinite.loc[0, "x"] = float("inf")
+    with pytest.raises(ValueError, match="not infinite"):
+        train_evaluate(infinite, labels, tmp_path / "inf", folds=2, ensemble_members=2)
+    with pytest.raises(ValueError, match="not infinite"):
+        predict_locked(
+            tmp_path / "model.joblib",
+            pd.DataFrame({"patient_id": ["external"], "x": [float("-inf")]}),
+        )
+    with pytest.raises(ValueError, match="must be numeric"):
+        predict_locked(
+            tmp_path / "model.joblib",
+            pd.DataFrame({"patient_id": ["external"], "x": ["unknown"]}),
+        )
+
+
 def test_external_audit_parses_csv_boole_but_rejects_ambiguous_values():
     predictions = pd.DataFrame({
         "patient_id": ["a", "b"], "probability": [0.2, 0.8],
