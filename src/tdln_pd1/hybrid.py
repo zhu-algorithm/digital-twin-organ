@@ -42,6 +42,14 @@ def _finite(row: pd.Series, name: str, default: float) -> float:
     return value
 
 
+def _finite_alias(row: pd.Series, names: tuple[str, ...], default: float) -> float:
+    """Prefer a lineage-restricted state estimate, then a legacy global one."""
+    for name in names:
+        if name in row and pd.notna(row[name]):
+            return _finite(row, name, default)
+    return default
+
+
 def _nonnegative(row: pd.Series, name: str, default: float) -> float:
     value = _finite(row, name, default)
     if value < 0:
@@ -69,10 +77,12 @@ def initial_state_from_features(row: pd.Series, base: InitialState | None = None
     and inspectable so a calibrated mapping can replace it without changing the simulator.
     """
     base = base or InitialState()
-    cytotoxic = _finite(row, "sig_cytotoxic", 0.0)
-    exhaustion = _finite(row, "sig_exhaustion", 0.0)
-    tcf7 = _finite(row, "sig_tcf7_memory", 0.0)
-    dendritic = _finite(row, "sig_dendritic_activation", 0.0)
+    cytotoxic = _finite_alias(row, ("sig_cytotoxic_cd8_t", "sig_cytotoxic"), 0.0)
+    exhaustion = _finite_alias(row, ("sig_exhaustion_cd8_t", "sig_exhaustion"), 0.0)
+    tcf7 = _finite_alias(row, ("sig_tcf7_memory_cd8_t", "sig_tcf7_memory"), 0.0)
+    dendritic = _finite_alias(
+        row, ("sig_dendritic_activation_dc", "sig_dendritic_activation"), 0.0
+    )
     treg_fraction = _fraction(row, ("frac_treg", "frac_regulatory_t_cell"), 0.05)
     cd8_fraction = _fraction(row, ("frac_cd8_t", "frac_cd8_t_cell"), 0.15)
     return replace(
@@ -96,9 +106,11 @@ def spatial_initial_state_from_features(
     absent, the auditable population default is retained.
     """
     base = base or SpatialInitialState()
-    dendritic = _finite(row, "sig_dendritic_activation", 0.0)
-    tcf7 = _finite(row, "sig_tcf7_memory", 0.0)
-    cytotoxic = _finite(row, "sig_cytotoxic", 0.0)
+    dendritic = _finite_alias(
+        row, ("sig_dendritic_activation_dc", "sig_dendritic_activation"), 0.0
+    )
+    tcf7 = _finite_alias(row, ("sig_tcf7_memory_cd8_t", "sig_tcf7_memory"), 0.0)
+    cytotoxic = _finite_alias(row, ("sig_cytotoxic_cd8_t", "sig_cytotoxic"), 0.0)
     cd8_fraction = _fraction(row, ("frac_cd8_t", "frac_cd8_t_cell"), 0.15)
     antigen_proxy = _nonnegative(row, "tumour_antigen_proxy", 0.5)
     return replace(

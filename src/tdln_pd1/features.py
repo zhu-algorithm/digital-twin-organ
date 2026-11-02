@@ -14,6 +14,16 @@ SIGNATURES = {
     "tcf7_memory": ("TCF7", "CCR7", "IL7R", "LTB"),
     "dendritic_activation": ("CD80", "CD86", "CCR7", "HLA-DRA"),
 }
+# Cell-state summaries are most interpretable within the lineage in which the
+# underlying programme is expected.  Global summaries remain available for
+# backwards compatibility and exploratory use.
+LINEAGE_SIGNATURES = {
+    "sig_cytotoxic_cd8_t": ("cytotoxic", r"\bcd8\b|cytotoxic|tpex|exhausted[ _-]*t"),
+    "sig_exhaustion_cd8_t": ("exhaustion", r"\bcd8\b|cytotoxic|tpex|exhausted[ _-]*t"),
+    "sig_tcf7_memory_cd8_t": ("tcf7_memory", r"\bcd8\b|cytotoxic|tpex|exhausted[ _-]*t"),
+    "sig_treg_treg": ("treg", r"\btreg\b|regulatory[ _-]*t"),
+    "sig_dendritic_activation_dc": ("dendritic_activation", r"\bdc\b|dendritic"),
+}
 TEMPORAL_COLUMNS = ("sampling_day", "timepoint", "visit", "collection_timepoint")
 UNASSIGNED_CLONOTYPES = {"", "nan", "none", "unassigned", "na", "n/a"}
 
@@ -151,6 +161,15 @@ def aggregate_cells(
             row[f"frac_{safe}"] = float(value)
         for name in SIGNATURES:
             row[f"sig_{name}"] = float(feature_group[f"sig_{name}"].mean())
+        normalized_cell_type = feature_group["cell_type"].astype(str).str.lower()
+        for feature_name, (signature_name, lineage_pattern) in LINEAGE_SIGNATURES.items():
+            lineage = feature_group.loc[
+                normalized_cell_type.str.contains(lineage_pattern, regex=True, na=False)
+            ]
+            row[feature_name] = (
+                float(lineage[f"sig_{signature_name}"].mean())
+                if not lineage.empty else np.nan
+            )
         if "clonotype_id" in group:
             clones = _assigned_clonotypes(group["clonotype_id"])
             counts = clones.value_counts()

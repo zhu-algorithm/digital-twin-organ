@@ -29,6 +29,25 @@ def test_feature_mapping_changes_biologically_linked_states():
     assert high.effector_tumour > low.effector_tumour
 
 
+def test_feature_mapping_prefers_lineage_state_and_falls_back_to_global():
+    lineage_low = initial_state_from_features(pd.Series({
+        "sig_cytotoxic_cd8_t": 0.1, "sig_cytotoxic": 2.0,
+        "sig_tcf7_memory_cd8_t": 0.1, "sig_tcf7_memory": 2.0,
+    }))
+    lineage_high = initial_state_from_features(pd.Series({
+        "sig_cytotoxic_cd8_t": 1.0, "sig_cytotoxic": 0.0,
+        "sig_tcf7_memory_cd8_t": 1.0, "sig_tcf7_memory": 0.0,
+    }))
+    fallback = initial_state_from_features(pd.Series({
+        "sig_cytotoxic_cd8_t": None, "sig_cytotoxic": 1.0,
+        "sig_tcf7_memory_cd8_t": None, "sig_tcf7_memory": 1.0,
+    }))
+    assert lineage_high.effector_tumour > lineage_low.effector_tumour
+    assert lineage_high.tpex_tdln > lineage_low.tpex_tdln
+    assert fallback.effector_tumour == lineage_high.effector_tumour
+    assert fallback.tpex_tdln == lineage_high.tpex_tdln
+
+
 def test_feature_mapping_initializes_patient_specific_spatial_states():
     low = spatial_initial_state_from_features(pd.Series({
         "sig_tcf7_memory": 0.1, "sig_cytotoxic": 0.1,

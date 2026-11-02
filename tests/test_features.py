@@ -14,6 +14,27 @@ def test_aggregate_cells_builds_fractions_and_signatures():
     assert out.loc["p1", "frac_cd8_t"] == 0.5
     assert out.loc["p1", "sig_exhaustion"] == 1.0
     assert out.loc["p2", "sig_cytotoxic"] == 2.0
+    assert out.loc["p1", "sig_exhaustion_cd8_t"] == 2.0
+    assert out.loc["p1", "sig_cytotoxic_cd8_t"] == 4.0
+
+
+def test_lineage_restricted_signatures_separate_state_from_composition():
+    cells = pd.DataFrame({
+        "patient_id": ["p1"] * 4,
+        "cell_type": ["CD8 T", "CD8 T", "DC", "Treg"],
+        "PDCD1": [1.0, 3.0, 100.0, 50.0],
+        "GZMB": [2.0, 4.0, 80.0, 0.0],
+        "TCF7": [5.0, 7.0, 90.0, 1.0],
+        "FOXP3": [0.0, 0.0, 0.0, 8.0],
+        "CD80": [0.0, 0.0, 9.0, 0.0],
+    })
+    row = aggregate_cells(cells, feature_tissue_pattern="all").iloc[0]
+    assert row.sig_exhaustion_cd8_t == 2.0
+    assert row.sig_cytotoxic_cd8_t == 3.0
+    assert row.sig_tcf7_memory_cd8_t == 6.0
+    assert row.sig_treg_treg == 8.0
+    assert row.sig_dendritic_activation_dc == 9.0
+    assert row.sig_exhaustion != row.sig_exhaustion_cd8_t
 
 
 def test_required_columns_are_checked():
