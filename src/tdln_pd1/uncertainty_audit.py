@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .provenance import sha256_file
+from .provenance import sha256_file, verify_bound_derivation_audit
 
 
 def write_uncertainty_audit(
@@ -62,6 +62,7 @@ def verify_uncertainty_audit(audit_path, input_paths: dict) -> dict:
         if (not target.is_file() or target.name != record.get("file")
                 or sha256_file(target) != record.get("sha256")):
             raise ValueError(f"uncertainty input SHA-256 mismatch: {name}")
+        verify_bound_derivation_audit(record, target)
         verified_inputs.append(name)
     verified_outputs = []
     for name, record in payload.get("outputs", {}).items():

@@ -20,7 +20,7 @@ from .spatial_assimilation import (
 )
 from .sensitivity import global_sensitivity, global_spatial_sensitivity
 from .sensitivity_audit import verify_sensitivity_audit, write_sensitivity_audit
-from .provenance import verify_manifest
+from .provenance import attach_derivation_audit, verify_manifest
 from .qc import cohort_qc
 from .verification import verify_twin
 from .validation_audit import (verify_prediction_audit, write_evaluation_audit,
@@ -86,12 +86,17 @@ def _load_patient_spatial_initial(path: str | None, patient_id: str | None):
     selected = states[states.patient_id.astype(str).eq(selected_id)].copy()
     if selected.empty:
         raise ValueError(f"patient not found in initial zone states: {selected_id}")
-    return selected, {
+    provenance = {
         "file": source.name,
         "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "patient_id": selected_id,
         "rows": int(len(selected)),
     }
+    provenance = attach_derivation_audit(
+        provenance, source, ".spatial-audit.json",
+        "label_free_spatial_state_featurization",
+    )
+    return selected, provenance
 
 
 def _source_record(path: str) -> dict:
@@ -519,6 +524,10 @@ def main() -> None:
         diagnostics = json.loads(diagnostics_path.read_text())
         doses = tuple(Dose(float(day), args.dose)
                       for day in args.dose_days.split(",") if day.strip())
+        if not doses or not np.isfinite(args.dose) or args.dose <= 0:
+            raise ValueError(
+                "spatial uncertainty treated arm requires an explicit positive dose schedule"
+            )
         systemic_trajectory = simulate(
             days=args.days, doses=doses, parameters=systemic_parameters,
         )

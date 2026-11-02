@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .provenance import sha256_file
+from .provenance import sha256_file, verify_bound_derivation_audit
 
 CALIBRATION_STAGES = {"systemic_calibration", "spatial_calibration"}
 
@@ -73,6 +73,7 @@ def verify_calibration_audit(
             raise ValueError(f"calibration input filename or path mismatch: {name}")
         if sha256_file(target) != record["sha256"]:
             raise ValueError(f"calibration input SHA-256 mismatch: {name}")
+        verify_bound_derivation_audit(record, target)
         verified_inputs.append(name)
     verified = []
     for name, record in outputs.items():

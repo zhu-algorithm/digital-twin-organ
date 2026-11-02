@@ -19,6 +19,60 @@ def sha256_file(path: str | Path, chunk_size: int = 1024 * 1024) -> str:
     return digest.hexdigest()
 
 
+def attach_derivation_audit(
+    record: dict, source_path: str | Path, suffix: str, expected_stage: str,
+) -> dict:
+    """Attach a validated transform sidecar fingerprint when one is present."""
+    source = Path(source_path)
+    sidecar = Path(f"{source}{suffix}")
+    if not sidecar.exists():
+        return record
+    try:
+        payload = json.loads(sidecar.read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"invalid derivation audit: {sidecar}") from error
+    output = payload.get("output", {}) if isinstance(payload, dict) else {}
+    if (not isinstance(payload, dict) or payload.get("schema_version") != 1
+            or payload.get("stage") != expected_stage
+            or payload.get("labels_used") is not False
+            or output.get("file") != source.name
+            or output.get("sha256") != sha256_file(source)):
+        raise ValueError("invalid or mismatched derivation audit")
+    bound = dict(record)
+    bound["derivation_audit"] = {
+        "file": sidecar.name, "sha256": sha256_file(sidecar),
+        "stage": expected_stage,
+    }
+    return bound
+
+
+def verify_bound_derivation_audit(record: dict, source_path: str | Path) -> bool:
+    """Verify an attached derivation sidecar and its binding to the source file."""
+    derivation = record.get("derivation_audit")
+    if derivation is None:
+        return False
+    source = Path(source_path)
+    stage = derivation.get("stage") if isinstance(derivation, dict) else None
+    suffixes = {
+        "label_free_single_cell_featurization": ".feature-audit.json",
+        "label_free_spatial_state_featurization": ".spatial-audit.json",
+    }
+    suffix = suffixes.get(stage)
+    sidecar = Path(f"{source}{suffix}") if suffix else None
+    if (sidecar is None or derivation.get("file") != sidecar.name
+            or not sidecar.is_file() or derivation.get("sha256") != sha256_file(sidecar)):
+        raise ValueError("derivation audit SHA-256 mismatch")
+    payload = json.loads(sidecar.read_text())
+    output = payload.get("output", {}) if isinstance(payload, dict) else {}
+    if (not isinstance(payload, dict) or payload.get("schema_version") != 1
+            or payload.get("stage") != stage
+            or payload.get("labels_used") is not False
+            or output.get("file") != source.name
+            or output.get("sha256") != sha256_file(source)):
+        raise ValueError("derivation audit no longer binds source output")
+    return True
+
+
 def verify_manifest(path: str | Path) -> dict:
     """Validate metadata and verify every declared local file hash."""
     path = Path(path)

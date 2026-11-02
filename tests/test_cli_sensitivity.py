@@ -9,6 +9,7 @@ import pytest
 from tdln_pd1.cli import _load_patient_spatial_initial, main
 from tdln_pd1.simulator import TwinParameters
 from tdln_pd1.spatial_dynamics import SPECIES, ZONE_NAMES, SpatialParameters
+from tdln_pd1.spatial_feature_audit import write_spatial_feature_audit
 
 
 def _complete_states(path: Path) -> None:
@@ -35,6 +36,22 @@ def test_patient_spatial_initial_selection_is_hashed_and_fail_closed(tmp_path):
         _load_patient_spatial_initial(str(path), None)
     with pytest.raises(ValueError, match="requires --initial-zones"):
         _load_patient_spatial_initial(None, "p1")
+
+
+def test_patient_spatial_initial_binds_upstream_spot_derivation(tmp_path):
+    spots = tmp_path / "spots.csv"
+    spots.write_text("patient_id,zone\np1,paracortex\n")
+    states = tmp_path / "states.csv"
+    _complete_states(states)
+    audit = write_spatial_feature_audit(spots, states, None)
+    _, provenance = _load_patient_spatial_initial(str(states), "p1")
+    assert provenance["derivation_audit"]["file"] == audit.name
+    assert provenance["derivation_audit"]["stage"] == (
+        "label_free_spatial_state_featurization"
+    )
+    audit.write_text("replaced\n")
+    with pytest.raises(ValueError, match="invalid derivation audit"):
+        _load_patient_spatial_initial(str(states), "p1")
 
 
 def test_spatial_sensitivity_cli_binds_fitted_parameters_and_patient_state(
@@ -99,3 +116,23 @@ def test_systemic_sensitivity_cli_adapts_omitted_schedule_to_short_window(
     audit = json.loads((output / "sensitivity_provenance.json").read_text())
     assert audit["settings"]["dose_days"] == [0.0]
     assert audit["settings"]["dose_amounts"] == [1.0]
+
+
+def test_spatial_uncertainty_cli_requires_a_real_treated_schedule(tmp_path, monkeypatch):
+    parameters = tmp_path / "spatial.json"
+    parameters.write_text(json.dumps(asdict(SpatialParameters())))
+    diagnostics = tmp_path / "diagnostics.json"
+    diagnostics.write_text(json.dumps({
+        "locally_identifiable": True,
+        "local_log_parameter_covariance": {
+            "parameter_order": ["antigen_decay"],
+            "log_scale_covariance": [[0.01]],
+        },
+    }))
+    monkeypatch.setattr(sys, "argv", [
+        "tdln-pd1", "propagate-spatial-uncertainty",
+        "--parameters", str(parameters), "--diagnostics", str(diagnostics),
+        "--dose-days", "", "--samples", "2", "--output", str(tmp_path / "out"),
+    ])
+    with pytest.raises(ValueError, match="explicit positive dose schedule"):
+        main()

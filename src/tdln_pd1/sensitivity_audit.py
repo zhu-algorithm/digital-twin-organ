@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .provenance import sha256_file
+from .provenance import sha256_file, verify_bound_derivation_audit
 
 
 def write_sensitivity_audit(
@@ -77,6 +77,7 @@ def verify_sensitivity_audit(
             raise ValueError(f"sensitivity input filename or path mismatch: {name}")
         if sha256_file(target) != record["sha256"]:
             raise ValueError(f"sensitivity input SHA-256 mismatch: {name}")
+        verify_bound_derivation_audit(record, target)
         verified_inputs.append(name)
     verified = []
     for key, record in outputs.items():

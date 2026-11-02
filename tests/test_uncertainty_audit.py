@@ -5,6 +5,7 @@ import pytest
 from tdln_pd1.uncertainty_audit import (
     verify_uncertainty_audit, write_uncertainty_audit,
 )
+from tdln_pd1.spatial_feature_audit import write_spatial_feature_audit
 
 
 def test_uncertainty_audit_binds_inputs_settings_and_outputs(tmp_path):
@@ -85,3 +86,34 @@ def test_spatial_uncertainty_stage_supports_spatial_output_contract(tmp_path):
     })
     assert verified["stage"] == "spatial_calibration_uncertainty_propagation"
     assert "optional" not in verified["payload"]["inputs"]
+
+
+def test_uncertainty_verifier_rechecks_bound_spatial_derivation(tmp_path):
+    spots = tmp_path / "spots.csv"
+    spots.write_text("patient_id,zone\np1,paracortex\n")
+    states = tmp_path / "states.csv"
+    states.write_text("patient_id,zone,species,amount\np1,paracortex,tpex,1\n")
+    sidecar = write_spatial_feature_audit(spots, states, None)
+    parameters = tmp_path / "parameters.json"
+    parameters.write_text("{}\n")
+    (tmp_path / "uncertainty_samples.csv").write_text("draw,x\n0,1\n")
+    (tmp_path / "uncertainty_summary.json").write_text("{}\n")
+    inputs = {
+        "parameters": {"file": parameters.name,
+                       "sha256": hashlib.sha256(parameters.read_bytes()).hexdigest()},
+        "initial_zones": {
+            "file": states.name,
+            "sha256": hashlib.sha256(states.read_bytes()).hexdigest(),
+            "derivation_audit": {
+                "file": sidecar.name,
+                "sha256": hashlib.sha256(sidecar.read_bytes()).hexdigest(),
+                "stage": "label_free_spatial_state_featurization",
+            },
+        },
+    }
+    audit = write_uncertainty_audit(tmp_path, inputs, {})
+    paths = {"parameters": parameters, "initial_zones": states}
+    assert verify_uncertainty_audit(audit, paths)["valid"] is True
+    sidecar.write_text("replaced\n")
+    with pytest.raises(ValueError, match="derivation audit SHA-256 mismatch"):
+        verify_uncertainty_audit(audit, paths)
