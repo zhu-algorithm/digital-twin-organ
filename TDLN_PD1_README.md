@@ -36,7 +36,8 @@ tdln-pd1 evaluate --predictions external_predictions.csv --labels external_label
 tdln-pd1 site-cv --features features.csv --labels labels_with_center.csv --output artifacts/site_cv
 tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln_trajectory.csv
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output artifacts/calibration
-tdln-pd1 augment-twin --features examples/features.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
+tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --output artifacts/spatial_cohort_initial.csv
+tdln-pd1 augment-twin --features examples/features.csv --spatial-initial-zones artifacts/spatial_cohort_initial.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
 tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --output artifacts/spatial_initial.csv
 tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patient-id example_patient --days 14 --dose-days 0 --dose 1 --paired-counterfactual --output artifacts/spatial_patient.csv
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
@@ -78,6 +79,8 @@ Calibration observations use long format: `day,variable,value,sd`. Variables mus
 `augment-twin` maps each patient's measured dendritic, cytotoxic, exhaustion, TCF7-memory and immune-cell-fraction features to bounded initial states, runs matched untreated and anti-PD-1 counterfactuals, and appends mechanistic endpoints. These include receptor occupancy, Tpex/effector states and treated-minus-control tumour/effector effects. The mapping is explicit in `hybrid.py`; response labels are not accepted or used during augmentation. The resulting hybrid table can be supplied to the existing `train` command.
 
 The same patient row now initializes the six-zone spatial twin: dendritic activation scales afferent DC input, TCF7-memory scales paracortical Tpex, cytotoxic/CD8 features scale paracortical effectors, and an optional `tumour_antigen_proxy` scales afferent antigen. When that proxy is absent the population default is retained rather than inferred from an unrelated expression signature. Treated/control efferent-effector endpoints and paracortical Tpex are appended to the hybrid feature table.
+
+When `--spatial-initial-zones` is supplied, `augment-twin` replaces that feature-derived spatial initialization with each patient's measured/deconvolved 24-state table. The spatial and single-cell patient sets must match exactly; missing or extra patients, duplicate state coordinates, invalid anatomy, and any outcome column fail closed. Mechanistic spatial counterfactual endpoints then enter the same patient-level hybrid table used by `train`. A `qc_spatial_initialization_measured` audit flag records the source but is excluded from fitting by the feature-role gate.
 
 ## Locked external evaluation
 

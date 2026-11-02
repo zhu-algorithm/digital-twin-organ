@@ -2,7 +2,7 @@
   "cohort_id": "synthetic-tdln-demo-v1",
   "source": "Repository-generated synthetic software verification fixture",
   "license": "MIT (repository fixture; no human data)",
-  "modalities": ["synthetic cell table", "synthetic binary outcome"],
+  "modalities": ["synthetic cell table", "synthetic spatial state table", "synthetic binary outcome"],
   "outcome_definition": "Synthetic response label generated only to exercise the pipeline; no clinical meaning",
   "files": [
     {
@@ -14,6 +14,11 @@
       "path": "labels.csv",
       "role": "patient labels",
       "sha256": "76c2708cd1e8d9eb8c6dae7524ea409ba4657d1ebecb91345fc21125651a7097"
+    },
+    {
+      "path": "spatial_spots_cohort.csv",
+      "role": "spatially resolved mechanistic-state fixture",
+      "sha256": "ff54f43e1948ac8c50044ff6aa3a9ed7c635b79ef926a6b118f047a77c27dd1b"
     }
   ]
 }

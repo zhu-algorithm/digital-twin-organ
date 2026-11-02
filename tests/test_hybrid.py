@@ -54,3 +54,31 @@ def test_twin_augmentation_is_label_free_and_patient_aligned():
 def test_duplicate_patient_is_rejected():
     with pytest.raises(ValueError):
         augment_with_twin(pd.DataFrame({"patient_id": ["a", "a"]}), days=1)
+
+
+def test_measured_spatial_states_drive_hybrid_endpoints_without_labels():
+    features = pd.DataFrame({"patient_id": ["a", "b"], "sig_tcf7_memory": [0.2, 0.2]})
+    states = pd.DataFrame({
+        "patient_id": ["a", "a", "b", "b"],
+        "species": ["tpex", "effector", "tpex", "effector"],
+        "zone": ["paracortex"] * 4,
+        "amount": [1.0e4, 5.0e3, 2.0e5, 8.0e4],
+    })
+    out = augment_with_twin(features, days=3, dose_days=(0,), spatial_states=states)
+    assert out.qc_spatial_initialization_measured.eq(1).all()
+    assert "response" not in out
+    assert out.loc[out.patient_id.eq("b"), "twin_spatial_treated_paracortex_tpex"].item() > (
+        out.loc[out.patient_id.eq("a"), "twin_spatial_treated_paracortex_tpex"].item()
+    )
+
+
+def test_spatial_hybrid_fails_closed_on_patient_mismatch_or_outcome_column():
+    features = pd.DataFrame({"patient_id": ["a", "b"]})
+    states = pd.DataFrame({"patient_id": ["a"], "species": ["tpex"],
+                           "zone": ["paracortex"], "amount": [1.0]})
+    with pytest.raises(ValueError, match="patient sets differ"):
+        augment_with_twin(features, days=1, spatial_states=states)
+    states = pd.concat([states, states.assign(patient_id="b")], ignore_index=True)
+    states["response"] = [0, 1]
+    with pytest.raises(ValueError, match="outcome-free"):
+        augment_with_twin(features, days=1, spatial_states=states)

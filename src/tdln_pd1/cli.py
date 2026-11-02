@@ -65,6 +65,8 @@ def main() -> None:
     aug.add_argument("--days", type=float, default=42.0)
     aug.add_argument("--dose-days", default="0,14,28")
     aug.add_argument("--dose", type=float, default=1.0)
+    aug.add_argument("--spatial-initial-zones",
+                     help="patient-zone-species states from spatial-featurize")
     aug.add_argument("--output", required=True)
     spatial = sub.add_parser("simulate-spatial")
     spatial.add_argument("--days", type=float, default=14.0)
@@ -154,7 +156,10 @@ def main() -> None:
     elif args.command == "augment-twin":
         import pandas as pd
         dose_days = tuple(float(day) for day in args.dose_days.split(",") if day.strip())
-        augmented = augment_with_twin(pd.read_csv(args.features), args.days, dose_days, args.dose)
+        spatial_states = (pd.read_csv(args.spatial_initial_zones)
+                          if args.spatial_initial_zones else None)
+        augmented = augment_with_twin(pd.read_csv(args.features), args.days, dose_days,
+                                      args.dose, spatial_states)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         augmented.to_csv(args.output, index=False)
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,

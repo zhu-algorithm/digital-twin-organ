@@ -83,19 +83,50 @@ def augment_with_twin(
     days: float = 42.0,
     dose_days: tuple[float, ...] = (0.0, 14.0, 28.0),
     dose: float = 1.0,
+    spatial_states: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Add per-patient treated/control mechanistic endpoints without using labels."""
     if "patient_id" not in features:
         raise ValueError("features need patient_id")
-    if features.patient_id.duplicated().any():
+    features = features.copy()
+    if features.patient_id.isna().any():
+        raise ValueError("features need non-missing patient_id")
+    features["patient_id"] = features.patient_id.astype(str).str.strip()
+    if features.patient_id.eq("").any() or features.patient_id.duplicated().any():
         raise ValueError("features must have one row per patient")
+    measured_states = None
+    if spatial_states is not None:
+        if "patient_id" not in spatial_states:
+            raise ValueError("spatial initial states need patient_id")
+        forbidden = [column for column in spatial_states.columns
+                     if any(token in column.lower()
+                            for token in ("response", "outcome", "label", "recist"))]
+        if forbidden:
+            raise ValueError(f"spatial initial states must be outcome-free: {sorted(forbidden)}")
+        measured_states = spatial_states.copy()
+        if measured_states.patient_id.isna().any():
+            raise ValueError("spatial initial states need non-missing patient_id")
+        measured_states["patient_id"] = measured_states.patient_id.astype(str).str.strip()
+        if measured_states.patient_id.eq("").any():
+            raise ValueError("spatial initial states need non-empty patient_id")
+        feature_ids, spatial_ids = set(features.patient_id), set(measured_states.patient_id)
+        if feature_ids != spatial_ids:
+            raise ValueError(
+                "spatial and feature patient sets differ: "
+                f"missing_spatial={sorted(feature_ids - spatial_ids)[:10]}, "
+                f"extra_spatial={sorted(spatial_ids - feature_ids)[:10]}"
+            )
     doses = tuple(Dose(day, dose) for day in dose_days)
     rows = []
     for row in features.to_dict(orient="records"):
         initial = initial_state_from_features(pd.Series(row))
         control = simulate(days=days, initial=initial)
         treated = simulate(days=days, doses=doses, initial=initial)
-        spatial_initial = spatial_initial_state_from_features(pd.Series(row))
+        spatial_initial = (
+            measured_states[measured_states.patient_id.eq(row["patient_id"])]
+            if measured_states is not None
+            else spatial_initial_state_from_features(pd.Series(row))
+        )
         spatial_days = min(days, 14.0)
         spatial_control = simulate_spatial_coupled(
             control, days=spatial_days, initial=spatial_initial,
@@ -126,5 +157,6 @@ def augment_with_twin(
             "twin_spatial_treated_paracortex_tpex": endpoint(
                 spatial_treated, "tpex", "paracortex"
             ),
+            "qc_spatial_initialization_measured": int(measured_states is not None),
         })
     return features.merge(pd.DataFrame(rows), on="patient_id", validate="one_to_one")

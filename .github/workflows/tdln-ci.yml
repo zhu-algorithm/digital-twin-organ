@@ -29,7 +29,8 @@ jobs:
         run: |
           tdln-pd1 featurize --cells examples/cells.csv --output /tmp/features.csv
           tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output /tmp/qc.json
-          tdln-pd1 augment-twin --features /tmp/features.csv --days 7 --dose-days 0 --output /tmp/hybrid.csv
+          tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --output /tmp/spatial_cohort_initial.csv
+          tdln-pd1 augment-twin --features /tmp/features.csv --spatial-initial-zones /tmp/spatial_cohort_initial.csv --days 7 --dose-days 0 --output /tmp/hybrid.csv
           tdln-pd1 train --features /tmp/hybrid.csv --labels examples/labels.csv --output /tmp/model --folds 2
           tdln-pd1 predict --model /tmp/model/model.joblib --features /tmp/hybrid.csv --output /tmp/training_predictions.csv
           if tdln-pd1 evaluate --predictions /tmp/training_predictions.csv --labels examples/labels.csv --output /tmp/invalid_metrics.json --bootstrap 20; then exit 1; fi
