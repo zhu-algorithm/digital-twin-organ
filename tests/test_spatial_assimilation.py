@@ -21,6 +21,7 @@ def test_spatial_calibration_recovers_synthetic_antigen_decay():
     })
     fitted, diagnostics, compared = calibrate_spatial(
         observations, fit_parameters=("antigen_decay",), max_nfev=80,
+        profile_points=5, profile_fold_range=2.0,
     )
     assert diagnostics["success"]
     assert fitted.antigen_decay == pytest.approx(0.2, rel=0.03)
@@ -28,6 +29,9 @@ def test_spatial_calibration_recovers_synthetic_antigen_decay():
     assert diagnostics["jacobian_rank"] == 1
     assert diagnostics["locally_identifiable"] is True
     assert diagnostics["local_parameter_uncertainty"]["antigen_decay"]
+    profile = diagnostics["profile_likelihood"]["profiles"]["antigen_decay"]
+    assert len(profile["points"]) == 5
+    assert profile["points"][2]["delta_weighted_sse"] == pytest.approx(0.0, abs=1e-9)
     assert len(compared) == len(observations)
 
 

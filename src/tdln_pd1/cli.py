@@ -124,6 +124,9 @@ def main() -> None:
     cal.add_argument("--dose-days", default="")
     cal.add_argument("--dose", type=float, default=1.0)
     cal.add_argument("--output", required=True)
+    cal.add_argument("--profile-points", type=int, default=0,
+                     help="zero disables; otherwise use an odd integer >=3")
+    cal.add_argument("--profile-fold-range", type=float, default=4.0)
     spatial_cal = sub.add_parser("calibrate-spatial")
     spatial_cal.add_argument("--observations", required=True)
     spatial_cal.add_argument("--fit", required=True,
@@ -133,6 +136,9 @@ def main() -> None:
     spatial_cal.add_argument("--dose-days", default="")
     spatial_cal.add_argument("--dose", type=float, default=1.0)
     spatial_cal.add_argument("--max-nfev", type=int, default=200)
+    spatial_cal.add_argument("--profile-points", type=int, default=0,
+                             help="zero disables; otherwise use an odd integer >=3")
+    spatial_cal.add_argument("--profile-fold-range", type=float, default=4.0)
     spatial_cal.add_argument("--output", required=True)
     aug = sub.add_parser("augment-twin")
     aug.add_argument("--features", required=True)
@@ -247,6 +253,8 @@ def main() -> None:
         fitted, diagnostics, compared = calibrate(
             pd.read_csv(args.observations), doses=doses,
             fit_parameters=tuple(name.strip() for name in args.fit.split(",") if name.strip()),
+            profile_points=args.profile_points,
+            profile_fold_range=args.profile_fold_range,
         )
         save_calibration(args.output, fitted, diagnostics, compared)
         print(json.dumps(diagnostics, indent=2))
@@ -275,6 +283,8 @@ def main() -> None:
             observations, initial=initial, systemic_trajectory=systemic,
             fit_parameters=tuple(name.strip() for name in args.fit.split(",") if name.strip()),
             max_nfev=args.max_nfev,
+            profile_points=args.profile_points,
+            profile_fold_range=args.profile_fold_range,
         )
         save_spatial_calibration(args.output, fitted, diagnostics, compared)
         print(json.dumps(diagnostics, indent=2))

@@ -41,6 +41,36 @@ def test_systemic_calibration_flags_a_structurally_uninformative_parameter():
     assert diagnostics["local_parameter_uncertainty"] is None
 
 
+def test_systemic_profile_likelihood_scans_fitted_parameter():
+    truth = TwinParameters(tumour_growth=0.11)
+    trajectory = simulate(days=8, parameters=truth)
+    days = np.array([0, 2, 4, 6, 8], dtype=float)
+    values = np.interp(days, trajectory.day, trajectory.tumour_cells)
+    observations = pd.DataFrame({
+        "day": days, "variable": "tumour_cells", "value": values,
+        "sd": values * 0.02,
+    })
+    _, diagnostics, _ = calibrate(
+        observations, fit_parameters=("tumour_growth",), max_nfev=50,
+        profile_points=5, profile_fold_range=2.0,
+    )
+    profile = diagnostics["profile_likelihood"]
+    rows = profile["profiles"]["tumour_growth"]["points"]
+    assert len(rows) == 5
+    assert rows[2]["delta_weighted_sse"] == pytest.approx(0.0, abs=1e-9)
+    fitted_value = profile["gaussian_profile_optimum"]["tumour_growth"]
+    assert rows[0]["parameter_value"] < fitted_value < rows[-1]["parameter_value"]
+
+
+def test_profile_likelihood_rejects_even_grid_size():
+    observations = pd.DataFrame({
+        "day": [0, 1], "variable": ["tumour_cells"] * 2,
+        "value": [2e7, 2.2e7], "sd": [1e6, 1e6],
+    })
+    with pytest.raises(ValueError, match="odd integer"):
+        calibrate(observations, fit_parameters=("tumour_growth",), profile_points=4)
+
+
 def test_observation_contract_rejects_unknown_state():
     bad = pd.DataFrame({"day": [0], "variable": ["magic"], "value": [1]})
     with pytest.raises(ValueError):

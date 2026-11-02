@@ -62,6 +62,97 @@ def _local_calibration_diagnostics(result, names, lower, upper, n_observations) 
     }
 
 
+def _profile_likelihood(
+    residual,
+    result,
+    names,
+    lower,
+    upper,
+    points: int,
+    fold_range: float,
+    max_nfev: int,
+) -> dict | None:
+    """Profile each fitted parameter while re-optimizing all remaining parameters."""
+    if points == 0:
+        return None
+    if points < 3 or points % 2 == 0:
+        raise ValueError("profile_points must be zero or an odd integer >= 3")
+    if not np.isfinite(fold_range) or fold_range <= 1:
+        raise ValueError("profile_fold_range must be finite and > 1")
+    names = tuple(names)
+    lower, upper = np.asarray(lower), np.asarray(upper)
+    gaussian_fit = least_squares(
+        residual, np.asarray(result.x, dtype=float), bounds=(lower, upper),
+        loss="linear", max_nfev=max_nfev,
+    )
+    optimum = np.asarray(gaussian_fit.x, dtype=float)
+    baseline_sse = float(np.sum(np.asarray(residual(optimum)) ** 2))
+    half = points // 2
+    radius = np.log(fold_range)
+    profiles = {}
+    for fixed_index, name in enumerate(names):
+        left = np.linspace(max(lower[fixed_index], optimum[fixed_index] - radius),
+                           optimum[fixed_index], half + 1)
+        right = np.linspace(optimum[fixed_index],
+                            min(upper[fixed_index], optimum[fixed_index] + radius),
+                            half + 1)[1:]
+        grid = np.concatenate([left, right])
+        rows = []
+        free = np.array([index for index in range(len(names)) if index != fixed_index])
+        for fixed_log_value in grid:
+            if len(free):
+                def profiled_residual(free_values):
+                    candidate = optimum.copy()
+                    candidate[fixed_index] = fixed_log_value
+                    candidate[free] = free_values
+                    return residual(candidate)
+
+                refit = least_squares(
+                    profiled_residual, optimum[free],
+                    bounds=(lower[free], upper[free]), loss="linear",
+                    max_nfev=max_nfev,
+                )
+                candidate = optimum.copy()
+                candidate[fixed_index] = fixed_log_value
+                candidate[free] = refit.x
+                refit_success = bool(refit.success)
+            else:
+                candidate = np.array([fixed_log_value])
+                refit_success = True
+            sse = float(np.sum(np.asarray(residual(candidate)) ** 2))
+            rows.append({
+                "parameter_value": float(np.exp(fixed_log_value)),
+                "weighted_sse": sse,
+                "delta_weighted_sse": float(max(0.0, sse - baseline_sse)),
+                "nuisance_refit_success": refit_success,
+            })
+        supported = [row for row in rows if row["delta_weighted_sse"] <= 3.841]
+        profiles[name] = {
+            "points": rows,
+            "scanned_support_lower": min(row["parameter_value"] for row in supported),
+            "scanned_support_upper": max(row["parameter_value"] for row in supported),
+            "lower_limit_resolved": rows[0]["delta_weighted_sse"] > 3.841,
+            "upper_limit_resolved": rows[-1]["delta_weighted_sse"] > 3.841,
+        }
+    return {
+        "method": "one_parameter_profile_with_nuisance_refit",
+        "threshold_delta_weighted_sse": 3.841,
+        "threshold_reference": "asymptotic chi-square, 1 degree of freedom",
+        "points_per_parameter": points,
+        "fold_range": float(fold_range),
+        "baseline_weighted_sse": baseline_sse,
+        "gaussian_baseline_refit_success": bool(gaussian_fit.success),
+        "gaussian_profile_optimum": {
+            name: float(np.exp(value)) for name, value in zip(names, optimum)
+        },
+        "profiles": profiles,
+        "note": (
+            "Scanned support is not a resolved confidence limit when the corresponding "
+            "limit_resolved flag is false; asymptotic coverage is not guaranteed."
+        ),
+    }
+
+
 def validate_observations(observations: pd.DataFrame) -> pd.DataFrame:
     """Validate long-format observations: day, variable, value, optional sd."""
     required = {"day", "variable", "value"}
@@ -97,6 +188,8 @@ def calibrate(
     initial: InitialState | None = None,
     fit_parameters: Iterable[str] = DEFAULT_FIT_PARAMETERS,
     max_nfev: int = 200,
+    profile_points: int = 0,
+    profile_fold_range: float = 4.0,
 ) -> tuple[TwinParameters, dict, pd.DataFrame]:
     """Fit positive parameters in log space using weighted robust residuals."""
     obs = validate_observations(observations)
@@ -125,6 +218,10 @@ def calibrate(
     prediction = _predictions(trajectory, obs)
     weighted = (prediction - obs.value.to_numpy()) / obs.sd.to_numpy()
     local = _local_calibration_diagnostics(result, names, lower, upper, len(obs))
+    profile = _profile_likelihood(
+        residual, result, names, lower, upper, profile_points,
+        profile_fold_range, max_nfev,
+    )
     diagnostics = {
         "success": bool(result.success), "message": result.message,
         "n_observations": int(len(obs)), "n_parameters": len(names), "nfev": int(result.nfev),
@@ -136,6 +233,7 @@ def calibrate(
             len(obs) < 5 * len(names) or not local["locally_identifiable"]
         ),
         "research_only": True,
+        "profile_likelihood": profile,
     }
     compared = obs.assign(prediction=prediction, weighted_residual=weighted)
     return fitted, diagnostics, compared

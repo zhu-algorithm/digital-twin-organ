@@ -14,7 +14,7 @@ from scipy.optimize import least_squares
 from .spatial_dynamics import (SPECIES, ZONE_NAMES, SpatialInitialState,
                                SpatialParameters, simulate_spatial,
                                simulate_spatial_coupled)
-from .assimilation import _local_calibration_diagnostics
+from .assimilation import _local_calibration_diagnostics, _profile_likelihood
 
 
 DEFAULT_SPATIAL_FIT_PARAMETERS = (
@@ -67,6 +67,8 @@ def calibrate_spatial(
     systemic_trajectory: pd.DataFrame | None = None,
     fit_parameters: Iterable[str] = DEFAULT_SPATIAL_FIT_PARAMETERS,
     max_nfev: int = 200,
+    profile_points: int = 0,
+    profile_fold_range: float = 4.0,
 ) -> tuple[SpatialParameters, dict, pd.DataFrame]:
     """Fit selected positive spatial parameters using robust weighted residuals."""
     obs = validate_spatial_observations(observations)
@@ -101,6 +103,10 @@ def calibrate_spatial(
     prediction = _spatial_predictions(run(fitted), obs)
     weighted = (prediction - obs.amount.to_numpy()) / obs.sd.to_numpy()
     local = _local_calibration_diagnostics(result, names, lower, upper, len(obs))
+    profile = _profile_likelihood(
+        residual, result, names, lower, upper, profile_points,
+        profile_fold_range, max_nfev,
+    )
     warning = len(obs) < 5 * len(names) or not local["locally_identifiable"]
     diagnostics = {
         "success": bool(result.success), "message": result.message,
@@ -112,6 +118,7 @@ def calibrate_spatial(
         "fit_parameters": {name: float(getattr(fitted, name)) for name in names},
         **local,
         "identifiability_warning": bool(warning), "research_only": True,
+        "profile_likelihood": profile,
     }
     compared = obs.assign(prediction=prediction, weighted_residual=weighted)
     return fitted, diagnostics, compared
