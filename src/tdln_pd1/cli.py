@@ -10,6 +10,7 @@ from .simulator import Dose, simulate
 from .assimilation import calibrate, save_calibration
 from .hybrid import augment_with_twin
 from .spatial_dynamics import simulate_spatial
+from .spatial_data import aggregate_spatial_spots
 from .sensitivity import global_sensitivity
 from .provenance import verify_manifest
 from .qc import cohort_qc
@@ -67,7 +68,13 @@ def main() -> None:
     spatial.add_argument("--days", type=float, default=14.0)
     spatial.add_argument("--step", type=float, default=0.1)
     spatial.add_argument("--transport-only", action="store_true")
+    spatial.add_argument("--initial-zones", help="long patient-zone-species state CSV")
+    spatial.add_argument("--patient-id", help="patient to select from --initial-zones")
     spatial.add_argument("--output", required=True)
+    spatial_features = sub.add_parser("spatial-featurize")
+    spatial_features.add_argument("--spots", required=True)
+    spatial_features.add_argument("--weight-column")
+    spatial_features.add_argument("--output", required=True)
     sens = sub.add_parser("sensitivity")
     sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
     sens.add_argument("--days", type=float, default=42.0)
@@ -148,7 +155,21 @@ def main() -> None:
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
                           "output": args.output, "labels_used": False}, indent=2))
     elif args.command == "simulate-spatial":
-        trajectory = simulate_spatial(args.days, args.step, reactions=not args.transport_only)
+        initial = None
+        if args.initial_zones:
+            import pandas as pd
+            states = pd.read_csv(args.initial_zones)
+            if "patient_id" not in states:
+                raise ValueError("initial zone states need patient_id")
+            patients = states.patient_id.astype(str).unique().tolist()
+            patient_id = args.patient_id or (patients[0] if len(patients) == 1 else None)
+            if patient_id is None:
+                raise ValueError("--patient-id is required when initial states contain multiple patients")
+            initial = states[states.patient_id.astype(str) == str(patient_id)]
+            if initial.empty:
+                raise ValueError(f"patient not found in initial zone states: {patient_id}")
+        trajectory = simulate_spatial(args.days, args.step, initial=initial,
+                                      reactions=not args.transport_only)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         trajectory.to_csv(args.output, index=False)
         efferent = trajectory[(trajectory.species == "effector") & (trajectory.zone == "efferent_lymph")]
@@ -156,6 +177,15 @@ def main() -> None:
                           "species": int(trajectory.species.nunique()),
                           "final_efferent_effector": float(efferent.amount.iloc[-1]),
                           "output": args.output}, indent=2))
+    elif args.command == "spatial-featurize":
+        import pandas as pd
+        states = aggregate_spatial_spots(pd.read_csv(args.spots), args.weight_column)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        states.to_csv(args.output, index=False)
+        print(json.dumps({"patients": int(states.patient_id.nunique()),
+                          "zones_observed": int(states.zone.nunique()),
+                          "species": int(states.species.nunique()),
+                          "output": args.output, "labels_used": False}, indent=2))
     elif args.command == "sensitivity":
         from .sensitivity import DEFAULT_PARAMETERS
         names = tuple(name.strip() for name in args.parameters.split(",") if name.strip()) or DEFAULT_PARAMETERS

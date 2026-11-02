@@ -12,6 +12,8 @@ The spatial ontology separates afferent lymph, subcapsular sinus, paracortex, fo
 
 The executable spatial model uses directed conservative transport between these zones. Antigen and migratory DCs enter through afferent lymph; antigen capture occurs in the subcapsular sinus; antigen-bearing DCs reach the paracortex; Tpex expand and differentiate there; effectors pass through medulla into efferent lymph. The implementation exposes a reaction-free mode in which every species must be conserved, separating numerical transport verification from biological source/sink assumptions.
 
+Segmented spatial-omics or imaging tables can initialize all 24 species-by-zone states through an explicit patient/zone/species bridge. Anatomy must be curated upstream; coordinates alone are never treated as sufficient evidence for a zone. Spot areas or cell counts may weight non-negative deconvolved abundances, and invalid zones, duplicate spots or non-finite/negative estimates are rejected. This supplies a reproducible data interface, not an assay-to-cell-count calibration; input units still require modality-specific validation.
+
 The systemic and spatial layers are coupled through the simulated TDLN PD-1 receptor occupancy trajectory. Occupancy increases the hypothesised Tpex expansion and differentiation reaction rates but never alters conservative transport terms. The coupling gains are explicit parameters, default to zero effect at zero occupancy, and require calibration; the directional response is a software invariant, not clinical validation.
 
 ## Evidence anchors
@@ -37,6 +39,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Label-free, patient-aligned mechanistic counterfactual feature generation.
 - Per-species mass conservation in the reaction-free spatial transport network.
 - Directional antigen, DC and effector movement across six TDLN zones.
+- Validated spatial-omics aggregation and exact day-zero initialization of all zone/species states.
 - TCR clone diversity, dominance and paired TDLN–tumour lineage-sharing features.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.

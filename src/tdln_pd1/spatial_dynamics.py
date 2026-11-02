@@ -66,7 +66,26 @@ def _index(species: str, zone: str) -> int:
     return SPECIES.index(species) * len(ZONE_NAMES) + ZONE_NAMES.index(zone)
 
 
-def initial_vector(initial: SpatialInitialState | None = None) -> np.ndarray:
+def initial_vector(initial: SpatialInitialState | pd.DataFrame | None = None) -> np.ndarray:
+    if isinstance(initial, pd.DataFrame):
+        required = {"species", "zone", "amount"}
+        missing = required.difference(initial.columns)
+        if missing:
+            raise ValueError(f"zone initial state missing columns: {sorted(missing)}")
+        x = initial.loc[:, ["species", "zone", "amount"]].copy()
+        if x[["species", "zone"]].isna().any().any() or x.duplicated(["species", "zone"]).any():
+            raise ValueError("zone initial state needs unique, non-missing species-zone pairs")
+        invalid_species = sorted(set(x.species) - set(SPECIES))
+        invalid_zones = sorted(set(x.zone) - set(ZONE_NAMES))
+        if invalid_species or invalid_zones:
+            raise ValueError(f"invalid initial species={invalid_species}, zones={invalid_zones}")
+        x["amount"] = pd.to_numeric(x.amount, errors="coerce")
+        if not np.isfinite(x.amount).all() or x.amount.lt(0).any():
+            raise ValueError("zone initial amounts must be finite and non-negative")
+        y = np.zeros(len(SPECIES) * len(ZONE_NAMES), dtype=float)
+        for row in x.itertuples(index=False):
+            y[_index(row.species, row.zone)] = row.amount
+        return y
     initial = initial or SpatialInitialState()
     y = np.zeros(len(SPECIES) * len(ZONE_NAMES), dtype=float)
     y[_index("antigen", "afferent_lymph")] = initial.afferent_antigen
@@ -124,7 +143,7 @@ def simulate_spatial(
     days: float = 14.0,
     step: float = 0.1,
     parameters: SpatialParameters | None = None,
-    initial: SpatialInitialState | None = None,
+    initial: SpatialInitialState | pd.DataFrame | None = None,
     reactions: bool = True,
     checkpoint_occupancy: float | Callable[[float], float] = 0.0,
     rtol: float = 1e-8,
@@ -164,7 +183,7 @@ def simulate_spatial_coupled(
     days: float = 14.0,
     step: float = 0.1,
     parameters: SpatialParameters | None = None,
-    initial: SpatialInitialState | None = None,
+    initial: SpatialInitialState | pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Couple systemic PD-1 occupancy into the six-zone reaction network."""
     required = {"day", "pd1_occupancy"}

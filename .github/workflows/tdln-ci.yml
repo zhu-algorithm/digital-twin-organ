@@ -39,6 +39,8 @@ jobs:
           tdln-pd1 site-cv --features /tmp/hybrid.csv --labels examples/labels_multicenter.csv --bootstrap 20 --output /tmp/site_cv
           tdln-pd1 simulate --days 7 --dose-days 0 --output /tmp/trajectory.csv
           tdln-pd1 simulate-spatial --days 3 --output /tmp/spatial.csv
+          tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --output /tmp/spatial_initial.csv
+          tdln-pd1 simulate-spatial --initial-zones /tmp/spatial_initial.csv --patient-id example_patient --days 3 --output /tmp/spatial_patient.csv
           tdln-pd1 sensitivity --parameters tumour_growth,killing_rate --days 3 --samples 8 --output /tmp/sensitivity
           tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output /tmp/calibration
           tdln-pd1 verify --output /tmp/verification.json
