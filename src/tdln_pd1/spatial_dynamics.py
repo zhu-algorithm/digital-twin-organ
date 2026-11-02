@@ -35,6 +35,7 @@ class SpatialParameters:
     priming_rate: float = 1.0e-7
     antigen_half_saturation: float = 0.2
     tpex_growth: float = 0.10
+    tpex_carrying_capacity: float = 1.0e7
     tpex_differentiation: float = 0.12
     checkpoint_growth_gain: float = 4.0
     checkpoint_differentiation_gain: float = 0.2
@@ -170,9 +171,13 @@ def _rhs(
             raise ValueError("checkpoint_occupancy callable must return values within [0, 1]")
         growth = (p.tpex_growth * tpex * antigen / (p.antigen_half_saturation + antigen)
                   * (1.0 + p.checkpoint_growth_gain * occupancy))
+        # Expansion and new priming share a finite paracortical niche. Above
+        # capacity, production stops while differentiation, death and egress
+        # continue to reduce the state.
+        niche = max(1.0 - tpex / p.tpex_carrying_capacity, 0.0)
         differentiation = (p.tpex_differentiation * tpex
                            * (1.0 + p.checkpoint_differentiation_gain * occupancy))
-        dydt[_index("tpex", "paracortex")] += priming + growth - differentiation
+        dydt[_index("tpex", "paracortex")] += (priming + growth) * niche - differentiation
         dydt[_index("effector", "paracortex")] += differentiation
     return np.where((y <= 0) & (dydt < 0), 0.0, dydt)
 
@@ -229,6 +234,8 @@ def simulate_spatial(
         )
     if p.antigen_half_saturation <= 0:
         raise ValueError("antigen_half_saturation must be strictly positive")
+    if p.tpex_carrying_capacity <= 0:
+        raise ValueError("tpex_carrying_capacity must be strictly positive")
     times = np.unique(np.append(np.arange(0.0, days, step), days))
     if not callable(checkpoint_occupancy):
         try:

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 
 from .simulator import Dose, STATE_NAMES, TwinParameters, simulate
-from .spatial_dynamics import (SPECIES, SpatialParameters, simulate_spatial,
+from .spatial_dynamics import (SPECIES, ZONE_NAMES, SpatialParameters, simulate_spatial,
                                simulate_spatial_coupled)
 
 
@@ -86,6 +87,43 @@ def verify_twin() -> dict:
     checks.append({"name": "spatial_transport_mass_conservation", "passed": max_drift <= 1e-6,
                    "relative_drift_by_species": drift, "maximum_relative_drift": max_drift,
                    "tolerance": 1e-6})
+
+    capacity_parameters = SpatialParameters(
+        antigen_decay=0.0, antigen_uptake=0.0, dc_death=0.0,
+        priming_rate=0.0, tpex_growth=2.0, tpex_carrying_capacity=1.0e5,
+        tpex_differentiation=0.0, tpex_death=0.0,
+        tpex_to_medulla=0.0, tpex_to_follicle=0.0,
+    )
+    capacity_initial = pd.DataFrame([
+        {"species": species, "zone": zone, "amount": (
+            1.0 if species == "antigen" and zone == "paracortex" else
+            8.0e4 if species == "tpex" and zone == "paracortex" else 0.0
+        )}
+        for species in SPECIES
+        for zone in ZONE_NAMES
+    ])
+    capacity_trajectory = simulate_spatial(
+        days=20, step=0.2, parameters=capacity_parameters, initial=capacity_initial,
+    )
+    capacity_tpex = capacity_trajectory[
+        capacity_trajectory.species.eq("tpex")
+        & capacity_trajectory.zone.eq("paracortex")
+    ].amount
+    maximum_capacity_ratio = float(
+        capacity_tpex.max() / capacity_parameters.tpex_carrying_capacity
+    )
+    final_capacity_ratio = float(
+        capacity_tpex.iloc[-1] / capacity_parameters.tpex_carrying_capacity
+    )
+    capacity_passed = maximum_capacity_ratio <= 1.0002 and abs(final_capacity_ratio - 1) <= 2e-4
+    checks.append({
+        "name": "spatial_tpex_niche_capacity",
+        "passed": bool(capacity_passed),
+        "maximum_capacity_ratio": maximum_capacity_ratio,
+        "final_capacity_ratio": final_capacity_ratio,
+        "tolerance": 2e-4,
+        "note": "Numerical saturation invariant under a high-antigen stress scenario.",
+    })
 
     control_system = simulate(days=14)
     treated_system = simulate(days=14, doses=(Dose(0, 1.0),))

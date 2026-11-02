@@ -24,7 +24,7 @@ OUTCOMES = ("tumour_cells", "effector_tumour", "tpex_tdln", "peak_pd1_occupancy"
 DEFAULT_SPATIAL_PARAMETERS = (
     "antigen_to_sinus", "dc_sinus_to_paracortex", "antigen_decay",
     "antigen_uptake", "priming_rate", "antigen_half_saturation",
-    "tpex_growth", "tpex_differentiation", "checkpoint_growth_gain",
+    "tpex_growth", "tpex_carrying_capacity", "tpex_differentiation", "checkpoint_growth_gain",
     "checkpoint_differentiation_gain", "effector_medulla_to_efferent",
 )
 SPATIAL_OUTCOMES = (

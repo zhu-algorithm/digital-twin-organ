@@ -55,6 +55,14 @@ def test_spatial_sensitivity_is_reproducible_and_preserves_paired_pd1_contrast()
     }
 
 
+def test_spatial_capacity_is_available_to_uncertainty_screening():
+    samples, ranking = global_spatial_sensitivity(
+        names=("tpex_carrying_capacity",), days=4, n=8, seed=2,
+    )
+    assert samples.tpex_carrying_capacity.nunique() == 8
+    assert set(ranking.parameter) == {"tpex_carrying_capacity"}
+
+
 def test_spatial_sensitivity_rejects_invalid_log_domain_and_occupancy():
     with pytest.raises(ValueError, match="strictly positive"):
         global_spatial_sensitivity(

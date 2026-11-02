@@ -9,7 +9,7 @@ def test_formal_verification_report_passes_all_prespecified_checks():
     assert report["schema_version"] == 1
     assert report["research_only"] is True
     assert report["passed"] is True
-    assert len(report["checks"]) == 8
+    assert len(report["checks"]) == 9
     assert all(check["passed"] for check in report["checks"])
     guards = next(check for check in report["checks"]
                   if check["name"] == "input_parameter_domain_guards")
@@ -22,6 +22,10 @@ def test_formal_verification_report_passes_all_prespecified_checks():
         later["final_efferent_effector"] >= earlier["final_efferent_effector"]
         for earlier, later in zip(spatial_dose["series"], spatial_dose["series"][1:])
     )
+    capacity = next(check for check in report["checks"]
+                    if check["name"] == "spatial_tpex_niche_capacity")
+    assert capacity["maximum_capacity_ratio"] <= 1.0002
+    assert capacity["final_capacity_ratio"] == pytest.approx(1.0, rel=2e-4)
 
 
 def test_simulator_rejects_nonfinite_inputs_and_invalid_tolerances():
