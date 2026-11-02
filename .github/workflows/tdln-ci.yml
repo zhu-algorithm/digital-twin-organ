@@ -30,4 +30,5 @@ jobs:
           tdln-pd1 evaluate --predictions /tmp/predictions.csv --labels examples/labels.csv --output /tmp/external_metrics.json --bootstrap 20
           tdln-pd1 simulate --days 7 --dose-days 0 --output /tmp/trajectory.csv
           tdln-pd1 simulate-spatial --days 3 --output /tmp/spatial.csv
+          tdln-pd1 sensitivity --parameters tumour_growth,killing_rate --days 3 --samples 8 --output /tmp/sensitivity
           tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output /tmp/calibration

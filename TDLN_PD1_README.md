@@ -34,6 +34,7 @@ tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output artifacts/calibration
 tdln-pd1 augment-twin --features examples/features.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
+tdln-pd1 sensitivity --days 42 --samples 128 --output artifacts/sensitivity
 pytest
 ```
 
@@ -50,6 +51,8 @@ Install `.[single-cell,test]` to read `.h5ad` directly.
 ## Patient/cohort data assimilation
 
 Calibration observations use long format: `day,variable,value,sd`. Variables must be explicit simulator states or documented derived endpoints. Positive parameters are fitted in log space with uncertainty-weighted robust residuals. The output includes fitted parameters, residuals, weighted RMSE, an identifiability warning, and an AIC-like diagnostic. Parameter-uncertainty ensembles propagate log-normal uncertainty into tumour and immune outcome intervals. The bundled observation file is synthetic and exists only to verify recovery of a known parameter.
+
+`sensitivity` uses seeded Latin-hypercube sampling over log-scaled parameter ranges and ranks monotonic influence on final tumour cells, tumour effectors, TDLN Tpex and peak PD-1 occupancy using Spearman correlations. These are screening statistics, not Sobol variance-decomposition indices or causal effects. The full sampled design is saved so every ranking is reproducible and inspectable.
 
 ## Mechanism–ML fusion
 

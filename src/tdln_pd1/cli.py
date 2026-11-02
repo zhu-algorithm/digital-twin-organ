@@ -10,6 +10,7 @@ from .simulator import Dose, simulate
 from .assimilation import calibrate, save_calibration
 from .hybrid import augment_with_twin
 from .spatial_dynamics import simulate_spatial
+from .sensitivity import global_sensitivity
 
 
 def main() -> None:
@@ -54,6 +55,15 @@ def main() -> None:
     spatial.add_argument("--step", type=float, default=0.1)
     spatial.add_argument("--transport-only", action="store_true")
     spatial.add_argument("--output", required=True)
+    sens = sub.add_parser("sensitivity")
+    sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
+    sens.add_argument("--days", type=float, default=42.0)
+    sens.add_argument("--dose-days", default="0,14,28")
+    sens.add_argument("--dose", type=float, default=1.0)
+    sens.add_argument("--samples", type=int, default=128)
+    sens.add_argument("--fold-range", type=float, default=4.0)
+    sens.add_argument("--seed", type=int, default=42)
+    sens.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
@@ -102,7 +112,7 @@ def main() -> None:
         augmented.to_csv(args.output, index=False)
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
                           "output": args.output, "labels_used": False}, indent=2))
-    else:
+    elif args.command == "simulate-spatial":
         trajectory = simulate_spatial(args.days, args.step, reactions=not args.transport_only)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         trajectory.to_csv(args.output, index=False)
@@ -111,6 +121,20 @@ def main() -> None:
                           "species": int(trajectory.species.nunique()),
                           "final_efferent_effector": float(efferent.amount.iloc[-1]),
                           "output": args.output}, indent=2))
+    else:
+        from .sensitivity import DEFAULT_PARAMETERS
+        names = tuple(name.strip() for name in args.parameters.split(",") if name.strip()) or DEFAULT_PARAMETERS
+        doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
+        samples, ranking = global_sensitivity(names=names, days=args.days, doses=doses,
+                                              n=args.samples, fold_range=args.fold_range, seed=args.seed)
+        output = Path(args.output)
+        output.mkdir(parents=True, exist_ok=True)
+        samples.to_csv(output / "sensitivity_samples.csv", index=False)
+        ranking.to_csv(output / "sensitivity_ranking.csv", index=False)
+        top = ranking.groupby("outcome", sort=False).first().reset_index()
+        print(json.dumps({"samples": len(samples), "parameters": len(names),
+                          "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
+                          "output": str(output), "method": "LHS Spearman screening"}, indent=2))
 
 
 if __name__ == "__main__":

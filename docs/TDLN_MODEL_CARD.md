@@ -37,6 +37,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Directional antigen, DC and effector movement across six TDLN zones.
 - TCR clone diversity, dominance and paired TDLN–tumour lineage-sharing features.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
+- Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
 
 ## Required validation ladder
 
@@ -53,6 +54,8 @@ The prediction report labels internal cross-validation separately from locked ex
 ## Identifiability policy
 
 Calibration never silently fits every parameter. The caller must name the fitted parameters, measurement error (`sd`) weights every residual, positive parameters are optimized in log space, and the report raises an identifiability warning when there are fewer than five observations per fitted parameter. This warning is heuristic rather than proof of identifiability; profile likelihood, posterior geometry and independent perturbation data remain required for a defensible calibrated twin.
+
+Global sensitivity screening samples configurable positive parameter ranges on a logarithmic scale and writes both the design and the outcome ranking. A low rank correlation does not establish irrelevance: non-monotonic effects, interactions and saturation can hide influence. Parameters that dominate an outcome are candidates for focused measurement and profile-likelihood analysis rather than automatic tuning.
 
 ## Mechanism–ML boundary
 
