@@ -5,10 +5,16 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .features import SIGNATURES
+from .features import SIGNATURES, select_baseline_cells
 
 
-def cohort_qc(cells: pd.DataFrame, labels: pd.DataFrame) -> dict:
+def cohort_qc(
+    cells: pd.DataFrame,
+    labels: pd.DataFrame,
+    time_column: str | None = None,
+    baseline_values: tuple[str, ...] | None = None,
+    feature_tissue_pattern: str | None = r"tdln|lymph",
+) -> dict:
     required_cells = {"patient_id", "cell_type"}
     required_labels = {"patient_id", "response"}
     errors, warnings = [], []
@@ -18,6 +24,13 @@ def cohort_qc(cells: pd.DataFrame, labels: pd.DataFrame) -> dict:
         errors.append(f"label table missing: {sorted(missing)}")
     if errors:
         return {"passed": False, "errors": errors, "warnings": warnings}
+    raw_cell_count = len(cells)
+    try:
+        cells = select_baseline_cells(cells, time_column, baseline_values)
+    except ValueError as error:
+        errors.append(str(error))
+        return {"passed": False, "errors": errors, "warnings": warnings,
+                "n_cells_raw": raw_cell_count, "n_cells_selected": 0}
     if labels.patient_id.duplicated().any():
         errors.append("label table has duplicate patient_id")
     if not set(labels.response.dropna().unique()).issubset({0, 1}):
@@ -32,6 +45,20 @@ def cohort_qc(cells: pd.DataFrame, labels: pd.DataFrame) -> dict:
     if missing_cells:
         errors.append(f"labels without cells: {missing_cells}")
     counts = cells.groupby(cells.patient_id.astype(str)).size()
+    feature_cell_count = len(cells)
+    if "tissue" in cells and feature_tissue_pattern and feature_tissue_pattern.lower() != "all":
+        feature_mask = cells.tissue.astype(str).str.contains(
+            feature_tissue_pattern, case=False, regex=True, na=False,
+        )
+        feature_cells = cells.loc[feature_mask]
+        feature_cell_count = len(feature_cells)
+        feature_patients = set(feature_cells.patient_id.astype(str))
+        missing_feature_tissue = sorted(cell_patients - feature_patients)
+        if missing_feature_tissue:
+            errors.append(
+                "patients without feature-compartment cells "
+                f"for pattern {feature_tissue_pattern!r}: {missing_feature_tissue[:10]}"
+            )
     response_counts = labels[labels.patient_id.astype(str).isin(matched)].response.value_counts().to_dict()
     if len(response_counts) < 2:
         errors.append("matched cohort does not contain both response classes")
@@ -56,7 +83,13 @@ def cohort_qc(cells: pd.DataFrame, labels: pd.DataFrame) -> dict:
         clonotype_report["assigned_fraction"] = float(assigned.mean()) if len(clone) else 0.0
     return {
         "passed": not errors, "errors": errors, "warnings": warnings,
-        "n_cells": int(len(cells)), "n_cell_patients": len(cell_patients),
+        "n_cells": int(len(cells)), "n_cells_raw": int(raw_cell_count),
+        "n_cells_selected": int(len(cells)),
+        "temporal_selection": {"time_column": time_column,
+                               "baseline_values": list(baseline_values or ())},
+        "feature_compartment": {"pattern": feature_tissue_pattern,
+                                "n_cells": int(feature_cell_count)},
+        "n_cell_patients": len(cell_patients),
         "n_label_patients": len(label_patients), "n_matched_patients": len(matched),
         "cells_per_patient": {"min": int(counts.min()) if len(counts) else 0,
                               "median": float(np.median(counts)) if len(counts) else 0.0,

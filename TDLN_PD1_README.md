@@ -8,8 +8,8 @@ Repository history and all branches were checked. At reconstruction time the rep
 
 ## Pipeline
 
-1. Load cell-level CSV or optional `.h5ad` (`obs.patient_id`, `obs.cell_type`).
-2. Compute patient-level cell fractions and cytotoxic, exhaustion, interferon, Treg, TCF7-memory, and dendritic-activation signatures.
+1. Load cell-level CSV or optional `.h5ad` (`obs.patient_id`, `obs.cell_type`), requiring an explicit baseline slice whenever temporal columns exist.
+2. Compute TDLN-restricted patient-level cell fractions and cytotoxic, exhaustion, interferon, Treg, TCF7-memory, and dendritic-activation signatures while retaining paired tissues for TCR sharing.
 3. Join pre-specified binary patient labels.
 4. Select logistic-regression regularization only inside nested, stratified patient-grouped cross-validation and generate one out-of-fold probability per patient.
 5. Write cross-validated predictions, metrics, and a fitted model artifact.
@@ -43,6 +43,8 @@ tdln-pd1 verify --output artifacts/verification.json
 pytest
 ```
 
+For longitudinal paired-tissue data, use the same temporal and tissue selection for both gates, for example `tdln-pd1 qc ... --time-column timepoint --baseline-values baseline --feature-tissue-pattern 'tdln|lymph'` followed by the same selection in `tdln-pd1 featurize`. Expression features default to the TDLN/lymph-node compartment; `--feature-tissue-pattern all` is an explicit opt-out. Omitting the temporal selection when a recognized time column exists is an error, preventing post-treatment information from leaking into a baseline model. QC also fails if any patient lacks cells in the chosen feature compartment.
+
 `verify` is a fail-closed numerical qualification gate. It checks finite/non-negative systemic states, scaled zero-dose numerical equivalence, monotone default dose/occupancy direction, endpoint stability under tighter solver tolerances, per-species conservation in the reaction-free spatial network, and the prespecified checkpoint-coupling direction. It writes every measured error and tolerance to JSON and exits non-zero if any invariant fails. Zero-dose schedules restart the adaptive solver at event boundaries, so equivalence uses a documented state-scaled relative tolerance rather than a dimensionally invalid near-zero absolute tolerance. These are software and numerical checks, not biological validation.
 
 The interactive six-zone virtual organ is published from [`docs/tdln.html`](docs/tdln.html). Its trajectories are not hand-authored: `python scripts/export_tdln_dashboard.py` deterministically exports the mechanistic and spatial simulations to a versioned local JSON file. CI regenerates the file and rejects stale dashboard data.
@@ -75,7 +77,7 @@ The same patient row now initializes the six-zone spatial twin: dendritic activa
 
 Training writes a versioned model artifact with its exact feature schema. `predict` applies that artifact without refitting and fails on missing features. `evaluate` reports ROC AUC, average precision, Brier score, log loss, balanced accuracy, sensitivity, specificity, calibration intercept/slope and patient-level bootstrap intervals. A result is external validation only when the evaluation cohort was never used for model fitting, hyperparameter selection, threshold choice or feature design; running the command on the bundled synthetic cohort does not make it external evidence.
 
-Training, prediction and evaluation normalize patient identifiers and fail closed on missing, duplicate or mismatched patient sets; no inner join may silently discard a patient. Model artifact version 3 stores SHA-256 hashes of normalized training identifiers plus a whole-cohort fingerprint. Locked prediction emits a per-patient overlap flag, and `evaluate` refuses the `external_locked_model` label if the artifact lacks this audit or any evaluation patient overlaps training. The hashes prevent accidental reuse; they are pseudonymous governance metadata, not anonymization against dictionary attacks on predictable identifiers.
+Training, prediction and evaluation normalize patient identifiers and fail closed on missing, duplicate or mismatched patient sets; no inner join may silently discard a patient. Model artifact version 4 stores SHA-256 hashes of normalized training identifiers plus a whole-cohort fingerprint. Locked prediction emits a per-patient overlap flag, and `evaluate` refuses the `external_locked_model` label if the artifact lacks this audit or any evaluation patient overlaps training. The hashes prevent accidental reuse; they are pseudonymous governance metadata, not anonymization against dictionary attacks on predictable identifiers.
 
 Internal evaluation uses an outer patient-grouped fold for performance estimation and an inner patient-grouped fold to choose `C` from a fixed grid using log loss. If an outer training fold is too small to support two-class inner validation, it records an explicit fixed-`C` fallback instead of presenting it as tuned. The report includes the selected value and train/test size for every outer fold, a prespecified 0.1–0.9 decision curve, and an artifact-level final selection performed only after out-of-fold evaluation is complete.
 

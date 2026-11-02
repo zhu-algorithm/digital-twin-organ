@@ -33,3 +33,43 @@ def test_tcr_clonality_and_cross_tissue_sharing():
     assert row.tcr_top_clone_fraction == 0.5
     assert row.tcr_tdln_tumour_shared_fraction == pytest.approx(1 / 3)
     assert 0 < row.tcr_simpson_concentration < 1
+    assert row.n_cells == 4
+    assert row.n_cells_total_selected == 6
+
+
+def test_temporal_input_requires_explicit_baseline_and_excludes_post_treatment():
+    cells = pd.DataFrame({
+        "patient_id": ["p1", "p1", "p2", "p2"],
+        "cell_type": ["Tpex"] * 4,
+        "timepoint": ["baseline", "post", "baseline", "post"],
+        "TCF7": [1.0, 100.0, 2.0, 200.0],
+    })
+    with pytest.raises(ValueError, match="temporal columns detected"):
+        aggregate_cells(cells)
+    out = aggregate_cells(cells, "timepoint", ("baseline",)).set_index("patient_id")
+    assert out.loc["p1", "sig_tcf7_memory"] == 1.0
+    assert out.loc["p2", "sig_tcf7_memory"] == 2.0
+    assert out.n_cells.eq(1).all()
+
+
+def test_signatures_use_tdln_while_tcr_sharing_uses_all_tissues():
+    cells = pd.DataFrame({
+        "patient_id": ["p1"] * 4,
+        "cell_type": ["Tpex"] * 4,
+        "tissue": ["TDLN", "TDLN", "tumour", "tumour"],
+        "TCF7": [2.0, 4.0, 100.0, 100.0],
+        "clonotype_id": ["a", "b", "a", "c"],
+    })
+    row = aggregate_cells(cells).iloc[0]
+    assert row.sig_tcf7_memory == 3.0
+    assert row.tcr_tdln_tumour_shared_fraction == pytest.approx(0.5)
+
+
+def test_each_patient_must_have_selected_baseline_and_tdln_cells():
+    temporal = pd.DataFrame({"patient_id": ["p1", "p2"], "cell_type": ["T", "T"],
+                             "timepoint": ["baseline", "post"]})
+    with pytest.raises(ValueError, match="removed all cells"):
+        aggregate_cells(temporal, "timepoint", ("baseline",))
+    tissue = pd.DataFrame({"patient_id": ["p1"], "cell_type": ["T"], "tissue": ["tumour"]})
+    with pytest.raises(ValueError, match="no cells matching"):
+        aggregate_cells(tissue)

@@ -13,6 +13,47 @@ SIGNATURES = {
     "tcf7_memory": ("TCF7", "CCR7", "IL7R", "LTB"),
     "dendritic_activation": ("CD80", "CD86", "CCR7", "HLA-DRA"),
 }
+TEMPORAL_COLUMNS = ("sampling_day", "timepoint", "visit", "collection_timepoint")
+
+
+def select_baseline_cells(
+    cells: pd.DataFrame,
+    time_column: str | None = None,
+    baseline_values: tuple[str, ...] | None = None,
+) -> pd.DataFrame:
+    """Select an explicitly declared pre-treatment slice, failing on ambiguity."""
+    detected = [column for column in TEMPORAL_COLUMNS if column in cells.columns]
+    if time_column is None:
+        if detected:
+            raise ValueError(
+                f"temporal columns detected {detected}; specify time_column and baseline_values"
+            )
+        return cells.copy()
+    if time_column not in cells:
+        raise ValueError(f"time column not found: {time_column}")
+    if not baseline_values:
+        raise ValueError("baseline_values are required when time_column is specified")
+    values = cells[time_column]
+    text = values.astype(str).str.strip().str.lower()
+    mask = pd.Series(False, index=cells.index)
+    numeric = pd.to_numeric(values, errors="coerce")
+    for baseline in baseline_values:
+        baseline_text = str(baseline).strip().lower()
+        mask |= text.eq(baseline_text)
+        try:
+            numeric_value = float(baseline_text)
+        except ValueError:
+            continue
+        mask |= np.isclose(numeric, numeric_value, rtol=0.0, atol=1e-12)
+    selected = cells.loc[mask].copy()
+    if selected.empty:
+        raise ValueError("baseline selection retained zero cells")
+    all_patients = set(cells.patient_id.astype(str)) if "patient_id" in cells else set()
+    selected_patients = set(selected.patient_id.astype(str)) if "patient_id" in selected else set()
+    missing = sorted(all_patients - selected_patients)
+    if missing:
+        raise ValueError(f"baseline selection removed all cells for patients: {missing[:10]}")
+    return selected
 
 
 def _mean_present(frame: pd.DataFrame, genes: tuple[str, ...]) -> pd.Series:
@@ -22,7 +63,12 @@ def _mean_present(frame: pd.DataFrame, genes: tuple[str, ...]) -> pd.Series:
     return frame[present].apply(pd.to_numeric, errors="coerce").mean(axis=1)
 
 
-def aggregate_cells(cells: pd.DataFrame) -> pd.DataFrame:
+def aggregate_cells(
+    cells: pd.DataFrame,
+    time_column: str | None = None,
+    baseline_values: tuple[str, ...] | None = None,
+    feature_tissue_pattern: str | None = r"tdln|lymph",
+) -> pd.DataFrame:
     """Aggregate long cell rows into one leakage-safe row per patient.
 
     Required columns are patient_id and cell_type. Gene columns are optional;
@@ -32,18 +78,28 @@ def aggregate_cells(cells: pd.DataFrame) -> pd.DataFrame:
     missing = required - set(cells.columns)
     if missing:
         raise ValueError(f"missing columns: {sorted(missing)}")
-    x = cells.copy()
+    x = select_baseline_cells(cells, time_column, baseline_values)
     for name, genes in SIGNATURES.items():
         x[f"sig_{name}"] = _mean_present(x, genes)
     rows = []
     for patient, group in x.groupby("patient_id", sort=True):
-        row: dict[str, float | str] = {"patient_id": patient, "n_cells": len(group)}
-        fractions = group["cell_type"].astype(str).value_counts(normalize=True)
+        feature_group = group
+        if "tissue" in group and feature_tissue_pattern and feature_tissue_pattern.lower() != "all":
+            mask = group.tissue.astype(str).str.contains(feature_tissue_pattern, case=False, regex=True, na=False)
+            feature_group = group.loc[mask]
+            if feature_group.empty:
+                raise ValueError(
+                    f"patient {patient} has no cells matching feature_tissue_pattern={feature_tissue_pattern!r}"
+                )
+        row: dict[str, float | str] = {
+            "patient_id": patient, "n_cells": len(feature_group), "n_cells_total_selected": len(group),
+        }
+        fractions = feature_group["cell_type"].astype(str).value_counts(normalize=True)
         for cell_type, value in fractions.items():
             safe = cell_type.lower().replace(" ", "_").replace("/", "_")
             row[f"frac_{safe}"] = float(value)
         for name in SIGNATURES:
-            row[f"sig_{name}"] = float(group[f"sig_{name}"].mean())
+            row[f"sig_{name}"] = float(feature_group[f"sig_{name}"].mean())
         if "clonotype_id" in group:
             clones = group["clonotype_id"].dropna().astype(str)
             clones = clones[~clones.str.lower().isin({"", "nan", "none", "unassigned"})]

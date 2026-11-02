@@ -22,6 +22,9 @@ def main() -> None:
     featurize = sub.add_parser("featurize")
     featurize.add_argument("--cells", required=True)
     featurize.add_argument("--output", required=True)
+    featurize.add_argument("--time-column")
+    featurize.add_argument("--baseline-values", default="")
+    featurize.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     train = sub.add_parser("train")
     train.add_argument("--features", required=True)
     train.add_argument("--labels", required=True)
@@ -79,11 +82,16 @@ def main() -> None:
     qc.add_argument("--labels", required=True)
     qc.add_argument("--manifest")
     qc.add_argument("--output", required=True)
+    qc.add_argument("--time-column")
+    qc.add_argument("--baseline-values", default="")
+    qc.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     verify = sub.add_parser("verify")
     verify.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
-        aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
+        baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
+        aggregate_cells(load_cells(args.cells), args.time_column, baseline_values or None,
+                        args.feature_tissue_pattern).to_csv(args.output, index=False)
     elif args.command == "train":
         import pandas as pd
         metrics = train_evaluate(pd.read_csv(args.features), load_labels(args.labels), Path(args.output),
@@ -164,7 +172,9 @@ def main() -> None:
                           "output": str(output), "method": "LHS Spearman screening"}, indent=2))
     elif args.command == "qc":
         import pandas as pd
-        report = cohort_qc(load_cells(args.cells), pd.read_csv(args.labels))
+        baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
+        report = cohort_qc(load_cells(args.cells), pd.read_csv(args.labels),
+                           args.time_column, baseline_values or None, args.feature_tissue_pattern)
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)
             report["passed"] = report["passed"] and report["provenance"]["valid"]
