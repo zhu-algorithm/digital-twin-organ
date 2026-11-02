@@ -142,8 +142,10 @@ def simulate(
         raise ValueError("solver tolerances must be finite and positive")
     _validate_model_inputs(p, init)
     if any(not np.isfinite(d.day) or not np.isfinite(d.amount)
-           or d.day < 0 or d.day > days or d.amount < 0 for d in doses):
-        raise ValueError("doses must have non-negative amount and fall within simulation")
+           or d.day < 0 or d.day >= days or d.amount < 0 for d in doses):
+        raise ValueError(
+            "doses must have non-negative amount and occur before the simulation endpoint"
+        )
     events: dict[float, float] = {}
     for dose in doses:
         events[dose.day] = events.get(dose.day, 0.0) + dose.amount
@@ -161,10 +163,16 @@ def simulate(
         frame = pd.DataFrame(sol.y.T, columns=STATE_NAMES)
         frame.insert(0, "day", sol.t)
         if frames:
-            frame = frame.iloc[1:]
+            if start in events:
+                # Report a right-continuous trajectory: at a bolus boundary the
+                # retained row is the post-dose state, not the pre-dose endpoint.
+                frames[-1] = frames[-1].iloc[:-1]
+            else:
+                frame = frame.iloc[1:]
         frames.append(frame)
         y = sol.y[:, -1]
     out = pd.concat(frames, ignore_index=True)
+    out.insert(1, "administered_dose", out.day.map(events).fillna(0.0))
     for name in STATE_NAMES:
         out[name] = out[name].clip(lower=0.0)
     out["tumour_change_pct"] = 100.0 * (out.tumour_cells / out.tumour_cells.iloc[0] - 1.0)

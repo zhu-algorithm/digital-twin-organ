@@ -57,6 +57,8 @@ The interactive six-zone virtual organ is published from [`docs/tdln.html`](docs
 
 Adding `--dose-days` couples the systemic anti-PD-1 pharmacokinetic/receptor-occupancy trajectory into that measured spatial state. `--paired-counterfactual` runs control and treated arms from the exact same patient initialization and writes an explicit `arm` and time-varying `pd1_occupancy` on every spatial row. A zero-amount schedule is numerically equivalent to control, while the default positive schedule increases efferent effectors in the prespecified verification scenario. Dosing is rejected in transport-only mode because receptor occupancy acts on immune reactions, not conservative transport.
 
+Systemic trajectories use right-continuous bolus semantics: the row at a dosing boundary is the post-dose state and `administered_dose` records the coalesced amount. A schedule at exactly the terminal simulation time fails instead of being accepted and silently ignored.
+
 Install `.[single-cell,test]` to read `.h5ad` directly.
 
 `qc` is the mandatory pre-training gate for imported cohorts. It checks cryptographic provenance, licensing/source metadata, patient matching, duplicate labels, binary outcomes, class balance, cell counts, signature-gene coverage, paired TDLN–tumour samples and clonotype assignment. A failed gate exits non-zero so CI and workflow systems cannot silently continue.

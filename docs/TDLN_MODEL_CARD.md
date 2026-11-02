@@ -6,7 +6,7 @@ Research simulation of the tumour–blood–tumour-draining-lymph-node axis, gen
 
 ## Architecture
 
-The executable core currently contains 12 non-negative state variables spanning tumour burden and antigen, migratory mature dendritic cells, naive CD8 T cells, TCF1-like progenitor-exhausted cells (Tpex), TDLN and tumour effectors, exhausted tumour T cells, Tregs, plasma/TDLN antibody exposure, and PD-1 receptor occupancy. Bolus dosing is integrated piecewise so discontinuities are explicit rather than hidden inside the ODE solver.
+The executable core currently contains 12 non-negative state variables spanning tumour burden and antigen, migratory mature dendritic cells, naive CD8 T cells, TCF1-like progenitor-exhausted cells (Tpex), TDLN and tumour effectors, exhausted tumour T cells, Tregs, plasma/TDLN antibody exposure, and PD-1 receptor occupancy. Bolus dosing is integrated piecewise so discontinuities are explicit rather than hidden inside the ODE solver. Output trajectories are right-continuous at dosing boundaries, retain the post-dose state, and expose `administered_dose`; a dose at the terminal time is rejected because it has no simulated follow-up interval.
 
 The spatial ontology separates afferent lymph, subcapsular sinus, paracortex, follicle, medulla, and efferent lymph. Single-cell annotations can be mapped to these zones; unresolved labels remain unresolved instead of being guessed.
 

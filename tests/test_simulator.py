@@ -34,3 +34,16 @@ def test_duplicate_doses_on_same_day_are_combined():
     a = simulate(days=2, doses=(Dose(0, 1), Dose(0, 2)))
     b = simulate(days=2, doses=(Dose(0, 3),))
     assert np.allclose(a.anti_pd1_plasma, b.anti_pd1_plasma)
+
+
+def test_bolus_boundary_is_post_dose_and_auditable():
+    trajectory = simulate(days=2, doses=(Dose(1, 1.5),), step=0.25)
+    boundary = trajectory.loc[trajectory.day.eq(1.0)].iloc[0]
+    assert boundary.administered_dose == 1.5
+    assert boundary.anti_pd1_plasma == pytest.approx(1.5)
+    assert trajectory.day.is_unique
+
+
+def test_dose_at_simulation_endpoint_is_rejected_instead_of_ignored():
+    with pytest.raises(ValueError, match="before the simulation endpoint"):
+        simulate(days=2, doses=(Dose(2, 1.0),))
