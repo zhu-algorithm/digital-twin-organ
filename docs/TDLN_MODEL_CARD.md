@@ -37,6 +37,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Lymph-node microanatomy zone coverage and deterministic cell-zone mapping.
 - Existing single-cell feature and prediction tests remain passing.
 - Synthetic-truth parameter recovery for longitudinal data assimilation.
+- Synthetic-truth recovery and Jacobian identifiability diagnostics for longitudinal spatial calibration.
 - Deterministic uncertainty propagation under a fixed random seed.
 - Label-free, patient-aligned mechanistic counterfactual feature generation.
 - Per-species mass conservation in the reaction-free spatial transport network.
@@ -76,6 +77,8 @@ Locked patient predictions include a 95% interval from deterministic patient-lev
 ## Identifiability policy
 
 Calibration never silently fits every parameter. The caller must name the fitted parameters, measurement error (`sd`) weights every residual, positive parameters are optimized in log space, and the report raises an identifiability warning when there are fewer than five observations per fitted parameter. This warning is heuristic rather than proof of identifiability; profile likelihood, posterior geometry and independent perturbation data remain required for a defensible calibrated twin.
+
+The same policy now applies to the six-zone model. Longitudinal species-by-zone observations can constrain explicitly selected transport/reaction parameters, optionally from a measured spatial initial state and under a fixed systemic PD-1 occupancy trajectory. Spatial reports add numerical Jacobian rank and condition number to the observation-count warning. These local diagnostics expose obvious non-identifiability but do not replace profile likelihood, posterior predictive checking or independent perturbation experiments.
 
 Global sensitivity screening samples configurable positive parameter ranges on a logarithmic scale and writes both the design and the outcome ranking. A low rank correlation does not establish irrelevance: non-monotonic effects, interactions and saturation can hide influence. Parameters that dominate an outcome are candidates for focused measurement and profile-likelihood analysis rather than automatic tuning.
 

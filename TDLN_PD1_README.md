@@ -36,6 +36,7 @@ tdln-pd1 evaluate --predictions external_predictions.csv --labels external_label
 tdln-pd1 site-cv --features features.csv --labels labels_with_center.csv --output artifacts/site_cv
 tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln_trajectory.csv
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output artifacts/calibration
+tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --output artifacts/spatial_calibration
 tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --output artifacts/spatial_cohort_initial.csv
 tdln-pd1 augment-twin --features examples/features.csv --spatial-initial-zones artifacts/spatial_cohort_initial.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
 tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --output artifacts/spatial_initial.csv
@@ -71,6 +72,8 @@ Install `.[single-cell,test]` to read `.h5ad` directly.
 ## Patient/cohort data assimilation
 
 Calibration observations use long format: `day,variable,value,sd`. Variables must be explicit simulator states or documented derived endpoints. Positive parameters are fitted in log space with uncertainty-weighted robust residuals. The output includes fitted parameters, residuals, weighted RMSE, an identifiability warning, and an AIC-like diagnostic. Parameter-uncertainty ensembles propagate log-normal uncertainty into tumour and immune outcome intervals. The bundled observation file is synthetic and exists only to verify recovery of a known parameter.
+
+`calibrate-spatial` accepts longitudinal `day,species,zone,amount,sd` observations and fits only explicitly named positive `SpatialParameters` in log space. It can use a selected patient's measured zone initialization and an optional anti-PD-1 dose schedule, in which case the fixed systemic receptor-occupancy trajectory is coupled during every spatial fit evaluation. Reports include weighted residuals, Jacobian rank and condition number, observation-to-parameter sufficiency, an AIC-like diagnostic and a fail-visible identifiability warning. The bundled spatial observations are synthetic and recover a known antigen-decay value; they are software verification, not biological calibration.
 
 `sensitivity` uses seeded Latin-hypercube sampling over log-scaled parameter ranges and ranks monotonic influence on final tumour cells, tumour effectors, TDLN Tpex and peak PD-1 occupancy using Spearman correlations. These are screening statistics, not Sobol variance-decomposition indices or causal effects. The full sampled design is saved so every ranking is reproducible and inspectable.
 

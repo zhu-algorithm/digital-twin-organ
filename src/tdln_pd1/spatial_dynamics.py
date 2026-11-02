@@ -17,6 +17,17 @@ SPECIES = ("antigen", "mature_dc", "tpex", "effector")
 
 @dataclass(frozen=True)
 class SpatialParameters:
+    antigen_to_sinus: float = 0.90
+    antigen_sinus_to_paracortex: float = 0.12
+    antigen_sinus_to_efferent: float = 0.18
+    dc_to_sinus: float = 0.55
+    dc_sinus_to_paracortex: float = 0.65
+    tpex_to_medulla: float = 0.05
+    tpex_medulla_to_efferent: float = 0.35
+    tpex_to_follicle: float = 0.02
+    tpex_follicle_to_paracortex: float = 0.04
+    effector_to_medulla: float = 0.18
+    effector_medulla_to_efferent: float = 0.65
     antigen_decay: float = 0.35
     antigen_uptake: float = 0.12
     dc_yield: float = 2.0e4
@@ -42,23 +53,23 @@ class SpatialInitialState:
 # material removed from the source is added to the destination.
 TRANSPORT = {
     "antigen": (
-        ("afferent_lymph", "subcapsular_sinus", 0.90),
-        ("subcapsular_sinus", "paracortex", 0.12),
-        ("subcapsular_sinus", "efferent_lymph", 0.18),
+        ("afferent_lymph", "subcapsular_sinus", "antigen_to_sinus"),
+        ("subcapsular_sinus", "paracortex", "antigen_sinus_to_paracortex"),
+        ("subcapsular_sinus", "efferent_lymph", "antigen_sinus_to_efferent"),
     ),
     "mature_dc": (
-        ("afferent_lymph", "subcapsular_sinus", 0.55),
-        ("subcapsular_sinus", "paracortex", 0.65),
+        ("afferent_lymph", "subcapsular_sinus", "dc_to_sinus"),
+        ("subcapsular_sinus", "paracortex", "dc_sinus_to_paracortex"),
     ),
     "tpex": (
-        ("paracortex", "medulla", 0.05),
-        ("medulla", "efferent_lymph", 0.35),
-        ("paracortex", "follicle", 0.02),
-        ("follicle", "paracortex", 0.04),
+        ("paracortex", "medulla", "tpex_to_medulla"),
+        ("medulla", "efferent_lymph", "tpex_medulla_to_efferent"),
+        ("paracortex", "follicle", "tpex_to_follicle"),
+        ("follicle", "paracortex", "tpex_follicle_to_paracortex"),
     ),
     "effector": (
-        ("paracortex", "medulla", 0.18),
-        ("medulla", "efferent_lymph", 0.65),
+        ("paracortex", "medulla", "effector_to_medulla"),
+        ("medulla", "efferent_lymph", "effector_medulla_to_efferent"),
     ),
 }
 
@@ -96,10 +107,11 @@ def initial_vector(initial: SpatialInitialState | pd.DataFrame | None = None) ->
     return y
 
 
-def _transport(y: np.ndarray) -> np.ndarray:
+def _transport(y: np.ndarray, parameters: SpatialParameters) -> np.ndarray:
     dydt = np.zeros_like(y)
     for species, edges in TRANSPORT.items():
-        for source, target, rate in edges:
+        for source, target, parameter_name in edges:
+            rate = getattr(parameters, parameter_name)
             flux = rate * max(y[_index(species, source)], 0.0)
             dydt[_index(species, source)] -= flux
             dydt[_index(species, target)] += flux
@@ -113,7 +125,7 @@ def _rhs(
     reactions: bool,
     checkpoint_occupancy: float | Callable[[float], float],
 ) -> np.ndarray:
-    dydt = _transport(y)
+    dydt = _transport(y, p)
     if reactions:
         # Antigen capture occurs in the subcapsular sinus; priming occurs in paracortex.
         scs_ag = max(y[_index("antigen", "subcapsular_sinus")], 0.0)

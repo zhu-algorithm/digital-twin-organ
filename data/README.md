@@ -14,6 +14,8 @@ Spatial initialization uses a separate spot table with `spot_id,patient_id,zone,
 
 For mechanism–ML fusion, pass that output to `augment-twin --spatial-initial-zones`. Its patient identifiers must match the single-cell feature table exactly. No inner join or population-default fallback is performed when a spatial table is requested, so incomplete multimodal linkage fails rather than silently changing the analysis cohort.
 
+Longitudinal spatial calibration uses `day,species,zone,amount,sd`, with one unique row per time/species/zone coordinate. Amounts must be finite and non-negative and standard deviations strictly positive. Species and zones use the same controlled vocabulary as spatial initialization. Observation units must match the initial-state amounts; the calibration command does not infer conversions between expression, density, imaging intensity and cell counts.
+
 The repository's existing CELLxGENE-derived organ files are useful provenance/context but do **not** contain a verified paired TDLN cohort with anti-PD-1 outcomes. They are therefore not silently reused as supervised labels.
 
 Every imported cohort should ship a JSON provenance manifest with `cohort_id`, `source`, `license`, `modalities`, `outcome_definition`, and a list of files containing relative `path`, semantic `role`, and SHA-256. `tdln-pd1 qc` verifies the hashes and fails closed on missing files, altered content, ambiguous timepoints, missing/duplicate patients, invalid response labels or a single-class matched cohort. Its report records raw and selected cell counts, the exact temporal selection, response balance, signature coverage, paired TDLN–tumour availability and clonotype assignment.

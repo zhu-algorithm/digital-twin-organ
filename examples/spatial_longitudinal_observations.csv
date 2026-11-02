@@ -1,0 +1,7 @@
+day,species,zone,amount,sd
+0,antigen,afferent_lymph,1.000000000,0.020000000
+1,antigen,afferent_lymph,0.332871084,0.006657422
+2,antigen,afferent_lymph,0.110803159,0.002216063
+3,antigen,afferent_lymph,0.036883168,0.000737663
+4,antigen,afferent_lymph,0.012277340,0.000245547
+5,antigen,afferent_lymph,0.004086772,0.000081735

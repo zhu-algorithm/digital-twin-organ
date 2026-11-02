@@ -13,6 +13,7 @@ from .hybrid import augment_with_twin
 from .spatial_dynamics import (simulate_spatial, simulate_spatial_coupled,
                                simulate_spatial_counterfactual)
 from .spatial_data import aggregate_spatial_spots
+from .spatial_assimilation import calibrate_spatial, save_spatial_calibration
 from .sensitivity import global_sensitivity
 from .provenance import verify_manifest
 from .qc import cohort_qc
@@ -60,6 +61,16 @@ def main() -> None:
     cal.add_argument("--dose-days", default="")
     cal.add_argument("--dose", type=float, default=1.0)
     cal.add_argument("--output", required=True)
+    spatial_cal = sub.add_parser("calibrate-spatial")
+    spatial_cal.add_argument("--observations", required=True)
+    spatial_cal.add_argument("--fit", required=True,
+                             help="comma-separated SpatialParameters fields")
+    spatial_cal.add_argument("--initial-zones")
+    spatial_cal.add_argument("--patient-id")
+    spatial_cal.add_argument("--dose-days", default="")
+    spatial_cal.add_argument("--dose", type=float, default=1.0)
+    spatial_cal.add_argument("--max-nfev", type=int, default=200)
+    spatial_cal.add_argument("--output", required=True)
     aug = sub.add_parser("augment-twin")
     aug.add_argument("--features", required=True)
     aug.add_argument("--days", type=float, default=42.0)
@@ -152,6 +163,34 @@ def main() -> None:
             fit_parameters=tuple(name.strip() for name in args.fit.split(",") if name.strip()),
         )
         save_calibration(args.output, fitted, diagnostics, compared)
+        print(json.dumps(diagnostics, indent=2))
+    elif args.command == "calibrate-spatial":
+        import pandas as pd
+        observations = pd.read_csv(args.observations)
+        initial = None
+        if args.initial_zones:
+            states = pd.read_csv(args.initial_zones)
+            if "patient_id" not in states:
+                raise ValueError("initial zone states need patient_id")
+            patients = states.patient_id.astype(str).unique().tolist()
+            patient_id = args.patient_id or (patients[0] if len(patients) == 1 else None)
+            if patient_id is None:
+                raise ValueError("--patient-id is required when initial states contain multiple patients")
+            initial = states[states.patient_id.astype(str).eq(str(patient_id))]
+            if initial.empty:
+                raise ValueError(f"patient not found in initial zone states: {patient_id}")
+        doses = tuple(Dose(float(day), args.dose)
+                      for day in args.dose_days.split(",") if day.strip())
+        systemic = None
+        if doses:
+            calibration_days = max(float(pd.to_numeric(observations.day).max()), 1e-6)
+            systemic = simulate(days=calibration_days, doses=doses)
+        fitted, diagnostics, compared = calibrate_spatial(
+            observations, initial=initial, systemic_trajectory=systemic,
+            fit_parameters=tuple(name.strip() for name in args.fit.split(",") if name.strip()),
+            max_nfev=args.max_nfev,
+        )
+        save_spatial_calibration(args.output, fitted, diagnostics, compared)
         print(json.dumps(diagnostics, indent=2))
     elif args.command == "augment-twin":
         import pandas as pd
