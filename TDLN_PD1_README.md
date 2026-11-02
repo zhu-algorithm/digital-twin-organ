@@ -95,6 +95,8 @@ Fitted parameter JSON is executable rather than archival: `simulate --parameters
 
 `sensitivity` uses seeded Latin-hypercube sampling over log-scaled parameter ranges and ranks monotonic influence on final tumour cells, tumour effectors, TDLN Tpex and peak PD-1 occupancy using Spearman correlations. These are screening statistics, not Sobol variance-decomposition indices or causal effects. The full sampled design is saved so every ranking is reproducible and inspectable.
 
+An explicitly supplied dose schedule is validated as a whole: non-finite, negative, endpoint or out-of-window events fail instead of being silently removed. Library callers that omit a schedule receive the standard days 0/14/28 regimen truncated prospectively to events strictly before their requested simulation endpoint.
+
 The systemic screen can center its ranges on an exact fitted `TwinParameters` JSON. Its report directory includes a provenance record with the parameter-file SHA-256, complete sampling design configuration, and hashes of the exact sample and ranking tables. The audit verifier fails if either result table is subsequently replaced.
 
 `spatial-sensitivity` applies the same seeded screening design to the six-zone model. Every parameter draw runs a matched zero-occupancy and prespecified-occupancy pair from the same initial state. Rankings cover untreated endpoints, occupied endpoints and the paired PD-1 effect on paracortical Tpex and efferent effectors. This separates general spatial dynamics from the model-implied checkpoint contrast, but remains a screening analysis rather than evidence of a clinical treatment effect.

@@ -46,7 +46,7 @@ def global_sensitivity(
     parameters: TwinParameters | None = None,
     names: Iterable[str] = DEFAULT_PARAMETERS,
     days: float = 42.0,
-    doses: tuple[Dose, ...] = (Dose(0, 1), Dose(14, 1), Dose(28, 1)),
+    doses: tuple[Dose, ...] | None = None,
     n: int = 128,
     fold_range: float = 4.0,
     seed: int = 42,
@@ -63,14 +63,17 @@ def global_sensitivity(
         raise ValueError(f"invalid sensitivity parameters: {sorted(invalid)}")
     if n < 8 or fold_range <= 1 or days <= 0:
         raise ValueError("n must be >=8, fold_range >1, and days positive")
+    if doses is None:
+        doses = tuple(Dose(day, 1.0) for day in (0.0, 14.0, 28.0) if day < days)
+    # Validate the complete explicit schedule once. Never trim events silently.
+    simulate(days=days, doses=doses, parameters=base)
     unit = qmc.LatinHypercube(d=len(names), seed=seed).random(n)
     log_fold = np.log(fold_range)
     multipliers = np.exp(-log_fold + unit * 2 * log_fold)
     rows = []
-    active_doses = tuple(dose for dose in doses if 0 <= dose.day <= days)
     for draw, vector in enumerate(multipliers):
         values = {name: getattr(base, name) * multiple for name, multiple in zip(names, vector)}
-        trajectory = simulate(days=days, doses=active_doses, parameters=replace(base, **values))
+        trajectory = simulate(days=days, doses=doses, parameters=replace(base, **values))
         final = trajectory.iloc[-1]
         row = {"draw": draw, **values, "tumour_cells": final.tumour_cells,
                "effector_tumour": final.effector_tumour, "tpex_tdln": final.tpex_tdln,

@@ -22,6 +22,19 @@ def test_sensitivity_contract_rejects_invalid_configuration():
         global_sensitivity(names=("not_a_parameter",), n=8)
     with pytest.raises(ValueError):
         global_sensitivity(names=("tumour_growth",), n=4)
+    with pytest.raises(ValueError, match="before the simulation endpoint"):
+        global_sensitivity(
+            names=("tumour_growth",), days=10, n=8,
+            doses=(Dose(0, 1), Dose(14, 1)),
+        )
+
+
+def test_default_sensitivity_schedule_adapts_without_hiding_explicit_events():
+    samples, _ = global_sensitivity(
+        names=("tumour_growth",), days=10, n=8, seed=3,
+    )
+    assert len(samples) == 8
+    assert samples.peak_pd1_occupancy.gt(0).all()
 
 
 def test_spatial_sensitivity_is_reproducible_and_preserves_paired_pd1_contrast():
