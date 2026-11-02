@@ -1,0 +1,30 @@
+name: TDLN digital twin CI
+
+on:
+  push:
+    branches: [main, rebuild/tdln-pd1-response]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e '.[test]'
+      - run: pytest -q
+      - name: Verify end-to-end digital twin pipeline
+        run: |
+          tdln-pd1 featurize --cells examples/cells.csv --output /tmp/features.csv
+          tdln-pd1 augment-twin --features /tmp/features.csv --days 7 --dose-days 0 --output /tmp/hybrid.csv
+          tdln-pd1 train --features /tmp/hybrid.csv --labels examples/labels.csv --output /tmp/model --folds 2
+          tdln-pd1 simulate --days 7 --dose-days 0 --output /tmp/trajectory.csv
+          tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output /tmp/calibration
