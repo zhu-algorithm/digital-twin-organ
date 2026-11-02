@@ -258,6 +258,7 @@ def main() -> None:
                      help="versioned FeatureStateMapping JSON")
     aug.add_argument("--systemic-diagnostics", help="systemic calibration diagnostics JSON")
     aug.add_argument("--spatial-diagnostics", help="spatial calibration diagnostics JSON")
+    aug.add_argument("--mapping-diagnostics", help="feature-state mapping diagnostics JSON")
     aug.add_argument("--uncertainty-samples", type=int, default=0,
                      help="0 disables; otherwise requires at least 2 correlated draws")
     aug.add_argument("--uncertainty-seed", type=int, default=42)
@@ -336,6 +337,7 @@ def main() -> None:
     verify_augmentation.add_argument("--feature-state-mapping")
     verify_augmentation.add_argument("--systemic-diagnostics")
     verify_augmentation.add_argument("--spatial-diagnostics")
+    verify_augmentation.add_argument("--mapping-diagnostics")
     verify_features = sub.add_parser("verify-features")
     verify_features.add_argument("--audit", required=True)
     verify_features.add_argument("--cells", required=True)
@@ -654,17 +656,20 @@ def main() -> None:
         )
         if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
             raise ValueError("--uncertainty-samples must be 0 or at least 2")
-        if (args.systemic_diagnostics or args.spatial_diagnostics) and not args.uncertainty_samples:
+        if (args.systemic_diagnostics or args.spatial_diagnostics
+                or args.mapping_diagnostics) and not args.uncertainty_samples:
             raise ValueError("diagnostics require --uncertainty-samples of at least 2")
         if args.systemic_diagnostics and systemic_parameters is None:
             raise ValueError("--systemic-diagnostics requires --systemic-parameters")
         if args.spatial_diagnostics and spatial_parameters is None:
             raise ValueError("--spatial-diagnostics requires --spatial-parameters")
+        if args.mapping_diagnostics and feature_state_mapping is None:
+            raise ValueError("--mapping-diagnostics requires --feature-state-mapping")
         if args.uncertainty_samples and not (
-            args.systemic_diagnostics or args.spatial_diagnostics
+            args.systemic_diagnostics or args.spatial_diagnostics or args.mapping_diagnostics
         ):
             raise ValueError("uncertainty sampling requires at least one diagnostics file")
-        systemic_draws = spatial_draws = None
+        systemic_draws = spatial_draws = mapping_draws = None
         if args.systemic_diagnostics:
             diagnostics = json.loads(Path(args.systemic_diagnostics).read_text())
             _, draws = calibration_parameter_draws(
@@ -679,13 +684,23 @@ def main() -> None:
                 args.uncertainty_seed + 1,
             )
             spatial_draws = tuple(replace(spatial_parameters, **draw) for draw in draws)
+        if args.mapping_diagnostics:
+            diagnostics = json.loads(Path(args.mapping_diagnostics).read_text())
+            _, draws = calibration_parameter_draws(
+                feature_state_mapping, diagnostics, args.uncertainty_samples,
+                args.uncertainty_seed + 2,
+            )
+            mapping_draws = tuple(
+                replace(feature_state_mapping, **draw) for draw in draws
+            )
         augmented = augment_with_twin(pd.read_csv(args.features), args.days, dose_days,
                                       args.dose, spatial_states,
                                       systemic_parameters=systemic_parameters,
                                       spatial_parameters=spatial_parameters,
                                       systemic_parameter_draws=systemic_draws,
                                       spatial_parameter_draws=spatial_draws,
-                                      feature_state_mapping=feature_state_mapping)
+                                      feature_state_mapping=feature_state_mapping,
+                                      feature_state_mapping_draws=mapping_draws)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         augmented.to_csv(args.output, index=False)
         _write_parameter_provenance(args.output, {
@@ -728,13 +743,15 @@ def main() -> None:
                                            if args.systemic_diagnostics else None),
                 "spatial_diagnostics": (_source_record(args.spatial_diagnostics)
                                           if args.spatial_diagnostics else None),
+                "mapping_diagnostics": (_source_record(args.mapping_diagnostics)
+                                          if args.mapping_diagnostics else None),
             },
             settings={
                 "days": args.days, "dose_days": list(dose_days),
                 "dose": args.dose, "labels_used": False,
                 "uncertainty_samples": args.uncertainty_samples,
                 "uncertainty_seed": args.uncertainty_seed,
-                "cross_layer_sampling": "independent_no_joint_covariance",
+                "cross_layer_sampling": "independent_systemic_spatial_mapping_no_joint_covariance",
             },
         )
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
@@ -981,6 +998,7 @@ def main() -> None:
             ("feature_state_mapping", args.feature_state_mapping),
             ("systemic_diagnostics", args.systemic_diagnostics),
             ("spatial_diagnostics", args.spatial_diagnostics),
+            ("mapping_diagnostics", args.mapping_diagnostics),
         ):
             if value:
                 input_paths[key] = value

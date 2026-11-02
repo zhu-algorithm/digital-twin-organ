@@ -115,7 +115,9 @@ def test_uncertainty_ensemble_is_reproducible():
 
 def test_calibration_ensemble_uses_saved_correlated_log_covariance():
     parameters = TwinParameters(tumour_growth=0.2, killing_rate=2e-8)
-    diagnostics = {"locally_identifiable": True, "local_log_parameter_covariance": {
+    diagnostics = {"locally_identifiable": True,
+                   "fit_parameters": {"tumour_growth": 0.2, "killing_rate": 2e-8},
+                   "local_log_parameter_covariance": {
         "parameter_order": ["tumour_growth", "killing_rate"],
         "log_scale_covariance": [[0.01, 0.008], [0.008, 0.01]],
     }}
@@ -130,7 +132,9 @@ def test_calibration_ensemble_uses_saved_correlated_log_covariance():
 def test_calibration_ensemble_rejects_missing_or_invalid_covariance():
     with pytest.raises(ValueError, match="estimable covariance"):
         calibration_ensemble(TwinParameters(), {}, (), days=2, n=4)
-    invalid = {"locally_identifiable": True, "local_log_parameter_covariance": {
+    invalid = {"locally_identifiable": True,
+               "fit_parameters": {"tumour_growth": TwinParameters().tumour_growth},
+               "local_log_parameter_covariance": {
         "parameter_order": ["tumour_growth"],
         "log_scale_covariance": [[-1.0]],
     }}
@@ -138,6 +142,7 @@ def test_calibration_ensemble_rejects_missing_or_invalid_covariance():
         calibration_ensemble(TwinParameters(), invalid, (), days=2, n=4)
     nonidentifiable = {
         "locally_identifiable": False,
+        "fit_parameters": {"tumour_growth": TwinParameters().tumour_growth},
         "local_log_parameter_covariance": {
             "parameter_order": ["tumour_growth"],
             "log_scale_covariance": [[0.01]],
@@ -145,3 +150,16 @@ def test_calibration_ensemble_rejects_missing_or_invalid_covariance():
     }
     with pytest.raises(ValueError, match="locally identifiable"):
         calibration_ensemble(TwinParameters(), nonidentifiable, (), days=2, n=4)
+
+
+def test_calibration_ensemble_rejects_mismatched_parameter_and_diagnostic_centers():
+    diagnostics = {
+        "locally_identifiable": True,
+        "fit_parameters": {"tumour_growth": 0.11},
+        "local_log_parameter_covariance": {
+            "parameter_order": ["tumour_growth"],
+            "log_scale_covariance": [[0.01]],
+        },
+    }
+    with pytest.raises(ValueError, match="different fit centers"):
+        calibration_ensemble(TwinParameters(tumour_growth=0.2), diagnostics, (), days=2, n=4)

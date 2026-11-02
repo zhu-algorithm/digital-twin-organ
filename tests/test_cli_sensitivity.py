@@ -124,6 +124,7 @@ def test_spatial_uncertainty_cli_requires_a_real_treated_schedule(tmp_path, monk
     diagnostics = tmp_path / "diagnostics.json"
     diagnostics.write_text(json.dumps({
         "locally_identifiable": True,
+        "fit_parameters": {"antigen_decay": SpatialParameters().antigen_decay},
         "local_log_parameter_covariance": {
             "parameter_order": ["antigen_decay"],
             "log_scale_covariance": [[0.01]],

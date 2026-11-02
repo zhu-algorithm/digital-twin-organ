@@ -234,9 +234,25 @@ def test_hybrid_uncertainty_draw_contract_fails_closed():
     features = pd.DataFrame({"patient_id": ["a"]})
     with pytest.raises(ValueError, match="non-empty"):
         augment_with_twin(features, days=1, systemic_parameter_draws=())
-    with pytest.raises(ValueError, match="counts must match"):
+    with pytest.raises(ValueError, match="draw counts must match"):
         augment_with_twin(
             features, days=1,
             systemic_parameter_draws=(TwinParameters(), TwinParameters()),
             spatial_parameter_draws=(SpatialParameters(),),
         )
+
+
+def test_mapping_calibration_draws_propagate_into_patient_mechanistic_intervals():
+    features = pd.DataFrame({"patient_id": ["a"], "sig_tcf7_memory_cd8_t": [0.8]})
+    mappings = tuple(
+        FeatureStateMapping(tcf7_coefficient=value) for value in (0.6, 1.0, 1.8)
+    )
+    out = augment_with_twin(
+        features, days=2, dose_days=(0,),
+        feature_state_mapping=FeatureStateMapping(),
+        feature_state_mapping_draws=mappings,
+    )
+    assert out.qc_mapping_uncertainty_supplied.item() == 1
+    assert out.qc_mechanistic_uncertainty_samples.item() == 3
+    assert out.twin_treated_tpex_tdln_uncertainty_width_95.item() > 0
+    assert out.twin_spatial_efferent_effector_gain_uncertainty_width_95.item() >= 0

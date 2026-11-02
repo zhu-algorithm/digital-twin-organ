@@ -358,6 +358,17 @@ def calibration_parameter_draws(parameters, diagnostics: dict, n: int, seed: int
             or not np.isfinite(covariance).all()
             or not np.allclose(covariance, covariance.T, rtol=1e-8, atol=1e-12)):
         raise ValueError("invalid calibration log-parameter covariance")
+    fitted_center = diagnostics.get("fit_parameters")
+    if (not isinstance(fitted_center, dict) or set(fitted_center) != set(names)):
+        raise ValueError("calibration diagnostics do not bind the fitted parameter center")
+    try:
+        center_values = np.asarray([float(fitted_center[name]) for name in names])
+    except (TypeError, ValueError) as error:
+        raise ValueError("invalid fitted parameter center in calibration diagnostics") from error
+    loaded_values = np.asarray([available[name] for name in names], dtype=float)
+    if (not np.isfinite(center_values).all() or (center_values <= 0).any()
+            or not np.allclose(center_values, loaded_values, rtol=1e-10, atol=0.0)):
+        raise ValueError("calibration diagnostics and parameter file have different fit centers")
     eigenvalues = np.linalg.eigvalsh(covariance)
     if eigenvalues.min() < -1e-10 * max(1.0, float(np.abs(eigenvalues).max())):
         raise ValueError("calibration covariance must be positive semidefinite")

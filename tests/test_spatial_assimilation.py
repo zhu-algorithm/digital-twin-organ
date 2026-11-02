@@ -96,6 +96,7 @@ def test_spatial_calibration_ensemble_propagates_correlated_paired_effects():
     parameters = SpatialParameters(tpex_growth=0.1, checkpoint_growth_gain=4.0)
     diagnostics = {
         "locally_identifiable": True,
+        "fit_parameters": {"tpex_growth": 0.1, "checkpoint_growth_gain": 4.0},
         "local_log_parameter_covariance": {
             "parameter_order": ["tpex_growth", "checkpoint_growth_gain"],
             "log_scale_covariance": [[0.01, 0.008], [0.008, 0.01]],

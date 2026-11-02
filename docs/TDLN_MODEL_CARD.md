@@ -26,6 +26,10 @@ The systemic and spatial layers are coupled through the simulated TDLN PD-1 rece
 
 Patient-level hybrid augmentation can propagate identifiable calibration covariance into label-free tumour-effect, effector-gain, spatial-egress and Tpex summaries. It exposes the median, 95% bounds and width beside the point counterfactual so prediction can represent mechanistic instability rather than silently treating fitted parameters as exact. Systemic and spatial parameters are sampled independently because a joint cross-layer covariance is not available. These local asymptotic intervals omit structural error, assay error and distribution shift and are not clinical confidence intervals.
 
+The same ensemble now propagates locally identifiable feature-to-state mapping covariance. Every mapping draw reconstructs patient-specific systemic initial conditions and feature-derived spatial conditions before both arms are simulated; a directly measured 24-state spatial table is deliberately preserved. Mapping, systemic and spatial draws are independent across layers because no joint calibration covariance exists, so interval widths must not be interpreted as complete posterior uncertainty.
+
+All three covariance loaders additionally require the diagnostic fit centre to equal the corresponding values in the loaded parameter artifact. This semantic pairing check prevents a valid covariance from one calibration run being silently combined with a different fitted point estimate.
+
 Systemic naive-CD8 homeostasis, Tpex and exhausted-cell loss, Treg induction/loss, and the spatial antigen half-saturation constant are explicit, serializable parameters rather than hidden equation literals. This makes them available to fingerprints, sensitivity analysis and selected-parameter calibration. Their defaults preserve the historical reference trajectory; they are hypotheses, not fitted biological constants.
 
 ## Evidence anchors

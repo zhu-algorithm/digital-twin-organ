@@ -205,6 +205,7 @@ def augment_with_twin(
     systemic_parameter_draws: tuple[TwinParameters, ...] | None = None,
     spatial_parameter_draws: tuple[SpatialParameters, ...] | None = None,
     feature_state_mapping: FeatureStateMapping | None = None,
+    feature_state_mapping_draws: tuple[FeatureStateMapping, ...] | None = None,
 ) -> pd.DataFrame:
     """Add label-free point and optional calibrated-uncertainty endpoints."""
     if "patient_id" not in features:
@@ -225,15 +226,18 @@ def augment_with_twin(
     for name, draws in (
         ("systemic_parameter_draws", systemic_parameter_draws),
         ("spatial_parameter_draws", spatial_parameter_draws),
+        ("feature_state_mapping_draws", feature_state_mapping_draws),
     ):
         if draws is not None and len(draws) == 0:
             raise ValueError(f"{name} must be non-empty when supplied")
-    if (systemic_parameter_draws is not None and spatial_parameter_draws is not None
-            and len(systemic_parameter_draws) != len(spatial_parameter_draws)):
-        raise ValueError("systemic and spatial parameter draw counts must match")
-    uncertainty_samples = max(
-        len(systemic_parameter_draws or ()), len(spatial_parameter_draws or ()),
-    )
+    supplied_draw_counts = {
+        len(draws) for draws in (
+            systemic_parameter_draws, spatial_parameter_draws, feature_state_mapping_draws,
+        ) if draws is not None
+    }
+    if len(supplied_draw_counts) > 1:
+        raise ValueError("systemic, spatial and mapping parameter draw counts must match")
+    uncertainty_samples = next(iter(supplied_draw_counts), 0)
     measured_states = None
     if spatial_states is not None:
         if "patient_id" not in spatial_states:
@@ -257,14 +261,13 @@ def augment_with_twin(
     doses = tuple(Dose(day, dose) for day in dose_days)
     rows = []
     for row in features.to_dict(orient="records"):
-        initial = initial_state_from_features(pd.Series(row), mapping=mapping)
-        spatial_initial = (
+        measured_spatial_initial = (
             measured_states[measured_states.patient_id.eq(row["patient_id"])]
             if measured_states is not None
-            else spatial_initial_state_from_features(pd.Series(row), mapping=mapping)
+            else None
         )
-        if measured_states is not None and "zone_observed" in spatial_initial:
-            zone_audit = spatial_initial[["zone", "zone_observed"]].drop_duplicates()
+        if measured_states is not None and "zone_observed" in measured_spatial_initial:
+            zone_audit = measured_spatial_initial[["zone", "zone_observed"]].drop_duplicates()
             if zone_audit.zone.duplicated().any():
                 raise ValueError("zone_observed must be consistent across species within each zone")
             if pd.api.types.is_bool_dtype(zone_audit.zone_observed):
@@ -286,7 +289,15 @@ def augment_with_twin(
         def run_pair(
             systemic: TwinParameters | None,
             spatial: SpatialParameters | None,
+            state_mapping: FeatureStateMapping,
         ) -> dict[str, float]:
+            initial = initial_state_from_features(pd.Series(row), mapping=state_mapping)
+            spatial_initial = (
+                measured_spatial_initial if measured_spatial_initial is not None
+                else spatial_initial_state_from_features(
+                    pd.Series(row), mapping=state_mapping
+                )
+            )
             control = simulate(days=days, initial=initial, parameters=systemic)
             treated = simulate(days=days, doses=doses, initial=initial, parameters=systemic)
             spatial_control = simulate_spatial_coupled(
@@ -315,7 +326,7 @@ def augment_with_twin(
                 ),
             }
 
-        point = run_pair(systemic_parameters, spatial_parameters)
+        point = run_pair(systemic_parameters, spatial_parameters, mapping)
         result = {
             "patient_id": row["patient_id"],
             **point,
@@ -327,12 +338,15 @@ def augment_with_twin(
             "qc_systemic_uncertainty_supplied": int(systemic_parameter_draws is not None),
             "qc_spatial_uncertainty_supplied": int(spatial_parameter_draws is not None),
             "qc_feature_state_mapping_supplied": int(feature_state_mapping is not None),
+            "qc_mapping_uncertainty_supplied": int(feature_state_mapping_draws is not None),
         }
         if uncertainty_samples:
             systemic_draws = systemic_parameter_draws or (systemic_parameters,) * uncertainty_samples
             spatial_draws = spatial_parameter_draws or (spatial_parameters,) * uncertainty_samples
-            ensemble = [run_pair(systemic, spatial)
-                        for systemic, spatial in zip(systemic_draws, spatial_draws)]
+            mapping_draws = feature_state_mapping_draws or (mapping,) * uncertainty_samples
+            ensemble = [run_pair(systemic, spatial, state_mapping)
+                        for systemic, spatial, state_mapping
+                        in zip(systemic_draws, spatial_draws, mapping_draws)]
             for name in (
                 "twin_treatment_tumour_delta", "twin_effector_gain",
                 "twin_spatial_efferent_effector_gain", "twin_treated_tpex_tdln",
