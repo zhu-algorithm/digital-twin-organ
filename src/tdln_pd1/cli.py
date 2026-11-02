@@ -208,10 +208,14 @@ def main() -> None:
     spatial_sens = sub.add_parser("spatial-sensitivity")
     spatial_sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
     spatial_sens.add_argument("--spatial-parameters", help="fitted SpatialParameters JSON")
+    spatial_sens.add_argument("--systemic-parameters", help="fitted TwinParameters JSON")
     spatial_sens.add_argument("--initial-zones", help="long patient-zone-species state CSV")
     spatial_sens.add_argument("--patient-id", help="patient to select from --initial-zones")
     spatial_sens.add_argument("--days", type=float, default=14.0)
     spatial_sens.add_argument("--checkpoint-occupancy", type=float, default=0.8)
+    spatial_sens.add_argument("--dose-days", default="",
+                              help="when supplied, use systemic time-varying occupancy")
+    spatial_sens.add_argument("--dose", type=float, default=1.0)
     spatial_sens.add_argument("--samples", type=int, default=128)
     spatial_sens.add_argument("--fold-range", type=float, default=4.0)
     spatial_sens.add_argument("--seed", type=int, default=42)
@@ -463,12 +467,27 @@ def main() -> None:
         base_parameters, parameter_provenance = _load_parameter_file(
             args.spatial_parameters, SpatialParameters
         )
+        systemic_parameters, systemic_provenance = _load_parameter_file(
+            args.systemic_parameters, TwinParameters
+        )
         initial, initial_provenance = _load_patient_spatial_initial(
             args.initial_zones, args.patient_id
         )
+        dose_days = tuple(
+            float(day) for day in args.dose_days.split(",") if day.strip()
+        )
+        if args.systemic_parameters and not dose_days:
+            raise ValueError("--systemic-parameters requires --dose-days")
+        systemic_trajectory = None
+        if dose_days:
+            doses = tuple(Dose(day, args.dose) for day in dose_days)
+            systemic_trajectory = simulate(
+                days=args.days, doses=doses, parameters=systemic_parameters,
+            )
         samples, ranking = global_spatial_sensitivity(
             parameters=base_parameters, initial=initial, names=names, days=args.days,
             checkpoint_occupancy=args.checkpoint_occupancy,
+            systemic_trajectory=systemic_trajectory,
             n=args.samples, fold_range=args.fold_range, seed=args.seed,
         )
         output = Path(args.output)
@@ -479,11 +498,23 @@ def main() -> None:
             output, "spatial_sensitivity_provenance.json", "spatial_sensitivity",
             inputs={
                 "parameter_source": parameter_provenance,
+                "systemic_parameter_source": systemic_provenance,
                 "initial_state_source": initial_provenance,
             },
             settings={
                 "sampled_parameters": list(names), "days": args.days,
-                "checkpoint_occupancy": args.checkpoint_occupancy,
+                "checkpoint_mode": (
+                    "dose_driven_systemic_trajectory" if systemic_trajectory is not None
+                    else "fixed_occupancy"
+                ),
+                "checkpoint_occupancy": (
+                    None if systemic_trajectory is not None else args.checkpoint_occupancy
+                ),
+                "dose_days": list(dose_days), "dose": args.dose,
+                "peak_pd1_occupancy": (
+                    float(systemic_trajectory.pd1_occupancy.max())
+                    if systemic_trajectory is not None else None
+                ),
                 "samples": args.samples, "fold_range": args.fold_range,
                 "seed": args.seed,
             },
@@ -495,7 +526,14 @@ def main() -> None:
         top = ranking.groupby("outcome", sort=False).first().reset_index()
         print(json.dumps({
             "samples": len(samples), "parameters": len(names),
-            "checkpoint_occupancy": args.checkpoint_occupancy,
+            "checkpoint_mode": (
+                "dose_driven_systemic_trajectory" if systemic_trajectory is not None
+                else "fixed_occupancy"
+            ),
+            "peak_pd1_occupancy": (
+                float(systemic_trajectory.pd1_occupancy.max())
+                if systemic_trajectory is not None else args.checkpoint_occupancy
+            ),
             "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
             "output": str(output), "method": "paired six-zone LHS Spearman screening",
         }, indent=2))

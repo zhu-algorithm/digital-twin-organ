@@ -12,6 +12,7 @@ from scipy.stats import qmc, spearmanr
 from .simulator import Dose, TwinParameters, simulate
 from .spatial_dynamics import (
     SpatialInitialState, SpatialParameters, simulate_spatial,
+    simulate_spatial_coupled,
 )
 
 DEFAULT_PARAMETERS = (
@@ -31,6 +32,14 @@ SPATIAL_OUTCOMES = (
     "pd1_efferent_effector_delta", "control_paracortex_tpex",
     "occupied_paracortex_tpex", "pd1_paracortex_tpex_delta",
 )
+
+
+def _rank_effect(parameter: pd.Series, outcome: pd.Series) -> tuple[float, float, bool]:
+    """Return a defined screening record, marking constant inputs non-estimable."""
+    if parameter.nunique(dropna=False) < 2 or outcome.nunique(dropna=False) < 2:
+        return 0.0, 1.0, False
+    rho, p_value = spearmanr(parameter, outcome)
+    return float(rho), float(p_value), True
 
 
 def global_sensitivity(
@@ -71,10 +80,11 @@ def global_sensitivity(
     effects = []
     for name in names:
         for outcome in OUTCOMES:
-            rho, p_value = spearmanr(samples[name], samples[outcome])
+            rho, p_value, estimable = _rank_effect(samples[name], samples[outcome])
             effects.append({"parameter": name, "outcome": outcome,
-                            "spearman_rho": float(rho), "p_value": float(p_value),
-                            "abs_rho": float(abs(rho)), "n": n})
+                            "spearman_rho": rho, "p_value": p_value,
+                            "abs_rho": float(abs(rho)), "estimable": estimable,
+                            "n": n})
     ranking = pd.DataFrame(effects).sort_values(["outcome", "abs_rho"], ascending=[True, False])
     return samples, ranking.reset_index(drop=True)
 
@@ -85,6 +95,7 @@ def global_spatial_sensitivity(
     names: Iterable[str] = DEFAULT_SPATIAL_PARAMETERS,
     days: float = 14.0,
     checkpoint_occupancy: float = 0.8,
+    systemic_trajectory: pd.DataFrame | None = None,
     n: int = 128,
     fold_range: float = 4.0,
     seed: int = 42,
@@ -111,8 +122,9 @@ def global_spatial_sensitivity(
     if (n < 8 or not np.isfinite(fold_range) or fold_range <= 1
             or not np.isfinite(days) or days <= 0):
         raise ValueError("n must be >=8, fold_range finite and >1, and days finite and positive")
-    if (not np.isfinite(checkpoint_occupancy)
-            or not 0 < checkpoint_occupancy <= 1):
+    if (systemic_trajectory is None and (
+            not np.isfinite(checkpoint_occupancy)
+            or not 0 < checkpoint_occupancy <= 1)):
         raise ValueError("checkpoint_occupancy must be finite and fall within (0, 1]")
 
     unit = qmc.LatinHypercube(d=len(names), seed=seed).random(n)
@@ -125,10 +137,15 @@ def global_spatial_sensitivity(
         control = simulate_spatial(
             days=days, parameters=sampled, initial=initial, checkpoint_occupancy=0.0,
         )
-        occupied = simulate_spatial(
-            days=days, parameters=sampled, initial=initial,
-            checkpoint_occupancy=checkpoint_occupancy,
-        )
+        if systemic_trajectory is None:
+            occupied = simulate_spatial(
+                days=days, parameters=sampled, initial=initial,
+                checkpoint_occupancy=checkpoint_occupancy,
+            )
+        else:
+            occupied = simulate_spatial_coupled(
+                systemic_trajectory, days=days, parameters=sampled, initial=initial,
+            )
 
         def endpoint(frame: pd.DataFrame, species: str, zone: str) -> float:
             selected = frame[(frame.species == species) & (frame.zone == zone)]
@@ -151,12 +168,20 @@ def global_spatial_sensitivity(
     effects = []
     for name in names:
         for outcome in SPATIAL_OUTCOMES:
-            rho, p_value = spearmanr(samples[name], samples[outcome])
+            rho, p_value, estimable = _rank_effect(samples[name], samples[outcome])
             effects.append({
                 "parameter": name, "outcome": outcome,
-                "spearman_rho": float(rho), "p_value": float(p_value),
+                "spearman_rho": rho, "p_value": p_value,
                 "abs_rho": float(abs(rho)), "n": n,
-                "checkpoint_occupancy": float(checkpoint_occupancy),
+                "estimable": estimable,
+                "checkpoint_mode": (
+                    "systemic_trajectory" if systemic_trajectory is not None
+                    else "fixed_occupancy"
+                ),
+                "checkpoint_occupancy": (
+                    float("nan") if systemic_trajectory is not None
+                    else float(checkpoint_occupancy)
+                ),
             })
     ranking = pd.DataFrame(effects).sort_values(
         ["outcome", "abs_rho"], ascending=[True, False]

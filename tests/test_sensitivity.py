@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from tdln_pd1.sensitivity import global_sensitivity, global_spatial_sensitivity
+from tdln_pd1.simulator import Dose, simulate
 from tdln_pd1.spatial_dynamics import SpatialParameters
 
 
@@ -49,3 +50,17 @@ def test_spatial_sensitivity_rejects_invalid_log_domain_and_occupancy():
         )
     with pytest.raises(ValueError, match="checkpoint_occupancy"):
         global_spatial_sensitivity(names=("tpex_growth",), n=8, checkpoint_occupancy=0)
+
+
+def test_spatial_sensitivity_accepts_time_varying_systemic_occupancy():
+    systemic = simulate(days=4, doses=(Dose(0, 1.0),))
+    samples, ranking = global_spatial_sensitivity(
+        names=("checkpoint_growth_gain",), days=4, n=8,
+        systemic_trajectory=systemic,
+    )
+    assert samples.pd1_efferent_effector_delta.gt(0).all()
+    assert set(ranking.checkpoint_mode) == {"systemic_trajectory"}
+    assert ranking.checkpoint_occupancy.isna().all()
+    control = ranking[ranking.outcome == "control_efferent_effector"].iloc[0]
+    assert bool(control.estimable) is False
+    assert control.spearman_rho == 0

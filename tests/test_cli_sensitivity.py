@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from tdln_pd1.cli import _load_patient_spatial_initial, main
+from tdln_pd1.simulator import TwinParameters
 from tdln_pd1.spatial_dynamics import SPECIES, ZONE_NAMES, SpatialParameters
 
 
@@ -63,3 +64,24 @@ def test_spatial_sensitivity_cli_binds_fitted_parameters_and_patient_state(
     }
     assert (output / "spatial_sensitivity_samples.csv").is_file()
     assert (output / "spatial_sensitivity_ranking.csv").is_file()
+
+
+def test_spatial_sensitivity_cli_uses_dose_driven_occupancy(tmp_path, monkeypatch):
+    spatial_path = tmp_path / "spatial.json"
+    spatial_path.write_text(json.dumps(asdict(SpatialParameters())))
+    systemic_path = tmp_path / "systemic.json"
+    systemic_path.write_text(json.dumps(asdict(TwinParameters())))
+    output = tmp_path / "screen"
+    monkeypatch.setattr(sys, "argv", [
+        "tdln-pd1", "spatial-sensitivity",
+        "--spatial-parameters", str(spatial_path),
+        "--systemic-parameters", str(systemic_path),
+        "--dose-days", "0", "--dose", "1",
+        "--parameters", "checkpoint_growth_gain",
+        "--days", "2", "--samples", "8", "--output", str(output),
+    ])
+    main()
+    audit = json.loads((output / "spatial_sensitivity_provenance.json").read_text())
+    assert audit["settings"]["checkpoint_mode"] == "dose_driven_systemic_trajectory"
+    assert audit["settings"]["peak_pd1_occupancy"] > 0
+    assert audit["inputs"]["systemic_parameter_source"]["parameter_class"] == "TwinParameters"
