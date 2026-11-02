@@ -1,4 +1,5 @@
 from dataclasses import asdict
+import hashlib
 import json
 
 import pytest
@@ -42,3 +43,24 @@ def test_training_input_binds_feature_and_parameter_sidecar_hashes(tmp_path):
     assert len(provenance["feature_sha256"]) == 64
     assert len(provenance["parameter_sidecar_sha256"]) == 64
     assert provenance["parameter_provenance"]["sources"]["systemic"]["sha256"] == "a" * 64
+
+
+def test_training_input_binds_and_checks_label_free_augmentation_audit(tmp_path):
+    features = tmp_path / "hybrid.csv"
+    features.write_text("patient_id,x\np0,1\n")
+    feature_sha = hashlib.sha256(features.read_bytes()).hexdigest()
+    audit = tmp_path / "hybrid.csv.twin-audit.json"
+    audit.write_text(json.dumps({
+        "schema_version": 1,
+        "stage": "label_free_twin_augmentation",
+        "labels_used": False,
+        "output": {"file": features.name, "sha256": feature_sha},
+        "inputs": {},
+    }))
+    provenance = _training_input_provenance(str(features))
+    assert provenance["augmentation_audit"]["labels_used"] is False
+    assert len(provenance["augmentation_audit_sha256"]) == 64
+
+    features.write_text("patient_id,x\np0,2\n")
+    with pytest.raises(ValueError, match="mismatched feature augmentation audit"):
+        _training_input_provenance(str(features))

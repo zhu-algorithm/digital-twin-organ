@@ -24,6 +24,7 @@ from .verification import verify_twin
 from .validation_audit import (verify_prediction_audit, write_evaluation_audit,
                                write_prediction_audit)
 from .calibration_audit import verify_calibration_audit, write_calibration_audit
+from .augmentation_audit import verify_augmentation_audit, write_augmentation_audit
 
 
 def _load_parameter_file(path: str | None, parameter_class):
@@ -113,6 +114,22 @@ def _training_input_provenance(feature_path: str) -> dict:
         provenance["parameter_sidecar_sha256"] = hashlib.sha256(sidecar.read_bytes()).hexdigest()
     else:
         provenance["parameter_provenance"] = None
+    augmentation_audit = Path(f"{feature_path}.twin-audit.json")
+    if augmentation_audit.exists():
+        payload = json.loads(augmentation_audit.read_text())
+        recorded_output = payload.get("output", {}) if isinstance(payload, dict) else {}
+        if (payload.get("schema_version") != 1
+                or payload.get("stage") != "label_free_twin_augmentation"
+                or payload.get("labels_used") is not False
+                or recorded_output.get("file") != source.name
+                or recorded_output.get("sha256") != provenance["feature_sha256"]):
+            raise ValueError("invalid or mismatched feature augmentation audit")
+        provenance["augmentation_audit"] = payload
+        provenance["augmentation_audit_sha256"] = hashlib.sha256(
+            augmentation_audit.read_bytes()
+        ).hexdigest()
+    else:
+        provenance["augmentation_audit"] = None
     return provenance
 
 
@@ -248,6 +265,13 @@ def main() -> None:
     verify_calibration.add_argument("--audit", required=True)
     verify_calibration.add_argument("--observations", required=True)
     verify_calibration.add_argument("--initial-zones")
+    verify_augmentation = sub.add_parser("verify-augmentation")
+    verify_augmentation.add_argument("--audit", required=True)
+    verify_augmentation.add_argument("--output", required=True)
+    verify_augmentation.add_argument("--features", required=True)
+    verify_augmentation.add_argument("--spatial-initial-zones")
+    verify_augmentation.add_argument("--systemic-parameters")
+    verify_augmentation.add_argument("--spatial-parameters")
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -400,6 +424,22 @@ def main() -> None:
         _write_parameter_provenance(args.output, {
             "systemic": systemic_provenance, "spatial": spatial_provenance,
         })
+        write_augmentation_audit(
+            args.output,
+            inputs={
+                "features": _source_record(args.features),
+                "spatial_initial_zones": (
+                    _source_record(args.spatial_initial_zones)
+                    if args.spatial_initial_zones else None
+                ),
+                "systemic_parameters": systemic_provenance,
+                "spatial_parameters": spatial_provenance,
+            },
+            settings={
+                "days": args.days, "dose_days": list(dose_days),
+                "dose": args.dose, "labels_used": False,
+            },
+        )
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
                           "output": args.output, "labels_used": False}, indent=2))
     elif args.command == "simulate-spatial":
@@ -628,6 +668,24 @@ def main() -> None:
             "valid": report["valid"], "stage": report["stage"],
             "verified_inputs": report["verified_inputs"],
             "verified_outputs": report["verified_outputs"],
+            "audit_sha256": report["audit_sha256"],
+        }, indent=2))
+    elif args.command == "verify-augmentation":
+        input_paths = {"features": args.features}
+        for key, value in (
+            ("spatial_initial_zones", args.spatial_initial_zones),
+            ("systemic_parameters", args.systemic_parameters),
+            ("spatial_parameters", args.spatial_parameters),
+        ):
+            if value:
+                input_paths[key] = value
+        report = verify_augmentation_audit(
+            args.audit, args.output, input_paths,
+        )
+        print(json.dumps({
+            "valid": report["valid"],
+            "verified_inputs": report["verified_inputs"],
+            "output_sha256": report["output_sha256"],
             "audit_sha256": report["audit_sha256"],
         }, indent=2))
     else:
