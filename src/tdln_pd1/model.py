@@ -243,12 +243,25 @@ def _decision_curve(y: np.ndarray, prob: np.ndarray) -> list[dict[str, float]]:
     return rows
 
 
-def evaluate_probabilities(y_true, probability, bootstrap: int = 500, seed: int = 42) -> dict:
-    """Discrimination, calibration and patient-level bootstrap intervals."""
+def evaluate_probabilities(
+    y_true,
+    probability,
+    bootstrap: int = 500,
+    seed: int = 42,
+    bootstrap_groups=None,
+) -> dict:
+    """Discrimination, calibration and patient- or centre-bootstrap intervals."""
     y = np.asarray(y_true, dtype=int)
     prob = np.clip(np.asarray(probability, dtype=float), 1e-7, 1 - 1e-7)
     if len(y) != len(prob) or len(y) == 0 or set(np.unique(y)) != {0, 1}:
         raise ValueError("evaluation requires aligned probabilities and both response classes")
+    groups = None
+    if bootstrap_groups is not None:
+        groups = np.asarray(bootstrap_groups)
+        if len(groups) != len(y):
+            raise ValueError("bootstrap groups must align one-to-one with outcomes")
+        if pd.isna(groups).any() or len(np.unique(groups)) < 2:
+            raise ValueError("cluster bootstrap requires at least two non-missing groups")
     pred = prob >= 0.5
     tn, fp, fn, tp = confusion_matrix(y, pred, labels=[0, 1]).ravel()
     logits = np.log(prob / (1 - prob)).reshape(-1, 1)
@@ -268,8 +281,15 @@ def evaluate_probabilities(y_true, probability, bootstrap: int = 500, seed: int 
     if bootstrap:
         rng = np.random.default_rng(seed)
         draws = {name: [] for name in ("roc_auc", "average_precision", "brier_score")}
+        unique_groups = np.unique(groups) if groups is not None else None
         for _ in range(bootstrap):
-            index = rng.integers(0, len(y), len(y))
+            if unique_groups is None:
+                index = rng.integers(0, len(y), len(y))
+            else:
+                sampled_groups = rng.choice(unique_groups, len(unique_groups), replace=True)
+                index = np.concatenate([
+                    np.flatnonzero(groups == group) for group in sampled_groups
+                ])
             if len(np.unique(y[index])) < 2:
                 continue
             draws["roc_auc"].append(roc_auc_score(y[index], prob[index]))
@@ -281,7 +301,28 @@ def evaluate_probabilities(y_true, probability, bootstrap: int = 500, seed: int 
                    "valid_draws": len(values)}
             for name, values in draws.items() if values
         }
+        point["bootstrap_design"] = {
+            "unit": "centre" if groups is not None else "patient",
+            "requested_draws": int(bootstrap),
+            "groups": int(len(unique_groups)) if unique_groups is not None else int(len(y)),
+            "seed": int(seed),
+            "note": (
+                "Entire centres were sampled with replacement; all patients in each sampled "
+                "centre were retained, including repeated centres."
+                if groups is not None else
+                "Patients were sampled with replacement."
+            ),
+        }
     return point
+
+
+def _available_cluster_groups(frame: pd.DataFrame, column: str = "center"):
+    """Use a declared cluster only when at least two complete groups are present."""
+    if column not in frame:
+        return None
+    if frame[column].isna().any():
+        raise ValueError(f"{column} must be complete when supplied for clustered evaluation")
+    return frame[column] if frame[column].nunique() >= 2 else None
 
 
 def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFrame:
@@ -374,7 +415,11 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     audited_predictions = predictions.copy()
     audited_predictions["_domain_shift_flag"] = domain_flags.to_numpy(dtype=bool)
     data = audited_predictions.merge(labels, on="patient_id", validate="one_to_one")
-    metrics = evaluate_probabilities(data.response, data.probability, bootstrap=bootstrap)
+    centre_groups = _available_cluster_groups(data)
+    metrics = evaluate_probabilities(
+        data.response, data.probability, bootstrap=bootstrap,
+        bootstrap_groups=centre_groups,
+    )
     metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
                     "training_overlap_checked": True, "training_overlap_count": 0,
                     "training_feature_reuse_checked": True,
@@ -397,6 +442,7 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
         sensitivity["status"] = "evaluated"
         sensitivity["metrics"] = evaluate_probabilities(
             in_domain.response, in_domain.probability, bootstrap=bootstrap,
+            bootstrap_groups=_available_cluster_groups(in_domain),
         )
     else:
         sensitivity["status"] = "not_evaluable"
@@ -457,7 +503,10 @@ def leave_one_site_out(
     if not predictions:
         raise ValueError("no site could be evaluated with both classes in train and test")
     out = pd.concat(predictions, ignore_index=True)
-    metrics = evaluate_probabilities(out.response, out.probability, bootstrap=bootstrap)
+    metrics = evaluate_probabilities(
+        out.response, out.probability, bootstrap=bootstrap,
+        bootstrap_groups=out[site_column],
+    )
     metrics.update({"n_patients": int(len(out)), "n_sites_evaluated": int(out[site_column].nunique()),
                     "skipped_sites": skipped, "site_column": site_column,
                     "evaluation_type": "leave_one_site_out",

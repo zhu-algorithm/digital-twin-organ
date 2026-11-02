@@ -45,8 +45,29 @@ def test_probability_evaluation_reports_calibration_and_intervals():
     assert metrics["brier_score"] < 0.1
     assert "calibration_slope" in metrics
     assert metrics["bootstrap"]["roc_auc"]["valid_draws"] > 0
+    assert metrics["bootstrap_design"]["unit"] == "patient"
     assert len(metrics["decision_curve"]) == 9
     assert metrics["decision_curve"][4]["threshold"] == 0.5
+
+
+def test_probability_evaluation_uses_whole_centre_cluster_bootstrap():
+    metrics = evaluate_probabilities(
+        [0, 1, 0, 1, 0, 1],
+        [0.1, 0.8, 0.2, 0.7, 0.3, 0.9],
+        bootstrap=20,
+        bootstrap_groups=["a", "a", "b", "b", "c", "c"],
+    )
+    assert metrics["bootstrap_design"]["unit"] == "centre"
+    assert metrics["bootstrap_design"]["groups"] == 3
+    assert metrics["bootstrap"]["roc_auc"]["valid_draws"] == 20
+
+
+def test_cluster_bootstrap_rejects_unusable_groups():
+    with pytest.raises(ValueError, match="at least two"):
+        evaluate_probabilities(
+            [0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9], bootstrap=10,
+            bootstrap_groups=["only"] * 4,
+        )
 
 
 def test_locked_prediction_and_external_evaluation(tmp_path: Path):
@@ -209,6 +230,8 @@ def test_leave_one_site_out_predicts_each_evaluable_patient_once():
     metrics, predictions = leave_one_site_out(features, labels, bootstrap=10)
     assert metrics["n_sites_evaluated"] == 3
     assert metrics["evaluation_type"] == "leave_one_site_out"
+    assert metrics["bootstrap_design"]["unit"] == "centre"
+    assert metrics["bootstrap_design"]["groups"] == 3
     assert len(metrics["site_hyperparameter_selection"]) == 3
     assert all(row["mode"] == "nested_grid_search"
                for row in metrics["site_hyperparameter_selection"])
