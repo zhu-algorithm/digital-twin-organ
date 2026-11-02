@@ -56,6 +56,8 @@ Until steps 2–5 are completed with real data, default trajectories are demonst
 
 The prediction report labels internal cross-validation separately from locked external evaluation. Discrimination alone is insufficient: Brier score, log loss, calibration intercept/slope, sensitivity/specificity and bootstrap intervals are emitted together. The software cannot prove that a supplied cohort is independent; cohort provenance and analysis preregistration remain governance requirements.
 
+Regularization strength is selected inside each outer patient-grouped fold using an inner patient-grouped grid search scored by log loss. Every patient receives exactly one outer-fold probability, and the per-fold selection record is persisted. A prespecified decision curve reports model, treat-all and treat-none net benefit from thresholds 0.1–0.9. These calculations expose potential utility and overfitting; they do not choose a clinical threshold or establish clinical benefit.
+
 ## Identifiability policy
 
 Calibration never silently fits every parameter. The caller must name the fitted parameters, measurement error (`sd`) weights every residual, positive parameters are optimized in log space, and the report raises an identifiability warning when there are fewer than five observations per fitted parameter. This warning is heuristic rather than proof of identifiability; profile likelihood, posterior geometry and independent perturbation data remain required for a defensible calibrated twin.

@@ -13,19 +13,42 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (average_precision_score, balanced_accuracy_score,
                              brier_score_loss, log_loss, roc_auc_score,
                              confusion_matrix)
-from sklearn.model_selection import StratifiedGroupKFold, cross_val_predict
+from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 
-def build_model(feature_columns: list[str]) -> Pipeline:
+DEFAULT_C_GRID = (0.01, 0.1, 1.0, 10.0, 100.0)
+
+
+def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
     prep = ColumnTransformer([
         ("numeric", Pipeline([
             ("impute", SimpleImputer(strategy="median", keep_empty_features=True)),
             ("scale", StandardScaler()),
         ]), feature_columns)
     ])
-    return Pipeline([("prep", prep), ("classifier", LogisticRegression(max_iter=2000, class_weight="balanced"))])
+    return Pipeline([("prep", prep), ("classifier", LogisticRegression(
+        C=c, max_iter=2000, class_weight="balanced", solver="liblinear", random_state=42,
+    ))])
+
+
+def _decision_curve(y: np.ndarray, prob: np.ndarray) -> list[dict[str, float]]:
+    """Decision-curve net benefit across prespecified probability thresholds."""
+    rows = []
+    prevalence = float(y.mean())
+    for threshold in np.arange(0.1, 1.0, 0.1):
+        prediction = prob >= threshold
+        tp = float(np.sum(prediction & (y == 1)))
+        fp = float(np.sum(prediction & (y == 0)))
+        odds = threshold / (1.0 - threshold)
+        rows.append({
+            "threshold": round(float(threshold), 1),
+            "model_net_benefit": float(tp / len(y) - fp / len(y) * odds),
+            "treat_all_net_benefit": float(prevalence - (1.0 - prevalence) * odds),
+            "treat_none_net_benefit": 0.0,
+        })
+    return rows
 
 
 def evaluate_probabilities(y_true, probability, bootstrap: int = 500, seed: int = 42) -> dict:
@@ -48,6 +71,7 @@ def evaluate_probabilities(y_true, probability, bootstrap: int = 500, seed: int 
         "specificity": float(tn / (tn + fp)) if tn + fp else np.nan,
         "calibration_intercept": float(calibrator.intercept_[0]),
         "calibration_slope": float(calibrator.coef_[0, 0]),
+        "decision_curve": _decision_curve(y, prob),
     }
     if bootstrap:
         rng = np.random.default_rng(seed)
@@ -78,8 +102,12 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     if missing:
         raise ValueError(f"missing locked-model features: {sorted(missing)}")
     probability = artifact["model"].predict_proba(features[required])[:, 1]
+    threshold = float(artifact.get("threshold", 0.5))
+    if not 0.0 < threshold < 1.0:
+        raise ValueError("locked-model threshold must fall strictly between 0 and 1")
     return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
-                         "predicted_response": (probability >= 0.5).astype(int)})
+                         "predicted_response": (probability >= threshold).astype(int),
+                         "decision_threshold": threshold})
 
 
 def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap: int = 500) -> dict:
@@ -138,18 +166,62 @@ def train_evaluate(features: pd.DataFrame, labels: pd.DataFrame, output: str | P
         raise ValueError("each class needs at least two patients")
     cols = [c for c in data.columns if c not in {"patient_id", "response"}]
     X, y = data[cols], data["response"].astype(int)
-    model = build_model(cols)
-    cv = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
-    prob = cross_val_predict(model, X, y, groups=data["patient_id"], cv=cv, method="predict_proba")[:, 1]
+    outer_cv = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
+    prob = np.full(len(data), np.nan)
+    fold_id = np.full(len(data), -1, dtype=int)
+    selected_c = np.full(len(data), np.nan)
+    tuning = []
+    for fold, (train_index, test_index) in enumerate(
+        outer_cv.split(X, y, groups=data["patient_id"]), start=1
+    ):
+        y_train = y.iloc[train_index]
+        inner_splits = min(3, int(y_train.value_counts().min()))
+        if inner_splits >= 2:
+            inner_cv = StratifiedGroupKFold(n_splits=inner_splits, shuffle=True, random_state=fold)
+            search = GridSearchCV(
+                build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
+                scoring="neg_log_loss", cv=inner_cv, refit=True, error_score="raise",
+            )
+            search.fit(X.iloc[train_index], y_train, groups=data.patient_id.iloc[train_index])
+            fitted = search.best_estimator_
+            best_c = float(search.best_params_["classifier__C"])
+            mode = "nested_grid_search"
+        else:
+            fitted = build_model(cols).fit(X.iloc[train_index], y_train)
+            best_c = 1.0
+            mode = "fixed_C_inner_cv_not_evaluable"
+        prob[test_index] = fitted.predict_proba(X.iloc[test_index])[:, 1]
+        fold_id[test_index] = fold
+        selected_c[test_index] = best_c
+        tuning.append({"fold": fold, "inner_splits": inner_splits, "selected_C": best_c,
+                       "mode": mode, "n_train": int(len(train_index)), "n_test": int(len(test_index))})
+    if np.isnan(prob).any() or (fold_id < 1).any():
+        raise RuntimeError("outer cross-validation did not predict every patient exactly once")
     metrics = evaluate_probabilities(y, prob)
     metrics.update({"n_patients": int(len(data)), "n_splits": n_splits,
+                    "hyperparameter_selection": tuning,
+                    "selection_metric": "negative_log_loss",
+                    "C_grid": list(DEFAULT_C_GRID),
                     "evaluation_type": "internal_cross_validation",
-                    "note": "Cross-validated baseline metrics; not external or clinical validation."})
-    model.fit(X, y)
+                    "note": "Nested patient-level cross-validation; not external or clinical validation."})
+    final_splits = min(5, int(counts.min()))
+    final_cv = StratifiedGroupKFold(n_splits=final_splits, shuffle=True, random_state=42)
+    final_search = GridSearchCV(
+        build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
+        scoring="neg_log_loss", cv=final_cv, refit=True, error_score="raise",
+    )
+    final_search.fit(X, y, groups=data.patient_id)
+    model = final_search.best_estimator_
+    final_c = float(final_search.best_params_["classifier__C"])
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     joblib.dump({"model": model, "features": cols, "threshold": 0.5,
-                 "training_patients": int(len(data)), "artifact_version": 1}, output / "model.joblib")
+                 "training_patients": int(len(data)), "selected_C": final_c,
+                 "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
+                 "artifact_version": 2}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
-    pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob}).to_csv(output / "cv_predictions.csv", index=False)
+    pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
+                  "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(
+        output / "cv_predictions.csv", index=False
+    )
     return metrics

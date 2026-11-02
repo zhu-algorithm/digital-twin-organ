@@ -11,7 +11,7 @@ Repository history and all branches were checked. At reconstruction time the rep
 1. Load cell-level CSV or optional `.h5ad` (`obs.patient_id`, `obs.cell_type`).
 2. Compute patient-level cell fractions and cytotoxic, exhaustion, interferon, Treg, TCF7-memory, and dendritic-activation signatures.
 3. Join pre-specified binary patient labels.
-4. Evaluate regularised logistic regression with stratified, patient-grouped cross-validation.
+4. Select logistic-regression regularization only inside nested, stratified patient-grouped cross-validation and generate one out-of-fold probability per patient.
 5. Write cross-validated predictions, metrics, and a fitted model artifact.
 
 The mechanistic digital-twin layer additionally simulates the tumour–blood–TDLN axis, antigen transport, DC migration, Tpex self-renewal/differentiation, effector export, exhaustion/reinvigoration, anti-PD-1 pharmacokinetics, TDLN exposure, and receptor occupancy. See [`docs/TDLN_MODEL_CARD.md`](docs/TDLN_MODEL_CARD.md) for evidence, verification and the validation ladder.
@@ -71,5 +71,7 @@ The same patient row now initializes the six-zone spatial twin: dendritic activa
 ## Locked external evaluation
 
 Training writes a versioned model artifact with its exact feature schema. `predict` applies that artifact without refitting and fails on missing features. `evaluate` reports ROC AUC, average precision, Brier score, log loss, balanced accuracy, sensitivity, specificity, calibration intercept/slope and patient-level bootstrap intervals. A result is external validation only when the evaluation cohort was never used for model fitting, hyperparameter selection, threshold choice or feature design; running the command on the bundled synthetic cohort does not make it external evidence.
+
+Internal evaluation uses an outer patient-grouped fold for performance estimation and an inner patient-grouped fold to choose `C` from a fixed grid using log loss. If an outer training fold is too small to support two-class inner validation, it records an explicit fixed-`C` fallback instead of presenting it as tuned. The report includes the selected value and train/test size for every outer fold, a prespecified 0.1–0.9 decision curve, and an artifact-level final selection performed only after out-of-fold evaluation is complete.
 
 `site-cv` performs leave-one-center-out evaluation: each centre is predicted only by a model trained on all other centres. Sites whose training or test partition lacks one response class are reported as skipped rather than silently producing invalid AUC estimates. This is a stronger internal transportability check than random folds, but it is still not an independently collected external validation.

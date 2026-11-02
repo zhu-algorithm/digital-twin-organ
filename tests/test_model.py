@@ -1,4 +1,5 @@
 from pathlib import Path
+import joblib
 import pandas as pd
 import pytest
 from tdln_pd1.model import (evaluate_external, evaluate_probabilities,
@@ -16,6 +17,14 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert metrics["n_patients"] == 8
     assert (tmp_path / "model.joblib").exists()
     assert (tmp_path / "cv_predictions.csv").exists()
+    predictions = pd.read_csv(tmp_path / "cv_predictions.csv")
+    assert predictions.patient_id.nunique() == len(predictions)
+    assert predictions.outer_fold.ge(1).all()
+    assert predictions.fold_selected_C.isin([0.01, 0.1, 1.0, 10.0, 100.0]).all()
+    artifact = joblib.load(tmp_path / "model.joblib")
+    assert artifact["artifact_version"] == 2
+    assert artifact["selected_C"] in artifact["C_grid"]
+    assert metrics["selection_metric"] == "negative_log_loss"
 
 
 def test_probability_evaluation_reports_calibration_and_intervals():
@@ -24,6 +33,8 @@ def test_probability_evaluation_reports_calibration_and_intervals():
     assert metrics["brier_score"] < 0.1
     assert "calibration_slope" in metrics
     assert metrics["bootstrap"]["roc_auc"]["valid_draws"] > 0
+    assert len(metrics["decision_curve"]) == 9
+    assert metrics["decision_curve"][4]["threshold"] == 0.5
 
 
 def test_locked_prediction_and_external_evaluation(tmp_path: Path):
@@ -35,6 +46,7 @@ def test_locked_prediction_and_external_evaluation(tmp_path: Path):
     assert predictions.probability.between(0, 1).all()
     metrics = evaluate_external(predictions, labels, bootstrap=10)
     assert metrics["evaluation_type"] == "external_locked_model"
+    assert predictions.decision_threshold.eq(0.5).all()
     with pytest.raises(ValueError):
         predict_locked(tmp_path / "model.joblib", pd.DataFrame({"patient_id": ["z"]}))
 
