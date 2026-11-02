@@ -61,7 +61,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Fail-closed cohort QC and SHA-256 provenance verification before training.
 - Cohort QC executes the exact downstream single-cell aggregation path and records its patient-row result, preventing a report-only gate from diverging from featurization semantics.
 - Reproducible browser dashboard export: six-zone spatial states and treated/control trajectories are generated directly from the executable model and checked byte-for-structure in CI.
-- A machine-readable, fail-closed verification report covering zero-dose limits, default dose direction, tightened-tolerance convergence, finite/non-negative states, spatial mass conservation and coupled checkpoint direction.
+- A machine-readable, fail-closed verification report covering systemic and spatial zero-dose limits, prespecified systemic and six-zone dose directions, tightened-tolerance convergence, finite/non-negative states, spatial mass conservation and coupled checkpoint direction. Dose-direction checks qualify software behavior under default hypotheses; they do not establish a clinical dose-response relationship.
 
 ## Required validation ladder
 

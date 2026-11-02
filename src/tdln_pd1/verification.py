@@ -106,5 +106,57 @@ def verify_twin() -> dict:
     checks.append({"name": "coupled_checkpoint_direction", "passed": bool(coupled_passed),
                    **spatial_direction})
 
+    spatial_dose_rows = []
+    zero_spatial = None
+    for amount in dose_amounts:
+        system = simulate(days=14, doses=(Dose(0, amount),))
+        spatial = simulate_spatial_coupled(system, days=14)
+        if amount == 0:
+            zero_spatial = spatial
+        spatial_dose_rows.append({
+            "dose": amount,
+            "peak_pd1_occupancy": float(system.pd1_occupancy.max()),
+            "final_efferent_effector": endpoint(
+                spatial, "effector", "efferent_lymph"
+            ),
+            "final_paracortex_tpex": endpoint(spatial, "tpex", "paracortex"),
+        })
+    assert zero_spatial is not None
+    spatial_zero_difference = np.abs(
+        zero_spatial.amount.to_numpy(dtype=float)
+        - control_spatial.amount.to_numpy(dtype=float)
+    )
+    spatial_zero_scale = np.maximum(
+        np.abs(control_spatial.amount.to_numpy(dtype=float)), 1.0
+    )
+    spatial_zero_error = float(np.max(spatial_zero_difference / spatial_zero_scale))
+    spatial_occupancy = np.array([
+        row["peak_pd1_occupancy"] for row in spatial_dose_rows
+    ])
+    spatial_effector = np.array([
+        row["final_efferent_effector"] for row in spatial_dose_rows
+    ])
+    spatial_tpex = np.array([
+        row["final_paracortex_tpex"] for row in spatial_dose_rows
+    ])
+    spatial_dose_passed = bool(
+        spatial_zero_error <= 1e-6
+        and (np.diff(spatial_occupancy) >= 0).all()
+        and (np.diff(spatial_effector) >= 0).all()
+        and (np.diff(spatial_tpex) >= 0).all()
+    )
+    checks.append({
+        "name": "spatial_zero_dose_and_dose_direction",
+        "passed": spatial_dose_passed,
+        "maximum_zero_dose_scaled_relative_error": spatial_zero_error,
+        "relative_tolerance": 1e-6,
+        "expected": (
+            "zero dose equivalent to control; occupancy, efferent effectors and "
+            "paracortical Tpex non-decreasing over the prespecified dose series"
+        ),
+        "series": spatial_dose_rows,
+        "note": "Software direction check under default hypotheses, not a clinical dose response.",
+    })
+
     return {"schema_version": 1, "research_only": True,
             "passed": all(check["passed"] for check in checks), "checks": checks}
