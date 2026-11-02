@@ -20,6 +20,8 @@ from .sensitivity import global_sensitivity
 from .provenance import verify_manifest
 from .qc import cohort_qc
 from .verification import verify_twin
+from .validation_audit import (verify_prediction_audit, write_evaluation_audit,
+                               write_prediction_audit)
 
 
 def _load_parameter_file(path: str | None, parameter_class):
@@ -102,6 +104,8 @@ def main() -> None:
     evaluate.add_argument("--labels", required=True)
     evaluate.add_argument("--output", required=True)
     evaluate.add_argument("--bootstrap", type=int, default=500)
+    evaluate.add_argument("--prediction-audit",
+                          help="defaults to <predictions>.audit.json")
     site_cv = sub.add_parser("site-cv")
     site_cv.add_argument("--features", required=True)
     site_cv.add_argument("--labels", required=True)
@@ -192,13 +196,28 @@ def main() -> None:
         predictions = predict_locked(args.model, pd.read_csv(args.features))
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         predictions.to_csv(args.output, index=False)
+        audit_path = write_prediction_audit(
+            args.model, args.features, args.output, len(predictions),
+        )
         print(json.dumps({"n_patients": len(predictions), "output": args.output,
-                          "model_refit": False}, indent=2))
+                          "model_refit": False, "audit": str(audit_path)}, indent=2))
     elif args.command == "evaluate":
         import pandas as pd
+        prediction_audit = verify_prediction_audit(
+            args.predictions, args.prediction_audit,
+        )
         metrics = evaluate_external(pd.read_csv(args.predictions), load_labels(args.labels), args.bootstrap)
+        metrics["validation_chain"] = {
+            "prediction_audit_sha256": prediction_audit["audit_sha256"],
+            "model_sha256": prediction_audit["payload"]["inputs"]["model"]["sha256"],
+            "features_sha256": prediction_audit["payload"]["inputs"]["features"]["sha256"],
+            "integrity_verified": True,
+        }
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         Path(args.output).write_text(json.dumps(metrics, indent=2) + "\n")
+        write_evaluation_audit(
+            args.predictions, prediction_audit, args.labels, args.output, args.bootstrap,
+        )
         print(json.dumps(metrics, indent=2))
     elif args.command == "site-cv":
         import pandas as pd

@@ -39,6 +39,8 @@ jobs:
           python -c "import pandas as pd; x=pd.read_csv('/tmp/hybrid.csv'); x['patient_id']=['external_smoke_'+str(i) for i in range(len(x))]; x['sig_cytotoxic']=x['sig_cytotoxic']+1e-6; x.to_csv('/tmp/external_smoke.csv',index=False); y=pd.read_csv('examples/labels.csv'); y['patient_id']=x['patient_id']; y.to_csv('/tmp/external_smoke_labels.csv',index=False)"
           tdln-pd1 predict --model /tmp/model/model.joblib --features /tmp/external_smoke.csv --output /tmp/predictions.csv
           tdln-pd1 evaluate --predictions /tmp/predictions.csv --labels /tmp/external_smoke_labels.csv --output /tmp/external_metrics.json --bootstrap 20
+          test -f /tmp/predictions.csv.audit.json
+          test -f /tmp/external_metrics.json.audit.json
           tdln-pd1 site-cv --features /tmp/hybrid.csv --labels examples/labels_multicenter.csv --bootstrap 20 --output /tmp/site_cv
           tdln-pd1 simulate --days 7 --dose-days 0 --parameters /tmp/calibration/fitted_parameters.json --output /tmp/trajectory.csv
           tdln-pd1 simulate-spatial --days 3 --output /tmp/spatial.csv
