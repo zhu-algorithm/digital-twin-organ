@@ -10,6 +10,8 @@ The executable core currently contains 12 non-negative state variables spanning 
 
 The spatial ontology separates afferent lymph, subcapsular sinus, paracortex, follicle, medulla, and efferent lymph. Single-cell annotations can be mapped to these zones; unresolved labels remain unresolved instead of being guessed.
 
+The executable spatial model uses directed conservative transport between these zones. Antigen and migratory DCs enter through afferent lymph; antigen capture occurs in the subcapsular sinus; antigen-bearing DCs reach the paracortex; Tpex expand and differentiate there; effectors pass through medulla into efferent lymph. The implementation exposes a reaction-free mode in which every species must be conserved, separating numerical transport verification from biological source/sink assumptions.
+
 ## Evidence anchors
 
 - Four-compartment QSP precedent (blood, peripheral tissue, tumour, TDLN) and explicit antigen/APC/T-cell/checkpoint modules: [Jusko et al., 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11138134/) and [Milberg et al., 2019](https://pmc.ncbi.nlm.nih.gov/articles/PMC6677731/).
@@ -31,6 +33,8 @@ These sources motivate model structure. They do not validate the default numeric
 - Synthetic-truth parameter recovery for longitudinal data assimilation.
 - Deterministic uncertainty propagation under a fixed random seed.
 - Label-free, patient-aligned mechanistic counterfactual feature generation.
+- Per-species mass conservation in the reaction-free spatial transport network.
+- Directional antigen, DC and effector movement across six TDLN zones.
 
 ## Required validation ladder
 

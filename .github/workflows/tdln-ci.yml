@@ -27,4 +27,5 @@ jobs:
           tdln-pd1 augment-twin --features /tmp/features.csv --days 7 --dose-days 0 --output /tmp/hybrid.csv
           tdln-pd1 train --features /tmp/hybrid.csv --labels examples/labels.csv --output /tmp/model --folds 2
           tdln-pd1 simulate --days 7 --dose-days 0 --output /tmp/trajectory.csv
+          tdln-pd1 simulate-spatial --days 3 --output /tmp/spatial.csv
           tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output /tmp/calibration
