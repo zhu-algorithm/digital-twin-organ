@@ -72,12 +72,17 @@ def verify_augmentation_audit(
             raise ValueError(f"augmentation input SHA-256 mismatch: {name}")
         derivation = record.get("derivation_audit")
         if derivation is not None:
-            derived_audit = Path(f"{target}.feature-audit.json")
-            if (name != "features" or not isinstance(derivation, dict)
+            suffixes = {
+                "features": ".feature-audit.json",
+                "spatial_initial_zones": ".spatial-audit.json",
+            }
+            suffix = suffixes.get(name)
+            derived_audit = Path(f"{target}{suffix}") if suffix else None
+            if (derived_audit is None or not isinstance(derivation, dict)
                     or derivation.get("file") != derived_audit.name
                     or not derived_audit.is_file()
                     or derivation.get("sha256") != sha256_file(derived_audit)):
-                raise ValueError("feature derivation audit SHA-256 mismatch")
+                raise ValueError(f"{name} derivation audit SHA-256 mismatch")
         verified_inputs.append(name)
     return {
         "valid": True,

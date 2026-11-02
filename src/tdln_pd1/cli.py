@@ -26,6 +26,9 @@ from .validation_audit import (verify_prediction_audit, write_evaluation_audit,
 from .calibration_audit import verify_calibration_audit, write_calibration_audit
 from .augmentation_audit import verify_augmentation_audit, write_augmentation_audit
 from .feature_audit import verify_feature_audit, write_feature_audit
+from .spatial_feature_audit import (
+    verify_spatial_feature_audit, write_spatial_feature_audit,
+)
 
 
 def _load_parameter_file(path: str | None, parameter_class):
@@ -279,6 +282,10 @@ def main() -> None:
     verify_features.add_argument("--audit", required=True)
     verify_features.add_argument("--cells", required=True)
     verify_features.add_argument("--output", required=True)
+    verify_spatial_features = sub.add_parser("verify-spatial-features")
+    verify_spatial_features.add_argument("--audit", required=True)
+    verify_spatial_features.add_argument("--spots", required=True)
+    verify_spatial_features.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -449,14 +456,25 @@ def main() -> None:
                     or feature_payload.get("output", {}).get("sha256") != feature_record["sha256"]):
                 raise ValueError("invalid or mismatched feature derivation audit")
             feature_record["derivation_audit"] = _source_record(str(feature_audit))
+        spatial_record = None
+        if args.spatial_initial_zones:
+            spatial_record = _source_record(args.spatial_initial_zones)
+            spatial_audit = Path(f"{args.spatial_initial_zones}.spatial-audit.json")
+            if spatial_audit.exists():
+                spatial_payload = json.loads(spatial_audit.read_text())
+                if (spatial_payload.get("stage") != "label_free_spatial_state_featurization"
+                        or spatial_payload.get("labels_used") is not False
+                        or spatial_payload.get("output", {}).get("file")
+                        != Path(args.spatial_initial_zones).name
+                        or spatial_payload.get("output", {}).get("sha256")
+                        != spatial_record["sha256"]):
+                    raise ValueError("invalid or mismatched spatial derivation audit")
+                spatial_record["derivation_audit"] = _source_record(str(spatial_audit))
         write_augmentation_audit(
             args.output,
             inputs={
                 "features": feature_record,
-                "spatial_initial_zones": (
-                    _source_record(args.spatial_initial_zones)
-                    if args.spatial_initial_zones else None
-                ),
+                "spatial_initial_zones": spatial_record,
                 "systemic_parameters": systemic_provenance,
                 "spatial_parameters": spatial_provenance,
             },
@@ -533,6 +551,7 @@ def main() -> None:
         states = aggregate_spatial_spots(pd.read_csv(args.spots), args.weight_column)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         states.to_csv(args.output, index=False)
+        write_spatial_feature_audit(args.spots, args.output, args.weight_column)
         observed_zones = states.loc[states.zone_observed].groupby("patient_id").zone.nunique()
         print(json.dumps({"patients": int(states.patient_id.nunique()),
                           "zones_in_state_grid": int(states.zone.nunique()),
@@ -717,6 +736,14 @@ def main() -> None:
         }, indent=2))
     elif args.command == "verify-features":
         report = verify_feature_audit(args.audit, args.cells, args.output)
+        print(json.dumps({
+            "valid": report["valid"],
+            "input_sha256": report["input_sha256"],
+            "output_sha256": report["output_sha256"],
+            "audit_sha256": report["audit_sha256"],
+        }, indent=2))
+    elif args.command == "verify-spatial-features":
+        report = verify_spatial_feature_audit(args.audit, args.spots, args.output)
         print(json.dumps({
             "valid": report["valid"],
             "input_sha256": report["input_sha256"],

@@ -35,6 +35,7 @@ jobs:
           tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --max-nfev 80 --profile-points 5 --output /tmp/spatial_calibration
           tdln-pd1 verify-calibration --audit /tmp/spatial_calibration/spatial_calibration_provenance.json --observations examples/spatial_longitudinal_observations.csv
           tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --output /tmp/spatial_cohort_initial.csv
+          tdln-pd1 verify-spatial-features --audit /tmp/spatial_cohort_initial.csv.spatial-audit.json --spots examples/spatial_spots_cohort.csv --output /tmp/spatial_cohort_initial.csv
           tdln-pd1 augment-twin --features /tmp/features.csv --spatial-initial-zones /tmp/spatial_cohort_initial.csv --systemic-parameters /tmp/calibration/fitted_parameters.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --days 7 --dose-days 0 --output /tmp/hybrid.csv
           tdln-pd1 verify-augmentation --audit /tmp/hybrid.csv.twin-audit.json --output /tmp/hybrid.csv --features /tmp/features.csv --spatial-initial-zones /tmp/spatial_cohort_initial.csv --systemic-parameters /tmp/calibration/fitted_parameters.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json
           tdln-pd1 train --features /tmp/hybrid.csv --labels examples/labels.csv --output /tmp/model --folds 2
