@@ -139,6 +139,15 @@ The spatial screen accepts both an exact fitted `SpatialParameters` JSON and one
 
 The assay-to-state bridge is a strict `FeatureStateMapping` JSON rather than an untracked set of literals. It controls signature intercepts, lower/upper state multipliers and lineage-specific coefficients shared by the systemic and spatial initializers. `examples/feature_state_mapping.json` reproduces the historical defaults. A supplied mapping is schema-checked, fingerprinted in both parameter and augmentation sidecars, independently reverified before training in CI, and marked only through a model-excluded `qc_` field. These coefficients still require cohort-specific calibration against quantitative cell/state measurements; versioning them does not make their defaults biological measurements.
 
+The bridge can be fitted from long-form paired measurements (`patient_id,target,value,sd` plus the same patient feature columns) rather than edited by hand:
+
+```bash
+tdln-pd1 calibrate-feature-state-mapping --observations examples/feature_state_mapping_observations.csv --fit tcf7_coefficient --base-mapping examples/feature_state_mapping.json --output artifacts/mapping_calibration
+tdln-pd1 verify-calibration --audit artifacts/mapping_calibration/mapping_calibration_provenance.json --observations examples/feature_state_mapping_observations.csv --base-mapping examples/feature_state_mapping.json
+```
+
+Supported quantitative targets span systemic DC, Tpex, tumour effector/exhausted, Treg states and spatial afferent antigen/DC plus paracortical Tpex/effector states. Fitting is positive log-space robust least squares with rank, condition-number, boundary and local covariance diagnostics. It fails on duplicate patient-target pairs, unknown targets, invalid uncertainty or unknown coefficients. The included table is synthetic truth for executable verification, not patient evidence.
+
 When calibration diagnostics are supplied, `augment-twin` additionally propagates the saved local log-parameter covariance into patient-level tumour, effector, spatial-egress and Tpex endpoints. Each endpoint gains a median, 95% lower/upper bound and interval-width feature, allowing the predictor to distinguish effect size from mechanistic uncertainty without reading an outcome label. Systemic and spatial draws use separate deterministic random streams because no joint cross-layer covariance has been estimated; these are local asymptotic mechanism intervals, not clinical confidence intervals.
 
 The label-free boundary is enforced before simulation on both inputs: patient feature tables and measured spatial-state tables reject response/responder, outcome, label, RECIST, PFS, progression-free and overall-survival-like column names. Outcomes therefore cannot be carried through the mechanistic transform as inert-looking columns even if a downstream caller bypasses the standard training command.

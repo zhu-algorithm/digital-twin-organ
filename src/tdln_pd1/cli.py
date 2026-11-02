@@ -13,6 +13,9 @@ from .simulator import Dose, TwinParameters, simulate
 from .assimilation import (calibrate, calibration_ensemble, calibration_parameter_draws,
                            save_calibration)
 from .hybrid import FeatureStateMapping, augment_with_twin
+from .mapping_assimilation import (
+    calibrate_feature_state_mapping, save_mapping_calibration,
+)
 from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spatial_coupled,
                                simulate_spatial_counterfactual)
 from .spatial_data import aggregate_spatial_spots
@@ -201,6 +204,13 @@ def main() -> None:
     cal.add_argument("--profile-points", type=int, default=0,
                      help="zero disables; otherwise use an odd integer >=3")
     cal.add_argument("--profile-fold-range", type=float, default=4.0)
+    mapping_cal = sub.add_parser("calibrate-feature-state-mapping")
+    mapping_cal.add_argument("--observations", required=True)
+    mapping_cal.add_argument("--fit", required=True,
+                             help="comma-separated FeatureStateMapping fields")
+    mapping_cal.add_argument("--base-mapping", help="starting FeatureStateMapping JSON")
+    mapping_cal.add_argument("--max-nfev", type=int, default=200)
+    mapping_cal.add_argument("--output", required=True)
     spatial_cal = sub.add_parser("calibrate-spatial")
     spatial_cal.add_argument("--observations", required=True)
     spatial_cal.add_argument("--fit", required=True,
@@ -315,6 +325,7 @@ def main() -> None:
     verify_calibration.add_argument("--audit", required=True)
     verify_calibration.add_argument("--observations", required=True)
     verify_calibration.add_argument("--initial-zones")
+    verify_calibration.add_argument("--base-mapping")
     verify_augmentation = sub.add_parser("verify-augmentation")
     verify_augmentation.add_argument("--audit", required=True)
     verify_augmentation.add_argument("--output", required=True)
@@ -439,6 +450,32 @@ def main() -> None:
             generated_filenames=(
                 "fitted_parameters.json", "calibration_diagnostics.json",
                 "calibration_residuals.csv",
+            ),
+        )
+        print(json.dumps(diagnostics, indent=2))
+    elif args.command == "calibrate-feature-state-mapping":
+        import pandas as pd
+        base, base_provenance = _load_parameter_file(
+            args.base_mapping, FeatureStateMapping
+        )
+        fit_names = tuple(name.strip() for name in args.fit.split(",") if name.strip())
+        fitted, diagnostics, compared = calibrate_feature_state_mapping(
+            pd.read_csv(args.observations), base=base,
+            fit_parameters=fit_names, max_nfev=args.max_nfev,
+        )
+        save_mapping_calibration(args.output, fitted, diagnostics, compared)
+        write_calibration_audit(
+            args.output, "mapping_calibration_provenance.json",
+            "feature_state_mapping_calibration",
+            inputs={
+                "observations": _source_record(args.observations),
+                "base_mapping": base_provenance,
+            },
+            settings={"fit_parameters": list(fit_names), "max_nfev": args.max_nfev},
+            generated_filenames=(
+                "fitted_feature_state_mapping.json",
+                "mapping_calibration_diagnostics.json",
+                "mapping_calibration_residuals.csv",
             ),
         )
         print(json.dumps(diagnostics, indent=2))
@@ -926,6 +963,8 @@ def main() -> None:
         input_paths = {"observations": args.observations}
         if args.initial_zones:
             input_paths["initial_state_source"] = args.initial_zones
+        if args.base_mapping:
+            input_paths["base_mapping"] = args.base_mapping
         report = verify_calibration_audit(args.audit, input_paths)
         print(json.dumps({
             "valid": report["valid"], "stage": report["stage"],

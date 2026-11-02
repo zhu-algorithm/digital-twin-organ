@@ -1,0 +1,7 @@
+patient_id,target,value,sd,sig_tcf7_memory_cd8_t
+mapping_p1,tpex_tdln,51200,100,0.1
+mapping_p2,tpex_tdln,62400,100,0.2
+mapping_p3,tpex_tdln,84800,100,0.4
+mapping_p4,tpex_tdln,107200,100,0.6
+mapping_p5,tpex_tdln,129600,100,0.8
+mapping_p6,tpex_tdln,152000,100,1.0
