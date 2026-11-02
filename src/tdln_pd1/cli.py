@@ -1018,6 +1018,7 @@ def main() -> None:
         )
         print(json.dumps({
             "valid": report["valid"],
+            "derivation_replayed": report["derivation_replayed"],
             "verified_inputs": report["verified_inputs"],
             "output_sha256": report["output_sha256"],
             "audit_sha256": report["audit_sha256"],
