@@ -341,6 +341,29 @@ def test_site_cv_records_fixed_c_when_inner_tuning_is_not_evaluable():
                for row in metrics["site_hyperparameter_selection"])
 
 
+def test_site_cv_keeps_single_class_held_out_centers_in_primary_analysis():
+    features = pd.DataFrame({
+        "patient_id": ["a0", "a1", "b0", "b1", "c0", "c1"],
+        "x": [0.1, 0.9, 0.2, 0.8, 0.15, 0.25],
+    })
+    labels = pd.DataFrame({
+        "patient_id": features.patient_id,
+        "response": [0, 1, 0, 1, 0, 0],
+        "center": ["a", "a", "b", "b", "single_class", "single_class"],
+    })
+    metrics, predictions = leave_one_site_out(features, labels, bootstrap=10)
+    assert predictions.patient_id.nunique() == 6
+    assert metrics["n_patients"] == 6
+    assert metrics["n_sites_evaluated"] == 3
+    assert metrics["skipped_sites"] == []
+    by_center = {
+        row["center"]: row
+        for row in metrics["center_stratified_evaluation"]["centers"]
+    }
+    assert by_center["single_class"]["status"] == "not_evaluable"
+    assert by_center["a"]["status"] == "evaluated"
+
+
 def test_safe_group_splits_never_emit_single_class_partitions():
     y = pd.Series([0, 1, 0, 1, 0, 1, 0, 1])
     groups = pd.Series([f"p{i}" for i in range(8)])

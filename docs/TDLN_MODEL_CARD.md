@@ -48,7 +48,7 @@ These sources motivate model structure. They do not validate the default numeric
 - TCR clone diversity, dominance and paired TDLN–tumour lineage sharing by unique-clone fraction, TDLN cell-weighted fraction and Jaccard overlap, with a common invalid-assignment filter.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
-- Leave-one-centre-out transportability evaluation with explicit reporting of non-evaluable sites.
+- Leave-one-centre-out transportability evaluation retains every predictable held-out patient. Single-class held-out centres remain in pooled proper-score and threshold analyses while their centre-specific discrimination is explicitly non-evaluable; only centres whose complementary training partition cannot fit a two-class model are skipped.
 - Fold-internal regularization selection for every evaluable held-out centre, with explicit fixed-value fallback when inner tuning is impossible.
 - Cross-version-safe grouped splitting that rejects any candidate train/validation partition lacking both response classes and reduces fold count before fallback.
 - Fail-closed cohort QC and SHA-256 provenance verification before training.
