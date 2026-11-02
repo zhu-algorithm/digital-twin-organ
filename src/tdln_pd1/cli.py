@@ -11,6 +11,8 @@ from .assimilation import calibrate, save_calibration
 from .hybrid import augment_with_twin
 from .spatial_dynamics import simulate_spatial
 from .sensitivity import global_sensitivity
+from .provenance import verify_manifest
+from .qc import cohort_qc
 
 
 def main() -> None:
@@ -70,6 +72,11 @@ def main() -> None:
     sens.add_argument("--fold-range", type=float, default=4.0)
     sens.add_argument("--seed", type=int, default=42)
     sens.add_argument("--output", required=True)
+    qc = sub.add_parser("qc")
+    qc.add_argument("--cells", required=True)
+    qc.add_argument("--labels", required=True)
+    qc.add_argument("--manifest")
+    qc.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
@@ -136,7 +143,7 @@ def main() -> None:
                           "species": int(trajectory.species.nunique()),
                           "final_efferent_effector": float(efferent.amount.iloc[-1]),
                           "output": args.output}, indent=2))
-    else:
+    elif args.command == "sensitivity":
         from .sensitivity import DEFAULT_PARAMETERS
         names = tuple(name.strip() for name in args.parameters.split(",") if name.strip()) or DEFAULT_PARAMETERS
         doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
@@ -150,6 +157,17 @@ def main() -> None:
         print(json.dumps({"samples": len(samples), "parameters": len(names),
                           "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
                           "output": str(output), "method": "LHS Spearman screening"}, indent=2))
+    else:
+        import pandas as pd
+        report = cohort_qc(load_cells(args.cells), pd.read_csv(args.labels))
+        if args.manifest:
+            report["provenance"] = verify_manifest(args.manifest)
+            report["passed"] = report["passed"] and report["provenance"]["valid"]
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(json.dumps(report, indent=2) + "\n")
+        print(json.dumps(report, indent=2))
+        if not report["passed"]:
+            raise SystemExit(2)
 
 
 if __name__ == "__main__":

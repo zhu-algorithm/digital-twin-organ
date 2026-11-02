@@ -27,6 +27,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[test]'
 tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
+tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output artifacts/qc.json
 tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts
 tdln-pd1 predict --model artifacts/model.joblib --features external_features.csv --output external_predictions.csv
 tdln-pd1 evaluate --predictions external_predictions.csv --labels external_labels.csv --output external_metrics.json
@@ -40,6 +41,8 @@ pytest
 ```
 
 Install `.[single-cell,test]` to read `.h5ad` directly.
+
+`qc` is the mandatory pre-training gate for imported cohorts. It checks cryptographic provenance, licensing/source metadata, patient matching, duplicate labels, binary outcomes, class balance, cell counts, signature-gene coverage, paired TDLN–tumour samples and clonotype assignment. A failed gate exits non-zero so CI and workflow systems cannot silently continue.
 
 ## Interpretation and limitations
 
