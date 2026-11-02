@@ -288,7 +288,10 @@ def evaluate_probabilities(
     }
     if bootstrap:
         rng = np.random.default_rng(seed)
-        draws = {name: [] for name in ("roc_auc", "average_precision", "brier_score")}
+        draws = {name: [] for name in (
+            "roc_auc", "average_precision", "brier_score", "log_loss",
+            "balanced_accuracy", "sensitivity", "specificity",
+        )}
         unique_groups = np.unique(groups) if groups is not None else None
         for _ in range(bootstrap):
             if unique_groups is None:
@@ -303,6 +306,20 @@ def evaluate_probabilities(
             draws["roc_auc"].append(roc_auc_score(y[index], prob[index]))
             draws["average_precision"].append(average_precision_score(y[index], prob[index]))
             draws["brier_score"].append(brier_score_loss(y[index], prob[index]))
+            draws["log_loss"].append(log_loss(y[index], prob[index], labels=[0, 1]))
+            sampled_prediction = prob[index] >= decision_threshold
+            sampled_tn, sampled_fp, sampled_fn, sampled_tp = confusion_matrix(
+                y[index], sampled_prediction, labels=[0, 1]
+            ).ravel()
+            draws["balanced_accuracy"].append(
+                balanced_accuracy_score(y[index], sampled_prediction)
+            )
+            draws["sensitivity"].append(
+                sampled_tp / (sampled_tp + sampled_fn)
+            )
+            draws["specificity"].append(
+                sampled_tn / (sampled_tn + sampled_fp)
+            )
         point["bootstrap"] = {
             name: {"lower_95": float(np.percentile(values, 2.5)),
                    "upper_95": float(np.percentile(values, 97.5)),

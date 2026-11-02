@@ -45,6 +45,9 @@ def test_probability_evaluation_reports_calibration_and_intervals():
     assert metrics["brier_score"] < 0.1
     assert "calibration_slope" in metrics
     assert metrics["bootstrap"]["roc_auc"]["valid_draws"] > 0
+    assert metrics["bootstrap"]["log_loss"]["valid_draws"] > 0
+    assert metrics["bootstrap"]["sensitivity"]["valid_draws"] > 0
+    assert metrics["bootstrap"]["specificity"]["valid_draws"] > 0
     assert metrics["bootstrap_design"]["unit"] == "patient"
     assert len(metrics["decision_curve"]) == 9
     assert metrics["decision_curve"][4]["threshold"] == 0.5
@@ -60,6 +63,9 @@ def test_probability_evaluation_uses_whole_centre_cluster_bootstrap():
     assert metrics["bootstrap_design"]["unit"] == "centre"
     assert metrics["bootstrap_design"]["groups"] == 3
     assert metrics["bootstrap"]["roc_auc"]["valid_draws"] == 20
+    assert metrics["bootstrap"]["balanced_accuracy"]["valid_draws"] == 20
+    assert metrics["bootstrap"]["sensitivity"]["lower_95"] <= 1.0
+    assert metrics["bootstrap"]["specificity"]["upper_95"] >= 1.0
 
 
 def test_cluster_bootstrap_rejects_unusable_groups():
