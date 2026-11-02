@@ -1,7 +1,8 @@
 import pandas as pd
 import pytest
 
-from tdln_pd1.sensitivity import global_sensitivity
+from tdln_pd1.sensitivity import global_sensitivity, global_spatial_sensitivity
+from tdln_pd1.spatial_dynamics import SpatialParameters
 
 
 def test_sensitivity_is_reproducible_and_detects_dominant_growth_effect():
@@ -20,3 +21,31 @@ def test_sensitivity_contract_rejects_invalid_configuration():
         global_sensitivity(names=("not_a_parameter",), n=8)
     with pytest.raises(ValueError):
         global_sensitivity(names=("tumour_growth",), n=4)
+
+
+def test_spatial_sensitivity_is_reproducible_and_preserves_paired_pd1_contrast():
+    kwargs = dict(
+        names=("antigen_half_saturation", "checkpoint_growth_gain"),
+        days=4, checkpoint_occupancy=0.8, n=12, seed=11, fold_range=2,
+    )
+    samples_a, ranking_a = global_spatial_sensitivity(**kwargs)
+    samples_b, ranking_b = global_spatial_sensitivity(**kwargs)
+    pd.testing.assert_frame_equal(samples_a, samples_b)
+    pd.testing.assert_frame_equal(ranking_a, ranking_b)
+    assert samples_a.pd1_efferent_effector_delta.gt(0).all()
+    assert samples_a.pd1_paracortex_tpex_delta.gt(0).all()
+    assert set(ranking_a.outcome) == {
+        "control_efferent_effector", "occupied_efferent_effector",
+        "pd1_efferent_effector_delta", "control_paracortex_tpex",
+        "occupied_paracortex_tpex", "pd1_paracortex_tpex_delta",
+    }
+
+
+def test_spatial_sensitivity_rejects_invalid_log_domain_and_occupancy():
+    with pytest.raises(ValueError, match="strictly positive"):
+        global_spatial_sensitivity(
+            parameters=SpatialParameters(checkpoint_growth_gain=0),
+            names=("checkpoint_growth_gain",), n=8,
+        )
+    with pytest.raises(ValueError, match="checkpoint_occupancy"):
+        global_spatial_sensitivity(names=("tpex_growth",), n=8, checkpoint_occupancy=0)

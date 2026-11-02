@@ -101,6 +101,8 @@ Systemic and spatial fitted-parameter JSON files can be loaded directly into sim
 
 Global sensitivity screening samples configurable positive parameter ranges on a logarithmic scale and writes both the design and the outcome ranking. A low rank correlation does not establish irrelevance: non-monotonic effects, interactions and saturation can hide influence. Parameters that dominate an outcome are candidates for focused measurement and profile-likelihood analysis rather than automatic tuning.
 
+The six-zone layer has a separate paired sensitivity screen. Each sampled spatial parameter vector is run from the same initial state at zero and prespecified PD-1 occupancy; untreated endpoints, occupied endpoints and within-draw deltas are ranked separately. The paired delta isolates the simulator's checkpoint-response mechanism from baseline transport variation, but fixed occupancy is not a pharmacokinetic or patient-level causal estimate.
+
 ## Mechanism–ML boundary
 
 Single-cell features initialize selected immune states through bounded, documented rules. For every patient, the same initial state is simulated under treated and untreated schedules, producing counterfactual deltas. Outcome labels are joined only after this transformation. This ordering prevents the most direct form of target leakage, but it does not remove cohort confounding or guarantee transportability; nested model selection and locked external validation are still required.

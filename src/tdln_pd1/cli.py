@@ -16,7 +16,7 @@ from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spa
                                simulate_spatial_counterfactual)
 from .spatial_data import aggregate_spatial_spots
 from .spatial_assimilation import calibrate_spatial, save_spatial_calibration
-from .sensitivity import global_sensitivity
+from .sensitivity import global_sensitivity, global_spatial_sensitivity
 from .provenance import verify_manifest
 from .qc import cohort_qc
 from .verification import verify_twin
@@ -175,6 +175,14 @@ def main() -> None:
     sens.add_argument("--fold-range", type=float, default=4.0)
     sens.add_argument("--seed", type=int, default=42)
     sens.add_argument("--output", required=True)
+    spatial_sens = sub.add_parser("spatial-sensitivity")
+    spatial_sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
+    spatial_sens.add_argument("--days", type=float, default=14.0)
+    spatial_sens.add_argument("--checkpoint-occupancy", type=float, default=0.8)
+    spatial_sens.add_argument("--samples", type=int, default=128)
+    spatial_sens.add_argument("--fold-range", type=float, default=4.0)
+    spatial_sens.add_argument("--seed", type=int, default=42)
+    spatial_sens.add_argument("--output", required=True)
     qc = sub.add_parser("qc")
     qc.add_argument("--cells", required=True)
     qc.add_argument("--labels", required=True)
@@ -398,6 +406,25 @@ def main() -> None:
         print(json.dumps({"samples": len(samples), "parameters": len(names),
                           "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
                           "output": str(output), "method": "LHS Spearman screening"}, indent=2))
+    elif args.command == "spatial-sensitivity":
+        from .sensitivity import DEFAULT_SPATIAL_PARAMETERS
+        names = (tuple(name.strip() for name in args.parameters.split(",") if name.strip())
+                 or DEFAULT_SPATIAL_PARAMETERS)
+        samples, ranking = global_spatial_sensitivity(
+            names=names, days=args.days, checkpoint_occupancy=args.checkpoint_occupancy,
+            n=args.samples, fold_range=args.fold_range, seed=args.seed,
+        )
+        output = Path(args.output)
+        output.mkdir(parents=True, exist_ok=True)
+        samples.to_csv(output / "spatial_sensitivity_samples.csv", index=False)
+        ranking.to_csv(output / "spatial_sensitivity_ranking.csv", index=False)
+        top = ranking.groupby("outcome", sort=False).first().reset_index()
+        print(json.dumps({
+            "samples": len(samples), "parameters": len(names),
+            "checkpoint_occupancy": args.checkpoint_occupancy,
+            "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
+            "output": str(output), "method": "paired six-zone LHS Spearman screening",
+        }, indent=2))
     elif args.command == "qc":
         import pandas as pd
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
