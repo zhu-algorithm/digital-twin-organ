@@ -36,8 +36,8 @@ tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
 tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output artifacts/qc.json
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --profile-points 7 --output artifacts/calibration
 tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --profile-points 7 --output artifacts/spatial_calibration
-tdln-pd1 verify-calibration --audit artifacts/calibration/calibration_provenance.json
-tdln-pd1 verify-calibration --audit artifacts/spatial_calibration/spatial_calibration_provenance.json
+tdln-pd1 verify-calibration --audit artifacts/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv
+tdln-pd1 verify-calibration --audit artifacts/spatial_calibration/spatial_calibration_provenance.json --observations examples/spatial_longitudinal_observations.csv
 tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --output artifacts/spatial_cohort_initial.csv
 tdln-pd1 augment-twin --features examples/features.csv --spatial-initial-zones artifacts/spatial_cohort_initial.csv --systemic-parameters artifacts/calibration/fitted_parameters.json --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
 tdln-pd1 train --features artifacts/hybrid_features.csv --labels examples/labels.csv --output artifacts --ensemble-members 50
@@ -95,7 +95,7 @@ Calibration tables must be non-empty and contain one unambiguous observation per
 
 Fitted parameter JSON is executable rather than archival: `simulate --parameters`, `simulate-spatial --systemic-parameters/--spatial-parameters`, and `augment-twin --systemic-parameters/--spatial-parameters` load it with exact dataclass-schema and finite-positive-value checks. Whenever a parameter file is used, the command writes `<output>.parameters.json` containing its SHA-256 fingerprint and parameter class. Hybrid output also carries `qc_*_parameters_supplied` audit fields, which the model feature-role gate excludes from fitting. This closes the calibration-to-prediction chain and makes the actual parameterization independently checkable.
 
-Each CLI calibration writes a cryptographic manifest binding the exact longitudinal observation file, fit fields, dose/profile settings and the fitted-parameter, diagnostic and residual outputs. Spatial calibration additionally binds the selected patient initialization and the default systemic parameter manifest used for dose-driven occupancy. `verify-calibration` fails if any bound output is missing or replaced. This proves file integrity, not parameter identifiability or biological validity.
+Each CLI calibration writes a cryptographic manifest binding the exact longitudinal observation file, fit fields, dose/profile settings and the fitted-parameter, diagnostic and residual outputs. Spatial calibration additionally binds the selected patient initialization and the default systemic parameter manifest used for dose-driven occupancy. `verify-calibration` requires the observation file again, plus `--initial-zones` when one was used, and fails if any bound input or output is missing or replaced. This proves file integrity, not parameter identifiability or biological validity.
 
 `sensitivity` uses seeded Latin-hypercube sampling over log-scaled parameter ranges and ranks monotonic influence on final tumour cells, tumour effectors, TDLN Tpex and peak PD-1 occupancy using Spearman correlations. These are screening statistics, not Sobol variance-decomposition indices or causal effects. The full sampled design is saved so every ranking is reproducible and inspectable.
 

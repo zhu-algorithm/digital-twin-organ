@@ -242,6 +242,8 @@ def main() -> None:
     verify_sensitivity.add_argument("--audit", required=True)
     verify_calibration = sub.add_parser("verify-calibration")
     verify_calibration.add_argument("--audit", required=True)
+    verify_calibration.add_argument("--observations", required=True)
+    verify_calibration.add_argument("--initial-zones")
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
@@ -605,9 +607,13 @@ def main() -> None:
             "audit_sha256": report["audit_sha256"],
         }, indent=2))
     elif args.command == "verify-calibration":
-        report = verify_calibration_audit(args.audit)
+        input_paths = {"observations": args.observations}
+        if args.initial_zones:
+            input_paths["initial_state_source"] = args.initial_zones
+        report = verify_calibration_audit(args.audit, input_paths)
         print(json.dumps({
             "valid": report["valid"], "stage": report["stage"],
+            "verified_inputs": report["verified_inputs"],
             "verified_outputs": report["verified_outputs"],
             "audit_sha256": report["audit_sha256"],
         }, indent=2))
