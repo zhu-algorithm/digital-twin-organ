@@ -3,12 +3,30 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import re
 import numpy as np
 import pandas as pd
 
 from .simulator import Dose, InitialState, TwinParameters, simulate
 from .spatial_dynamics import (SpatialInitialState, SpatialParameters,
                                simulate_spatial_coupled)
+
+
+OUTCOME_TOKENS = (
+    "response", "responder", "outcome", "label", "recist",
+    "progression_free", "overall_survival", "pfs", "os_months",
+)
+
+
+def _outcome_like_columns(frame: pd.DataFrame) -> list[str]:
+    """Return columns that could carry treatment outcome into the twin transform."""
+    return sorted([
+        column for column in frame.columns
+        if any(
+            token in re.sub(r"[^a-z0-9]+", "_", str(column).lower())
+            for token in OUTCOME_TOKENS
+        )
+    ])
 
 
 def _finite(row: pd.Series, name: str, default: float) -> float:
@@ -107,6 +125,11 @@ def augment_with_twin(
     if "patient_id" not in features:
         raise ValueError("features need patient_id")
     features = features.copy()
+    forbidden_features = _outcome_like_columns(features)
+    if forbidden_features:
+        raise ValueError(
+            f"patient features must be outcome-free before twin augmentation: {forbidden_features}"
+        )
     if features.patient_id.isna().any():
         raise ValueError("features need non-missing patient_id")
     features["patient_id"] = features.patient_id.astype(str).str.strip()
@@ -116,9 +139,7 @@ def augment_with_twin(
     if spatial_states is not None:
         if "patient_id" not in spatial_states:
             raise ValueError("spatial initial states need patient_id")
-        forbidden = [column for column in spatial_states.columns
-                     if any(token in column.lower()
-                            for token in ("response", "outcome", "label", "recist"))]
+        forbidden = _outcome_like_columns(spatial_states)
         if forbidden:
             raise ValueError(f"spatial initial states must be outcome-free: {sorted(forbidden)}")
         measured_states = spatial_states.copy()

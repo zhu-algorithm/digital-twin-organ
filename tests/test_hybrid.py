@@ -103,6 +103,14 @@ def test_twin_augmentation_is_label_free_and_patient_aligned():
     assert out.twin_spatial_treated_paracortex_tpex.gt(0).all()
 
 
+def test_twin_augmentation_rejects_outcomes_in_patient_features_before_simulation():
+    base = pd.DataFrame({"patient_id": ["a", "b"], "sig_cytotoxic": [0.1, 0.2]})
+    for column in ("response", "RECIST_category", "pfs_months", "overall_survival_days"):
+        contaminated = base.assign(**{column: [0, 1]})
+        with pytest.raises(ValueError, match="outcome-free"):
+            augment_with_twin(contaminated, days=1)
+
+
 def test_duplicate_patient_is_rejected():
     with pytest.raises(ValueError):
         augment_with_twin(pd.DataFrame({"patient_id": ["a", "a"]}), days=1)
