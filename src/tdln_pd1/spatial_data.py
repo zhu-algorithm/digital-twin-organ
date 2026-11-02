@@ -7,9 +7,15 @@ import pandas as pd
 
 from .spatial import ZONES
 from .spatial_dynamics import SPECIES
+from .features import select_baseline_cells
 
 
-def aggregate_spatial_spots(spots: pd.DataFrame, weight_column: str | None = None) -> pd.DataFrame:
+def aggregate_spatial_spots(
+    spots: pd.DataFrame,
+    weight_column: str | None = None,
+    time_column: str | None = None,
+    baseline_values: tuple[str, ...] | None = None,
+) -> pd.DataFrame:
     """Aggregate segmented/deconvolved spots into patient-zone-species amounts.
 
     Inputs must already use the model's anatomical zone vocabulary and contain
@@ -29,6 +35,7 @@ def aggregate_spatial_spots(spots: pd.DataFrame, weight_column: str | None = Non
     x["zone"] = x.zone.astype(str).str.strip().str.lower()
     if x.patient_id.eq("").any():
         raise ValueError("spatial patient_id must be non-empty")
+    x = select_baseline_cells(x, time_column, baseline_values)
     valid_zones = {zone.name for zone in ZONES}
     invalid_zones = sorted(set(x.zone) - valid_zones)
     if invalid_zones:

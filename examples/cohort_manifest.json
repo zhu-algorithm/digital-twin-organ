@@ -18,7 +18,7 @@
     {
       "path": "spatial_spots_cohort.csv",
       "role": "spatially resolved mechanistic-state fixture",
-      "sha256": "ff54f43e1948ac8c50044ff6aa3a9ed7c635b79ef926a6b118f047a77c27dd1b"
+      "sha256": "053fa04f98e6d6bd7dc736e83f57badb1b6f3212a413c73546a7eef5356fb11d"
     },
     {
       "path": "spatial_longitudinal_observations.csv",

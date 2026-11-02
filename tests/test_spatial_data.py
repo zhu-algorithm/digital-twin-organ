@@ -53,3 +53,28 @@ def test_spatial_ingestion_fails_closed_on_anatomy_and_abundance_errors():
     duplicate.loc[1, "spot_id"] = "s1"
     with pytest.raises(ValueError, match="unique within patient"):
         aggregate_spatial_spots(duplicate)
+
+
+def test_spatial_temporal_input_requires_explicit_baseline_and_excludes_post_treatment():
+    baseline = _spots().assign(timepoint="baseline")
+    post = _spots().assign(
+        spot_id=lambda x: x.spot_id + "_post", timepoint="post", tpex=1000000.0,
+    )
+    longitudinal = pd.concat([baseline, post], ignore_index=True)
+    with pytest.raises(ValueError, match="temporal columns detected"):
+        aggregate_spatial_spots(longitudinal, "area")
+    states = aggregate_spatial_spots(
+        longitudinal, "area", "timepoint", ("baseline",)
+    )
+    amount = states.set_index(["species", "zone"]).amount
+    assert amount[("tpex", "paracortex")] == 11.0
+
+
+def test_spatial_baseline_selection_must_retain_every_patient():
+    first = _spots().assign(timepoint="baseline")
+    second = _spots().assign(patient_id="p2", timepoint="post")
+    longitudinal = pd.concat([first, second], ignore_index=True)
+    with pytest.raises(ValueError, match="removed all cells for patients"):
+        aggregate_spatial_spots(
+            longitudinal, "area", "timepoint", ("baseline",)
+        )

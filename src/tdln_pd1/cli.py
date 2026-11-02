@@ -278,6 +278,8 @@ def main() -> None:
     spatial_features = sub.add_parser("spatial-featurize")
     spatial_features.add_argument("--spots", required=True)
     spatial_features.add_argument("--weight-column")
+    spatial_features.add_argument("--time-column")
+    spatial_features.add_argument("--baseline-values", default="")
     spatial_features.add_argument("--output", required=True)
     sens = sub.add_parser("sensitivity")
     sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
@@ -819,10 +821,19 @@ def main() -> None:
         print(json.dumps(report, indent=2))
     elif args.command == "spatial-featurize":
         import pandas as pd
-        states = aggregate_spatial_spots(pd.read_csv(args.spots), args.weight_column)
+        baseline_values = tuple(
+            value.strip() for value in args.baseline_values.split(",") if value.strip()
+        )
+        states = aggregate_spatial_spots(
+            pd.read_csv(args.spots), args.weight_column, args.time_column,
+            baseline_values or None,
+        )
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         states.to_csv(args.output, index=False)
-        write_spatial_feature_audit(args.spots, args.output, args.weight_column)
+        write_spatial_feature_audit(
+            args.spots, args.output, args.weight_column, args.time_column,
+            baseline_values or None,
+        )
         observed_zones = states.loc[states.zone_observed].groupby("patient_id").zone.nunique()
         print(json.dumps({"patients": int(states.patient_id.nunique()),
                           "zones_in_state_grid": int(states.zone.nunique()),
