@@ -48,6 +48,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
 - Leave-one-centre-out transportability evaluation with explicit reporting of non-evaluable sites.
+- Fold-internal regularization selection for every evaluable held-out centre, with explicit fixed-value fallback when inner tuning is impossible.
 - Fail-closed cohort QC and SHA-256 provenance verification before training.
 - Reproducible browser dashboard export: six-zone spatial states and treated/control trajectories are generated directly from the executable model and checked byte-for-structure in CI.
 - A machine-readable, fail-closed verification report covering zero-dose limits, default dose direction, tightened-tolerance convergence, finite/non-negative states, spatial mass conservation and coupled checkpoint direction.

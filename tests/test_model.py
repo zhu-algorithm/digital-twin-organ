@@ -208,5 +208,22 @@ def test_leave_one_site_out_predicts_each_evaluable_patient_once():
     metrics, predictions = leave_one_site_out(features, labels, bootstrap=10)
     assert metrics["n_sites_evaluated"] == 3
     assert metrics["evaluation_type"] == "leave_one_site_out"
+    assert len(metrics["site_hyperparameter_selection"]) == 3
+    assert all(row["mode"] == "nested_grid_search"
+               for row in metrics["site_hyperparameter_selection"])
+    assert predictions.selected_C.isin([0.01, 0.1, 1.0, 10.0, 100.0]).all()
     assert predictions.patient_id.nunique() == 12
     assert not predictions.patient_id.duplicated().any()
+
+
+def test_site_cv_records_fixed_c_when_inner_tuning_is_not_evaluable():
+    features = pd.DataFrame({"patient_id": ["a0", "a1", "b0", "b1"],
+                             "x": [0.1, 0.9, 0.2, 0.8]})
+    labels = pd.DataFrame({"patient_id": features.patient_id,
+                           "response": [0, 1, 0, 1],
+                           "center": ["a", "a", "b", "b"]})
+    metrics, predictions = leave_one_site_out(features, labels, bootstrap=0)
+    assert len(predictions) == 4
+    assert predictions.selected_C.eq(1.0).all()
+    assert all(row["mode"] == "fixed_C_inner_cv_not_evaluable"
+               for row in metrics["site_hyperparameter_selection"])

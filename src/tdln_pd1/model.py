@@ -393,18 +393,40 @@ def leave_one_site_out(
     cols, excluded = _select_model_features(features, labels)
     predictions = []
     skipped = []
-    for site in sorted(data[site_column].astype(str).unique()):
+    tuning = []
+    for site_index, site in enumerate(sorted(data[site_column].astype(str).unique()), start=1):
         test = data[data[site_column].astype(str) == site]
         train = data[data[site_column].astype(str) != site]
         if train.response.nunique() < 2 or test.response.nunique() < 2:
             skipped.append(site)
             continue
-        model = build_model(cols).fit(train[cols], train.response.astype(int))
+        y_train = train.response.astype(int)
+        inner_splits = min(3, int(y_train.value_counts().min()))
+        if inner_splits >= 2:
+            inner_cv = StratifiedGroupKFold(
+                n_splits=inner_splits, shuffle=True, random_state=100 + site_index,
+            )
+            search = GridSearchCV(
+                build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
+                scoring="neg_log_loss", cv=inner_cv, refit=True, error_score="raise",
+            )
+            search.fit(train[cols], y_train, groups=train.patient_id)
+            model = search.best_estimator_
+            selected_c = float(search.best_params_["classifier__C"])
+            mode = "nested_grid_search"
+        else:
+            model = build_model(cols).fit(train[cols], y_train)
+            selected_c = 1.0
+            mode = "fixed_C_inner_cv_not_evaluable"
         probability = model.predict_proba(test[cols])[:, 1]
         predictions.append(pd.DataFrame({"patient_id": test.patient_id, site_column: site,
                                          "response": test.response.astype(int),
                                          "probability": probability,
+                                         "selected_C": selected_c,
                                          "predicted_response": (probability >= 0.5).astype(int)}))
+        tuning.append({"held_out_site": site, "inner_splits": inner_splits,
+                       "selected_C": selected_c, "mode": mode,
+                       "n_train": int(len(train)), "n_test": int(len(test))})
     if not predictions:
         raise ValueError("no site could be evaluated with both classes in train and test")
     out = pd.concat(predictions, ignore_index=True)
@@ -412,6 +434,9 @@ def leave_one_site_out(
     metrics.update({"n_patients": int(len(out)), "n_sites_evaluated": int(out[site_column].nunique()),
                     "skipped_sites": skipped, "site_column": site_column,
                     "evaluation_type": "leave_one_site_out",
+                    "site_hyperparameter_selection": tuning,
+                    "selection_metric": "negative_log_loss",
+                    "C_grid": list(DEFAULT_C_GRID),
                     "feature_schema": {"included": cols, "excluded": excluded},
                     "note": "Stronger internal transportability check; not independent external validation."})
     return metrics, out
