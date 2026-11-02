@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 import joblib
 import numpy as np
@@ -19,6 +20,45 @@ from sklearn.preprocessing import StandardScaler
 
 
 DEFAULT_C_GRID = (0.01, 0.1, 1.0, 10.0, 100.0)
+
+
+def _normalise_patient_ids(frame: pd.DataFrame, name: str) -> pd.DataFrame:
+    if "patient_id" not in frame:
+        raise ValueError(f"{name} need patient_id")
+    if frame.patient_id.isna().any():
+        raise ValueError(f"{name} contain missing patient_id")
+    out = frame.copy()
+    out["patient_id"] = out.patient_id.astype(str).str.strip()
+    if out.patient_id.eq("").any() or out.patient_id.duplicated().any():
+        raise ValueError(f"{name} need unique, non-empty patient_id")
+    return out
+
+
+def _align_patients(features: pd.DataFrame, labels: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    features = _normalise_patient_ids(features, "features")
+    labels = _normalise_patient_ids(labels, "labels")
+    feature_ids, label_ids = set(features.patient_id), set(labels.patient_id)
+    if feature_ids != label_ids:
+        missing_labels = sorted(feature_ids - label_ids)
+        missing_features = sorted(label_ids - feature_ids)
+        raise ValueError(
+            "patient sets differ: "
+            f"missing_labels={missing_labels[:10]}, missing_features={missing_features[:10]}"
+        )
+    return features, labels
+
+
+def _patient_hash(patient_id: str) -> str:
+    return hashlib.sha256(patient_id.encode("utf-8")).hexdigest()
+
+
+def _boolean_audit_column(series: pd.Series, name: str) -> pd.Series:
+    if pd.api.types.is_bool_dtype(series):
+        return series.astype(bool)
+    normalized = series.astype(str).str.strip().str.lower()
+    if not normalized.isin({"true", "false"}).all():
+        raise ValueError(f"{name} must contain only true/false values")
+    return normalized.eq("true")
 
 
 def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
@@ -95,25 +135,44 @@ def evaluate_probabilities(y_true, probability, bootstrap: int = 500, seed: int 
 def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFrame:
     """Apply an immutable fitted artifact to a new cohort without refitting."""
     artifact = joblib.load(model_path)
+    features = _normalise_patient_ids(features, "features")
     required = artifact["features"]
     missing = set(required) - set(features.columns)
-    if "patient_id" not in features:
-        raise ValueError("features need patient_id")
     if missing:
         raise ValueError(f"missing locked-model features: {sorted(missing)}")
     probability = artifact["model"].predict_proba(features[required])[:, 1]
     threshold = float(artifact.get("threshold", 0.5))
     if not 0.0 < threshold < 1.0:
         raise ValueError("locked-model threshold must fall strictly between 0 and 1")
+    training_hashes = set(artifact.get("training_patient_hashes", []))
+    overlap_check_available = bool(training_hashes)
+    overlap = features.patient_id.map(lambda value: _patient_hash(value) in training_hashes)
     return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
                          "predicted_response": (probability >= threshold).astype(int),
-                         "decision_threshold": threshold})
+                         "decision_threshold": threshold,
+                         "training_overlap": overlap,
+                         "overlap_check_available": overlap_check_available})
 
 
 def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap: int = 500) -> dict:
+    predictions, labels = _align_patients(predictions, labels)
+    if "overlap_check_available" not in predictions:
+        raise ValueError("external evaluation requires a model artifact with training-overlap fingerprints")
+    check_available = _boolean_audit_column(
+        predictions.overlap_check_available, "overlap_check_available"
+    )
+    if not check_available.all():
+        raise ValueError("external evaluation requires a model artifact with training-overlap fingerprints")
+    if "training_overlap" not in predictions:
+        raise ValueError("predictions need training_overlap audit column")
+    overlap_flags = _boolean_audit_column(predictions.training_overlap, "training_overlap")
+    overlap = predictions.loc[overlap_flags, "patient_id"].tolist()
+    if overlap:
+        raise ValueError(f"external cohort overlaps model training patients: {overlap[:10]}")
     data = predictions.merge(labels, on="patient_id", validate="one_to_one")
     metrics = evaluate_probabilities(data.response, data.probability, bootstrap=bootstrap)
     metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
+                    "training_overlap_checked": True, "training_overlap_count": 0,
                     "note": "External only if this cohort was never used for fitting, tuning, or feature design."})
     return metrics
 
@@ -125,6 +184,7 @@ def leave_one_site_out(
     bootstrap: int = 500,
 ) -> tuple[dict, pd.DataFrame]:
     """Train on all other sites and predict each held-out site exactly once."""
+    features, labels = _align_patients(features, labels)
     if site_column not in labels:
         raise ValueError(f"labels need site column: {site_column}")
     data = features.merge(labels[["patient_id", "response", site_column]], on="patient_id", validate="one_to_one")
@@ -157,6 +217,7 @@ def leave_one_site_out(
 
 
 def train_evaluate(features: pd.DataFrame, labels: pd.DataFrame, output: str | Path, folds: int = 5) -> dict:
+    features, labels = _align_patients(features, labels)
     data = features.merge(labels, on="patient_id", validate="one_to_one")
     if data["response"].nunique() != 2:
         raise ValueError("training needs both response classes")
@@ -215,10 +276,14 @@ def train_evaluate(features: pd.DataFrame, labels: pd.DataFrame, output: str | P
     final_c = float(final_search.best_params_["classifier__C"])
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
+    training_hashes = sorted(_patient_hash(value) for value in data.patient_id)
+    cohort_fingerprint = hashlib.sha256("\n".join(training_hashes).encode("utf-8")).hexdigest()
     joblib.dump({"model": model, "features": cols, "threshold": 0.5,
                  "training_patients": int(len(data)), "selected_C": final_c,
                  "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
-                 "artifact_version": 2}, output / "model.joblib")
+                 "training_patient_hashes": training_hashes,
+                 "training_cohort_fingerprint": cohort_fingerprint,
+                 "artifact_version": 3}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
                   "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(
