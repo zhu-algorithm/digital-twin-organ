@@ -15,7 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (average_precision_score, balanced_accuracy_score,
                              brier_score_loss, log_loss, roc_auc_score,
                              confusion_matrix)
-from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold
+from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -152,10 +152,18 @@ def _safe_group_splits(
     labels = np.asarray(y, dtype=int)
     group_values = np.asarray(groups)
     for n_splits in range(min(maximum_splits, int(pd.Series(labels).value_counts().min())), 1, -1):
-        splitter = StratifiedGroupKFold(
-            n_splits=n_splits, shuffle=True, random_state=seed,
-        )
-        splits = list(splitter.split(np.zeros((len(labels), 1)), labels, group_values))
+        if len(np.unique(group_values)) == len(group_values):
+            # One patient-level row per group: ordinary stratification is exactly
+            # group-safe and avoids version-dependent singleton-group heuristics.
+            splitter = StratifiedKFold(
+                n_splits=n_splits, shuffle=True, random_state=seed,
+            )
+            splits = list(splitter.split(np.zeros((len(labels), 1)), labels))
+        else:
+            splitter = StratifiedGroupKFold(
+                n_splits=n_splits, shuffle=True, random_state=seed,
+            )
+            splits = list(splitter.split(np.zeros((len(labels), 1)), labels, group_values))
         if all(len(np.unique(labels[train])) == 2 and len(np.unique(labels[test])) == 2
                for train, test in splits):
             return splits, n_splits
