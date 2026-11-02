@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 from pathlib import Path
 import joblib
 import numpy as np
@@ -20,6 +21,10 @@ from sklearn.preprocessing import StandardScaler
 
 
 DEFAULT_C_GRID = (0.01, 0.1, 1.0, 10.0, 100.0)
+FORBIDDEN_FEATURE_TOKENS = (
+    "response", "responder", "outcome", "label", "recist",
+    "progression_free", "overall_survival", "pfs", "os_months",
+)
 
 
 def _normalise_patient_ids(frame: pd.DataFrame, name: str) -> pd.DataFrame:
@@ -59,6 +64,48 @@ def _boolean_audit_column(series: pd.Series, name: str) -> pd.Series:
     if not normalized.isin({"true", "false"}).all():
         raise ValueError(f"{name} must contain only true/false values")
     return normalized.eq("true")
+
+
+def _select_model_features(
+    features: pd.DataFrame,
+    labels: pd.DataFrame,
+) -> tuple[list[str], dict[str, str]]:
+    """Audit feature roles and reject common forms of target leakage."""
+    candidates = [column for column in features.columns if column != "patient_id"]
+    forbidden = [
+        column for column in candidates
+        if any(token in re.sub(r"[^a-z0-9]+", "_", column.lower())
+               for token in FORBIDDEN_FEATURE_TOKENS)
+    ]
+    if forbidden:
+        raise ValueError(f"forbidden outcome-like feature columns: {sorted(forbidden)}")
+    non_numeric = [column for column in candidates
+                   if not pd.api.types.is_numeric_dtype(features[column])]
+    if non_numeric:
+        raise ValueError(
+            "model features must be numeric; keep metadata in the label/cohort table: "
+            f"{sorted(non_numeric)}"
+        )
+    excluded = {
+        column: "technical cell-count/QC feature"
+        for column in candidates
+        if column == "n_cells" or column.startswith("n_cells_") or column.startswith("qc_")
+    }
+    included = [column for column in candidates if column not in excluded]
+    if not included:
+        raise ValueError("no eligible biological or mechanistic model features remain")
+    response = labels.set_index("patient_id").loc[features.patient_id, "response"].to_numpy(dtype=float)
+    copied = []
+    for column in included:
+        values = pd.to_numeric(features[column], errors="coerce").to_numpy(dtype=float)
+        if np.isfinite(values).all() and (
+            np.allclose(values, response, rtol=0.0, atol=1e-12)
+            or np.allclose(values, 1.0 - response, rtol=0.0, atol=1e-12)
+        ):
+            copied.append(column)
+    if copied:
+        raise ValueError(f"features exactly copy or invert the response labels: {sorted(copied)}")
+    return included, excluded
 
 
 def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
@@ -206,7 +253,7 @@ def leave_one_site_out(
     data = features.merge(labels[["patient_id", "response", site_column]], on="patient_id", validate="one_to_one")
     if data[site_column].isna().any() or data[site_column].nunique() < 2:
         raise ValueError("site evaluation needs at least two non-missing sites")
-    cols = [column for column in features.columns if column != "patient_id"]
+    cols, excluded = _select_model_features(features, labels)
     predictions = []
     skipped = []
     for site in sorted(data[site_column].astype(str).unique()):
@@ -228,6 +275,7 @@ def leave_one_site_out(
     metrics.update({"n_patients": int(len(out)), "n_sites_evaluated": int(out[site_column].nunique()),
                     "skipped_sites": skipped, "site_column": site_column,
                     "evaluation_type": "leave_one_site_out",
+                    "feature_schema": {"included": cols, "excluded": excluded},
                     "note": "Stronger internal transportability check; not independent external validation."})
     return metrics, out
 
@@ -249,7 +297,7 @@ def train_evaluate(
     n_splits = min(folds, int(counts.min()))
     if n_splits < 2:
         raise ValueError("each class needs at least two patients")
-    cols = [c for c in data.columns if c not in {"patient_id", "response"}]
+    cols, excluded = _select_model_features(features, labels)
     X, y = data[cols], data["response"].astype(int)
     outer_cv = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
     prob = np.full(len(data), np.nan)
@@ -287,6 +335,7 @@ def train_evaluate(
                     "hyperparameter_selection": tuning,
                     "selection_metric": "negative_log_loss",
                     "C_grid": list(DEFAULT_C_GRID),
+                    "feature_schema": {"included": cols, "excluded": excluded},
                     "evaluation_type": "internal_cross_validation",
                     "note": "Nested patient-level cross-validation; not external or clinical validation."})
     final_splits = min(5, int(counts.min()))
@@ -324,6 +373,7 @@ def train_evaluate(
     training_hashes = sorted(_patient_hash(value) for value in data.patient_id)
     cohort_fingerprint = hashlib.sha256("\n".join(training_hashes).encode("utf-8")).hexdigest()
     joblib.dump({"model": model, "features": cols, "threshold": 0.5,
+                 "excluded_features": excluded,
                  "training_patients": int(len(data)), "selected_C": final_c,
                  "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
                  "training_patient_hashes": training_hashes,

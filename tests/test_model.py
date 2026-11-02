@@ -11,6 +11,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
         "patient_id": [f"p{i}" for i in range(8)],
         "sig_exhaustion": [0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4],
         "frac_cd8_t": [0.2, 0.3, 0.2, 0.3, 0.7, 0.8, 0.7, 0.8],
+        "n_cells": [100, 200, 300, 400, 500, 600, 700, 800],
     })
     labels = pd.DataFrame({"patient_id": [f"p{i}" for i in range(8)], "response": [0]*4 + [1]*4})
     metrics = train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=8)
@@ -29,6 +30,9 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert len(artifact["bootstrap_models"]) == 8
     assert metrics["prediction_uncertainty"]["members"] == 8
     assert metrics["selection_metric"] == "negative_log_loss"
+    assert "n_cells" not in artifact["features"]
+    assert artifact["excluded_features"]["n_cells"] == "technical cell-count/QC feature"
+    assert metrics["feature_schema"]["included"] == ["sig_exhaustion", "frac_cd8_t"]
 
 
 def test_probability_evaluation_reports_calibration_and_intervals():
@@ -80,6 +84,26 @@ def test_negative_ensemble_size_is_rejected(tmp_path: Path):
     labels = pd.DataFrame({"patient_id": features.patient_id, "response": [0, 0, 1, 1]})
     with pytest.raises(ValueError, match="ensemble_members"):
         train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=-1)
+
+
+def test_outcome_named_and_exact_label_proxy_features_are_rejected(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    named = pd.DataFrame({"patient_id": patients, "response_score": range(8)})
+    with pytest.raises(ValueError, match="outcome-like"):
+        train_evaluate(named, labels, tmp_path, folds=2, ensemble_members=2)
+    copied = pd.DataFrame({"patient_id": patients, "perfect_proxy": labels.response,
+                           "safe_feature": range(8)})
+    with pytest.raises(ValueError, match="exactly copy"):
+        train_evaluate(copied, labels, tmp_path, folds=2, ensemble_members=2)
+
+
+def test_non_numeric_metadata_must_not_enter_model_matrix(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    features = pd.DataFrame({"patient_id": patients, "x": range(8), "batch": ["a", "b"] * 4})
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    with pytest.raises(ValueError, match="must be numeric"):
+        train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
 
 
 def test_external_audit_parses_csv_boole_but_rejects_ambiguous_values():
