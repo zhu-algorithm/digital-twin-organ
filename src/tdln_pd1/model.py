@@ -142,6 +142,26 @@ def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
     ))])
 
 
+def _safe_group_splits(
+    y: pd.Series,
+    groups: pd.Series,
+    maximum_splits: int,
+    seed: int,
+) -> tuple[list[tuple[np.ndarray, np.ndarray]] | None, int]:
+    """Return grouped stratified splits only when every partition has both classes."""
+    labels = np.asarray(y, dtype=int)
+    group_values = np.asarray(groups)
+    for n_splits in range(min(maximum_splits, int(pd.Series(labels).value_counts().min())), 1, -1):
+        splitter = StratifiedGroupKFold(
+            n_splits=n_splits, shuffle=True, random_state=seed,
+        )
+        splits = list(splitter.split(np.zeros((len(labels), 1)), labels, group_values))
+        if all(len(np.unique(labels[train])) == 2 and len(np.unique(labels[test])) == 2
+               for train, test in splits):
+            return splits, n_splits
+    return None, 0
+
+
 def _training_domain_reference(features: pd.DataFrame, columns: list[str]) -> dict:
     """Persist label-free training support for locked-model applicability checks."""
     reference = {}
@@ -401,16 +421,15 @@ def leave_one_site_out(
             skipped.append(site)
             continue
         y_train = train.response.astype(int)
-        inner_splits = min(3, int(y_train.value_counts().min()))
-        if inner_splits >= 2:
-            inner_cv = StratifiedGroupKFold(
-                n_splits=inner_splits, shuffle=True, random_state=100 + site_index,
-            )
+        inner_cv, inner_splits = _safe_group_splits(
+            y_train, train.patient_id, 3, 100 + site_index,
+        )
+        if inner_cv is not None:
             search = GridSearchCV(
                 build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
                 scoring="neg_log_loss", cv=inner_cv, refit=True, error_score="raise",
             )
-            search.fit(train[cols], y_train, groups=train.patient_id)
+            search.fit(train[cols], y_train)
             model = search.best_estimator_
             selected_c = float(search.best_params_["classifier__C"])
             mode = "nested_grid_search"
@@ -462,23 +481,26 @@ def train_evaluate(
         raise ValueError("each class needs at least two patients")
     cols, excluded = _select_model_features(features, labels)
     X, y = data[cols], data["response"].astype(int)
-    outer_cv = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
+    outer_cv, n_splits = _safe_group_splits(y, data.patient_id, n_splits, 42)
+    if outer_cv is None:
+        raise ValueError("could not construct grouped outer folds with both classes")
     prob = np.full(len(data), np.nan)
     fold_id = np.full(len(data), -1, dtype=int)
     selected_c = np.full(len(data), np.nan)
     tuning = []
     for fold, (train_index, test_index) in enumerate(
-        outer_cv.split(X, y, groups=data["patient_id"]), start=1
+        outer_cv, start=1
     ):
         y_train = y.iloc[train_index]
-        inner_splits = min(3, int(y_train.value_counts().min()))
-        if inner_splits >= 2:
-            inner_cv = StratifiedGroupKFold(n_splits=inner_splits, shuffle=True, random_state=fold)
+        inner_cv, inner_splits = _safe_group_splits(
+            y_train, data.patient_id.iloc[train_index], 3, fold,
+        )
+        if inner_cv is not None:
             search = GridSearchCV(
                 build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
                 scoring="neg_log_loss", cv=inner_cv, refit=True, error_score="raise",
             )
-            search.fit(X.iloc[train_index], y_train, groups=data.patient_id.iloc[train_index])
+            search.fit(X.iloc[train_index], y_train)
             fitted = search.best_estimator_
             best_c = float(search.best_params_["classifier__C"])
             mode = "nested_grid_search"
@@ -502,13 +524,14 @@ def train_evaluate(
                     "evaluation_type": "internal_cross_validation",
                     "note": "Nested patient-level cross-validation; not external or clinical validation."})
     metrics["training_input_provenance"] = input_provenance
-    final_splits = min(5, int(counts.min()))
-    final_cv = StratifiedGroupKFold(n_splits=final_splits, shuffle=True, random_state=42)
+    final_cv, final_splits = _safe_group_splits(y, data.patient_id, min(5, int(counts.min())), 42)
+    if final_cv is None:
+        raise ValueError("could not construct grouped final-selection folds with both classes")
     final_search = GridSearchCV(
         build_model(cols), {"classifier__C": list(DEFAULT_C_GRID)},
         scoring="neg_log_loss", cv=final_cv, refit=True, error_score="raise",
     )
-    final_search.fit(X, y, groups=data.patient_id)
+    final_search.fit(X, y)
     model = final_search.best_estimator_
     final_c = float(final_search.best_params_["classifier__C"])
     rng = np.random.default_rng(42)

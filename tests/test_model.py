@@ -3,7 +3,8 @@ import joblib
 import pandas as pd
 import pytest
 from tdln_pd1.model import (evaluate_external, evaluate_probabilities,
-                            leave_one_site_out, predict_locked, train_evaluate)
+                            leave_one_site_out, predict_locked, train_evaluate,
+                            _safe_group_splits)
 
 
 def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
@@ -227,3 +228,13 @@ def test_site_cv_records_fixed_c_when_inner_tuning_is_not_evaluable():
     assert predictions.selected_C.eq(1.0).all()
     assert all(row["mode"] == "fixed_C_inner_cv_not_evaluable"
                for row in metrics["site_hyperparameter_selection"])
+
+
+def test_safe_group_splits_never_emit_single_class_partitions():
+    y = pd.Series([0, 1, 0, 1, 0, 1, 0, 1])
+    groups = pd.Series([f"p{i}" for i in range(8)])
+    splits, n_splits = _safe_group_splits(y, groups, maximum_splits=3, seed=101)
+    assert splits is not None and n_splits >= 2
+    for train, test in splits:
+        assert set(y.iloc[train]) == {0, 1}
+        assert set(y.iloc[test]) == {0, 1}
