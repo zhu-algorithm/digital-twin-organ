@@ -66,6 +66,8 @@ Calibration observations use long format: `day,variable,value,sd`. Variables mus
 
 `augment-twin` maps each patient's measured dendritic, cytotoxic, exhaustion, TCF7-memory and immune-cell-fraction features to bounded initial states, runs matched untreated and anti-PD-1 counterfactuals, and appends mechanistic endpoints. These include receptor occupancy, Tpex/effector states and treated-minus-control tumour/effector effects. The mapping is explicit in `hybrid.py`; response labels are not accepted or used during augmentation. The resulting hybrid table can be supplied to the existing `train` command.
 
+The same patient row now initializes the six-zone spatial twin: dendritic activation scales afferent DC input, TCF7-memory scales paracortical Tpex, cytotoxic/CD8 features scale paracortical effectors, and an optional `tumour_antigen_proxy` scales afferent antigen. When that proxy is absent the population default is retained rather than inferred from an unrelated expression signature. Treated/control efferent-effector endpoints and paracortical Tpex are appended to the hybrid feature table.
+
 ## Locked external evaluation
 
 Training writes a versioned model artifact with its exact feature schema. `predict` applies that artifact without refitting and fails on missing features. `evaluate` reports ROC AUC, average precision, Brier score, log loss, balanced accuracy, sensitivity, specificity, calibration intercept/slope and patient-level bootstrap intervals. A result is external validation only when the evaluation cohort was never used for model fitting, hyperparameter selection, threshold choice or feature design; running the command on the bundled synthetic cohort does not make it external evidence.

@@ -1,7 +1,9 @@
 import pandas as pd
 import pytest
 
-from tdln_pd1.hybrid import augment_with_twin, initial_state_from_features
+from tdln_pd1.hybrid import (
+    augment_with_twin, initial_state_from_features, spatial_initial_state_from_features,
+)
 
 
 def test_feature_mapping_changes_biologically_linked_states():
@@ -9,6 +11,28 @@ def test_feature_mapping_changes_biologically_linked_states():
     high = initial_state_from_features(pd.Series({"sig_tcf7_memory": 1.5, "sig_cytotoxic": 1.5}))
     assert high.tpex_tdln > low.tpex_tdln
     assert high.effector_tumour > low.effector_tumour
+
+
+def test_feature_mapping_initializes_patient_specific_spatial_states():
+    low = spatial_initial_state_from_features(pd.Series({
+        "sig_tcf7_memory": 0.1, "sig_cytotoxic": 0.1,
+        "sig_dendritic_activation": 0.1, "tumour_antigen_proxy": 0.1,
+    }))
+    high = spatial_initial_state_from_features(pd.Series({
+        "sig_tcf7_memory": 1.5, "sig_cytotoxic": 1.5,
+        "sig_dendritic_activation": 1.5, "tumour_antigen_proxy": 1.5,
+    }))
+    assert high.afferent_antigen > low.afferent_antigen
+    assert high.afferent_dc > low.afferent_dc
+    assert high.paracortex_tpex > low.paracortex_tpex
+    assert high.paracortex_effector > low.paracortex_effector
+
+
+def test_canonical_cd8_fraction_alias_and_missing_antigen_proxy_are_supported():
+    low = spatial_initial_state_from_features(pd.Series({"frac_cd8_t_cell": 0.05}))
+    high = spatial_initial_state_from_features(pd.Series({"frac_cd8_t_cell": 0.80}))
+    assert high.paracortex_effector > low.paracortex_effector
+    assert high.afferent_antigen == low.afferent_antigen
 
 
 def test_twin_augmentation_is_label_free_and_patient_aligned():
@@ -23,6 +47,8 @@ def test_twin_augmentation_is_label_free_and_patient_aligned():
     assert "response" not in out
     assert out.twin_peak_pd1_occupancy.gt(0).all()
     assert out.twin_treatment_tumour_delta.lt(0).all()
+    assert out.twin_spatial_efferent_effector_gain.gt(0).all()
+    assert out.twin_spatial_treated_paracortex_tpex.gt(0).all()
 
 
 def test_duplicate_patient_is_rejected():

@@ -65,3 +65,5 @@ Global sensitivity screening samples configurable positive parameter ranges on a
 ## Mechanism–ML boundary
 
 Single-cell features initialize selected immune states through bounded, documented rules. For every patient, the same initial state is simulated under treated and untreated schedules, producing counterfactual deltas. Outcome labels are joined only after this transformation. This ordering prevents the most direct form of target leakage, but it does not remove cohort confounding or guarantee transportability; nested model selection and locked external validation are still required.
+
+Patient-specific initialization now covers both scales. Dendritic activation, TCF7-memory, cytotoxic/CD8 abundance and an optional tumour-antigen proxy initialize afferent and paracortical spatial states through bounded multipliers. Antigen is not silently inferred from transcriptomic interferon activity: without an explicit proxy the population antigen default is used. Spatial treated-minus-control endpoints are generated before outcomes are joined, preserving the same label-free boundary as the systemic features.
