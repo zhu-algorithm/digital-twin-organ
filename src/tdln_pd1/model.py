@@ -435,17 +435,21 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     if missing:
         raise ValueError(f"missing locked-model features: {sorted(missing)}")
     _validate_model_matrix(features, required, "prediction")
+    # The primary point estimate comes from the model fitted to the complete
+    # development cohort with the locked selected C. Bootstrap refits describe
+    # resampling instability; their median is a separate estimand.
+    probability = artifact["model"].predict_proba(features[required])[:, 1]
     ensemble = artifact.get("bootstrap_models", [])
     if ensemble:
         ensemble_probability = np.column_stack([
             member.predict_proba(features[required])[:, 1] for member in ensemble
         ])
-        probability = np.median(ensemble_probability, axis=1)
+        bootstrap_median = np.median(ensemble_probability, axis=1)
         lower = np.percentile(ensemble_probability, 2.5, axis=1)
         upper = np.percentile(ensemble_probability, 97.5, axis=1)
         uncertainty_available = True
     else:
-        probability = artifact["model"].predict_proba(features[required])[:, 1]
+        bootstrap_median = np.full(len(features), np.nan)
         lower = np.full(len(features), np.nan)
         upper = np.full(len(features), np.nan)
         uncertainty_available = False
@@ -462,9 +466,11 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     )
     domain = _domain_diagnostics(features, required, artifact.get("training_domain"))
     return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
+                         "bootstrap_probability_median": bootstrap_median,
                          "probability_lower_95": lower, "probability_upper_95": upper,
                          "probability_interval_width": upper - lower,
                          "uncertainty_available": uncertainty_available,
+                         "point_prediction_method": "full_cohort_locked_model",
                          "predicted_response": (probability >= threshold).astype(int),
                          "decision_threshold": threshold,
                          "training_overlap": overlap,
@@ -734,6 +740,8 @@ def train_evaluate(
         "members": ensemble_members,
         "interval": "2.5th to 97.5th percentile",
         "fixed_selected_C": final_c,
+        "point_estimate": "full_cohort_locked_model",
+        "bootstrap_summary": "median_and_2.5th_to_97.5th_percentiles_reported_separately",
         "seed": 42,
         "note": "Model-resampling uncertainty only; excludes cohort shift and structural uncertainty.",
     }
@@ -760,7 +768,7 @@ def train_evaluate(
                  "training_input_provenance": input_provenance,
                  "bootstrap_models": bootstrap_models,
                  "uncertainty_method": "patient_bootstrap_refit",
-                 "artifact_version": 7}, output / "model.joblib")
+                 "artifact_version": 8}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
                   "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(

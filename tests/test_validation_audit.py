@@ -12,7 +12,7 @@ from tdln_pd1.validation_audit import (verify_prediction_audit,
 def _files(tmp_path: Path):
     model = tmp_path / "model.joblib"
     joblib.dump({
-        "artifact_version": 7,
+        "artifact_version": 8,
         "training_cohort_fingerprint": "a" * 64,
         "training_feature_cohort_fingerprint": "b" * 64,
     }, model)

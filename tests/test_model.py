@@ -24,7 +24,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert predictions.outer_fold.ge(1).all()
     assert predictions.fold_selected_C.isin([0.01, 0.1, 1.0, 10.0, 100.0]).all()
     artifact = joblib.load(tmp_path / "model.joblib")
-    assert artifact["artifact_version"] == 7
+    assert artifact["artifact_version"] == 8
     assert artifact["selected_C"] in artifact["C_grid"]
     assert len(artifact["training_patient_hashes"]) == 8
     assert len(artifact["training_cohort_fingerprint"]) == 64
@@ -91,10 +91,14 @@ def test_locked_prediction_and_external_evaluation(tmp_path: Path):
     })
     external_labels = labels.assign(patient_id=external_features.patient_id)
     predictions = predict_locked(tmp_path / "model.joblib", external_features)
+    artifact = joblib.load(tmp_path / "model.joblib")
+    expected_point = artifact["model"].predict_proba(external_features[["x"]])[:, 1]
+    assert predictions.probability.tolist() == pytest.approx(expected_point)
+    assert predictions.point_prediction_method.eq("full_cohort_locked_model").all()
     assert predictions.probability.between(0, 1).all()
     assert predictions.uncertainty_available.all()
-    assert predictions.probability_lower_95.le(predictions.probability).all()
-    assert predictions.probability_upper_95.ge(predictions.probability).all()
+    assert predictions.probability_lower_95.le(predictions.bootstrap_probability_median).all()
+    assert predictions.probability_upper_95.ge(predictions.bootstrap_probability_median).all()
     assert predictions.probability_interval_width.ge(0).all()
     assert not predictions.training_overlap.any()
     assert not predictions.training_feature_reuse.any()
