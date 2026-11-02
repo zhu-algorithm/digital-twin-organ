@@ -40,6 +40,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.
 - Leave-one-centre-out transportability evaluation with explicit reporting of non-evaluable sites.
 - Fail-closed cohort QC and SHA-256 provenance verification before training.
+- Reproducible browser dashboard export: six-zone spatial states and treated/control trajectories are generated directly from the executable model and checked byte-for-structure in CI.
 
 ## Required validation ladder
 

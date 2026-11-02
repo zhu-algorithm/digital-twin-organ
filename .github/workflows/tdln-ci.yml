@@ -21,6 +21,10 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e '.[test]'
       - run: pytest -q
+      - name: Verify dashboard model export is reproducible
+        run: |
+          python scripts/export_tdln_dashboard.py
+          git diff --exit-code -- docs/data/tdln_dashboard.json
       - name: Verify end-to-end digital twin pipeline
         run: |
           tdln-pd1 featurize --cells examples/cells.csv --output /tmp/features.csv

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TDLN 虚拟器官 · PD-1 机制模拟</title>
+<meta name="description" content="可审计的肿瘤引流淋巴结六区反应运输模型与抗 PD-1 对照模拟。">
+<style>
+:root{color-scheme:dark;--bg:#080b12;--surface:#111723;--surface2:#171f2e;--line:#2b3649;--text:#edf3fb;--muted:#9aa9bc;--ag:#f2b84b;--dc:#56b4e9;--tpex:#b890ff;--eff:#49d19d;--drug:#ff6f91;--control:#7e8da3}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 25% 0,#17243c 0,transparent 35%),var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"PingFang SC",sans-serif}.shell{max-width:1180px;margin:auto;padding:24px 18px 56px}a{color:#8dc5ff}.top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.eyebrow{color:var(--tpex);letter-spacing:.12em;text-transform:uppercase;font-size:12px}h1{font-size:clamp(26px,5vw,46px);line-height:1.1;margin:8px 0}h2{font-size:17px;margin:0 0 12px}.sub{color:var(--muted);max-width:720px}.notice{max-width:330px;color:#ffd6a2;background:#2a2015;border:1px solid #5b4223;border-radius:10px;padding:10px 12px;font-size:13px}.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:25px 0 14px}.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px}.seg button{border:0;border-radius:6px;padding:9px 13px;background:transparent;color:var(--muted);font:inherit}.seg button[aria-pressed=true]{background:var(--text);color:var(--bg)}.range{display:flex;align-items:center;gap:10px;flex:1;min-width:240px}.range input{width:100%;accent-color:var(--tpex)}.day{font-variant-numeric:tabular-nums;min-width:52px}.grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(290px,.65fr);gap:14px}.panel{background:color-mix(in srgb,var(--surface) 91%,transparent);border:1px solid var(--line);border-radius:14px;padding:16px}.organ{min-height:460px;position:relative;overflow:hidden}.organ svg{width:100%;height:auto;display:block}.zone-shape{fill:var(--surface2);stroke:var(--line);stroke-width:1.5;transition:fill .25s}.zone-name{fill:var(--text);font-size:12px;font-weight:600}.zone-role{fill:var(--muted);font-size:9px}.flow{fill:none;stroke:var(--line);stroke-width:2;marker-end:url(#arrow)}.bubble{transition:r .25s,opacity .25s}.legend{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:12px}.sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.metric{background:var(--surface2);border-radius:9px;padding:11px}.metric span{display:block;color:var(--muted);font-size:11px}.metric strong{font-size:19px;font-weight:500;font-variant-numeric:tabular-nums}.chart{width:100%;height:auto;display:block}.chart text{fill:var(--muted);font-size:10px}.chart .axis{stroke:var(--line);stroke-width:1}.chart .control{fill:none;stroke:var(--control);stroke-width:2}.chart .treated{fill:none;stroke:var(--drug);stroke-width:2.4}.chart .cursor{stroke:var(--text);stroke-width:1;stroke-dasharray:3 4}.chart-labels{display:flex;gap:14px;color:var(--muted);font-size:12px;margin-top:7px}.status{margin-top:12px;color:var(--muted);font-size:12px}.footer{margin-top:18px;color:var(--muted);font-size:12px}.error{color:#ffadad}.back{display:inline-block;margin-bottom:14px;text-decoration:none}@media(max-width:780px){.top{display:block}.notice{max-width:none;margin-top:14px}.grid{grid-template-columns:1fr}.organ{min-height:0}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <a class="back" href="index.html">← 返回数字孪生器官</a>
+  <div class="top">
+    <div><div class="eyebrow">Tumor-draining lymph node</div><h1>TDLN 虚拟器官</h1><div class="sub">从肿瘤抗原输入、树突状细胞迁移，到 Tpex 扩增和效应细胞输出。页面直接读取可执行模型生成的版本化轨迹。</div></div>
+    <div class="notice"><b>仅限研究用途。</b> 默认参数是可检验假设，不是患者预测；尚未完成独立真实队列临床验证，不可用于诊断或给药决策。</div>
+  </div>
+  <div class="controls" aria-label="模拟控制">
+    <div class="seg" role="group" aria-label="治疗场景">
+      <button id="scenario-control" type="button" aria-pressed="false">未治疗</button>
+      <button id="scenario-treated" type="button" aria-pressed="true">抗 PD-1</button>
+    </div>
+    <label class="range" for="day-slider"><span>时间</span><input id="day-slider" type="range" min="0" max="42" step="2" value="14"><output id="day-output" class="day">第 14 天</output></label>
+  </div>
+  <div class="grid">
+    <section class="panel organ" aria-labelledby="organ-title"><h2 id="organ-title">六区反应–运输网络</h2>
+      <svg id="organ-svg" viewBox="0 0 720 430" role="img" aria-labelledby="svg-title svg-desc">
+        <title id="svg-title">肿瘤引流淋巴结六区虚拟器官</title><desc id="svg-desc">抗原和成熟树突状细胞由输入淋巴进入被膜下窦，在副皮质启动 T 细胞，并经髓质从输出淋巴离开。圆点大小表示相对数量。</desc>
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#64748b"/></marker></defs>
+        <path class="flow" d="M55 210H135"/><path class="flow" d="M250 210H310"/><path class="flow" d="M440 210H505"/><path class="flow" d="M605 210H680"/>
+        <g data-zone="afferent_lymph"><rect class="zone-shape" x="8" y="160" width="115" height="100" rx="44"/><text class="zone-name" x="65" y="198" text-anchor="middle">输入淋巴</text><text class="zone-role" x="65" y="215" text-anchor="middle">抗原 / DC 入口</text></g>
+        <g data-zone="subcapsular_sinus"><path class="zone-shape" d="M145 100Q250 50 355 100L330 155Q250 125 170 155Z"/><text class="zone-name" x="250" y="105" text-anchor="middle">被膜下窦</text><text class="zone-role" x="250" y="121" text-anchor="middle">捕获淋巴抗原</text></g>
+        <g data-zone="paracortex"><ellipse class="zone-shape" cx="375" cy="230" rx="125" ry="105"/><text class="zone-name" x="375" y="214" text-anchor="middle">副皮质</text><text class="zone-role" x="375" y="231" text-anchor="middle">DC–T 细胞启动与扩增</text></g>
+        <g data-zone="follicle"><circle class="zone-shape" cx="278" cy="315" r="58"/><text class="zone-name" x="278" y="310" text-anchor="middle">滤泡</text><text class="zone-role" x="278" y="327" text-anchor="middle">B / Tfh 互作</text></g>
+        <g data-zone="medulla"><ellipse class="zone-shape" cx="555" cy="230" rx="72" ry="92"/><text class="zone-name" x="555" y="220" text-anchor="middle">髓质</text><text class="zone-role" x="555" y="237" text-anchor="middle">浆细胞生态位</text></g>
+        <g data-zone="efferent_lymph"><rect class="zone-shape" x="620" y="160" width="92" height="100" rx="44"/><text class="zone-name" x="666" y="198" text-anchor="middle">输出淋巴</text><text class="zone-role" x="666" y="215" text-anchor="middle">效应细胞输出</text></g>
+        <g id="bubbles"></g>
+      </svg>
+      <div class="legend"><span><i class="sw" style="background:var(--ag)"></i>抗原</span><span><i class="sw" style="background:var(--dc)"></i>成熟 DC</span><span><i class="sw" style="background:var(--tpex)"></i>Tpex</span><span><i class="sw" style="background:var(--eff)"></i>效应 T</span></div>
+    </section>
+    <aside class="panel" aria-labelledby="response-title"><h2 id="response-title">系统响应</h2>
+      <div class="metrics"><div class="metric"><span>肿瘤细胞（模型单位）</span><strong id="m-tumour">—</strong></div><div class="metric"><span>PD-1 占有率</span><strong id="m-occ">—</strong></div><div class="metric"><span>TDLN Tpex</span><strong id="m-tpex">—</strong></div><div class="metric"><span>肿瘤效应 T</span><strong id="m-eff">—</strong></div></div>
+      <svg id="chart" class="chart" viewBox="0 0 400 230" role="img" aria-labelledby="chart-title chart-desc"><title id="chart-title">治疗与未治疗的肿瘤轨迹</title><desc id="chart-desc">横轴为天数，纵轴为相对初始肿瘤负荷。灰线为未治疗，粉线为抗 PD-1。</desc><line class="axis" x1="46" y1="195" x2="382" y2="195"/><line class="axis" x1="46" y1="18" x2="46" y2="195"/><text x="214" y="220" text-anchor="middle">时间（天）</text><text transform="translate(12 110) rotate(-90)" text-anchor="middle">相对初始肿瘤负荷</text><path id="line-control" class="control"/><path id="line-treated" class="treated"/><line id="chart-cursor" class="cursor" y1="18" y2="195"/><text x="46" y="209">0</text><text x="365" y="209">42</text></svg>
+      <div class="chart-labels"><span><i class="sw" style="background:var(--control)"></i>未治疗</span><span><i class="sw" style="background:var(--drug)"></i>抗 PD-1（第 0/14/28 天）</span></div>
+      <div id="live-status" class="status" aria-live="polite">正在读取模型数据…</div>
+    </aside>
+  </div>
+  <div class="footer">可执行模型与验证说明见 <a href="https://github.com/zhu-algorithm/digital-twin-organ/tree/rebuild/tdln-pd1-response">独立源码分支</a>。空间动画只展示前 14 天的六区模型；第 14 天后保持最后一个空间状态，系统 ODE 继续至第 42 天。</div>
+</main>
+<script>
+const NS='http://www.w3.org/2000/svg';let DATA,scenario='anti_pd1';
+const zoneXY={afferent_lymph:[64,242],subcapsular_sinus:[210,145],paracortex:[370,270],follicle:[280,350],medulla:[550,280],efferent_lymph:[665,242]};
+const speciesStyle={antigen:['var(--ag)',-16,-9],mature_dc:['var(--dc)',16,-9],tpex:['var(--tpex)',-16,16],effector:['var(--eff)',16,16]};
+const fmt=v=>v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(2);
+function path(points,x,y){return points.map((p,i)=>(i?'L':'M')+x(p.day).toFixed(1)+' '+y(p.tumour_cells/p0).toFixed(1)).join(' ')}let p0=1;
+function drawChart(){const all=[...DATA.scenarios.control,...DATA.scenarios.anti_pd1];p0=DATA.scenarios.control[0].tumour_cells;const ys=all.map(p=>p.tumour_cells/p0),max=Math.max(...ys)*1.05,min=Math.min(...ys)*.95;const x=d=>46+d/42*336,y=v=>195-(v-min)/(max-min)*177;document.querySelector('#line-control').setAttribute('d',path(DATA.scenarios.control,x,y));document.querySelector('#line-treated').setAttribute('d',path(DATA.scenarios.anti_pd1,x,y));update();}
+function update(){if(!DATA)return;const day=+document.querySelector('#day-slider').value;const row=DATA.scenarios[scenario].find(d=>d.day===day);document.querySelector('#day-output').textContent=`第 ${day} 天`;document.querySelector('#m-tumour').textContent=fmt(row.tumour_cells);document.querySelector('#m-occ').textContent=(row.pd1_occupancy*100).toFixed(1)+'%';document.querySelector('#m-tpex').textContent=fmt(row.tpex_tdln);document.querySelector('#m-eff').textContent=fmt(row.effector_tumour);document.querySelector('#chart-cursor').setAttribute('x1',46+day/42*336);document.querySelector('#chart-cursor').setAttribute('x2',46+day/42*336);drawSpatial(Math.min(day,14));document.querySelector('#live-status').textContent=`${scenario==='anti_pd1'?'抗 PD-1':'未治疗'}场景 · 第 ${day} 天 · 模型 ${DATA.model_version}`;}
+function drawSpatial(day){const state=DATA.spatial.reduce((a,b)=>Math.abs(b.day-day)<Math.abs(a.day-day)?b:a);const root=document.querySelector('#bubbles');root.replaceChildren();for(const [sp,[color,dx,dy]] of Object.entries(speciesStyle)){const max=Math.max(...DATA.spatial.flatMap(d=>Object.values(d.values[sp])));for(const z of DATA.zones){const amount=state.values[sp][z.id],c=document.createElementNS(NS,'circle'),[x,y]=zoneXY[z.id];c.setAttribute('class','bubble');c.setAttribute('cx',x+dx);c.setAttribute('cy',y+dy);c.setAttribute('r',amount?3+11*Math.sqrt(amount/max):0);c.setAttribute('fill',color);c.setAttribute('opacity',amount?0.82:0);c.setAttribute('aria-label',`${z.id} ${sp} ${fmt(amount)}`);root.append(c);}}}
+function choose(next){scenario=next;document.querySelector('#scenario-control').setAttribute('aria-pressed',next==='control');document.querySelector('#scenario-treated').setAttribute('aria-pressed',next==='anti_pd1');update();}
+document.querySelector('#scenario-control').addEventListener('click',()=>choose('control'));document.querySelector('#scenario-treated').addEventListener('click',()=>choose('anti_pd1'));document.querySelector('#day-slider').addEventListener('input',update);
+fetch('data/tdln_dashboard.json').then(r=>{if(!r.ok)throw Error(r.status);return r.json()}).then(d=>{if(d.schema_version!==1||d.research_only!==true)throw Error('不兼容的数据模式');DATA=d;drawChart()}).catch(e=>{const s=document.querySelector('#live-status');s.className='status error';s.textContent='模型数据加载失败：'+e.message});
+</script>
+</body>
+</html>
