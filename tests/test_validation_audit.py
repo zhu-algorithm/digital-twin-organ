@@ -15,6 +15,7 @@ def _files(tmp_path: Path):
         "artifact_version": 8,
         "training_cohort_fingerprint": "a" * 64,
         "training_feature_cohort_fingerprint": "b" * 64,
+        "point_prediction_method": "full_cohort_locked_model",
     }, model)
     features = tmp_path / "features.csv"
     features.write_text("patient_id,x\np1,1\n")
@@ -30,6 +31,8 @@ def test_prediction_and_evaluation_audits_bind_every_file(tmp_path: Path):
     assert verified["payload"]["model_refit"] is False
     assert verified["payload"]["patient_count"] == 1
     assert verified["payload"]["decision_threshold"] == 0.5
+    assert verified["payload"]["schema_version"] == 2
+    assert verified["payload"]["point_prediction_method"] == "full_cohort_locked_model"
 
     labels = tmp_path / "labels.csv"
     labels.write_text("patient_id,response\np1,1\n")

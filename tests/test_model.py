@@ -140,6 +140,7 @@ def test_all_model_entry_points_reject_missing_response_labels(tmp_path: Path):
         "feature_reuse_check_available": [True] * 4,
         "domain_check_available": [True] * 4,
         "domain_shift_flag": [False] * 4, "decision_threshold": [0.5] * 4,
+        "point_prediction_method": ["full_cohort_locked_model"] * 4,
     })
     with pytest.raises(ValueError, match="complete"):
         evaluate_external(predictions, labels, bootstrap=0)
@@ -209,6 +210,7 @@ def test_external_audit_parses_csv_boole_but_rejects_ambiguous_values():
         "feature_reuse_check_available": ["true", "True"],
         "training_feature_reuse": ["false", "False"],
         "decision_threshold": [0.5, 0.5],
+        "point_prediction_method": ["full_cohort_locked_model"] * 2,
     })
     labels = pd.DataFrame({"patient_id": ["a", "b"], "response": [0, 1]})
     assert evaluate_external(predictions, labels, bootstrap=0)["training_overlap_count"] == 0
@@ -229,6 +231,21 @@ def test_locked_prediction_flags_out_of_domain_patients(tmp_path: Path):
     assert not predictions.loc[predictions.patient_id.eq("near"), "domain_shift_flag"].item()
     assert predictions.loc[predictions.patient_id.eq("far"), "domain_shift_flag"].item()
     assert predictions.loc[predictions.patient_id.eq("far"), "domain_max_abs_robust_z"].item() > 4
+
+
+def test_locked_prediction_rejects_legacy_or_ambiguous_point_estimate_artifacts(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    features = pd.DataFrame({"patient_id": patients, "x": range(8)})
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+    artifact = joblib.load(tmp_path / "model.joblib")
+    artifact["artifact_version"] = 7
+    joblib.dump(artifact, tmp_path / "legacy.joblib")
+    with pytest.raises(ValueError, match="version 8"):
+        predict_locked(
+            tmp_path / "legacy.joblib",
+            pd.DataFrame({"patient_id": ["external"], "x": [0.5]}),
+        )
 
 
 def test_external_evaluation_rejects_missing_domain_audit():
@@ -268,6 +285,7 @@ def test_external_primary_analysis_keeps_domain_shifted_patients():
         "domain_check_available": [True] * 6,
         "domain_shift_flag": [True, False, False, False, False, False],
         "decision_threshold": [0.5] * 6,
+        "point_prediction_method": ["full_cohort_locked_model"] * 6,
     })
     labels = pd.DataFrame({"patient_id": predictions.patient_id,
                            "response": [0, 0, 0, 1, 1, 1]})
@@ -292,6 +310,7 @@ def test_external_evaluation_uses_the_locked_decision_threshold():
         "domain_check_available": [True] * 6,
         "domain_shift_flag": [False] * 6,
         "decision_threshold": [0.7] * 6,
+        "point_prediction_method": ["full_cohort_locked_model"] * 6,
     })
     labels = pd.DataFrame({"patient_id": predictions.patient_id,
                            "response": [0, 0, 0, 1, 1, 1]})
@@ -299,6 +318,28 @@ def test_external_evaluation_uses_the_locked_decision_threshold():
     assert metrics["decision_threshold"] == 0.7
     assert metrics["sensitivity"] == pytest.approx(1 / 3)
     assert metrics["specificity"] == 1.0
+
+
+def test_external_evaluation_requires_one_locked_point_prediction_method():
+    predictions = pd.DataFrame({
+        "patient_id": ["a", "b", "c", "d"],
+        "probability": [0.1, 0.2, 0.8, 0.9],
+        "training_overlap": [False] * 4,
+        "overlap_check_available": [True] * 4,
+        "training_feature_reuse": [False] * 4,
+        "feature_reuse_check_available": [True] * 4,
+        "domain_check_available": [True] * 4,
+        "domain_shift_flag": [False] * 4,
+        "decision_threshold": [0.5] * 4,
+        "point_prediction_method": ["bootstrap_median"] * 4,
+    })
+    labels = pd.DataFrame({
+        "patient_id": predictions.patient_id, "response": [0, 0, 1, 1],
+    })
+    with pytest.raises(ValueError, match="full_cohort_locked_model"):
+        evaluate_external(predictions, labels, bootstrap=0)
+    with pytest.raises(ValueError, match="point-prediction method"):
+        evaluate_external(predictions.drop(columns="point_prediction_method"), labels, bootstrap=0)
 
 
 def test_external_evaluation_exposes_center_heterogeneity_without_dropping_sites():
@@ -312,6 +353,7 @@ def test_external_evaluation_exposes_center_heterogeneity_without_dropping_sites
         "domain_check_available": [True] * 10,
         "domain_shift_flag": [False] * 10,
         "decision_threshold": [0.5] * 10,
+        "point_prediction_method": ["full_cohort_locked_model"] * 10,
     })
     labels = pd.DataFrame({
         "patient_id": predictions.patient_id,

@@ -35,16 +35,20 @@ def write_prediction_audit(
     predictions_path = Path(predictions_path)
     artifact = joblib.load(model_path)
     required = {"artifact_version", "training_cohort_fingerprint",
-                "training_feature_cohort_fingerprint"}
+                "training_feature_cohort_fingerprint", "point_prediction_method"}
     if not isinstance(artifact, dict) or not required.issubset(artifact):
         raise ValueError("locked model lacks versioned training fingerprints")
+    if (artifact["artifact_version"] != 8
+            or artifact["point_prediction_method"] != "full_cohort_locked_model"):
+        raise ValueError("locked model lacks the version 8 point-prediction contract")
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "stage": "locked_prediction",
         "research_only": True,
         "model_refit": False,
         "patient_count": int(patient_count),
         "artifact_version": int(artifact["artifact_version"]),
+        "point_prediction_method": artifact["point_prediction_method"],
         "decision_threshold": float(artifact.get("threshold", 0.5)),
         "training_cohort_fingerprint": artifact["training_cohort_fingerprint"],
         "training_feature_cohort_fingerprint": artifact[
@@ -78,10 +82,12 @@ def verify_prediction_audit(
     predictions_path = Path(predictions_path)
     audit_path = Path(audit_path) if audit_path else Path(f"{predictions_path}.audit.json")
     payload = _load_json(audit_path)
-    if payload.get("schema_version") != 1 or payload.get("stage") != "locked_prediction":
+    if payload.get("schema_version") != 2 or payload.get("stage") != "locked_prediction":
         raise ValueError("unsupported locked-prediction audit schema")
     if payload.get("model_refit") is not False:
         raise ValueError("prediction audit does not attest locked inference")
+    if payload.get("point_prediction_method") != "full_cohort_locked_model":
+        raise ValueError("prediction audit lacks the locked point-prediction contract")
     recorded = payload.get("output", {}).get("predictions", {})
     if recorded.get("sha256") != sha256_file(predictions_path):
         raise ValueError("prediction file SHA-256 does not match locked-prediction audit")

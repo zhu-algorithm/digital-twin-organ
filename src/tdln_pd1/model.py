@@ -429,6 +429,11 @@ def _center_stratified_evaluation(
 def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFrame:
     """Apply an immutable fitted artifact to a new cohort without refitting."""
     artifact = joblib.load(model_path)
+    if not isinstance(artifact, dict) or artifact.get("artifact_version") != 8:
+        raise ValueError("locked prediction requires model artifact version 8")
+    point_method = artifact.get("point_prediction_method")
+    if point_method != "full_cohort_locked_model":
+        raise ValueError("locked model lacks the version 8 point-prediction contract")
     features = _normalise_patient_ids(features, "features")
     required = artifact["features"]
     missing = set(required) - set(features.columns)
@@ -470,7 +475,7 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
                          "probability_lower_95": lower, "probability_upper_95": upper,
                          "probability_interval_width": upper - lower,
                          "uncertainty_available": uncertainty_available,
-                         "point_prediction_method": "full_cohort_locked_model",
+                         "point_prediction_method": point_method,
                          "predicted_response": (probability >= threshold).astype(int),
                          "decision_threshold": threshold,
                          "training_overlap": overlap,
@@ -527,6 +532,14 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
             or not 0 < float(thresholds.iloc[0]) < 1):
         raise ValueError("locked predictions need one valid decision_threshold")
     decision_threshold = float(thresholds.iloc[0])
+    if "point_prediction_method" not in predictions:
+        raise ValueError("external evaluation requires a locked point-prediction method")
+    point_methods = predictions.point_prediction_method.astype(str).str.strip()
+    if (point_methods.nunique() != 1
+            or point_methods.iloc[0] != "full_cohort_locked_model"):
+        raise ValueError(
+            "external evaluation requires point_prediction_method=full_cohort_locked_model"
+        )
     audited_predictions = predictions.copy()
     audited_predictions["_domain_shift_flag"] = domain_flags.to_numpy(dtype=bool)
     data = audited_predictions.merge(labels, on="patient_id", validate="one_to_one")
@@ -768,6 +781,7 @@ def train_evaluate(
                  "training_input_provenance": input_provenance,
                  "bootstrap_models": bootstrap_models,
                  "uncertainty_method": "patient_bootstrap_refit",
+                 "point_prediction_method": "full_cohort_locked_model",
                  "artifact_version": 8}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
