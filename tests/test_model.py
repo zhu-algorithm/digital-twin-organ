@@ -37,6 +37,33 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert artifact["excluded_features"]["n_cells"] == "technical cell-count/QC feature"
     assert metrics["feature_schema"]["included"] == ["sig_exhaustion", "frac_cd8_t"]
     assert set(artifact["training_domain"]["features"]) == {"sig_exhaustion", "frac_cd8_t"}
+    assert metrics["mechanism_data_fusion_ablation"]["status"] == "not_evaluable"
+
+
+def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
+    features = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(12)],
+        "sig_exhaustion": [0.10, 0.21, 0.31, 0.39, 0.48, 0.59,
+                           0.62, 0.73, 0.79, 0.91, 1.02, 1.08],
+        "twin_effector_gain": [0.3, 0.8, 0.4, 0.9, 0.5, 1.0,
+                               1.4, 1.1, 1.7, 1.3, 1.9, 1.5],
+    })
+    labels = pd.DataFrame({
+        "patient_id": features.patient_id,
+        "response": [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+    })
+    metrics = train_evaluate(features, labels, tmp_path, folds=3, ensemble_members=4)
+    ablation = metrics["mechanism_data_fusion_ablation"]
+    assert ablation["status"] == "evaluated"
+    assert ablation["design"] == "paired_nested_patient_level_cross_validation_same_outer_folds"
+    assert ablation["data_only"]["features"] == ["sig_exhaustion"]
+    assert ablation["mechanism_only"]["features"] == ["twin_effector_gain"]
+    assert set(ablation["hybrid_minus_data_only"]) == {
+        "roc_auc", "average_precision", "brier_score_improvement", "log_loss_improvement",
+    }
+    predictions = pd.read_csv(tmp_path / "cv_predictions.csv")
+    assert predictions.data_only_probability.notna().all()
+    assert predictions.mechanism_only_probability.notna().all()
 
 
 def test_probability_evaluation_reports_calibration_and_intervals():

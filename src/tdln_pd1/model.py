@@ -173,6 +173,94 @@ def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
     ))])
 
 
+def _nested_oof_for_columns(
+    data: pd.DataFrame,
+    y: pd.Series,
+    columns: list[str],
+    outer_cv: list[tuple[np.ndarray, np.ndarray]],
+) -> tuple[np.ndarray, list[dict]]:
+    """Generate group-safe nested-CV probabilities for one prespecified feature block."""
+    probabilities = np.full(len(data), np.nan)
+    tuning = []
+    X = data[columns]
+    for fold, (train_index, test_index) in enumerate(outer_cv, start=1):
+        y_train = y.iloc[train_index]
+        inner_cv, inner_splits = _safe_group_splits(
+            y_train, data.patient_id.iloc[train_index], 3, fold,
+        )
+        if inner_cv is not None:
+            search = GridSearchCV(
+                build_model(columns), {"classifier__C": list(DEFAULT_C_GRID)},
+                scoring="neg_log_loss", cv=inner_cv, refit=True, error_score="raise",
+            )
+            search.fit(X.iloc[train_index], y_train)
+            fitted = search.best_estimator_
+            best_c = float(search.best_params_["classifier__C"])
+            mode = "nested_grid_search"
+        else:
+            fitted = build_model(columns).fit(X.iloc[train_index], y_train)
+            best_c = 1.0
+            mode = "fixed_C_inner_cv_not_evaluable"
+        probabilities[test_index] = fitted.predict_proba(X.iloc[test_index])[:, 1]
+        tuning.append({
+            "fold": fold, "inner_splits": inner_splits, "selected_C": best_c,
+            "mode": mode, "n_train": int(len(train_index)),
+            "n_test": int(len(test_index)),
+        })
+    if np.isnan(probabilities).any():
+        raise RuntimeError("feature-block ablation did not predict every patient exactly once")
+    return probabilities, tuning
+
+
+def _fusion_ablation(
+    data: pd.DataFrame,
+    y: pd.Series,
+    columns: list[str],
+    outer_cv: list[tuple[np.ndarray, np.ndarray]],
+    hybrid_probability: np.ndarray,
+) -> tuple[dict | None, dict[str, np.ndarray]]:
+    """Compare data-only, mechanism-only and fused models on identical outer folds."""
+    mechanistic = [column for column in columns if column.startswith("twin_")]
+    measured = [column for column in columns if not column.startswith("twin_")]
+    if not mechanistic or not measured:
+        return None, {}
+    block_probabilities = {"hybrid": hybrid_probability}
+    block_reports = {}
+    for name, block in (("data_only", measured), ("mechanism_only", mechanistic)):
+        probability, tuning = _nested_oof_for_columns(data, y, block, outer_cv)
+        block_probabilities[name] = probability
+        block_reports[name] = {
+            "features": block,
+            "metrics": evaluate_probabilities(y, probability, bootstrap=0),
+            "hyperparameter_selection": tuning,
+        }
+    hybrid_metrics = evaluate_probabilities(y, hybrid_probability, bootstrap=0)
+    data_metrics = block_reports["data_only"]["metrics"]
+    report = {
+        "status": "evaluated",
+        "design": "paired_nested_patient_level_cross_validation_same_outer_folds",
+        "hybrid": {"features": columns, "metrics": hybrid_metrics},
+        **block_reports,
+        "hybrid_minus_data_only": {
+            "roc_auc": float(hybrid_metrics["roc_auc"] - data_metrics["roc_auc"]),
+            "average_precision": float(
+                hybrid_metrics["average_precision"] - data_metrics["average_precision"]
+            ),
+            "brier_score_improvement": float(
+                data_metrics["brier_score"] - hybrid_metrics["brier_score"]
+            ),
+            "log_loss_improvement": float(
+                data_metrics["log_loss"] - hybrid_metrics["log_loss"]
+            ),
+        },
+        "interpretation": (
+            "Exploratory internal ablation only; positive values do not establish clinical "
+            "utility, causality, or external transportability."
+        ),
+    }
+    return report, block_probabilities
+
+
 def _safe_group_splits(
     y: pd.Series,
     groups: pd.Series,
@@ -771,6 +859,13 @@ def train_evaluate(
                     "feature_schema": {"included": cols, "excluded": excluded},
                     "evaluation_type": "internal_cross_validation",
                     "note": "Nested patient-level cross-validation; not external or clinical validation."})
+    ablation, ablation_probabilities = _fusion_ablation(data, y, cols, outer_cv, prob)
+    metrics["mechanism_data_fusion_ablation"] = (
+        ablation if ablation is not None else {
+            "status": "not_evaluable",
+            "reason": "requires at least one twin_ mechanistic and one measured feature",
+        }
+    )
     metrics["training_input_provenance"] = input_provenance
     final_cv, final_splits = _safe_group_splits(y, data.patient_id, min(5, int(counts.min())), 42)
     if final_cv is None:
@@ -831,8 +926,16 @@ def train_evaluate(
                  "point_prediction_method": "full_cohort_locked_model",
                  "artifact_version": 8}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
-    pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
-                  "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(
+    prediction_columns = {
+        "patient_id": data["patient_id"], "response": y, "probability": prob,
+        "outer_fold": fold_id, "fold_selected_C": selected_c,
+    }
+    if ablation_probabilities:
+        prediction_columns["data_only_probability"] = ablation_probabilities["data_only"]
+        prediction_columns["mechanism_only_probability"] = ablation_probabilities[
+            "mechanism_only"
+        ]
+    pd.DataFrame(prediction_columns).to_csv(
         output / "cv_predictions.csv", index=False
     )
     return metrics
