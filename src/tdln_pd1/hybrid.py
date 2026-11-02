@@ -12,19 +12,33 @@ from .spatial_dynamics import (SpatialInitialState, SpatialParameters,
 
 
 def _finite(row: pd.Series, name: str, default: float) -> float:
-    value = row.get(name, default)
+    if name not in row or pd.isna(row[name]):
+        return default
+    value = row[name]
     try:
         value = float(value)
-    except (TypeError, ValueError):
-        return default
-    return value if np.isfinite(value) else default
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"patient feature must be numeric when supplied: {name}") from error
+    if not np.isfinite(value):
+        raise ValueError(f"patient feature must be finite when supplied: {name}")
+    return value
+
+
+def _nonnegative(row: pd.Series, name: str, default: float) -> float:
+    value = _finite(row, name, default)
+    if value < 0:
+        raise ValueError(f"patient feature must be non-negative: {name}")
+    return value
 
 
 def _fraction(row: pd.Series, names: tuple[str, ...], default: float) -> float:
     """Read the first available canonicalized cell-fraction alias."""
     for name in names:
         if name in row and pd.notna(row[name]):
-            return float(np.clip(_finite(row, name, default), 0.0, 1.0))
+            value = _finite(row, name, default)
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"cell-fraction feature must fall within [0, 1]: {name}")
+            return value
     return default
 
 
@@ -36,10 +50,10 @@ def initial_state_from_features(row: pd.Series, base: InitialState | None = None
     mapping can replace it without changing the simulator.
     """
     base = base or InitialState()
-    cytotoxic = max(_finite(row, "sig_cytotoxic", 0.0), 0.0)
-    exhaustion = max(_finite(row, "sig_exhaustion", 0.0), 0.0)
-    tcf7 = max(_finite(row, "sig_tcf7_memory", 0.0), 0.0)
-    dendritic = max(_finite(row, "sig_dendritic_activation", 0.0), 0.0)
+    cytotoxic = _nonnegative(row, "sig_cytotoxic", 0.0)
+    exhaustion = _nonnegative(row, "sig_exhaustion", 0.0)
+    tcf7 = _nonnegative(row, "sig_tcf7_memory", 0.0)
+    dendritic = _nonnegative(row, "sig_dendritic_activation", 0.0)
     treg_fraction = _fraction(row, ("frac_treg", "frac_regulatory_t_cell"), 0.05)
     cd8_fraction = _fraction(row, ("frac_cd8_t", "frac_cd8_t_cell"), 0.15)
     return replace(
@@ -63,11 +77,11 @@ def spatial_initial_state_from_features(
     absent, the auditable population default is retained.
     """
     base = base or SpatialInitialState()
-    dendritic = max(_finite(row, "sig_dendritic_activation", 0.0), 0.0)
-    tcf7 = max(_finite(row, "sig_tcf7_memory", 0.0), 0.0)
-    cytotoxic = max(_finite(row, "sig_cytotoxic", 0.0), 0.0)
+    dendritic = _nonnegative(row, "sig_dendritic_activation", 0.0)
+    tcf7 = _nonnegative(row, "sig_tcf7_memory", 0.0)
+    cytotoxic = _nonnegative(row, "sig_cytotoxic", 0.0)
     cd8_fraction = _fraction(row, ("frac_cd8_t", "frac_cd8_t_cell"), 0.15)
-    antigen_proxy = max(_finite(row, "tumour_antigen_proxy", 0.5), 0.0)
+    antigen_proxy = _nonnegative(row, "tumour_antigen_proxy", 0.5)
     return replace(
         base,
         afferent_antigen=float(base.afferent_antigen * np.clip(0.5 + antigen_proxy, 0.25, 4.0)),

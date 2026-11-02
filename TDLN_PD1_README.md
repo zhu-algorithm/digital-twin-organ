@@ -89,6 +89,8 @@ Fitted parameter JSON is executable rather than archival: `simulate --parameters
 
 The same patient row now initializes the six-zone spatial twin: dendritic activation scales afferent DC input, TCF7-memory scales paracortical Tpex, cytotoxic/CD8 features scale paracortical effectors, and an optional `tumour_antigen_proxy` scales afferent antigen. When that proxy is absent the population default is retained rather than inferred from an unrelated expression signature. Treated/control efferent-effector endpoints and paracortical Tpex are appended to the hybrid feature table.
 
+Optional absent/NaN mechanistic inputs use their documented defaults. A supplied measurement is never silently repaired: signatures and antigen proxies must be finite and non-negative, cell fractions must lie in `[0,1]`, and non-numeric values fail before simulation.
+
 When `--spatial-initial-zones` is supplied, `augment-twin` replaces that feature-derived spatial initialization with each patient's measured/deconvolved 24-state table. The spatial and single-cell patient sets must match exactly; missing or extra patients, incomplete or duplicate state coordinates, invalid anatomy, and any outcome column fail closed. Mechanistic spatial counterfactual endpoints then enter the same patient-level hybrid table used by `train`. `qc_spatial_initialization_measured` and `qc_spatial_zone_coverage` record the source and fraction of anatomically observed zones; both are excluded from fitting by the feature-role gate.
 
 ## Locked external evaluation
