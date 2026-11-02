@@ -26,6 +26,8 @@ def test_spatial_calibration_recovers_synthetic_antigen_decay():
     assert fitted.antigen_decay == pytest.approx(0.2, rel=0.03)
     assert diagnostics["weighted_rmse"] < 0.1
     assert diagnostics["jacobian_rank"] == 1
+    assert diagnostics["locally_identifiable"] is True
+    assert diagnostics["local_parameter_uncertainty"]["antigen_decay"]
     assert len(compared) == len(observations)
 
 

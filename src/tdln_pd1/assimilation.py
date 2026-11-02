@@ -19,6 +19,49 @@ DEFAULT_FIT_PARAMETERS = (
 )
 
 
+def _local_calibration_diagnostics(result, names, lower, upper, n_observations) -> dict:
+    """Return local Jacobian, boundary and approximate log-scale uncertainty diagnostics."""
+    jacobian = np.asarray(result.jac, dtype=float)
+    singular = np.linalg.svd(jacobian, compute_uv=False) if jacobian.size else np.array([])
+    rank = int(np.linalg.matrix_rank(jacobian)) if jacobian.size else 0
+    condition = (float(singular[0] / singular[-1])
+                 if len(singular) and singular[-1] > 0 else float("inf"))
+    span = np.asarray(upper) - np.asarray(lower)
+    tolerance = 1e-6 * np.maximum(span, 1.0)
+    boundary = [
+        name for name, value, low, high, tol in
+        zip(names, result.x, lower, upper, tolerance)
+        if value - low <= tol or high - value <= tol
+    ]
+    uncertainty = None
+    dof = int(n_observations - len(names))
+    if rank == len(names) and dof > 0:
+        residual_variance = float(np.sum(np.asarray(result.fun) ** 2) / dof)
+        covariance = np.linalg.pinv(jacobian.T @ jacobian) * residual_variance
+        standard_error = np.sqrt(np.maximum(np.diag(covariance), 0.0))
+        uncertainty = {
+            name: {
+                "log_scale_standard_error": float(error),
+                "approximate_lower_95": float(np.exp(value - 1.96 * error)),
+                "approximate_upper_95": float(np.exp(value + 1.96 * error)),
+            }
+            for name, value, error in zip(names, result.x, standard_error)
+        }
+    return {
+        "jacobian_rank": rank,
+        "jacobian_condition_number": condition if np.isfinite(condition) else None,
+        "parameters_at_search_boundary": boundary,
+        "local_parameter_uncertainty": uncertainty,
+        "uncertainty_note": (
+            "Approximate local intervals from the weighted residual Jacobian in log-parameter "
+            "space; unavailable when rank deficient or residual degrees of freedom are absent."
+        ),
+        "locally_identifiable": bool(
+            rank == len(names) and np.isfinite(condition) and condition <= 1e8 and not boundary
+        ),
+    }
+
+
 def validate_observations(observations: pd.DataFrame) -> pd.DataFrame:
     """Validate long-format observations: day, variable, value, optional sd."""
     required = {"day", "variable", "value"}
@@ -72,21 +115,26 @@ def calibrate(
         trajectory = simulate(days=days, doses=doses, parameters=unpack(log_values), initial=initial)
         return (_predictions(trajectory, obs) - obs.value.to_numpy()) / obs.sd.to_numpy()
 
+    lower, upper = x0 - np.log(100.0), x0 + np.log(100.0)
     result = least_squares(
-        residual, x0, bounds=(x0 - np.log(100.0), x0 + np.log(100.0)),
+        residual, x0, bounds=(lower, upper),
         loss="soft_l1", max_nfev=max_nfev,
     )
     fitted = unpack(result.x)
     trajectory = simulate(days=days, doses=doses, parameters=fitted, initial=initial)
     prediction = _predictions(trajectory, obs)
     weighted = (prediction - obs.value.to_numpy()) / obs.sd.to_numpy()
+    local = _local_calibration_diagnostics(result, names, lower, upper, len(obs))
     diagnostics = {
         "success": bool(result.success), "message": result.message,
         "n_observations": int(len(obs)), "n_parameters": len(names), "nfev": int(result.nfev),
         "weighted_rmse": float(np.sqrt(np.mean(weighted ** 2))),
         "aic_like": float(len(obs) * np.log(max(np.mean(weighted ** 2), 1e-15)) + 2 * len(names)),
         "fit_parameters": {name: float(getattr(fitted, name)) for name in names},
-        "identifiability_warning": len(obs) < 5 * len(names),
+        **local,
+        "identifiability_warning": bool(
+            len(obs) < 5 * len(names) or not local["locally_identifiable"]
+        ),
         "research_only": True,
     }
     compared = obs.assign(prediction=prediction, weighted_residual=weighted)

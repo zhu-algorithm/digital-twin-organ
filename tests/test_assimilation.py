@@ -16,7 +16,29 @@ def test_calibration_recovers_synthetic_growth_rate():
     assert diagnostics["success"]
     assert fitted.tumour_growth == pytest.approx(0.11, rel=0.03)
     assert diagnostics["weighted_rmse"] < 0.1
+    assert diagnostics["jacobian_rank"] == 1
+    assert diagnostics["locally_identifiable"] is True
+    interval = diagnostics["local_parameter_uncertainty"]["tumour_growth"]
+    assert interval["approximate_lower_95"] <= truth.tumour_growth * (1 + 1e-12)
+    assert interval["approximate_upper_95"] >= truth.tumour_growth * (1 - 1e-12)
     assert len(compared) == len(observations)
+
+
+def test_systemic_calibration_flags_a_structurally_uninformative_parameter():
+    trajectory = simulate(days=5)
+    days = np.arange(0, 6, dtype=float)
+    values = np.interp(days, trajectory.day, trajectory.tumour_cells)
+    observations = pd.DataFrame({
+        "day": days, "variable": "tumour_cells", "value": values,
+        "sd": np.maximum(values * 0.01, 1.0),
+    })
+    _, diagnostics, _ = calibrate(
+        observations, fit_parameters=("occupancy_on",), max_nfev=20,
+    )
+    assert diagnostics["jacobian_rank"] == 0
+    assert diagnostics["locally_identifiable"] is False
+    assert diagnostics["identifiability_warning"] is True
+    assert diagnostics["local_parameter_uncertainty"] is None
 
 
 def test_observation_contract_rejects_unknown_state():

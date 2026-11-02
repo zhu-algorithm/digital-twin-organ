@@ -14,6 +14,7 @@ from scipy.optimize import least_squares
 from .spatial_dynamics import (SPECIES, ZONE_NAMES, SpatialInitialState,
                                SpatialParameters, simulate_spatial,
                                simulate_spatial_coupled)
+from .assimilation import _local_calibration_diagnostics
 
 
 DEFAULT_SPATIAL_FIT_PARAMETERS = (
@@ -91,18 +92,16 @@ def calibrate_spatial(
         prediction = _spatial_predictions(run(unpack(log_values)), obs)
         return (prediction - obs.amount.to_numpy()) / obs.sd.to_numpy()
 
+    lower, upper = x0 - np.log(100.0), x0 + np.log(100.0)
     result = least_squares(
-        residual, x0, bounds=(x0 - np.log(100.0), x0 + np.log(100.0)),
+        residual, x0, bounds=(lower, upper),
         loss="soft_l1", max_nfev=max_nfev,
     )
     fitted = unpack(result.x)
     prediction = _spatial_predictions(run(fitted), obs)
     weighted = (prediction - obs.amount.to_numpy()) / obs.sd.to_numpy()
-    singular = np.linalg.svd(result.jac, compute_uv=False) if result.jac.size else np.array([])
-    rank = int(np.linalg.matrix_rank(result.jac)) if result.jac.size else 0
-    condition = (float(singular[0] / singular[-1])
-                 if len(singular) and singular[-1] > 0 else float("inf"))
-    warning = len(obs) < 5 * len(names) or rank < len(names) or condition > 1e8
+    local = _local_calibration_diagnostics(result, names, lower, upper, len(obs))
+    warning = len(obs) < 5 * len(names) or not local["locally_identifiable"]
     diagnostics = {
         "success": bool(result.success), "message": result.message,
         "n_observations": int(len(obs)), "n_parameters": len(names),
@@ -111,8 +110,7 @@ def calibrate_spatial(
         "aic_like": float(len(obs) * np.log(max(np.mean(weighted ** 2), 1e-15))
                           + 2 * len(names)),
         "fit_parameters": {name: float(getattr(fitted, name)) for name in names},
-        "jacobian_rank": rank,
-        "jacobian_condition_number": condition if np.isfinite(condition) else None,
+        **local,
         "identifiability_warning": bool(warning), "research_only": True,
     }
     compared = obs.assign(prediction=prediction, weighted_residual=weighted)
