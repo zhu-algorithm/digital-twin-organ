@@ -30,6 +30,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Existing single-cell feature and prediction tests remain passing.
 - Synthetic-truth parameter recovery for longitudinal data assimilation.
 - Deterministic uncertainty propagation under a fixed random seed.
+- Label-free, patient-aligned mechanistic counterfactual feature generation.
 
 ## Required validation ladder
 
@@ -44,3 +45,7 @@ Until steps 2–5 are completed with real data, default trajectories are demonst
 ## Identifiability policy
 
 Calibration never silently fits every parameter. The caller must name the fitted parameters, measurement error (`sd`) weights every residual, positive parameters are optimized in log space, and the report raises an identifiability warning when there are fewer than five observations per fitted parameter. This warning is heuristic rather than proof of identifiability; profile likelihood, posterior geometry and independent perturbation data remain required for a defensible calibrated twin.
+
+## Mechanism–ML boundary
+
+Single-cell features initialize selected immune states through bounded, documented rules. For every patient, the same initial state is simulated under treated and untreated schedules, producing counterfactual deltas. Outcome labels are joined only after this transformation. This ordering prevents the most direct form of target leakage, but it does not remove cohort confounding or guarantee transportability; nested model selection and locked external validation are still required.

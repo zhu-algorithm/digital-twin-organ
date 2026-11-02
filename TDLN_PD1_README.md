@@ -28,6 +28,7 @@ tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
 tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts
 tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln_trajectory.csv
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output artifacts/calibration
+tdln-pd1 augment-twin --features examples/features.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
 pytest
 ```
 
@@ -44,3 +45,7 @@ Install `.[single-cell,test]` to read `.h5ad` directly.
 ## Patient/cohort data assimilation
 
 Calibration observations use long format: `day,variable,value,sd`. Variables must be explicit simulator states or documented derived endpoints. Positive parameters are fitted in log space with uncertainty-weighted robust residuals. The output includes fitted parameters, residuals, weighted RMSE, an identifiability warning, and an AIC-like diagnostic. Parameter-uncertainty ensembles propagate log-normal uncertainty into tumour and immune outcome intervals. The bundled observation file is synthetic and exists only to verify recovery of a known parameter.
+
+## Mechanism–ML fusion
+
+`augment-twin` maps each patient's measured dendritic, cytotoxic, exhaustion, TCF7-memory and immune-cell-fraction features to bounded initial states, runs matched untreated and anti-PD-1 counterfactuals, and appends mechanistic endpoints. These include receptor occupancy, Tpex/effector states and treated-minus-control tumour/effector effects. The mapping is explicit in `hybrid.py`; response labels are not accepted or used during augmentation. The resulting hybrid table can be supplied to the existing `train` command.

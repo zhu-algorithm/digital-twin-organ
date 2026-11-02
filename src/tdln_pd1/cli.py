@@ -8,6 +8,7 @@ from .features import aggregate_cells
 from .model import train_evaluate
 from .simulator import Dose, simulate
 from .assimilation import calibrate, save_calibration
+from .hybrid import augment_with_twin
 
 
 def main() -> None:
@@ -32,6 +33,12 @@ def main() -> None:
     cal.add_argument("--dose-days", default="")
     cal.add_argument("--dose", type=float, default=1.0)
     cal.add_argument("--output", required=True)
+    aug = sub.add_parser("augment-twin")
+    aug.add_argument("--features", required=True)
+    aug.add_argument("--days", type=float, default=42.0)
+    aug.add_argument("--dose-days", default="0,14,28")
+    aug.add_argument("--dose", type=float, default=1.0)
+    aug.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
@@ -50,7 +57,7 @@ def main() -> None:
             "output": args.output,
             "research_only": True,
         }, indent=2))
-    else:
+    elif args.command == "calibrate":
         import pandas as pd
         doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
         fitted, diagnostics, compared = calibrate(
@@ -59,6 +66,14 @@ def main() -> None:
         )
         save_calibration(args.output, fitted, diagnostics, compared)
         print(json.dumps(diagnostics, indent=2))
+    else:
+        import pandas as pd
+        dose_days = tuple(float(day) for day in args.dose_days.split(",") if day.strip())
+        augmented = augment_with_twin(pd.read_csv(args.features), args.days, dose_days, args.dose)
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        augmented.to_csv(args.output, index=False)
+        print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
+                          "output": args.output, "labels_used": False}, indent=2))
 
 
 if __name__ == "__main__":
