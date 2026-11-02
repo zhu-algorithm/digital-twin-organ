@@ -52,14 +52,33 @@ def test_canonical_cd8_fraction_alias_and_missing_antigen_proxy_are_supported():
 
 
 def test_patient_feature_mapping_rejects_supplied_invalid_measurements():
-    with pytest.raises(ValueError, match="non-negative"):
-        initial_state_from_features(pd.Series({"sig_cytotoxic": -0.1}))
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         initial_state_from_features(pd.Series({"frac_cd8_t": 1.2}))
     with pytest.raises(ValueError, match="finite"):
         spatial_initial_state_from_features(pd.Series({"tumour_antigen_proxy": float("inf")}))
     with pytest.raises(ValueError, match="numeric"):
         spatial_initial_state_from_features(pd.Series({"sig_tcf7_memory": "high"}))
+
+
+def test_signed_finite_signatures_map_monotonically_to_bounded_positive_states():
+    negative = initial_state_from_features(pd.Series({
+        "sig_cytotoxic": -2.0, "sig_tcf7_memory": -2.0,
+    }))
+    centered = initial_state_from_features(pd.Series({
+        "sig_cytotoxic": 0.0, "sig_tcf7_memory": 0.0,
+    }))
+    positive = initial_state_from_features(pd.Series({
+        "sig_cytotoxic": 2.0, "sig_tcf7_memory": 2.0,
+    }))
+    assert 0 < negative.effector_tumour < centered.effector_tumour < positive.effector_tumour
+    assert 0 < negative.tpex_tdln < centered.tpex_tdln < positive.tpex_tdln
+
+    spatial_negative = spatial_initial_state_from_features(pd.Series({
+        "sig_dendritic_activation": -2.0,
+    }))
+    assert spatial_negative.afferent_dc > 0
+    with pytest.raises(ValueError, match="non-negative"):
+        spatial_initial_state_from_features(pd.Series({"tumour_antigen_proxy": -0.1}))
 
 
 def test_truly_missing_optional_patient_features_keep_documented_defaults():

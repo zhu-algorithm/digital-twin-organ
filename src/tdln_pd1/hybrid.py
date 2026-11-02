@@ -45,15 +45,16 @@ def _fraction(row: pd.Series, names: tuple[str, ...], default: float) -> float:
 def initial_state_from_features(row: pd.Series, base: InitialState | None = None) -> InitialState:
     """Map measured immune features to initial states with explicit bounded rules.
 
-    Signature inputs are assumed non-negative expression summaries; fractions are
-    in [0,1].  The mapping is intentionally simple and inspectable so a calibrated
-    mapping can replace it without changing the simulator.
+    Signature inputs are finite signed summaries so centered/scaled assays remain
+    admissible; fractions are in [0,1]. Bounded multipliers keep signed deviations
+    from producing negative mechanistic states. The mapping is intentionally simple
+    and inspectable so a calibrated mapping can replace it without changing the simulator.
     """
     base = base or InitialState()
-    cytotoxic = _nonnegative(row, "sig_cytotoxic", 0.0)
-    exhaustion = _nonnegative(row, "sig_exhaustion", 0.0)
-    tcf7 = _nonnegative(row, "sig_tcf7_memory", 0.0)
-    dendritic = _nonnegative(row, "sig_dendritic_activation", 0.0)
+    cytotoxic = _finite(row, "sig_cytotoxic", 0.0)
+    exhaustion = _finite(row, "sig_exhaustion", 0.0)
+    tcf7 = _finite(row, "sig_tcf7_memory", 0.0)
+    dendritic = _finite(row, "sig_dendritic_activation", 0.0)
     treg_fraction = _fraction(row, ("frac_treg", "frac_regulatory_t_cell"), 0.05)
     cd8_fraction = _fraction(row, ("frac_cd8_t", "frac_cd8_t_cell"), 0.15)
     return replace(
@@ -77,9 +78,9 @@ def spatial_initial_state_from_features(
     absent, the auditable population default is retained.
     """
     base = base or SpatialInitialState()
-    dendritic = _nonnegative(row, "sig_dendritic_activation", 0.0)
-    tcf7 = _nonnegative(row, "sig_tcf7_memory", 0.0)
-    cytotoxic = _nonnegative(row, "sig_cytotoxic", 0.0)
+    dendritic = _finite(row, "sig_dendritic_activation", 0.0)
+    tcf7 = _finite(row, "sig_tcf7_memory", 0.0)
+    cytotoxic = _finite(row, "sig_cytotoxic", 0.0)
     cd8_fraction = _fraction(row, ("frac_cd8_t", "frac_cd8_t_cell"), 0.15)
     antigen_proxy = _nonnegative(row, "tumour_antigen_proxy", 0.5)
     return replace(
