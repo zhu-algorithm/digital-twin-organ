@@ -199,7 +199,8 @@ def main() -> None:
     sens.add_argument("--parameters", default="", help="comma-separated fields; empty uses defaults")
     sens.add_argument("--base-parameters", help="fitted TwinParameters JSON")
     sens.add_argument("--days", type=float, default=42.0)
-    sens.add_argument("--dose-days", default="0,14,28")
+    sens.add_argument("--dose-days", default=None,
+                      help="comma-separated schedule; omitted uses adaptive days 0/14/28")
     sens.add_argument("--dose", type=float, default=1.0)
     sens.add_argument("--samples", type=int, default=128)
     sens.add_argument("--fold-range", type=float, default=4.0)
@@ -283,7 +284,8 @@ def main() -> None:
         (output / "site_cv_metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
         print(json.dumps(metrics, indent=2))
     elif args.command == "simulate":
-        doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
+        doses = tuple(Dose(float(day), args.dose)
+                      for day in args.dose_days.split(",") if day.strip())
         parameters, provenance = _load_parameter_file(args.parameters, TwinParameters)
         trajectory = simulate(days=args.days, doses=doses, parameters=parameters)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -434,7 +436,13 @@ def main() -> None:
     elif args.command == "sensitivity":
         from .sensitivity import DEFAULT_PARAMETERS
         names = tuple(name.strip() for name in args.parameters.split(",") if name.strip()) or DEFAULT_PARAMETERS
-        doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
+        doses = (None if args.dose_days is None else tuple(
+            Dose(float(day), args.dose)
+            for day in args.dose_days.split(",") if day.strip()
+        ))
+        effective_doses = (doses if doses is not None else tuple(
+            Dose(day, 1.0) for day in (0.0, 14.0, 28.0) if day < args.days
+        ))
         base_parameters, parameter_provenance = _load_parameter_file(
             args.base_parameters, TwinParameters
         )
@@ -450,7 +458,8 @@ def main() -> None:
             inputs={"parameter_source": parameter_provenance},
             settings={
                 "sampled_parameters": list(names), "days": args.days,
-                "dose_days": [dose.day for dose in doses], "dose": args.dose,
+                "dose_days": [dose.day for dose in effective_doses],
+                "dose_amounts": [dose.amount for dose in effective_doses],
                 "samples": args.samples, "fold_range": args.fold_range,
                 "seed": args.seed,
             },

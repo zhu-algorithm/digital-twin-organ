@@ -85,3 +85,17 @@ def test_spatial_sensitivity_cli_uses_dose_driven_occupancy(tmp_path, monkeypatc
     assert audit["settings"]["checkpoint_mode"] == "dose_driven_systemic_trajectory"
     assert audit["settings"]["peak_pd1_occupancy"] > 0
     assert audit["inputs"]["systemic_parameter_source"]["parameter_class"] == "TwinParameters"
+
+
+def test_systemic_sensitivity_cli_adapts_omitted_schedule_to_short_window(
+    tmp_path, monkeypatch,
+):
+    output = tmp_path / "systemic_screen"
+    monkeypatch.setattr(sys, "argv", [
+        "tdln-pd1", "sensitivity", "--parameters", "tumour_growth",
+        "--days", "3", "--samples", "8", "--output", str(output),
+    ])
+    main()
+    audit = json.loads((output / "sensitivity_provenance.json").read_text())
+    assert audit["settings"]["dose_days"] == [0.0]
+    assert audit["settings"]["dose_amounts"] == [1.0]
