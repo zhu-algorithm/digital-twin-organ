@@ -4,6 +4,8 @@ import pytest
 from tdln_pd1.hybrid import (
     augment_with_twin, initial_state_from_features, spatial_initial_state_from_features,
 )
+from tdln_pd1.simulator import TwinParameters
+from tdln_pd1.spatial_dynamics import SpatialParameters
 
 
 def test_feature_mapping_changes_biologically_linked_states():
@@ -64,8 +66,14 @@ def test_measured_spatial_states_drive_hybrid_endpoints_without_labels():
         "zone": ["paracortex"] * 4,
         "amount": [1.0e4, 5.0e3, 2.0e5, 8.0e4],
     })
-    out = augment_with_twin(features, days=3, dose_days=(0,), spatial_states=states)
+    out = augment_with_twin(
+        features, days=3, dose_days=(0,), spatial_states=states,
+        systemic_parameters=TwinParameters(tumour_growth=0.15),
+        spatial_parameters=SpatialParameters(effector_to_medulla=0.2),
+    )
     assert out.qc_spatial_initialization_measured.eq(1).all()
+    assert out.qc_systemic_parameters_supplied.eq(1).all()
+    assert out.qc_spatial_parameters_supplied.eq(1).all()
     assert "response" not in out
     assert out.loc[out.patient_id.eq("b"), "twin_spatial_treated_paracortex_tpex"].item() > (
         out.loc[out.patient_id.eq("a"), "twin_spatial_treated_paracortex_tpex"].item()

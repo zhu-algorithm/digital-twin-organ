@@ -23,7 +23,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert predictions.outer_fold.ge(1).all()
     assert predictions.fold_selected_C.isin([0.01, 0.1, 1.0, 10.0, 100.0]).all()
     artifact = joblib.load(tmp_path / "model.joblib")
-    assert artifact["artifact_version"] == 5
+    assert artifact["artifact_version"] == 6
     assert artifact["selected_C"] in artifact["C_grid"]
     assert len(artifact["training_patient_hashes"]) == 8
     assert len(artifact["training_cohort_fingerprint"]) == 64

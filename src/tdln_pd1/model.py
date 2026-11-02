@@ -362,6 +362,7 @@ def train_evaluate(
     output: str | Path,
     folds: int = 5,
     ensemble_members: int = 50,
+    input_provenance: dict | None = None,
 ) -> dict:
     features, labels = _align_patients(features, labels)
     data = features.merge(labels, on="patient_id", validate="one_to_one")
@@ -414,6 +415,7 @@ def train_evaluate(
                     "feature_schema": {"included": cols, "excluded": excluded},
                     "evaluation_type": "internal_cross_validation",
                     "note": "Nested patient-level cross-validation; not external or clinical validation."})
+    metrics["training_input_provenance"] = input_provenance
     final_splits = min(5, int(counts.min()))
     final_cv = StratifiedGroupKFold(n_splits=final_splits, shuffle=True, random_state=42)
     final_search = GridSearchCV(
@@ -456,9 +458,10 @@ def train_evaluate(
                  "training_patient_hashes": training_hashes,
                  "training_cohort_fingerprint": cohort_fingerprint,
                  "training_domain": training_domain,
+                 "training_input_provenance": input_provenance,
                  "bootstrap_models": bootstrap_models,
                  "uncertainty_method": "patient_bootstrap_refit",
-                 "artifact_version": 5}, output / "model.joblib")
+                 "artifact_version": 6}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     pd.DataFrame({"patient_id": data["patient_id"], "response": y, "probability": prob,
                   "outer_fold": fold_id, "fold_selected_C": selected_c}).to_csv(

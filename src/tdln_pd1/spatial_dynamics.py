@@ -9,7 +9,7 @@ import pandas as pd
 from scipy.integrate import solve_ivp
 
 from .spatial import ZONES
-from .simulator import Dose, simulate
+from .simulator import Dose, TwinParameters, simulate
 
 ZONE_NAMES = tuple(zone.name for zone in ZONES)
 SPECIES = ("antigen", "mature_dc", "tpex", "effector")
@@ -221,12 +221,13 @@ def simulate_spatial_counterfactual(
     step: float = 0.1,
     parameters: SpatialParameters | None = None,
     initial: SpatialInitialState | pd.DataFrame | None = None,
+    systemic_parameters: TwinParameters | None = None,
 ) -> pd.DataFrame:
     """Run matched control and anti-PD-1 spatial arms from one initial state."""
     if not doses:
         raise ValueError("counterfactual simulation requires an explicit dose schedule")
-    systemic_control = simulate(days=days)
-    systemic_treated = simulate(days=days, doses=doses)
+    systemic_control = simulate(days=days, parameters=systemic_parameters)
+    systemic_treated = simulate(days=days, doses=doses, parameters=systemic_parameters)
     frames = []
     for arm, systemic in (("control", systemic_control), ("anti_pd1", systemic_treated)):
         spatial = simulate_spatial_coupled(

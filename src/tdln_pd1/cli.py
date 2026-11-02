@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import fields
+import hashlib
 import json
 from pathlib import Path
 import numpy as np
 from .data import load_cells, load_labels
 from .features import aggregate_cells
 from .model import evaluate_external, leave_one_site_out, predict_locked, train_evaluate
-from .simulator import Dose, simulate
+from .simulator import Dose, TwinParameters, simulate
 from .assimilation import calibrate, save_calibration
 from .hybrid import augment_with_twin
-from .spatial_dynamics import (simulate_spatial, simulate_spatial_coupled,
+from .spatial_dynamics import (SpatialParameters, simulate_spatial, simulate_spatial_coupled,
                                simulate_spatial_counterfactual)
 from .spatial_data import aggregate_spatial_spots
 from .spatial_assimilation import calibrate_spatial, save_spatial_calibration
@@ -18,6 +20,62 @@ from .sensitivity import global_sensitivity
 from .provenance import verify_manifest
 from .qc import cohort_qc
 from .verification import verify_twin
+
+
+def _load_parameter_file(path: str | None, parameter_class):
+    if not path:
+        return None, None
+    source = Path(path)
+    payload = json.loads(source.read_text())
+    if not isinstance(payload, dict):
+        raise ValueError("parameter file must contain one JSON object")
+    expected = {field.name for field in fields(parameter_class)}
+    if set(payload) != expected:
+        raise ValueError(
+            f"parameter schema mismatch for {parameter_class.__name__}: "
+            f"missing={sorted(expected - set(payload))}, extra={sorted(set(payload) - expected)}"
+        )
+    converted = {name: float(payload[name]) for name in expected}
+    values = np.asarray([converted[name] for name in sorted(expected)], dtype=float)
+    if not np.isfinite(values).all() or (values <= 0).any():
+        raise ValueError("parameter files require finite, strictly positive values")
+    fingerprint = hashlib.sha256(source.read_bytes()).hexdigest()
+    return parameter_class(**converted), {
+        "file": source.name, "sha256": fingerprint,
+        "parameter_class": parameter_class.__name__,
+    }
+
+
+def _write_parameter_provenance(output: str, sources: dict) -> None:
+    used = {name: value for name, value in sources.items() if value is not None}
+    if used:
+        Path(f"{output}.parameters.json").write_text(json.dumps({
+            "schema_version": 1, "sources": used, "research_only": True,
+        }, indent=2) + "\n")
+
+
+def _training_input_provenance(feature_path: str) -> dict:
+    source = Path(feature_path)
+    provenance = {
+        "feature_file": source.name,
+        "feature_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+    }
+    sidecar = Path(f"{feature_path}.parameters.json")
+    if sidecar.exists():
+        payload = json.loads(sidecar.read_text())
+        if payload.get("schema_version") != 1 or not isinstance(payload.get("sources"), dict):
+            raise ValueError("invalid feature parameter-provenance sidecar")
+        for name, entry in payload["sources"].items():
+            digest = entry.get("sha256") if isinstance(entry, dict) else None
+            if (name not in {"systemic", "spatial"} or not isinstance(digest, str)
+                    or len(digest) != 64
+                    or any(character not in "0123456789abcdef" for character in digest.lower())):
+                raise ValueError("invalid parameter source fingerprint in feature sidecar")
+        provenance["parameter_provenance"] = payload
+        provenance["parameter_sidecar_sha256"] = hashlib.sha256(sidecar.read_bytes()).hexdigest()
+    else:
+        provenance["parameter_provenance"] = None
+    return provenance
 
 
 def main() -> None:
@@ -54,6 +112,7 @@ def main() -> None:
     sim.add_argument("--days", type=float, default=42.0)
     sim.add_argument("--dose-days", default="0,14,28")
     sim.add_argument("--dose", type=float, default=1.0)
+    sim.add_argument("--parameters", help="fitted TwinParameters JSON")
     sim.add_argument("--output", required=True)
     cal = sub.add_parser("calibrate")
     cal.add_argument("--observations", required=True)
@@ -78,6 +137,8 @@ def main() -> None:
     aug.add_argument("--dose", type=float, default=1.0)
     aug.add_argument("--spatial-initial-zones",
                      help="patient-zone-species states from spatial-featurize")
+    aug.add_argument("--systemic-parameters", help="fitted TwinParameters JSON")
+    aug.add_argument("--spatial-parameters", help="fitted SpatialParameters JSON")
     aug.add_argument("--output", required=True)
     spatial = sub.add_parser("simulate-spatial")
     spatial.add_argument("--days", type=float, default=14.0)
@@ -86,6 +147,8 @@ def main() -> None:
     spatial.add_argument("--dose-days", default="", help="comma-separated anti-PD-1 dose days")
     spatial.add_argument("--dose", type=float, default=1.0)
     spatial.add_argument("--paired-counterfactual", action="store_true")
+    spatial.add_argument("--systemic-parameters", help="fitted TwinParameters JSON")
+    spatial.add_argument("--spatial-parameters", help="fitted SpatialParameters JSON")
     spatial.add_argument("--initial-zones", help="long patient-zone-species state CSV")
     spatial.add_argument("--patient-id", help="patient to select from --initial-zones")
     spatial.add_argument("--output", required=True)
@@ -119,8 +182,10 @@ def main() -> None:
                         args.feature_tissue_pattern).to_csv(args.output, index=False)
     elif args.command == "train":
         import pandas as pd
-        metrics = train_evaluate(pd.read_csv(args.features), load_labels(args.labels), Path(args.output),
-                                 args.folds, args.ensemble_members)
+        metrics = train_evaluate(
+            pd.read_csv(args.features), load_labels(args.labels), Path(args.output),
+            args.folds, args.ensemble_members, _training_input_provenance(args.features),
+        )
         print(json.dumps(metrics, indent=2))
     elif args.command == "predict":
         import pandas as pd
@@ -146,9 +211,11 @@ def main() -> None:
         print(json.dumps(metrics, indent=2))
     elif args.command == "simulate":
         doses = tuple(Dose(float(day), args.dose) for day in args.dose_days.split(",") if day.strip())
-        trajectory = simulate(days=args.days, doses=doses)
+        parameters, provenance = _load_parameter_file(args.parameters, TwinParameters)
+        trajectory = simulate(days=args.days, doses=doses, parameters=parameters)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         trajectory.to_csv(args.output, index=False)
+        _write_parameter_provenance(args.output, {"systemic": provenance})
         print(json.dumps({
             "final_tumour_change_pct": float(trajectory.tumour_change_pct.iloc[-1]),
             "peak_pd1_occupancy": float(trajectory.pd1_occupancy.max()),
@@ -197,13 +264,30 @@ def main() -> None:
         dose_days = tuple(float(day) for day in args.dose_days.split(",") if day.strip())
         spatial_states = (pd.read_csv(args.spatial_initial_zones)
                           if args.spatial_initial_zones else None)
+        systemic_parameters, systemic_provenance = _load_parameter_file(
+            args.systemic_parameters, TwinParameters
+        )
+        spatial_parameters, spatial_provenance = _load_parameter_file(
+            args.spatial_parameters, SpatialParameters
+        )
         augmented = augment_with_twin(pd.read_csv(args.features), args.days, dose_days,
-                                      args.dose, spatial_states)
+                                      args.dose, spatial_states,
+                                      systemic_parameters=systemic_parameters,
+                                      spatial_parameters=spatial_parameters)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         augmented.to_csv(args.output, index=False)
+        _write_parameter_provenance(args.output, {
+            "systemic": systemic_provenance, "spatial": spatial_provenance,
+        })
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
                           "output": args.output, "labels_used": False}, indent=2))
     elif args.command == "simulate-spatial":
+        systemic_parameters, systemic_provenance = _load_parameter_file(
+            args.systemic_parameters, TwinParameters
+        )
+        spatial_parameters, spatial_provenance = _load_parameter_file(
+            args.spatial_parameters, SpatialParameters
+        )
         initial = None
         if args.initial_zones:
             import pandas as pd
@@ -225,22 +309,29 @@ def main() -> None:
             raise ValueError("--paired-counterfactual requires --dose-days")
         if args.paired_counterfactual:
             trajectory = simulate_spatial_counterfactual(
-                doses, args.days, args.step, initial=initial,
+                doses, args.days, args.step, parameters=spatial_parameters,
+                initial=initial, systemic_parameters=systemic_parameters,
             )
         elif doses:
-            systemic = simulate(days=args.days, doses=doses)
+            systemic = simulate(days=args.days, doses=doses,
+                                parameters=systemic_parameters)
             trajectory = simulate_spatial_coupled(
-                systemic, args.days, args.step, initial=initial,
+                systemic, args.days, args.step, parameters=spatial_parameters,
+                initial=initial,
             )
             trajectory["pd1_occupancy"] = np.interp(
                 trajectory.day, systemic.day, systemic.pd1_occupancy
             )
             trajectory["arm"] = "anti_pd1"
         else:
-            trajectory = simulate_spatial(args.days, args.step, initial=initial,
+            trajectory = simulate_spatial(args.days, args.step, parameters=spatial_parameters,
+                                          initial=initial,
                                           reactions=not args.transport_only)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         trajectory.to_csv(args.output, index=False)
+        _write_parameter_provenance(args.output, {
+            "systemic": systemic_provenance, "spatial": spatial_provenance,
+        })
         efferent = trajectory[(trajectory.species == "effector") & (trajectory.zone == "efferent_lymph")]
         report = {"rows": len(trajectory), "zones": int(trajectory.zone.nunique()),
                   "species": int(trajectory.species.nunique()), "output": args.output}

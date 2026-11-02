@@ -30,17 +30,17 @@ source .venv/bin/activate
 pip install -e '.[test]'
 tdln-pd1 featurize --cells examples/cells.csv --output examples/features.csv
 tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output artifacts/qc.json
-tdln-pd1 train --features examples/features.csv --labels examples/labels.csv --output artifacts --ensemble-members 50
-tdln-pd1 predict --model artifacts/model.joblib --features external_features.csv --output external_predictions.csv
-tdln-pd1 evaluate --predictions external_predictions.csv --labels external_labels.csv --output external_metrics.json
-tdln-pd1 site-cv --features features.csv --labels labels_with_center.csv --output artifacts/site_cv
-tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln_trajectory.csv
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output artifacts/calibration
 tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --output artifacts/spatial_calibration
 tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --output artifacts/spatial_cohort_initial.csv
-tdln-pd1 augment-twin --features examples/features.csv --spatial-initial-zones artifacts/spatial_cohort_initial.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
+tdln-pd1 augment-twin --features examples/features.csv --spatial-initial-zones artifacts/spatial_cohort_initial.csv --systemic-parameters artifacts/calibration/fitted_parameters.json --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
+tdln-pd1 train --features artifacts/hybrid_features.csv --labels examples/labels.csv --output artifacts --ensemble-members 50
+tdln-pd1 predict --model artifacts/model.joblib --features external_hybrid_features.csv --output external_predictions.csv
+tdln-pd1 evaluate --predictions external_predictions.csv --labels external_labels.csv --output external_metrics.json
+tdln-pd1 site-cv --features artifacts/hybrid_features.csv --labels labels_with_center.csv --output artifacts/site_cv
+tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --parameters artifacts/calibration/fitted_parameters.json --output artifacts/tdln_trajectory.csv
 tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --output artifacts/spatial_initial.csv
-tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patient-id example_patient --days 14 --dose-days 0 --dose 1 --paired-counterfactual --output artifacts/spatial_patient.csv
+tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patient-id example_patient --systemic-parameters artifacts/calibration/fitted_parameters.json --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json --days 14 --dose-days 0 --dose 1 --paired-counterfactual --output artifacts/spatial_patient.csv
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
 tdln-pd1 sensitivity --days 42 --samples 128 --output artifacts/sensitivity
 tdln-pd1 verify --output artifacts/verification.json
@@ -75,6 +75,8 @@ Calibration observations use long format: `day,variable,value,sd`. Variables mus
 
 `calibrate-spatial` accepts longitudinal `day,species,zone,amount,sd` observations and fits only explicitly named positive `SpatialParameters` in log space. It can use a selected patient's measured zone initialization and an optional anti-PD-1 dose schedule, in which case the fixed systemic receptor-occupancy trajectory is coupled during every spatial fit evaluation. Reports include weighted residuals, Jacobian rank and condition number, observation-to-parameter sufficiency, an AIC-like diagnostic and a fail-visible identifiability warning. The bundled spatial observations are synthetic and recover a known antigen-decay value; they are software verification, not biological calibration.
 
+Fitted parameter JSON is executable rather than archival: `simulate --parameters`, `simulate-spatial --systemic-parameters/--spatial-parameters`, and `augment-twin --systemic-parameters/--spatial-parameters` load it with exact dataclass-schema and finite-positive-value checks. Whenever a parameter file is used, the command writes `<output>.parameters.json` containing its SHA-256 fingerprint and parameter class. Hybrid output also carries `qc_*_parameters_supplied` audit fields, which the model feature-role gate excludes from fitting. This closes the calibration-to-prediction chain and makes the actual parameterization independently checkable.
+
 `sensitivity` uses seeded Latin-hypercube sampling over log-scaled parameter ranges and ranks monotonic influence on final tumour cells, tumour effectors, TDLN Tpex and peak PD-1 occupancy using Spearman correlations. These are screening statistics, not Sobol variance-decomposition indices or causal effects. The full sampled design is saved so every ranking is reproducible and inspectable.
 
 ## Mechanism–ML fusion
@@ -89,13 +91,15 @@ When `--spatial-initial-zones` is supplied, `augment-twin` replaces that feature
 
 Training writes a versioned model artifact with its exact feature schema. `predict` applies that artifact without refitting and fails on missing features. `evaluate` reports ROC AUC, average precision, Brier score, log loss, balanced accuracy, sensitivity, specificity, calibration intercept/slope and patient-level bootstrap intervals. A result is external validation only when the evaluation cohort was never used for model fitting, hyperparameter selection, threshold choice or feature design; running the command on the bundled synthetic cohort does not make it external evidence.
 
-Training, prediction and evaluation normalize patient identifiers and fail closed on missing, duplicate or mismatched patient sets; no inner join may silently discard a patient. Model artifact version 5 stores SHA-256 hashes of normalized training identifiers plus a whole-cohort fingerprint. Locked prediction emits a per-patient overlap flag, and `evaluate` refuses the `external_locked_model` label if the artifact lacks this audit or any evaluation patient overlaps training. The hashes prevent accidental reuse; they are pseudonymous governance metadata, not anonymization against dictionary attacks on predictable identifiers.
+Training, prediction and evaluation normalize patient identifiers and fail closed on missing, duplicate or mismatched patient sets; no inner join may silently discard a patient. Model artifact version 6 stores SHA-256 hashes of normalized training identifiers plus a whole-cohort fingerprint. Locked prediction emits a per-patient overlap flag, and `evaluate` refuses the `external_locked_model` label if the artifact lacks this audit or any evaluation patient overlaps training. The hashes prevent accidental reuse; they are pseudonymous governance metadata, not anonymization against dictionary attacks on predictable identifiers.
 
 Internal evaluation uses an outer patient-grouped fold for performance estimation and an inner patient-grouped fold to choose `C` from a fixed grid using log loss. If an outer training fold is too small to support two-class inner validation, it records an explicit fixed-`C` fallback instead of presenting it as tuned. The report includes the selected value and train/test size for every outer fold, a prespecified 0.1–0.9 decision curve, and an artifact-level final selection performed only after out-of-fold evaluation is complete.
 
 Before any split, a label-blind role audit removes technical cell-count/QC columns such as `n_cells` and records why they were excluded. Non-numeric metadata must remain outside the model matrix. Outcome-like names (`response`, `outcome`, `RECIST`, survival labels, and related tokens) are rejected, as is any numeric feature that exactly copies or inverts the response vector. The included and excluded schema is persisted in both metrics and the locked artifact.
 
-Artifact version 5 stores a deterministic patient-bootstrap refit ensemble. Locked prediction reports the ensemble median, 2.5th/97.5th percentiles and interval width for every patient. The final `C` is held fixed across bootstrap members so the interval measures patient-resampling instability rather than mixing in an undocumented tuning procedure. This is model-resampling uncertainty only: it does not cover assay error, population shift, causal ambiguity or mechanistic structural uncertainty.
+Artifact version 6 stores a deterministic patient-bootstrap refit ensemble. Locked prediction reports the ensemble median, 2.5th/97.5th percentiles and interval width for every patient. The final `C` is held fixed across bootstrap members so the interval measures patient-resampling instability rather than mixing in an undocumented tuning procedure. This is model-resampling uncertainty only: it does not cover assay error, population shift, causal ambiguity or mechanistic structural uncertainty.
+
+When training is invoked through the CLI, artifact version 6 also embeds the exact hybrid-feature CSV hash and, when present, its parameter-provenance sidecar and sidecar hash. This binds the fitted predictor to the calibrated systemic/spatial parameter fingerprints used to generate its mechanistic covariates rather than relying on a detached workflow log.
 
 The artifact also freezes a label-free training applicability profile for every model feature (median, robust scale, finite range and missingness). Locked predictions report each patient's maximum robust distance, fraction of features outside the observed training range, missing-feature fraction and a prespecified domain-shift flag. External evaluation fails closed when this audit is absent and reports in-domain coverage. These diagnostics expose unsupported extrapolation; they do not demonstrate biological transportability or justify discarding difficult patients after outcomes are known.
 

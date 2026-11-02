@@ -6,8 +6,9 @@ from dataclasses import replace
 import numpy as np
 import pandas as pd
 
-from .simulator import Dose, InitialState, simulate
-from .spatial_dynamics import SpatialInitialState, simulate_spatial_coupled
+from .simulator import Dose, InitialState, TwinParameters, simulate
+from .spatial_dynamics import (SpatialInitialState, SpatialParameters,
+                               simulate_spatial_coupled)
 
 
 def _finite(row: pd.Series, name: str, default: float) -> float:
@@ -84,6 +85,8 @@ def augment_with_twin(
     dose_days: tuple[float, ...] = (0.0, 14.0, 28.0),
     dose: float = 1.0,
     spatial_states: pd.DataFrame | None = None,
+    systemic_parameters: TwinParameters | None = None,
+    spatial_parameters: SpatialParameters | None = None,
 ) -> pd.DataFrame:
     """Add per-patient treated/control mechanistic endpoints without using labels."""
     if "patient_id" not in features:
@@ -120,8 +123,9 @@ def augment_with_twin(
     rows = []
     for row in features.to_dict(orient="records"):
         initial = initial_state_from_features(pd.Series(row))
-        control = simulate(days=days, initial=initial)
-        treated = simulate(days=days, doses=doses, initial=initial)
+        control = simulate(days=days, initial=initial, parameters=systemic_parameters)
+        treated = simulate(days=days, doses=doses, initial=initial,
+                           parameters=systemic_parameters)
         spatial_initial = (
             measured_states[measured_states.patient_id.eq(row["patient_id"])]
             if measured_states is not None
@@ -130,9 +134,11 @@ def augment_with_twin(
         spatial_days = min(days, 14.0)
         spatial_control = simulate_spatial_coupled(
             control, days=spatial_days, initial=spatial_initial,
+            parameters=spatial_parameters,
         )
         spatial_treated = simulate_spatial_coupled(
             treated, days=spatial_days, initial=spatial_initial,
+            parameters=spatial_parameters,
         )
         c, t = control.iloc[-1], treated.iloc[-1]
         def endpoint(frame: pd.DataFrame, species: str, zone: str) -> float:
@@ -158,5 +164,7 @@ def augment_with_twin(
                 spatial_treated, "tpex", "paracortex"
             ),
             "qc_spatial_initialization_measured": int(measured_states is not None),
+            "qc_systemic_parameters_supplied": int(systemic_parameters is not None),
+            "qc_spatial_parameters_supplied": int(spatial_parameters is not None),
         })
     return features.merge(pd.DataFrame(rows), on="patient_id", validate="one_to_one")

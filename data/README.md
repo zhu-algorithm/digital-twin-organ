@@ -16,6 +16,8 @@ For mechanism–ML fusion, pass that output to `augment-twin --spatial-initial-z
 
 Longitudinal spatial calibration uses `day,species,zone,amount,sd`, with one unique row per time/species/zone coordinate. Amounts must be finite and non-negative and standard deviations strictly positive. Species and zones use the same controlled vocabulary as spatial initialization. Observation units must match the initial-state amounts; the calibration command does not infer conversions between expression, density, imaging intensity and cell counts.
 
+Fitted parameter files are complete JSON serializations of `TwinParameters` or `SpatialParameters`. Downstream commands reject missing, extra, non-finite or non-positive fields and write an adjacent `.parameters.json` sidecar containing the exact SHA-256 used. Retain that sidecar with every simulated or hybrid dataset so model inputs can be traced back to a specific calibrated parameter bundle.
+
 The repository's existing CELLxGENE-derived organ files are useful provenance/context but do **not** contain a verified paired TDLN cohort with anti-PD-1 outcomes. They are therefore not silently reused as supervised labels.
 
 Every imported cohort should ship a JSON provenance manifest with `cohort_id`, `source`, `license`, `modalities`, `outcome_definition`, and a list of files containing relative `path`, semantic `role`, and SHA-256. `tdln-pd1 qc` verifies the hashes and fails closed on missing files, altered content, ambiguous timepoints, missing/duplicate patients, invalid response labels or a single-class matched cohort. Its report records raw and selected cell counts, the exact temporal selection, response balance, signature coverage, paired TDLN–tumour availability and clonotype assignment.
