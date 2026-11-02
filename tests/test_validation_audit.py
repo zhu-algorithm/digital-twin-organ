@@ -1,11 +1,12 @@
 import json
+import hashlib
 from pathlib import Path
 
 import joblib
 import pandas as pd
 import pytest
 
-from tdln_pd1.validation_audit import (verify_prediction_audit,
+from tdln_pd1.validation_audit import (verify_evaluation_audit, verify_prediction_audit,
                                        write_evaluation_audit,
                                        write_prediction_audit)
 
@@ -49,6 +50,7 @@ def test_prediction_and_evaluation_audits_bind_every_file(tmp_path: Path, monkey
     )
     payload = json.loads(evaluation_audit.read_text())
     assert payload["stage"] == "locked_external_evaluation"
+    assert payload["schema_version"] == 2
     assert payload["settings"]["bootstrap_draws"] == 500
     assert payload["inputs"]["prediction_audit"]["file"] == audit_path.name
 
@@ -73,3 +75,43 @@ def test_prediction_audit_requires_replay_inputs(tmp_path: Path):
     write_prediction_audit(model, features, predictions, 1)
     with pytest.raises(ValueError, match="requires the locked model"):
         verify_prediction_audit(predictions)
+
+
+def test_evaluation_audit_replays_exact_metric_report(tmp_path: Path, monkeypatch):
+    model, features, predictions = _files(tmp_path)
+    replayed_predictions = pd.DataFrame({"patient_id": ["p1"], "probability": [0.7]})
+    monkeypatch.setattr("tdln_pd1.validation_audit.predict_locked", lambda *_: replayed_predictions)
+    prediction_audit = write_prediction_audit(model, features, predictions, 1)
+    verified = verify_prediction_audit(predictions, model_path=model, features_path=features)
+    labels = tmp_path / "labels.csv"
+    labels.write_text("patient_id,response\np1,1\n")
+    expected = {"roc_auc": 0.5, "validation_chain": {
+        "prediction_audit_sha256": verified["audit_sha256"],
+        "model_sha256": verified["payload"]["inputs"]["model"]["sha256"],
+        "features_sha256": verified["payload"]["inputs"]["features"]["sha256"],
+        "integrity_verified": True,
+        "prediction_derivation_replayed": True,
+    }}
+    monkeypatch.setattr("tdln_pd1.validation_audit.evaluate_external", lambda *_: {"roc_auc": 0.5})
+    metrics = tmp_path / "metrics.json"
+    metrics.write_text(json.dumps(expected, indent=2) + "\n")
+    audit = write_evaluation_audit(predictions, verified, labels, metrics, bootstrap=500)
+    report = verify_evaluation_audit(
+        audit, predictions, model, features, labels, metrics, prediction_audit,
+    )
+    assert report["valid"] is True
+    assert report["evaluation_derivation_replayed"] is True
+
+    metrics.write_text(json.dumps({"roc_auc": 0.9}, indent=2) + "\n")
+    with pytest.raises(ValueError, match="SHA-256"):
+        verify_evaluation_audit(
+            audit, predictions, model, features, labels, metrics, prediction_audit,
+        )
+
+    forged = json.loads(audit.read_text())
+    forged["output"]["metrics"]["sha256"] = hashlib.sha256(metrics.read_bytes()).hexdigest()
+    audit.write_text(json.dumps(forged, indent=2, sort_keys=True) + "\n")
+    with pytest.raises(ValueError, match="derivation replay"):
+        verify_evaluation_audit(
+            audit, predictions, model, features, labels, metrics, prediction_audit,
+        )

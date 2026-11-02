@@ -52,6 +52,7 @@ jobs:
           tdln-pd1 evaluate --predictions /tmp/predictions.csv --model /tmp/model/model.joblib --features /tmp/external_smoke.csv --labels /tmp/external_smoke_labels.csv --output /tmp/external_metrics.json --bootstrap 20
           test -f /tmp/predictions.csv.audit.json
           test -f /tmp/external_metrics.json.audit.json
+          tdln-pd1 verify-evaluation --audit /tmp/external_metrics.json.audit.json --predictions /tmp/predictions.csv --model /tmp/model/model.joblib --features /tmp/external_smoke.csv --labels /tmp/external_smoke_labels.csv --metrics /tmp/external_metrics.json
           tdln-pd1 site-cv --features /tmp/hybrid.csv --labels examples/labels_multicenter.csv --bootstrap 20 --output /tmp/site_cv
           tdln-pd1 simulate --days 7 --dose-days 0 --parameters /tmp/calibration/fitted_parameters.json --output /tmp/trajectory.csv
           tdln-pd1 simulate-spatial --days 3 --output /tmp/spatial.csv

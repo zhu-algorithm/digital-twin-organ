@@ -27,8 +27,8 @@ from .sensitivity_audit import verify_sensitivity_audit, write_sensitivity_audit
 from .provenance import attach_derivation_audit, verify_manifest
 from .qc import cohort_qc
 from .verification import verify_twin
-from .validation_audit import (verify_prediction_audit, write_evaluation_audit,
-                               write_prediction_audit)
+from .validation_audit import (verify_evaluation_audit, verify_prediction_audit,
+                               write_evaluation_audit, write_prediction_audit)
 from .calibration_audit import verify_calibration_audit, write_calibration_audit
 from .augmentation_audit import verify_augmentation_audit, write_augmentation_audit
 from .feature_audit import verify_feature_audit, write_feature_audit
@@ -185,6 +185,14 @@ def main() -> None:
     evaluate.add_argument("--bootstrap", type=int, default=500)
     evaluate.add_argument("--prediction-audit",
                           help="defaults to <predictions>.audit.json")
+    verify_evaluation = sub.add_parser("verify-evaluation")
+    verify_evaluation.add_argument("--audit", required=True)
+    verify_evaluation.add_argument("--predictions", required=True)
+    verify_evaluation.add_argument("--model", required=True)
+    verify_evaluation.add_argument("--features", required=True)
+    verify_evaluation.add_argument("--labels", required=True)
+    verify_evaluation.add_argument("--metrics", required=True)
+    verify_evaluation.add_argument("--prediction-audit")
     site_cv = sub.add_parser("site-cv")
     site_cv.add_argument("--features", required=True)
     site_cv.add_argument("--labels", required=True)
@@ -419,6 +427,12 @@ def main() -> None:
         predictions.to_csv(output / "site_cv_predictions.csv", index=False)
         (output / "site_cv_metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
         print(json.dumps(metrics, indent=2))
+    elif args.command == "verify-evaluation":
+        report = verify_evaluation_audit(
+            args.audit, args.predictions, args.model, args.features, args.labels,
+            args.metrics, args.prediction_audit,
+        )
+        print(json.dumps(report, indent=2))
     elif args.command == "simulate":
         doses = tuple(Dose(float(day), args.dose)
                       for day in args.dose_days.split(",") if day.strip())

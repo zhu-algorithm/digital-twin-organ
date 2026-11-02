@@ -9,7 +9,8 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
-from .model import predict_locked
+from .data import load_labels
+from .model import evaluate_external, predict_locked
 from .provenance import sha256_file
 
 
@@ -130,7 +131,7 @@ def write_evaluation_audit(
     metrics_path = Path(metrics_path)
     source = prediction_audit["payload"]
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "stage": "locked_external_evaluation",
         "research_only": True,
         "settings": {"bootstrap_draws": int(bootstrap), "primary_denominator": "all_patients"},
@@ -153,3 +154,74 @@ def write_evaluation_audit(
     audit_path = Path(f"{metrics_path}.audit.json")
     _write_json(audit_path, payload)
     return audit_path
+
+
+def verify_evaluation_audit(
+    audit_path: str | Path,
+    predictions_path: str | Path,
+    model_path: str | Path,
+    features_path: str | Path,
+    labels_path: str | Path,
+    metrics_path: str | Path,
+    prediction_audit_path: str | Path | None = None,
+) -> dict:
+    """Replay locked inference and evaluation, then verify the exact metric report."""
+    audit_path = Path(audit_path)
+    predictions_path, labels_path = Path(predictions_path), Path(labels_path)
+    metrics_path = Path(metrics_path)
+    payload = _load_json(audit_path)
+    if payload.get("schema_version") != 2 or payload.get("stage") != "locked_external_evaluation":
+        raise ValueError("unsupported locked-evaluation audit schema")
+    settings = payload.get("settings", {})
+    bootstrap = settings.get("bootstrap_draws")
+    if (not isinstance(bootstrap, int) or isinstance(bootstrap, bool) or bootstrap < 0
+            or settings.get("primary_denominator") != "all_patients"):
+        raise ValueError("invalid locked-evaluation settings")
+    verified_prediction = verify_prediction_audit(
+        predictions_path, prediction_audit_path, model_path, features_path,
+    )
+    source_inputs = payload.get("inputs", {})
+    expected_inputs = {
+        "model_sha256": verified_prediction["payload"]["inputs"]["model"]["sha256"],
+        "features_sha256": verified_prediction["payload"]["inputs"]["features"]["sha256"],
+    }
+    for name, expected in expected_inputs.items():
+        if source_inputs.get(name) != expected:
+            raise ValueError(f"evaluation audit {name} mismatch")
+    bound_files = {
+        "predictions": predictions_path,
+        "prediction_audit": Path(prediction_audit_path) if prediction_audit_path else Path(
+            f"{predictions_path}.audit.json"
+        ),
+        "labels": labels_path,
+    }
+    for name, path in bound_files.items():
+        record = source_inputs.get(name, {})
+        if (record.get("file") != path.name or not path.is_file()
+                or record.get("sha256") != sha256_file(path)):
+            raise ValueError(f"evaluation replay {name} SHA-256 mismatch")
+    output = payload.get("output", {}).get("metrics", {})
+    if (output.get("file") != metrics_path.name or not metrics_path.is_file()
+            or output.get("sha256") != sha256_file(metrics_path)):
+        raise ValueError("evaluation metric report SHA-256 mismatch")
+    replayed = evaluate_external(
+        pd.read_csv(predictions_path), load_labels(labels_path), bootstrap,
+    )
+    replayed["validation_chain"] = {
+        "prediction_audit_sha256": verified_prediction["audit_sha256"],
+        "model_sha256": verified_prediction["payload"]["inputs"]["model"]["sha256"],
+        "features_sha256": verified_prediction["payload"]["inputs"]["features"]["sha256"],
+        "integrity_verified": True,
+        "prediction_derivation_replayed": True,
+    }
+    replayed_bytes = (json.dumps(replayed, indent=2) + "\n").encode("utf-8")
+    if hashlib.sha256(replayed_bytes).hexdigest() != output["sha256"]:
+        raise ValueError("locked evaluation derivation replay mismatch")
+    return {
+        "valid": True,
+        "schema_version": 2,
+        "prediction_derivation_replayed": True,
+        "evaluation_derivation_replayed": True,
+        "bootstrap_draws": bootstrap,
+        "metrics_sha256": output["sha256"],
+    }
