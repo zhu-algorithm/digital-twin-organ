@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from tdln_pd1.data import load_cells
+from tdln_pd1.data import load_cells, load_labels
 from tdln_pd1.features import aggregate_cells
 
 
@@ -65,3 +65,19 @@ def test_cell_loader_rejects_missing_identifiers_for_csv_and_h5ad(monkeypatch, t
     h5ad_path.touch()
     with pytest.raises(ValueError, match="non-missing"):
         load_cells(h5ad_path)
+
+
+def test_label_loader_requires_complete_binary_outcomes_and_unique_patients(tmp_path):
+    missing = tmp_path / "missing.csv"
+    pd.DataFrame({"patient_id": ["p1", "p2"], "response": [0, None]}).to_csv(
+        missing, index=False,
+    )
+    with pytest.raises(ValueError, match="complete"):
+        load_labels(missing)
+
+    duplicate = tmp_path / "duplicate.csv"
+    pd.DataFrame({"patient_id": ["p1", "p1"], "response": [0, 1]}).to_csv(
+        duplicate, index=False,
+    )
+    with pytest.raises(ValueError, match="unique"):
+        load_labels(duplicate)

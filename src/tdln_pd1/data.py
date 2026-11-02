@@ -65,6 +65,14 @@ def load_labels(path: str | Path) -> pd.DataFrame:
     required = {"patient_id", "response"}
     if not required.issubset(labels.columns):
         raise ValueError("labels need patient_id,response; response must be 0/1")
-    if not set(labels["response"].dropna().unique()).issubset({0, 1}):
-        raise ValueError("response must contain only 0 and 1")
+    if labels.patient_id.isna().any():
+        raise ValueError("label patient_id must be non-missing")
+    labels = labels.copy()
+    labels["patient_id"] = labels.patient_id.astype(str).str.strip()
+    if labels.patient_id.eq("").any() or labels.patient_id.duplicated().any():
+        raise ValueError("label patient_id must be unique and non-empty")
+    response = pd.to_numeric(labels.response, errors="coerce")
+    if response.isna().any() or not response.isin([0, 1]).all():
+        raise ValueError("response must be complete and contain only 0 and 1")
+    labels["response"] = response.astype(int)
     return labels

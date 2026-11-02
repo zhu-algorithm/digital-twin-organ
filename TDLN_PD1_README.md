@@ -63,6 +63,8 @@ Install `.[single-cell,test]` to read `.h5ad` directly.
 
 `qc` is the mandatory pre-training gate for imported cohorts. It checks cryptographic provenance, licensing/source metadata, patient matching, duplicate labels, binary outcomes, class balance, cell counts, signature-gene coverage, paired TDLN–tumour samples and clonotype assignment. A failed gate exits non-zero so CI and workflow systems cannot silently continue.
 
+Patient and outcome contracts are shared by training, site validation and locked external evaluation: identifiers must be present, non-empty and unique, while every response must be explicitly observed and equal to integer 0 or 1. Missing outcomes are never treated as a third class or silently removed.
+
 ## Interpretation and limitations
 
 - The included demo is synthetic and proves software execution only.

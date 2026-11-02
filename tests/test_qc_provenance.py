@@ -33,6 +33,22 @@ def test_qc_clonotype_assignment_uses_same_placeholder_filter_as_features():
     assert report["clonotypes"]["assigned_fraction"] == 0.5
 
 
+def test_qc_fails_on_missing_outcome_or_patient_identity():
+    cells = pd.DataFrame({"patient_id": ["p1", "p2"], "cell_type": ["T", "T"]})
+    missing_outcome = pd.DataFrame({"patient_id": ["p1", "p2"],
+                                    "response": [0, None]})
+    report = cohort_qc(cells, missing_outcome)
+    assert not report["passed"]
+    assert any("complete binary" in error for error in report["errors"])
+
+    missing_patient = cells.copy()
+    missing_patient.loc[0, "patient_id"] = None
+    labels = pd.DataFrame({"patient_id": ["p1", "p2"], "response": [0, 1]})
+    report = cohort_qc(missing_patient, labels)
+    assert not report["passed"]
+    assert any("non-missing" in error for error in report["errors"])
+
+
 def test_qc_fails_on_ambiguous_timepoints_and_reports_explicit_baseline_selection():
     cells = pd.DataFrame({
         "patient_id": ["a", "a", "b", "b", "c", "c", "d", "d"],

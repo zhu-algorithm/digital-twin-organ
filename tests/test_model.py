@@ -121,6 +121,26 @@ def test_patient_alignment_fails_closed_instead_of_silent_inner_join(tmp_path: P
         train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=4)
 
 
+def test_all_model_entry_points_reject_missing_response_labels(tmp_path: Path):
+    features = pd.DataFrame({"patient_id": ["p0", "p1", "p2", "p3"],
+                             "x": [0.1, 0.2, 0.8, 0.9]})
+    labels = pd.DataFrame({"patient_id": features.patient_id,
+                           "response": [0, 0, 1, None]})
+    with pytest.raises(ValueError, match="complete"):
+        train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+
+    predictions = pd.DataFrame({
+        "patient_id": features.patient_id, "probability": [0.1, 0.2, 0.8, 0.9],
+        "training_overlap": [False] * 4, "overlap_check_available": [True] * 4,
+        "training_feature_reuse": [False] * 4,
+        "feature_reuse_check_available": [True] * 4,
+        "domain_check_available": [True] * 4,
+        "domain_shift_flag": [False] * 4, "decision_threshold": [0.5] * 4,
+    })
+    with pytest.raises(ValueError, match="complete"):
+        evaluate_external(predictions, labels, bootstrap=0)
+
+
 def test_negative_ensemble_size_is_rejected(tmp_path: Path):
     features = pd.DataFrame({"patient_id": ["a", "b", "c", "d"], "x": [0, 1, 2, 3]})
     labels = pd.DataFrame({"patient_id": features.patient_id, "response": [0, 0, 1, 1]})

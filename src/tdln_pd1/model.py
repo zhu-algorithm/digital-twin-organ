@@ -45,6 +45,12 @@ def _normalise_patient_ids(frame: pd.DataFrame, name: str) -> pd.DataFrame:
 def _align_patients(features: pd.DataFrame, labels: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     features = _normalise_patient_ids(features, "features")
     labels = _normalise_patient_ids(labels, "labels")
+    if "response" not in labels:
+        raise ValueError("labels need response")
+    response = pd.to_numeric(labels.response, errors="coerce")
+    if response.isna().any() or not response.isin([0, 1]).all():
+        raise ValueError("response must be complete and contain only 0 and 1")
+    labels["response"] = response.astype(int)
     feature_ids, label_ids = set(features.patient_id), set(labels.patient_id)
     if feature_ids != label_ids:
         missing_labels = sorted(feature_ids - label_ids)

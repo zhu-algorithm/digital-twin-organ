@@ -24,6 +24,10 @@ def cohort_qc(
         errors.append(f"label table missing: {sorted(missing)}")
     if errors:
         return {"passed": False, "errors": errors, "warnings": warnings}
+    if cells[["patient_id", "cell_type"]].isna().any().any():
+        errors.append("cell patient_id and cell_type must be non-missing")
+    if labels.patient_id.isna().any():
+        errors.append("label patient_id must be non-missing")
     raw_cell_count = len(cells)
     try:
         cells = select_baseline_cells(cells, time_column, baseline_values)
@@ -31,10 +35,12 @@ def cohort_qc(
         errors.append(str(error))
         return {"passed": False, "errors": errors, "warnings": warnings,
                 "n_cells_raw": raw_cell_count, "n_cells_selected": 0}
-    if labels.patient_id.duplicated().any():
-        errors.append("label table has duplicate patient_id")
-    if not set(labels.response.dropna().unique()).issubset({0, 1}):
-        errors.append("response must be binary 0/1")
+    normalized_label_ids = labels.patient_id.astype(str).str.strip()
+    if normalized_label_ids.eq("").any() or normalized_label_ids.duplicated().any():
+        errors.append("label table needs unique, non-empty patient_id")
+    response = pd.to_numeric(labels.response, errors="coerce")
+    if response.isna().any() or not response.isin([0, 1]).all():
+        errors.append("response must be complete binary 0/1")
     cell_patients = set(cells.patient_id.astype(str))
     label_patients = set(labels.patient_id.astype(str))
     matched = cell_patients & label_patients
