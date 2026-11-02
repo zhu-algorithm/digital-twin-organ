@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .features import (SIGNATURES, _assigned_clonotypes, aggregate_cells,
-                       select_baseline_cells)
+from .features import (MIN_SIGNATURE_GENE_COVERAGE, SIGNATURES, _assigned_clonotypes,
+                       aggregate_cells, select_baseline_cells, signature_gene_coverage)
 
 
 def cohort_qc(
@@ -87,6 +87,15 @@ def cohort_qc(
     missing_genes = sorted(set(signature_genes) - set(cells.columns))
     if len(present_genes) < 3:
         warnings.append("fewer than three configured signature genes are present")
+    signature_coverage = signature_gene_coverage(cells.columns)
+    unusable_signatures = sorted(
+        name for name, record in signature_coverage.items() if not record["usable"]
+    )
+    if unusable_signatures:
+        warnings.append(
+            "signatures below minimum gene coverage are emitted as missing: "
+            f"{unusable_signatures}"
+        )
     tissue_report = {"available": "tissue" in cells, "paired_tdln_tumour_patients": 0}
     if "tissue" in cells:
         tissue = cells.assign(_tissue=cells.tissue.astype(str).str.lower())
@@ -120,5 +129,7 @@ def cohort_qc(
                               "max": int(counts.max()) if len(counts) else 0},
         "response_counts": {str(key): int(value) for key, value in response_counts.items()},
         "signature_genes_present": present_genes, "signature_genes_missing": missing_genes,
+        "signature_gene_coverage": signature_coverage,
+        "minimum_signature_gene_coverage": MIN_SIGNATURE_GENE_COVERAGE,
         "tissue_pairing": tissue_report, "clonotypes": clonotype_report,
     }

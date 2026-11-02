@@ -8,6 +8,9 @@ def test_aggregate_cells_builds_fractions_and_signatures():
         "patient_id": ["p1", "p1", "p2"],
         "cell_type": ["CD8 T", "DC", "CD8 T"],
         "PDCD1": [2.0, 0.0, 1.0],
+        "CTLA4": [2.0, 0.0, 1.0],
+        "LAG3": [2.0, 0.0, 1.0],
+        "NKG7": [4.0, 0.0, 2.0],
         "GZMB": [4.0, 0.0, 2.0],
     })
     out = aggregate_cells(cells).set_index("patient_id")
@@ -23,17 +26,23 @@ def test_lineage_restricted_signatures_separate_state_from_composition():
         "patient_id": ["p1"] * 4,
         "cell_type": ["CD8 T", "CD8 T", "DC", "Treg"],
         "PDCD1": [1.0, 3.0, 100.0, 50.0],
+        "CTLA4": [1.0, 3.0, 100.0, 50.0],
+        "LAG3": [1.0, 3.0, 100.0, 50.0],
+        "NKG7": [2.0, 4.0, 80.0, 0.0],
         "GZMB": [2.0, 4.0, 80.0, 0.0],
         "TCF7": [5.0, 7.0, 90.0, 1.0],
+        "CCR7": [5.0, 7.0, 90.0, 1.0],
         "FOXP3": [0.0, 0.0, 0.0, 8.0],
+        "IL2RA": [0.0, 0.0, 0.0, 8.0],
         "CD80": [0.0, 0.0, 9.0, 0.0],
+        "CD86": [0.0, 0.0, 9.0, 0.0],
     })
     row = aggregate_cells(cells, feature_tissue_pattern="all").iloc[0]
     assert row.sig_exhaustion_cd8_t == 2.0
     assert row.sig_cytotoxic_cd8_t == 3.0
     assert row.sig_tcf7_memory_cd8_t == 6.0
-    assert row.sig_treg_treg == 8.0
-    assert row.sig_dendritic_activation_dc == 9.0
+    assert row.sig_treg_treg == 22.0
+    assert row.sig_dendritic_activation_dc == 36.0
     assert row.sig_exhaustion != row.sig_exhaustion_cd8_t
 
 
@@ -81,6 +90,7 @@ def test_temporal_input_requires_explicit_baseline_and_excludes_post_treatment()
         "cell_type": ["Tpex"] * 4,
         "timepoint": ["baseline", "post", "baseline", "post"],
         "TCF7": [1.0, 100.0, 2.0, 200.0],
+        "CCR7": [1.0, 100.0, 2.0, 200.0],
     })
     with pytest.raises(ValueError, match="temporal columns detected"):
         aggregate_cells(cells)
@@ -96,6 +106,7 @@ def test_signatures_use_tdln_while_tcr_sharing_uses_all_tissues():
         "cell_type": ["Tpex"] * 4,
         "tissue": ["TDLN", "TDLN", "tumour", "tumour"],
         "TCF7": [2.0, 4.0, 100.0, 100.0],
+        "CCR7": [2.0, 4.0, 100.0, 100.0],
         "clonotype_id": ["a", "b", "a", "c"],
     })
     row = aggregate_cells(cells).iloc[0]
@@ -116,7 +127,7 @@ def test_each_patient_must_have_selected_baseline_and_tdln_cells():
 def test_expression_contract_rejects_corrupt_values_but_preserves_missingness():
     valid = pd.DataFrame({
         "patient_id": ["p1", "p1"], "cell_type": ["T", "T"],
-        "GZMB": [1.0, float("nan")],
+        "NKG7": [1.0, float("nan")], "GZMB": [1.0, float("nan")],
     })
     row = aggregate_cells(valid, feature_tissue_pattern="all").iloc[0]
     assert row.sig_cytotoxic == 1.0
@@ -128,6 +139,17 @@ def test_expression_contract_rejects_corrupt_values_but_preserves_missingness():
     infinite.loc[1, "GZMB"] = float("inf")
     with pytest.raises(ValueError, match="finite or missing: GZMB"):
         aggregate_cells(infinite, feature_tissue_pattern="all")
+
+
+def test_incomplete_signature_gene_panels_are_explicitly_missing_and_audited():
+    cells = pd.DataFrame({
+        "patient_id": ["p1", "p1"], "cell_type": ["CD8 T", "CD8 T"],
+        "GZMB": [2.0, 4.0],
+    })
+    row = aggregate_cells(cells, feature_tissue_pattern="all").iloc[0]
+    assert pd.isna(row.sig_cytotoxic)
+    assert pd.isna(row.sig_cytotoxic_cd8_t)
+    assert row.qc_sig_cytotoxic_gene_coverage == 0.25
 
 
 def test_cell_type_fraction_names_cannot_silently_collide():

@@ -23,6 +23,10 @@ def test_qc_reports_pairing_clonotypes_and_response_balance():
     assert report["feature_derivation"] == {
         "validated": True, "n_patient_rows": 4, "shared_with_featurize": True,
     }
+    assert report["minimum_signature_gene_coverage"] == 0.5
+    assert report["signature_gene_coverage"]["cytotoxic"]["fraction"] == 0.25
+    assert report["signature_gene_coverage"]["cytotoxic"]["usable"] is False
+    assert any("emitted as missing" in warning for warning in report["warnings"])
 
 
 def test_qc_clonotype_assignment_uses_same_placeholder_filter_as_features():

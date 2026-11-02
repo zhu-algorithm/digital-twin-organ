@@ -26,6 +26,7 @@ LINEAGE_SIGNATURES = {
 }
 TEMPORAL_COLUMNS = ("sampling_day", "timepoint", "visit", "collection_timepoint")
 UNASSIGNED_CLONOTYPES = {"", "nan", "none", "unassigned", "na", "n/a"}
+MIN_SIGNATURE_GENE_COVERAGE = 0.5
 
 
 def select_baseline_cells(
@@ -70,9 +71,25 @@ def select_baseline_cells(
 
 def _mean_present(frame: pd.DataFrame, genes: tuple[str, ...]) -> pd.Series:
     present = [g for g in genes if g in frame.columns]
-    if not present:
+    if len(present) / len(genes) < MIN_SIGNATURE_GENE_COVERAGE:
         return pd.Series(np.nan, index=frame.index)
     return frame[present].mean(axis=1)
+
+
+def signature_gene_coverage(columns) -> dict[str, dict]:
+    available = set(columns)
+    return {
+        name: {
+            "present": [gene for gene in genes if gene in available],
+            "missing": [gene for gene in genes if gene not in available],
+            "fraction": float(sum(gene in available for gene in genes) / len(genes)),
+            "usable": bool(
+                sum(gene in available for gene in genes) / len(genes)
+                >= MIN_SIGNATURE_GENE_COVERAGE
+            ),
+        }
+        for name, genes in SIGNATURES.items()
+    }
 
 
 def _validate_expression_columns(frame: pd.DataFrame) -> pd.DataFrame:
@@ -140,6 +157,7 @@ def aggregate_cells(
     x = select_baseline_cells(x, time_column, baseline_values)
     x = _validate_expression_columns(x)
     cell_type_names = _cell_type_feature_names(x["cell_type"])
+    coverage = signature_gene_coverage(x.columns)
     for name, genes in SIGNATURES.items():
         x[f"sig_{name}"] = _mean_present(x, genes)
     rows = []
@@ -161,6 +179,7 @@ def aggregate_cells(
             row[f"frac_{safe}"] = float(value)
         for name in SIGNATURES:
             row[f"sig_{name}"] = float(feature_group[f"sig_{name}"].mean())
+            row[f"qc_sig_{name}_gene_coverage"] = coverage[name]["fraction"]
         normalized_cell_type = feature_group["cell_type"].astype(str).str.lower()
         for feature_name, (signature_name, lineage_pattern) in LINEAGE_SIGNATURES.items():
             lineage = feature_group.loc[
