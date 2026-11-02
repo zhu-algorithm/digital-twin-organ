@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Callable
 import numpy as np
 import pandas as pd
 from scipy.integrate import solve_ivp
@@ -22,6 +23,8 @@ class SpatialParameters:
     priming_rate: float = 1.0e-7
     tpex_growth: float = 0.10
     tpex_differentiation: float = 0.12
+    checkpoint_growth_gain: float = 4.0
+    checkpoint_differentiation_gain: float = 0.2
     tpex_death: float = 0.04
     effector_death: float = 0.12
 
@@ -83,7 +86,13 @@ def _transport(y: np.ndarray) -> np.ndarray:
     return dydt
 
 
-def _rhs(_: float, y: np.ndarray, p: SpatialParameters, reactions: bool) -> np.ndarray:
+def _rhs(
+    time: float,
+    y: np.ndarray,
+    p: SpatialParameters,
+    reactions: bool,
+    checkpoint_occupancy: float | Callable[[float], float],
+) -> np.ndarray:
     dydt = _transport(y)
     if reactions:
         # Antigen capture occurs in the subcapsular sinus; priming occurs in paracortex.
@@ -100,8 +109,12 @@ def _rhs(_: float, y: np.ndarray, p: SpatialParameters, reactions: bool) -> np.n
         antigen = max(y[_index("antigen", "paracortex")], 0.0)
         tpex = max(y[_index("tpex", "paracortex")], 0.0)
         priming = p.priming_rate * dc * antigen
-        growth = p.tpex_growth * tpex * antigen / (0.2 + antigen)
-        differentiation = p.tpex_differentiation * tpex
+        occupancy = checkpoint_occupancy(time) if callable(checkpoint_occupancy) else checkpoint_occupancy
+        occupancy = float(np.clip(occupancy, 0.0, 1.0))
+        growth = (p.tpex_growth * tpex * antigen / (0.2 + antigen)
+                  * (1.0 + p.checkpoint_growth_gain * occupancy))
+        differentiation = (p.tpex_differentiation * tpex
+                           * (1.0 + p.checkpoint_differentiation_gain * occupancy))
         dydt[_index("tpex", "paracortex")] += priming + growth - differentiation
         dydt[_index("effector", "paracortex")] += differentiation
     return np.where((y <= 0) & (dydt < 0), 0.0, dydt)
@@ -113,13 +126,23 @@ def simulate_spatial(
     parameters: SpatialParameters | None = None,
     initial: SpatialInitialState | None = None,
     reactions: bool = True,
+    checkpoint_occupancy: float | Callable[[float], float] = 0.0,
 ) -> pd.DataFrame:
-    """Return tidy species-by-zone trajectories."""
+    """Return tidy species-by-zone trajectories.
+
+    ``checkpoint_occupancy`` is either a bounded constant or a time-varying
+    callable, normally interpolated from the systemic tumour–TDLN model.  It
+    modulates only reaction terms, so transport-only conservation remains an
+    independently auditable invariant.
+    """
     if days <= 0 or step <= 0:
         raise ValueError("days and step must be positive")
     p = parameters or SpatialParameters()
     times = np.unique(np.append(np.arange(0.0, days, step), days))
-    solution = solve_ivp(_rhs, (0.0, days), initial_vector(initial), args=(p, reactions),
+    if not callable(checkpoint_occupancy) and not 0.0 <= checkpoint_occupancy <= 1.0:
+        raise ValueError("checkpoint_occupancy must fall within [0, 1]")
+    solution = solve_ivp(_rhs, (0.0, days), initial_vector(initial),
+                         args=(p, reactions, checkpoint_occupancy),
                          t_eval=times, rtol=1e-8, atol=1e-10)
     if not solution.success:
         raise RuntimeError(solution.message)
@@ -130,6 +153,30 @@ def simulate_spatial(
                 rows.append({"day": day, "species": species, "zone": zone,
                              "amount": max(solution.y[_index(species, zone), time_index], 0.0)})
     return pd.DataFrame(rows)
+
+
+def simulate_spatial_coupled(
+    system_trajectory: pd.DataFrame,
+    days: float = 14.0,
+    step: float = 0.1,
+    parameters: SpatialParameters | None = None,
+    initial: SpatialInitialState | None = None,
+) -> pd.DataFrame:
+    """Couple systemic PD-1 occupancy into the six-zone reaction network."""
+    required = {"day", "pd1_occupancy"}
+    missing = required.difference(system_trajectory.columns)
+    if missing:
+        raise ValueError(f"system trajectory missing columns: {sorted(missing)}")
+    timeline = system_trajectory.loc[:, ["day", "pd1_occupancy"]].dropna().sort_values("day")
+    if timeline.empty or timeline.day.duplicated().any():
+        raise ValueError("system trajectory must contain unique, finite time points")
+    if timeline.day.iloc[0] > 0 or timeline.day.iloc[-1] < days:
+        raise ValueError("system trajectory must cover the requested spatial interval")
+    if not timeline.pd1_occupancy.between(0.0, 1.0).all():
+        raise ValueError("system PD-1 occupancy must fall within [0, 1]")
+
+    occupancy = lambda time: float(np.interp(time, timeline.day, timeline.pd1_occupancy))
+    return simulate_spatial(days, step, parameters, initial, True, occupancy)
 
 
 def spatial_summary(trajectory: pd.DataFrame) -> pd.DataFrame:

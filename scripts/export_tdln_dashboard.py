@@ -15,10 +15,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from tdln_pd1.simulator import Dose, parameter_manifest, simulate
 from tdln_pd1.spatial import ZONES
-from tdln_pd1.spatial_dynamics import SPECIES, simulate_spatial
+from tdln_pd1.spatial_dynamics import SPECIES, simulate_spatial_coupled
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def _sample(frame, days: np.ndarray, columns: tuple[str, ...]) -> list[dict[str, float]]:
@@ -35,22 +35,25 @@ def build_dashboard_data() -> dict:
     control = simulate(days=42)
     treated = simulate(days=42, doses=tuple(Dose(day, 1.0) for day in (0, 14, 28)))
 
-    spatial = simulate_spatial(days=14, step=0.25)
     spatial_days = np.arange(0.0, 14.01, 1.0)
-    spatial_records = []
-    for day in spatial_days:
-        values = {}
-        for species in SPECIES:
-            species_frame = spatial[spatial.species == species]
-            values[species] = {
-                zone.name: round(float(np.interp(
-                    day,
-                    species_frame[species_frame.zone == zone.name].day,
-                    species_frame[species_frame.zone == zone.name].amount,
-                )), 3)
-                for zone in ZONES
-            }
-        spatial_records.append({"day": float(day), "values": values})
+    spatial_records = {}
+    for scenario, system_frame in (("control", control), ("anti_pd1", treated)):
+        spatial = simulate_spatial_coupled(system_frame, days=14, step=0.25)
+        records = []
+        for day in spatial_days:
+            values = {}
+            for species in SPECIES:
+                species_frame = spatial[spatial.species == species]
+                values[species] = {
+                    zone.name: round(float(np.interp(
+                        day,
+                        species_frame[species_frame.zone == zone.name].day,
+                        species_frame[species_frame.zone == zone.name].amount,
+                    )), 3)
+                    for zone in ZONES
+                }
+            records.append({"day": float(day), "values": values})
+        spatial_records[scenario] = records
 
     return {
         "schema_version": SCHEMA_VERSION,

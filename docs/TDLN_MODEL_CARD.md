@@ -12,6 +12,8 @@ The spatial ontology separates afferent lymph, subcapsular sinus, paracortex, fo
 
 The executable spatial model uses directed conservative transport between these zones. Antigen and migratory DCs enter through afferent lymph; antigen capture occurs in the subcapsular sinus; antigen-bearing DCs reach the paracortex; Tpex expand and differentiate there; effectors pass through medulla into efferent lymph. The implementation exposes a reaction-free mode in which every species must be conserved, separating numerical transport verification from biological source/sink assumptions.
 
+The systemic and spatial layers are coupled through the simulated TDLN PD-1 receptor occupancy trajectory. Occupancy increases the hypothesised Tpex expansion and differentiation reaction rates but never alters conservative transport terms. The coupling gains are explicit parameters, default to zero effect at zero occupancy, and require calibration; the directional response is a software invariant, not clinical validation.
+
 ## Evidence anchors
 
 - Four-compartment QSP precedent (blood, peripheral tissue, tumour, TDLN) and explicit antigen/APC/T-cell/checkpoint modules: [Jusko et al., 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11138134/) and [Milberg et al., 2019](https://pmc.ncbi.nlm.nih.gov/articles/PMC6677731/).

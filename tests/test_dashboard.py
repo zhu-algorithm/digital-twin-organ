@@ -13,11 +13,15 @@ def test_dashboard_export_schema_and_generated_file_are_current():
     expected = EXPORTER.build_dashboard_data()
     committed = json.loads((ROOT / "docs/data/tdln_dashboard.json").read_text())
     assert committed == expected
-    assert expected["schema_version"] == 1
+    assert expected["schema_version"] == 2
     assert expected["research_only"] is True
     assert len(expected["zones"]) == 6
     assert set(expected["scenarios"]) == {"control", "anti_pd1"}
     assert expected["species"] == ["antigen", "mature_dc", "tpex", "effector"]
+    assert set(expected["spatial"]) == {"control", "anti_pd1"}
+    control_exit = expected["spatial"]["control"][-1]["values"]["effector"]["efferent_lymph"]
+    treated_exit = expected["spatial"]["anti_pd1"][-1]["values"]["effector"]["efferent_lymph"]
+    assert treated_exit > control_exit
 
 
 def test_dashboard_has_accessible_controls_and_local_model_data():
