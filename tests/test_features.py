@@ -19,6 +19,21 @@ def test_aggregate_cells_builds_fractions_and_signatures():
     assert out.loc["p2", "sig_cytotoxic"] == 2.0
     assert out.loc["p1", "sig_exhaustion_cd8_t"] == 2.0
     assert out.loc["p1", "sig_cytotoxic_cd8_t"] == 4.0
+    assert out.loc["p2", "frac_dc"] == 0.0
+
+
+def test_cell_fraction_matrix_uses_observed_zero_not_missing_imputation():
+    cells = pd.DataFrame({
+        "patient_id": ["p1", "p1", "p2", "p2"],
+        "cell_type": ["CD8 T", "DC", "CD8 T", "Treg"],
+        "tissue": ["TDLN"] * 4,
+    })
+    out = aggregate_cells(cells).set_index("patient_id")
+    assert out.loc["p1", "frac_treg"] == 0.0
+    assert out.loc["p2", "frac_dc"] == 0.0
+    assert out.loc["p1", ["frac_cd8_t", "frac_dc", "frac_treg"]].sum() == 1.0
+    assert out.loc["p2", ["frac_cd8_t", "frac_dc", "frac_treg"]].sum() == 1.0
+    assert not out.filter(like="frac_").isna().any().any()
 
 
 def test_lineage_restricted_signatures_separate_state_from_composition():

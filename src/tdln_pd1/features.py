@@ -243,4 +243,13 @@ def aggregate_cells(
                     float(len(shared) / len(union)) if union else np.nan
                 )
         rows.append(row)
-    return pd.DataFrame(rows).fillna({"n_cells": 0})
+    result = pd.DataFrame(rows)
+    # Cell-type fractions form a compositional vector over the selected feature
+    # compartment.  A type absent from one patient's selected cells is an
+    # observed zero, not an unmeasured value for median imputation.  Signature
+    # and clonotype NaNs remain untouched because they can represent genuinely
+    # unavailable assays or insufficient gene coverage.
+    fraction_columns = [column for column in result if column.startswith("frac_")]
+    if fraction_columns:
+        result[fraction_columns] = result[fraction_columns].fillna(0.0)
+    return result.fillna({"n_cells": 0})
