@@ -63,6 +63,33 @@ def test_coupling_rejects_invalid_or_incomplete_occupancy():
         simulate_spatial(days=2, checkpoint_occupancy=1.1)
     with pytest.raises(ValueError, match="finite"):
         simulate_spatial(days=2, checkpoint_occupancy=lambda _: float("nan"))
+    with pytest.raises(ValueError, match=r"within \[0, 1\]"):
+        simulate_spatial(days=2, checkpoint_occupancy=lambda _: 1.01)
+    with pytest.raises(ValueError, match="numeric"):
+        simulate_spatial(days=2, checkpoint_occupancy=lambda _: "invalid")
+    with pytest.raises(ValueError, match="numeric"):
+        simulate_spatial(days=2, checkpoint_occupancy="invalid")
+
+
+def test_coupling_never_silently_drops_invalid_systemic_timeline_rows():
+    missing = pd.DataFrame({
+        "day": [0.0, 1.0, 2.0],
+        "pd1_occupancy": [0.0, float("nan"), 0.2],
+    })
+    with pytest.raises(ValueError, match="complete and finite"):
+        simulate_spatial_coupled(missing, days=2)
+    non_numeric = pd.DataFrame({
+        "day": [0.0, "invalid", 2.0],
+        "pd1_occupancy": [0.0, 0.1, 0.2],
+    })
+    with pytest.raises(ValueError, match="complete and finite"):
+        simulate_spatial_coupled(non_numeric, days=2)
+    duplicate = pd.DataFrame({
+        "day": [0.0, 1.0, 1.0, 2.0],
+        "pd1_occupancy": [0.0, 0.1, 0.2, 0.3],
+    })
+    with pytest.raises(ValueError, match="unique"):
+        simulate_spatial_coupled(duplicate, days=2)
 
 
 def test_matched_spatial_counterfactual_has_auditable_occupancy_and_effect():

@@ -45,6 +45,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Directional antigen, DC and effector movement across six TDLN zones.
 - Validated spatial-omics aggregation and exact day-zero initialization of all zone/species states.
 - Matched spatial treatment/control counterfactuals with explicit receptor-occupancy provenance and zero-dose equivalence.
+- Fail-closed systemic-to-spatial receptor-occupancy coupling: complete finite timelines, unique times and physical `[0,1]` support are enforced without dropping or clipping invalid observations.
 - TCR clone diversity, dominance and paired TDLN–tumour lineage sharing by unique-clone fraction, TDLN cell-weighted fraction and Jaccard overlap, with a common invalid-assignment filter.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Shared train/validation/prediction matrix validation: numeric finite measurements or explicit missingness only; infinities and string placeholders fail before fitting or inference.

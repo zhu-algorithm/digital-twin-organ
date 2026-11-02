@@ -20,6 +20,8 @@ The zone-resolved layer is a directed reaction–transport network across affere
 
 The six-zone network can consume the systemic model's time-varying PD-1 receptor occupancy. This makes treated and untreated spatial counterfactuals distinct while preserving exact zero-occupancy equivalence and transport-only mass conservation. Coupling gains remain calibration parameters rather than fitted clinical effects.
 
+Systemic-to-spatial coupling is fail-closed: every supplied timeline row must contain a numeric, finite, unique time and a complete finite receptor occupancy within `[0,1]`. Invalid rows are never dropped, and callable occupancy sources are rejected rather than clipped when they leave the physical range.
+
 Grouping is performed at the patient level; cells from one patient never become independent train/test observations.
 
 ## Run

@@ -159,9 +159,14 @@ def _rhs(
         tpex = max(y[_index("tpex", "paracortex")], 0.0)
         priming = p.priming_rate * dc * antigen
         occupancy = checkpoint_occupancy(time) if callable(checkpoint_occupancy) else checkpoint_occupancy
+        try:
+            occupancy = float(occupancy)
+        except (TypeError, ValueError) as error:
+            raise ValueError("checkpoint_occupancy callable must return numeric values") from error
         if not np.isfinite(occupancy):
             raise ValueError("checkpoint_occupancy callable must return finite values")
-        occupancy = float(np.clip(occupancy, 0.0, 1.0))
+        if not 0.0 <= occupancy <= 1.0:
+            raise ValueError("checkpoint_occupancy callable must return values within [0, 1]")
         growth = (p.tpex_growth * tpex * antigen / (0.2 + antigen)
                   * (1.0 + p.checkpoint_growth_gain * occupancy))
         differentiation = (p.tpex_differentiation * tpex
@@ -203,8 +208,13 @@ def simulate_spatial(
             f"{sorted(invalid_parameters)}"
         )
     times = np.unique(np.append(np.arange(0.0, days, step), days))
-    if not callable(checkpoint_occupancy) and not 0.0 <= checkpoint_occupancy <= 1.0:
-        raise ValueError("checkpoint_occupancy must fall within [0, 1]")
+    if not callable(checkpoint_occupancy):
+        try:
+            checkpoint_occupancy = float(checkpoint_occupancy)
+        except (TypeError, ValueError) as error:
+            raise ValueError("checkpoint_occupancy must be numeric") from error
+        if not np.isfinite(checkpoint_occupancy) or not 0.0 <= checkpoint_occupancy <= 1.0:
+            raise ValueError("checkpoint_occupancy must be finite and fall within [0, 1]")
     solution = solve_ivp(_rhs, (0.0, days), initial_vector(initial),
                          args=(p, reactions, checkpoint_occupancy),
                          t_eval=times, rtol=rtol, atol=atol)
@@ -231,9 +241,16 @@ def simulate_spatial_coupled(
     missing = required.difference(system_trajectory.columns)
     if missing:
         raise ValueError(f"system trajectory missing columns: {sorted(missing)}")
-    timeline = system_trajectory.loc[:, ["day", "pd1_occupancy"]].dropna().sort_values("day")
-    if timeline.empty or timeline.day.duplicated().any():
-        raise ValueError("system trajectory must contain unique, finite time points")
+    timeline = system_trajectory.loc[:, ["day", "pd1_occupancy"]].copy()
+    if timeline.empty:
+        raise ValueError("system trajectory must not be empty")
+    for column in ("day", "pd1_occupancy"):
+        timeline[column] = pd.to_numeric(timeline[column], errors="coerce")
+    if timeline.isna().any().any() or not np.isfinite(timeline.to_numpy(dtype=float)).all():
+        raise ValueError("system trajectory day and PD-1 occupancy must be complete and finite")
+    timeline = timeline.sort_values("day")
+    if timeline.day.duplicated().any():
+        raise ValueError("system trajectory must contain unique time points")
     if timeline.day.iloc[0] > 0 or timeline.day.iloc[-1] < days:
         raise ValueError("system trajectory must cover the requested spatial interval")
     if not timeline.pd1_occupancy.between(0.0, 1.0).all():
