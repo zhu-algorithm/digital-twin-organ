@@ -14,6 +14,8 @@ The executable spatial model uses directed conservative transport between these 
 
 Segmented spatial-omics or imaging tables can initialize all 24 species-by-zone states through an explicit patient/zone/species bridge. Anatomy must be curated upstream; coordinates alone are never treated as sufficient evidence for a zone. Spot areas or cell counts may weight non-negative deconvolved abundances, and invalid zones, duplicate spots or non-finite/negative estimates are rejected. This supplies a reproducible data interface, not an assay-to-cell-count calibration; input units still require modality-specific validation.
 
+The same measured 24-state initialization can be run as matched untreated and anti-PD-1 arms. Only the systemic drug schedule differs: its time-varying receptor occupancy drives the spatial reaction terms, and both arm and occupancy are retained in the output. Zero-dose equivalence and the prespecified positive-dose effector direction are tested; these are implementation checks, not evidence of an individual treatment effect.
+
 The systemic and spatial layers are coupled through the simulated TDLN PD-1 receptor occupancy trajectory. Occupancy increases the hypothesised Tpex expansion and differentiation reaction rates but never alters conservative transport terms. The coupling gains are explicit parameters, default to zero effect at zero occupancy, and require calibration; the directional response is a software invariant, not clinical validation.
 
 ## Evidence anchors
@@ -40,6 +42,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Per-species mass conservation in the reaction-free spatial transport network.
 - Directional antigen, DC and effector movement across six TDLN zones.
 - Validated spatial-omics aggregation and exact day-zero initialization of all zone/species states.
+- Matched spatial treatment/control counterfactuals with explicit receptor-occupancy provenance and zero-dose equivalence.
 - TCR clone diversity, dominance and paired TDLN–tumour lineage-sharing features.
 - Locked-model prediction with feature-schema enforcement, calibration metrics and patient-level bootstrap intervals.
 - Reproducible global parameter screening with Latin-hypercube sampling and outcome-specific rank correlations.

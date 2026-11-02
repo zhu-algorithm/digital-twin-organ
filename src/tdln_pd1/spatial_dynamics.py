@@ -9,6 +9,7 @@ import pandas as pd
 from scipy.integrate import solve_ivp
 
 from .spatial import ZONES
+from .simulator import Dose, simulate
 
 ZONE_NAMES = tuple(zone.name for zone in ZONES)
 SPECIES = ("antigen", "mature_dc", "tpex", "effector")
@@ -200,6 +201,31 @@ def simulate_spatial_coupled(
 
     occupancy = lambda time: float(np.interp(time, timeline.day, timeline.pd1_occupancy))
     return simulate_spatial(days, step, parameters, initial, True, occupancy)
+
+
+def simulate_spatial_counterfactual(
+    doses: tuple[Dose, ...],
+    days: float = 14.0,
+    step: float = 0.1,
+    parameters: SpatialParameters | None = None,
+    initial: SpatialInitialState | pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Run matched control and anti-PD-1 spatial arms from one initial state."""
+    if not doses:
+        raise ValueError("counterfactual simulation requires an explicit dose schedule")
+    systemic_control = simulate(days=days)
+    systemic_treated = simulate(days=days, doses=doses)
+    frames = []
+    for arm, systemic in (("control", systemic_control), ("anti_pd1", systemic_treated)):
+        spatial = simulate_spatial_coupled(
+            systemic, days=days, step=step, parameters=parameters, initial=initial,
+        )
+        spatial["pd1_occupancy"] = np.interp(
+            spatial.day, systemic.day, systemic.pd1_occupancy
+        )
+        spatial["arm"] = arm
+        frames.append(spatial)
+    return pd.concat(frames, ignore_index=True)
 
 
 def spatial_summary(trajectory: pd.DataFrame) -> pd.DataFrame:

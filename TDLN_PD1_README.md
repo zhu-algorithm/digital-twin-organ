@@ -38,7 +38,7 @@ tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --output artifacts/tdln
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --output artifacts/calibration
 tdln-pd1 augment-twin --features examples/features.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
 tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --output artifacts/spatial_initial.csv
-tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patient-id example_patient --days 14 --output artifacts/spatial_patient.csv
+tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patient-id example_patient --days 14 --dose-days 0 --dose 1 --paired-counterfactual --output artifacts/spatial_patient.csv
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
 tdln-pd1 sensitivity --days 42 --samples 128 --output artifacts/sensitivity
 tdln-pd1 verify --output artifacts/verification.json
@@ -52,6 +52,8 @@ For longitudinal paired-tissue data, use the same temporal and tissue selection 
 The interactive six-zone virtual organ is published from [`docs/tdln.html`](docs/tdln.html). Its trajectories are not hand-authored: `python scripts/export_tdln_dashboard.py` deterministically exports the mechanistic and spatial simulations to a versioned local JSON file. CI regenerates the file and rejects stale dashboard data.
 
 `spatial-featurize` is the explicit bridge from segmented spatial transcriptomics, imaging or deconvolution output into the executable six-zone model. Each input spot must carry a patient identifier, a curated anatomical `zone`, and non-negative `antigen`, `mature_dc`, `tpex` and `effector` abundance estimates; an optional area or cell-count weight converts densities into amounts. Unknown anatomy, duplicate spot identifiers, negative values and non-finite values fail closed. The command does not guess zones from coordinates, because coordinates without a tissue mask and landmarks do not identify lymph-node microanatomy. `simulate-spatial --initial-zones` then runs a selected patient's complete zone-resolved measured state rather than the population default. Abundances must be calibrated to consistent model units before patient interpretation.
+
+Adding `--dose-days` couples the systemic anti-PD-1 pharmacokinetic/receptor-occupancy trajectory into that measured spatial state. `--paired-counterfactual` runs control and treated arms from the exact same patient initialization and writes an explicit `arm` and time-varying `pd1_occupancy` on every spatial row. A zero-amount schedule is numerically equivalent to control, while the default positive schedule increases efferent effectors in the prespecified verification scenario. Dosing is rejected in transport-only mode because receptor occupancy acts on immune reactions, not conservative transport.
 
 Install `.[single-cell,test]` to read `.h5ad` directly.
 

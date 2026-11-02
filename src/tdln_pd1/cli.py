@@ -3,13 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import numpy as np
 from .data import load_cells, load_labels
 from .features import aggregate_cells
 from .model import evaluate_external, leave_one_site_out, predict_locked, train_evaluate
 from .simulator import Dose, simulate
 from .assimilation import calibrate, save_calibration
 from .hybrid import augment_with_twin
-from .spatial_dynamics import simulate_spatial
+from .spatial_dynamics import (simulate_spatial, simulate_spatial_coupled,
+                               simulate_spatial_counterfactual)
 from .spatial_data import aggregate_spatial_spots
 from .sensitivity import global_sensitivity
 from .provenance import verify_manifest
@@ -68,6 +70,9 @@ def main() -> None:
     spatial.add_argument("--days", type=float, default=14.0)
     spatial.add_argument("--step", type=float, default=0.1)
     spatial.add_argument("--transport-only", action="store_true")
+    spatial.add_argument("--dose-days", default="", help="comma-separated anti-PD-1 dose days")
+    spatial.add_argument("--dose", type=float, default=1.0)
+    spatial.add_argument("--paired-counterfactual", action="store_true")
     spatial.add_argument("--initial-zones", help="long patient-zone-species state CSV")
     spatial.add_argument("--patient-id", help="patient to select from --initial-zones")
     spatial.add_argument("--output", required=True)
@@ -168,15 +173,40 @@ def main() -> None:
             initial = states[states.patient_id.astype(str) == str(patient_id)]
             if initial.empty:
                 raise ValueError(f"patient not found in initial zone states: {patient_id}")
-        trajectory = simulate_spatial(args.days, args.step, initial=initial,
-                                      reactions=not args.transport_only)
+        doses = tuple(Dose(float(day), args.dose)
+                      for day in args.dose_days.split(",") if day.strip())
+        if args.transport_only and doses:
+            raise ValueError("anti-PD-1 dosing is incompatible with --transport-only")
+        if args.paired_counterfactual and not doses:
+            raise ValueError("--paired-counterfactual requires --dose-days")
+        if args.paired_counterfactual:
+            trajectory = simulate_spatial_counterfactual(
+                doses, args.days, args.step, initial=initial,
+            )
+        elif doses:
+            systemic = simulate(days=args.days, doses=doses)
+            trajectory = simulate_spatial_coupled(
+                systemic, args.days, args.step, initial=initial,
+            )
+            trajectory["pd1_occupancy"] = np.interp(
+                trajectory.day, systemic.day, systemic.pd1_occupancy
+            )
+            trajectory["arm"] = "anti_pd1"
+        else:
+            trajectory = simulate_spatial(args.days, args.step, initial=initial,
+                                          reactions=not args.transport_only)
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         trajectory.to_csv(args.output, index=False)
         efferent = trajectory[(trajectory.species == "effector") & (trajectory.zone == "efferent_lymph")]
-        print(json.dumps({"rows": len(trajectory), "zones": int(trajectory.zone.nunique()),
-                          "species": int(trajectory.species.nunique()),
-                          "final_efferent_effector": float(efferent.amount.iloc[-1]),
-                          "output": args.output}, indent=2))
+        report = {"rows": len(trajectory), "zones": int(trajectory.zone.nunique()),
+                  "species": int(trajectory.species.nunique()), "output": args.output}
+        if "arm" in efferent:
+            report["final_efferent_effector_by_arm"] = (
+                efferent.groupby("arm").amount.last().to_dict()
+            )
+        else:
+            report["final_efferent_effector"] = float(efferent.amount.iloc[-1])
+        print(json.dumps(report, indent=2))
     elif args.command == "spatial-featurize":
         import pandas as pd
         states = aggregate_spatial_spots(pd.read_csv(args.spots), args.weight_column)

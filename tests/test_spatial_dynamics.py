@@ -5,7 +5,8 @@ import pytest
 
 from tdln_pd1.simulator import Dose, simulate
 from tdln_pd1.spatial_dynamics import (
-    SPECIES, simulate_spatial, simulate_spatial_coupled, spatial_summary,
+    SPECIES, simulate_spatial, simulate_spatial_coupled,
+    simulate_spatial_counterfactual, spatial_summary,
 )
 
 
@@ -51,3 +52,23 @@ def test_coupling_rejects_invalid_or_incomplete_occupancy():
         simulate_spatial_coupled(pd.DataFrame({"day": [0, 1], "pd1_occupancy": [0, 0.5]}), days=2)
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         simulate_spatial(days=2, checkpoint_occupancy=1.1)
+
+
+def test_matched_spatial_counterfactual_has_auditable_occupancy_and_effect():
+    paired = simulate_spatial_counterfactual((Dose(0, 1.0),), days=7, step=1)
+    assert set(paired.arm) == {"control", "anti_pd1"}
+    assert paired[paired.arm.eq("control")].pd1_occupancy.eq(0).all()
+    assert paired[paired.arm.eq("anti_pd1")].pd1_occupancy.max() > 0
+    endpoint = paired[(paired.species == "effector") & (paired.zone == "efferent_lymph")]
+    values = endpoint.groupby("arm").amount.last()
+    assert values["anti_pd1"] > values["control"]
+
+
+def test_counterfactual_requires_explicit_schedule_and_zero_dose_is_equivalent():
+    with pytest.raises(ValueError, match="explicit dose"):
+        simulate_spatial_counterfactual((), days=2)
+    paired = simulate_spatial_counterfactual((Dose(0, 0.0),), days=3, step=1)
+    control = paired[paired.arm.eq("control")].reset_index(drop=True)
+    treated = paired[paired.arm.eq("anti_pd1")].reset_index(drop=True)
+    assert np.allclose(control.amount, treated.amount, rtol=1e-6, atol=1e-6)
+    assert treated.pd1_occupancy.eq(0).all()
