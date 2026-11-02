@@ -77,6 +77,34 @@ def test_observation_contract_rejects_unknown_state():
         validate_observations(bad)
 
 
+def test_systemic_calibration_rejects_ambiguous_or_empty_observations():
+    duplicate = pd.DataFrame({
+        "day": [0, 0], "variable": ["tumour_cells", "tumour_cells"],
+        "value": [2e7, 2e7], "sd": [1e6, 1e6],
+    })
+    with pytest.raises(ValueError, match="unique day-variable"):
+        validate_observations(duplicate)
+    with pytest.raises(ValueError, match="must not be empty"):
+        validate_observations(pd.DataFrame(columns=["day", "variable", "value"]))
+    missing_name = pd.DataFrame({"day": [0], "variable": [None], "value": [1]})
+    with pytest.raises(ValueError, match="non-missing"):
+        validate_observations(missing_name)
+
+
+def test_systemic_log_space_fit_requires_unique_positive_base_parameters():
+    observations = pd.DataFrame({
+        "day": [0, 1], "variable": ["tumour_cells"] * 2,
+        "value": [2e7, 2.2e7], "sd": [1e6, 1e6],
+    })
+    with pytest.raises(ValueError, match="must be unique"):
+        calibrate(observations, fit_parameters=("tumour_growth", "tumour_growth"))
+    with pytest.raises(ValueError, match="strictly positive"):
+        calibrate(
+            observations, base=TwinParameters(tumour_growth=0.0),
+            fit_parameters=("tumour_growth",),
+        )
+
+
 def test_uncertainty_ensemble_is_reproducible():
     a = ensemble(TwinParameters(), (), days=2, n=4, seed=7)
     b = ensemble(TwinParameters(), (), days=2, n=4, seed=7)

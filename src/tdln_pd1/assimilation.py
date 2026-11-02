@@ -160,6 +160,13 @@ def validate_observations(observations: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(f"missing observation columns: {sorted(missing)}")
     out = observations.copy()
+    if out.empty:
+        raise ValueError("calibration observations must not be empty")
+    if out["variable"].isna().any():
+        raise ValueError("observed variable names must be non-missing and non-empty")
+    out["variable"] = out["variable"].astype(str).str.strip()
+    if out["variable"].eq("").any():
+        raise ValueError("observed variable names must be non-missing and non-empty")
     out["day"] = pd.to_numeric(out["day"], errors="raise")
     out["value"] = pd.to_numeric(out["value"], errors="raise")
     if "sd" not in out:
@@ -171,7 +178,30 @@ def validate_observations(observations: pd.DataFrame) -> pd.DataFrame:
     unknown = set(out.variable) - allowed
     if unknown:
         raise ValueError(f"unknown observed variables: {sorted(unknown)}")
+    if out.duplicated(["day", "variable"]).any():
+        raise ValueError("calibration observations need unique day-variable rows")
     return out.sort_values(["day", "variable"]).reset_index(drop=True)
+
+
+def _validate_fit_parameters(base, fit_parameters: Iterable[str], label: str) -> tuple[str, ...]:
+    """Validate a log-space parameter selection against its dataclass instance."""
+    names = tuple(fit_parameters)
+    available = asdict(base)
+    invalid = set(names) - set(available)
+    if invalid or not names:
+        raise ValueError(f"invalid {label}fit parameters: {sorted(invalid)}")
+    if len(set(names)) != len(names):
+        raise ValueError(f"{label}fit parameters must be unique")
+    nonpositive = [
+        name for name in names
+        if not np.isfinite(available[name]) or available[name] <= 0
+    ]
+    if nonpositive:
+        raise ValueError(
+            f"{label}fit parameters need finite, strictly positive base values for log-space fitting: "
+            f"{sorted(nonpositive)}"
+        )
+    return names
 
 
 def _predictions(trajectory: pd.DataFrame, observations: pd.DataFrame) -> np.ndarray:
@@ -194,10 +224,7 @@ def calibrate(
     """Fit positive parameters in log space using weighted robust residuals."""
     obs = validate_observations(observations)
     base = base or TwinParameters()
-    names = tuple(fit_parameters)
-    invalid = set(names) - set(asdict(base))
-    if invalid or not names:
-        raise ValueError(f"invalid fit parameters: {sorted(invalid)}")
+    names = _validate_fit_parameters(base, fit_parameters, "")
     x0 = np.log([getattr(base, name) for name in names])
     days = max(float(obs.day.max()), 1e-6)
 

@@ -14,7 +14,8 @@ from scipy.optimize import least_squares
 from .spatial_dynamics import (SPECIES, ZONE_NAMES, SpatialInitialState,
                                SpatialParameters, simulate_spatial,
                                simulate_spatial_coupled)
-from .assimilation import _local_calibration_diagnostics, _profile_likelihood
+from .assimilation import (_local_calibration_diagnostics, _profile_likelihood,
+                           _validate_fit_parameters)
 
 
 DEFAULT_SPATIAL_FIT_PARAMETERS = (
@@ -30,6 +31,14 @@ def validate_spatial_observations(observations: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(f"missing spatial observation columns: {sorted(missing)}")
     out = observations.copy()
+    if out.empty:
+        raise ValueError("spatial calibration observations must not be empty")
+    if out[["species", "zone"]].isna().any().any():
+        raise ValueError("spatial species and zone must be non-missing and non-empty")
+    for column in ("species", "zone"):
+        out[column] = out[column].astype(str).str.strip()
+    if out[["species", "zone"]].eq("").any().any():
+        raise ValueError("spatial species and zone must be non-missing and non-empty")
     out["day"] = pd.to_numeric(out.day, errors="raise")
     out["amount"] = pd.to_numeric(out.amount, errors="raise")
     if "sd" not in out:
@@ -73,10 +82,7 @@ def calibrate_spatial(
     """Fit selected positive spatial parameters using robust weighted residuals."""
     obs = validate_spatial_observations(observations)
     base = base or SpatialParameters()
-    names = tuple(fit_parameters)
-    invalid = set(names) - set(asdict(base))
-    if invalid or not names:
-        raise ValueError(f"invalid spatial fit parameters: {sorted(invalid)}")
+    names = _validate_fit_parameters(base, fit_parameters, "spatial ")
     x0 = np.log([getattr(base, name) for name in names])
     days = max(float(obs.day.max()), 1e-6)
 

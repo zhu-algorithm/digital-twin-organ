@@ -45,6 +45,31 @@ def test_spatial_observation_contract_rejects_unknown_or_duplicate_rows():
                               "amount": [1.0, 1.0]})
     with pytest.raises(ValueError, match="unique"):
         validate_spatial_observations(duplicate)
+    with pytest.raises(ValueError, match="must not be empty"):
+        validate_spatial_observations(
+            pd.DataFrame(columns=["day", "species", "zone", "amount"])
+        )
+    missing_coordinate = pd.DataFrame({
+        "day": [0], "species": [None], "zone": ["paracortex"], "amount": [1.0],
+    })
+    with pytest.raises(ValueError, match="non-missing"):
+        validate_spatial_observations(missing_coordinate)
+
+
+def test_spatial_log_space_fit_requires_unique_positive_base_parameters():
+    observations = pd.DataFrame({
+        "day": [0, 1], "species": ["antigen"] * 2,
+        "zone": ["afferent_lymph"] * 2, "amount": [1.0, 0.5], "sd": [0.1, 0.1],
+    })
+    with pytest.raises(ValueError, match="must be unique"):
+        calibrate_spatial(
+            observations, fit_parameters=("antigen_decay", "antigen_decay")
+        )
+    with pytest.raises(ValueError, match="strictly positive"):
+        calibrate_spatial(
+            observations, base=SpatialParameters(antigen_decay=0.0),
+            fit_parameters=("antigen_decay",),
+        )
 
 
 def test_spatial_calibration_can_fit_transport_rate():
