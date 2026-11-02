@@ -39,8 +39,11 @@ tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit t
 tdln-pd1 augment-twin --features examples/features.csv --days 42 --dose-days 0,14,28 --output artifacts/hybrid_features.csv
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
 tdln-pd1 sensitivity --days 42 --samples 128 --output artifacts/sensitivity
+tdln-pd1 verify --output artifacts/verification.json
 pytest
 ```
+
+`verify` is a fail-closed numerical qualification gate. It checks finite/non-negative systemic states, scaled zero-dose numerical equivalence, monotone default dose/occupancy direction, endpoint stability under tighter solver tolerances, per-species conservation in the reaction-free spatial network, and the prespecified checkpoint-coupling direction. It writes every measured error and tolerance to JSON and exits non-zero if any invariant fails. Zero-dose schedules restart the adaptive solver at event boundaries, so equivalence uses a documented state-scaled relative tolerance rather than a dimensionally invalid near-zero absolute tolerance. These are software and numerical checks, not biological validation.
 
 The interactive six-zone virtual organ is published from [`docs/tdln.html`](docs/tdln.html). Its trajectories are not hand-authored: `python scripts/export_tdln_dashboard.py` deterministically exports the mechanistic and spatial simulations to a versioned local JSON file. CI regenerates the file and rejects stale dashboard data.
 

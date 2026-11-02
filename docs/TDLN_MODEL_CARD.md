@@ -43,6 +43,7 @@ These sources motivate model structure. They do not validate the default numeric
 - Leave-one-centre-out transportability evaluation with explicit reporting of non-evaluable sites.
 - Fail-closed cohort QC and SHA-256 provenance verification before training.
 - Reproducible browser dashboard export: six-zone spatial states and treated/control trajectories are generated directly from the executable model and checked byte-for-structure in CI.
+- A machine-readable, fail-closed verification report covering zero-dose limits, default dose direction, tightened-tolerance convergence, finite/non-negative states, spatial mass conservation and coupled checkpoint direction.
 
 ## Required validation ladder
 

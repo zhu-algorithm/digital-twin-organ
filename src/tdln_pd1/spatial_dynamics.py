@@ -127,6 +127,8 @@ def simulate_spatial(
     initial: SpatialInitialState | None = None,
     reactions: bool = True,
     checkpoint_occupancy: float | Callable[[float], float] = 0.0,
+    rtol: float = 1e-8,
+    atol: float = 1e-10,
 ) -> pd.DataFrame:
     """Return tidy species-by-zone trajectories.
 
@@ -135,15 +137,17 @@ def simulate_spatial(
     modulates only reaction terms, so transport-only conservation remains an
     independently auditable invariant.
     """
-    if days <= 0 or step <= 0:
-        raise ValueError("days and step must be positive")
+    if not np.isfinite(days) or not np.isfinite(step) or days <= 0 or step <= 0:
+        raise ValueError("days and step must be finite and positive")
+    if not np.isfinite(rtol) or not np.isfinite(atol) or rtol <= 0 or atol <= 0:
+        raise ValueError("solver tolerances must be finite and positive")
     p = parameters or SpatialParameters()
     times = np.unique(np.append(np.arange(0.0, days, step), days))
     if not callable(checkpoint_occupancy) and not 0.0 <= checkpoint_occupancy <= 1.0:
         raise ValueError("checkpoint_occupancy must fall within [0, 1]")
     solution = solve_ivp(_rhs, (0.0, days), initial_vector(initial),
                          args=(p, reactions, checkpoint_occupancy),
-                         t_eval=times, rtol=1e-8, atol=1e-10)
+                         t_eval=times, rtol=rtol, atol=atol)
     if not solution.success:
         raise RuntimeError(solution.message)
     rows = []

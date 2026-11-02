@@ -13,6 +13,7 @@ from .spatial_dynamics import simulate_spatial
 from .sensitivity import global_sensitivity
 from .provenance import verify_manifest
 from .qc import cohort_qc
+from .verification import verify_twin
 
 
 def main() -> None:
@@ -77,6 +78,8 @@ def main() -> None:
     qc.add_argument("--labels", required=True)
     qc.add_argument("--manifest")
     qc.add_argument("--output", required=True)
+    verify = sub.add_parser("verify")
+    verify.add_argument("--output", required=True)
     args = parser.parse_args()
     if args.command == "featurize":
         aggregate_cells(load_cells(args.cells)).to_csv(args.output, index=False)
@@ -157,12 +160,19 @@ def main() -> None:
         print(json.dumps({"samples": len(samples), "parameters": len(names),
                           "top_effects": top[["outcome", "parameter", "spearman_rho"]].to_dict("records"),
                           "output": str(output), "method": "LHS Spearman screening"}, indent=2))
-    else:
+    elif args.command == "qc":
         import pandas as pd
         report = cohort_qc(load_cells(args.cells), pd.read_csv(args.labels))
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)
             report["passed"] = report["passed"] and report["provenance"]["valid"]
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(json.dumps(report, indent=2) + "\n")
+        print(json.dumps(report, indent=2))
+        if not report["passed"]:
+            raise SystemExit(2)
+    else:
+        report = verify_twin()
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         Path(args.output).write_text(json.dumps(report, indent=2) + "\n")
         print(json.dumps(report, indent=2))

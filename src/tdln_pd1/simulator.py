@@ -102,12 +102,17 @@ def simulate(
     parameters: TwinParameters | None = None,
     initial: InitialState | None = None,
     step: float = 0.25,
+    rtol: float = 1e-7,
+    atol: float = 1e-9,
 ) -> pd.DataFrame:
     """Simulate piecewise across bolus doses and return a tidy trajectory."""
     p, init = parameters or TwinParameters(), initial or InitialState()
-    if days <= 0 or step <= 0:
-        raise ValueError("days and step must be positive")
-    if any(d.day < 0 or d.day > days or d.amount < 0 for d in doses):
+    if not np.isfinite(days) or not np.isfinite(step) or days <= 0 or step <= 0:
+        raise ValueError("days and step must be finite and positive")
+    if not np.isfinite(rtol) or not np.isfinite(atol) or rtol <= 0 or atol <= 0:
+        raise ValueError("solver tolerances must be finite and positive")
+    if any(not np.isfinite(d.day) or not np.isfinite(d.amount)
+           or d.day < 0 or d.day > days or d.amount < 0 for d in doses):
         raise ValueError("doses must have non-negative amount and fall within simulation")
     events: dict[float, float] = {}
     for dose in doses:
@@ -120,7 +125,7 @@ def simulate(
             y[STATE_NAMES.index("anti_pd1_plasma")] += events[start]
         times = np.arange(start, end, step)
         times = np.unique(np.append(times, end))
-        sol = solve_ivp(_rhs, (start, end), y, args=(p,), t_eval=times, rtol=1e-7, atol=1e-9)
+        sol = solve_ivp(_rhs, (start, end), y, args=(p,), t_eval=times, rtol=rtol, atol=atol)
         if not sol.success:
             raise RuntimeError(sol.message)
         frame = pd.DataFrame(sol.y.T, columns=STATE_NAMES)
