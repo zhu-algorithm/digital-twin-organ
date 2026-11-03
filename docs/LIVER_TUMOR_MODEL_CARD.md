@@ -10,9 +10,16 @@
 
 页面提供三个可比较的机制情景：自然进展、75% 血管生成抑制、总入流降至 65%。这些是反事实扰动，不代表具体药物或剂量。
 
+## 肝肿瘤–TDLN 闭环
+
+`liver_tdln_coupling.py` 将肝肿瘤活性负荷映射为引流抗原，驱动 TDLN 中的成熟 DC、Tpex 与效应 T 细胞；由 TDLN 产生并回流肿瘤的效应细胞再作用于肿瘤活性边缘。抗 PD-1 的血浆／TDLN 暴露和受体占有率沿用 TDLN 模型。细胞量尺度、免疫杀伤增益、坏死及缺氧抗原增益均为显式桥接参数，默认值是可审计假设，不是临床标定值。
+
+闭环反事实检查分别验证受体占有率、肿瘤内效应细胞时间积分和最终活肿瘤负荷；模型并不假定每个晚期时间点的效应细胞数都随治疗单调增加。
+
 ## 可重复性
 
 - 实现：`src/tdln_pd1/liver_tumor.py`
+- 肝肿瘤–TDLN 闭环：`src/tdln_pd1/liver_tdln_coupling.py`
 - 确定性数据导出：`scripts/export_liver_tumor_dashboard.py`
 - 固定网页数据：`docs/data/liver_tumor_dashboard.json`
 - 自动测试：`tests/test_liver_tumor.py` 与 `tests/test_liver_tumor_dashboard.py`

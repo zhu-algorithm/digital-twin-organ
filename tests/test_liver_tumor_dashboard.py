@@ -17,12 +17,19 @@ def test_liver_tumour_dashboard_export_is_current():
     assert expected["research_only"] is True
     assert set(expected["scenarios"]) == {"untreated", "antiangiogenic", "low_perfusion"}
     assert all(len(records) == 61 for records in expected["scenarios"].values())
+    assert set(expected["immune_coupling"]) == {"control", "anti_pd1"}
+    assert all(len(records) == 43 for records in expected["immune_coupling"].values())
+    treated = expected["immune_coupling"]["anti_pd1"]
+    control = expected["immune_coupling"]["control"]
+    assert max(row["pd1_occupancy"] for row in treated) > max(
+        row["pd1_occupancy"] for row in control)
 
 
 def test_liver_tumour_page_is_animated_accessible_and_local():
     page = (ROOT / "docs/liver-tumor.html").read_text()
     for marker in ('id="play"', 'id="day-slider"', 'aria-live="polite"', '<title>', '<desc ',
                    'data/liver_tumor_dashboard.json', '@keyframes breathe', '@keyframes flow',
-                   '@media(prefers-reduced-motion:reduce)', '正常肝细胞', '肿瘤细胞'):
+                   '@media(prefers-reduced-motion:reduce)', '正常肝细胞', '肿瘤细胞',
+                   'id="scenario-anti_pd1"', 'id="tdln-node"', 'immune_coupling'):
         assert marker in page
     assert "研究用途" in page
