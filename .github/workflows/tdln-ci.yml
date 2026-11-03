@@ -27,7 +27,7 @@ jobs:
           git diff --exit-code -- docs/data/tdln_dashboard.json
       - name: Verify end-to-end digital twin pipeline
         run: |
-          tdln-pd1 featurize --cells examples/cells.csv --output /tmp/features.csv
+          tdln-pd1 featurize --cells examples/cells.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output /tmp/features.csv
           tdln-pd1 verify-features --audit /tmp/features.csv.feature-audit.json --cells examples/cells.csv --output /tmp/features.csv
           tdln-pd1 calibrate-feature-state-mapping --observations examples/feature_state_mapping_observations.csv --fit tcf7_coefficient --base-mapping examples/feature_state_mapping.json --output /tmp/mapping_calibration
           tdln-pd1 verify-calibration --audit /tmp/mapping_calibration/mapping_calibration_provenance.json --observations examples/feature_state_mapping_observations.csv --base-mapping examples/feature_state_mapping.json

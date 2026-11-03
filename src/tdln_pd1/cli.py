@@ -166,6 +166,10 @@ def main() -> None:
     featurize.add_argument("--baseline-values", default="")
     featurize.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     featurize.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
+    featurize.add_argument(
+        "--cell-type-vocabulary", default="",
+        help="comma-separated locked annotation labels; unknown labels fail",
+    )
     train = sub.add_parser("train")
     train.add_argument("--features", required=True)
     train.add_argument("--labels", required=True)
@@ -371,15 +375,20 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "featurize":
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
+        cell_type_vocabulary = tuple(
+            value.strip() for value in args.cell_type_vocabulary.split(",") if value.strip()
+        )
         aggregate_cells(load_cells(args.cells, (args.time_column,) if args.time_column else ()),
                         args.time_column, baseline_values or None,
                         args.feature_tissue_pattern,
-                        args.min_signature_gene_coverage).to_csv(args.output, index=False)
+                        args.min_signature_gene_coverage,
+                        cell_type_vocabulary or None).to_csv(args.output, index=False)
         write_feature_audit(args.cells, args.output, {
             "time_column": args.time_column,
             "baseline_values": list(baseline_values),
             "feature_tissue_pattern": args.feature_tissue_pattern,
             "minimum_signature_gene_coverage": args.min_signature_gene_coverage,
+            "cell_type_vocabulary": list(cell_type_vocabulary),
             "labels_used": False,
         })
     elif args.command == "train":

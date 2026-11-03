@@ -36,6 +36,33 @@ def test_cell_fraction_matrix_uses_observed_zero_not_missing_imputation():
     assert not out.filter(like="frac_").isna().any().any()
 
 
+def test_locked_cell_type_vocabulary_stabilizes_external_feature_schema():
+    vocabulary = ("CD8 T", "DC", "Treg")
+    development = pd.DataFrame({
+        "patient_id": ["p1", "p1", "p1"],
+        "cell_type": list(vocabulary),
+    })
+    external = pd.DataFrame({
+        "patient_id": ["e1", "e1"], "cell_type": ["CD8 T", "CD8 T"],
+    })
+    dev = aggregate_cells(
+        development, feature_tissue_pattern="all", cell_type_vocabulary=vocabulary,
+    )
+    ext = aggregate_cells(
+        external, feature_tissue_pattern="all", cell_type_vocabulary=vocabulary,
+    )
+    fraction_columns = [column for column in dev if column.startswith("frac_")]
+    assert fraction_columns == ["frac_cd8_t", "frac_dc", "frac_treg"]
+    assert [column for column in ext if column.startswith("frac_")] == fraction_columns
+    assert ext.loc[0, "frac_dc"] == 0.0
+    assert ext.loc[0, "frac_treg"] == 0.0
+    unknown = external.assign(cell_type=["CD8 T", "B cell"])
+    with pytest.raises(ValueError, match="outside the locked vocabulary"):
+        aggregate_cells(
+            unknown, feature_tissue_pattern="all", cell_type_vocabulary=vocabulary,
+        )
+
+
 def test_lineage_restricted_signatures_separate_state_from_composition():
     cells = pd.DataFrame({
         "patient_id": ["p1"] * 4,

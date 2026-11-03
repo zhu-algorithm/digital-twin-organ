@@ -153,6 +153,7 @@ def aggregate_cells(
     baseline_values: tuple[str, ...] | None = None,
     feature_tissue_pattern: str | None = r"tdln|lymph",
     min_signature_gene_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
+    cell_type_vocabulary: tuple[str, ...] | None = None,
 ) -> pd.DataFrame:
     """Aggregate long cell rows into one leakage-safe row per patient.
 
@@ -175,7 +176,26 @@ def aggregate_cells(
             raise ValueError(f"{column} must be non-empty")
     x = select_baseline_cells(x, time_column, baseline_values)
     x = _validate_expression_columns(x)
-    cell_type_names = _cell_type_feature_names(x["cell_type"])
+    if cell_type_vocabulary is not None:
+        vocabulary = tuple(str(value).strip() for value in cell_type_vocabulary)
+        if (not vocabulary or any(not value for value in vocabulary)
+                or len(set(vocabulary)) != len(vocabulary)):
+            raise ValueError("cell_type_vocabulary must contain unique non-empty labels")
+        vocabulary_cells = x
+        if ("tissue" in x and feature_tissue_pattern
+                and feature_tissue_pattern.lower() != "all"):
+            vocabulary_cells = x.loc[
+                x.tissue.astype(str).str.contains(
+                    feature_tissue_pattern, case=False, regex=True, na=False,
+                )
+            ]
+        unknown = sorted(set(vocabulary_cells["cell_type"]) - set(vocabulary))
+        if unknown:
+            raise ValueError(f"cell types are outside the locked vocabulary: {unknown[:10]}")
+        cell_type_names = _cell_type_feature_names(pd.Series(vocabulary, dtype=str))
+    else:
+        vocabulary = tuple(sorted(set(x["cell_type"])))
+        cell_type_names = _cell_type_feature_names(x["cell_type"])
     coverage = signature_gene_coverage(x.columns, min_signature_gene_coverage)
     for name, genes in SIGNATURES.items():
         x[f"sig_{name}"] = _mean_present(x, genes, min_signature_gene_coverage)
@@ -193,6 +213,8 @@ def aggregate_cells(
             "patient_id": patient, "n_cells": len(feature_group), "n_cells_total_selected": len(group),
             "qc_min_signature_gene_coverage": min_signature_gene_coverage,
         }
+        for cell_type in vocabulary:
+            row[f"frac_{cell_type_names[cell_type]}"] = 0.0
         fractions = feature_group["cell_type"].astype(str).value_counts(normalize=True)
         for cell_type, value in fractions.items():
             safe = cell_type_names[cell_type]

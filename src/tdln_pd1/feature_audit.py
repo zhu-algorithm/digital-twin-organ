@@ -69,12 +69,18 @@ def verify_feature_audit(
     pattern = settings.get("feature_tissue_pattern")
     if pattern is not None and not isinstance(pattern, str):
         raise ValueError("invalid single-cell tissue-pattern setting")
+    vocabulary = settings.get("cell_type_vocabulary", [])
+    if (not isinstance(vocabulary, list)
+            or any(not isinstance(value, str) or not value.strip() for value in vocabulary)
+            or len(set(vocabulary)) != len(vocabulary)):
+        raise ValueError("invalid single-cell cell-type vocabulary")
     replayed = aggregate_cells(
         load_cells(cells, (time_column,) if time_column else ()),
         time_column,
         tuple(str(value) for value in settings["baseline_values"]) or None,
         pattern,
         float(settings["minimum_signature_gene_coverage"]),
+        tuple(vocabulary) or None,
     )
     replayed_sha = hashlib.sha256(
         replayed.to_csv(index=False).encode("utf-8")
