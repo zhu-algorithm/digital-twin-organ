@@ -72,6 +72,12 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
     assert set(ablation["hybrid_minus_data_only"]) == {
         "roc_auc", "average_precision", "brier_score_improvement", "log_loss_improvement",
     }
+    paired = ablation["paired_patient_bootstrap"]
+    assert paired["draws"] == 500
+    assert paired["seed"] == 42
+    assert paired["estimand"] == "paired_difference_of_fixed_out_of_fold_predictions"
+    assert set(paired["intervals"]) == set(ablation["hybrid_minus_data_only"])
+    assert all(value["valid_draws"] > 0 for value in paired["intervals"].values())
     predictions = pd.read_csv(tmp_path / "cv_predictions.csv")
     assert predictions.data_only_probability.notna().all()
     assert predictions.mechanism_only_probability.notna().all()

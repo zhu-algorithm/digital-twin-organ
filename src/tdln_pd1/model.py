@@ -22,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 
 DEFAULT_C_GRID = (0.01, 0.1, 1.0, 10.0, 100.0)
 PROBABILITY_ESTIMAND = "unweighted_logistic_likelihood_observed_development_prevalence"
+FUSION_ABLATION_BOOTSTRAP_DRAWS = 500
 FORBIDDEN_FEATURE_TOKENS = (
     "response", "responder", "outcome", "label", "recist",
     "progression_free", "overall_survival", "pfs", "os_months",
@@ -258,6 +259,43 @@ def _fusion_ablation(
         }
     hybrid_metrics = evaluate_probabilities(y, hybrid_probability, bootstrap=0)
     data_metrics = block_reports["data_only"]["metrics"]
+    rng = np.random.default_rng(42)
+    paired_draws = {name: [] for name in (
+        "roc_auc", "average_precision", "brier_score_improvement", "log_loss_improvement",
+    )}
+    data_probability = block_probabilities["data_only"]
+    outcome = y.to_numpy(dtype=int)
+    for _ in range(FUSION_ABLATION_BOOTSTRAP_DRAWS):
+        index = rng.integers(0, len(outcome), len(outcome))
+        if len(np.unique(outcome[index])) < 2:
+            continue
+        sampled_y = outcome[index]
+        sampled_hybrid = hybrid_probability[index]
+        sampled_data = data_probability[index]
+        paired_draws["roc_auc"].append(
+            roc_auc_score(sampled_y, sampled_hybrid)
+            - roc_auc_score(sampled_y, sampled_data)
+        )
+        paired_draws["average_precision"].append(
+            average_precision_score(sampled_y, sampled_hybrid)
+            - average_precision_score(sampled_y, sampled_data)
+        )
+        paired_draws["brier_score_improvement"].append(
+            brier_score_loss(sampled_y, sampled_data)
+            - brier_score_loss(sampled_y, sampled_hybrid)
+        )
+        paired_draws["log_loss_improvement"].append(
+            log_loss(sampled_y, sampled_data, labels=[0, 1])
+            - log_loss(sampled_y, sampled_hybrid, labels=[0, 1])
+        )
+    paired_intervals = {
+        name: {
+            "lower_95": float(np.percentile(values, 2.5)),
+            "upper_95": float(np.percentile(values, 97.5)),
+            "valid_draws": len(values),
+        }
+        for name, values in paired_draws.items()
+    }
     report = {
         "status": "evaluated",
         "design": "paired_nested_patient_level_cross_validation_same_outer_folds",
@@ -273,6 +311,16 @@ def _fusion_ablation(
             ),
             "log_loss_improvement": float(
                 data_metrics["log_loss"] - hybrid_metrics["log_loss"]
+            ),
+        },
+        "paired_patient_bootstrap": {
+            "draws": FUSION_ABLATION_BOOTSTRAP_DRAWS,
+            "seed": 42,
+            "intervals": paired_intervals,
+            "estimand": "paired_difference_of_fixed_out_of_fold_predictions",
+            "limitation": (
+                "Resamples patients and their paired predictions; does not repeat model "
+                "training or capture cross-validation split uncertainty."
             ),
         },
         "interpretation": (
