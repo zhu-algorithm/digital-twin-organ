@@ -23,6 +23,14 @@ def test_liver_tumour_dashboard_export_is_current():
     control = expected["immune_coupling"]["control"]
     assert max(row["pd1_occupancy"] for row in treated) > max(
         row["pd1_occupancy"] for row in control)
+    assert len(expected["tdln_zones"]) == 6
+    assert set(expected["liver_driven_tdln_spatial"]) == {"control", "anti_pd1"}
+    spatial_control = expected["liver_driven_tdln_spatial"]["control"]
+    assert len(spatial_control) == 15
+    assert spatial_control[-1]["values"]["antigen"]["subcapsular_sinus"] > 0
+    spatial_treated = expected["liver_driven_tdln_spatial"]["anti_pd1"]
+    assert spatial_treated[-1]["values"]["effector"]["efferent_lymph"] > (
+        spatial_control[-1]["values"]["effector"]["efferent_lymph"])
 
 
 def test_liver_tumour_page_is_animated_accessible_and_local():

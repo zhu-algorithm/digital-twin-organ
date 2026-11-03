@@ -19,6 +19,13 @@ def test_transport_only_conserves_each_species():
         assert np.allclose(totals[species], totals[species].iloc[0], rtol=1e-7, atol=1e-7)
 
 
+def test_transport_with_afferent_source_obeys_mass_balance():
+    trajectory = simulate_spatial(
+        days=3, step=0.1, reactions=False, afferent_sources={"antigen": 2.0})
+    antigen = trajectory[trajectory.species.eq("antigen")].groupby("day").amount.sum()
+    assert antigen.iloc[-1] == pytest.approx(antigen.iloc[0] + 6.0, rel=1e-7)
+
+
 def test_spatial_model_rejects_nonphysical_parameters_and_initial_states():
     with pytest.raises(ValueError, match="antigen_decay"):
         simulate_spatial(days=1, parameters=SpatialParameters(antigen_decay=-0.1))
@@ -108,6 +115,12 @@ def test_coupling_rejects_invalid_or_incomplete_occupancy():
         simulate_spatial(days=2, checkpoint_occupancy=lambda _: "invalid")
     with pytest.raises(ValueError, match="numeric"):
         simulate_spatial(days=2, checkpoint_occupancy="invalid")
+    with pytest.raises(ValueError, match="only antigen and mature_dc"):
+        simulate_spatial(days=2, afferent_sources={"effector": 1.0})
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        simulate_spatial(days=2, afferent_sources={"antigen": -1.0})
+    with pytest.raises(ValueError, match="callables"):
+        simulate_spatial(days=2, afferent_sources={"antigen": lambda _: float("nan")})
 
 
 def test_coupling_never_silently_drops_invalid_systemic_timeline_rows():

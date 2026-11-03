@@ -16,10 +16,13 @@
 
 闭环反事实检查分别验证受体占有率、肿瘤内效应细胞时间积分和最终活肿瘤负荷；模型并不假定每个晚期时间点的效应细胞数都随治疗单调增加。
 
+肝来源抗原还通过一个非负、时间变化的输入进入六区 TDLN 网络：`afferent_lymph → subcapsular_sinus → paracortex`。抗原在被膜下窦被摄取并产生成熟 DC，旁皮质内发生 Tpex 扩增和分化，效应细胞经髓质进入输出淋巴。运输层在关闭反应时满足“区室总量变化 = 累计输入”的质量平衡测试；把引流增益设为零会同时消除肝来源的窦内抗原与旁皮质 DC 信号。
+
 ## 可重复性
 
 - 实现：`src/tdln_pd1/liver_tumor.py`
 - 肝肿瘤–TDLN 闭环：`src/tdln_pd1/liver_tdln_coupling.py`
+- 六区空间桥接：`src/tdln_pd1/liver_tdln_spatial.py`
 - 确定性数据导出：`scripts/export_liver_tumor_dashboard.py`
 - 固定网页数据：`docs/data/liver_tumor_dashboard.json`
 - 自动测试：`tests/test_liver_tumor.py` 与 `tests/test_liver_tumor_dashboard.py`

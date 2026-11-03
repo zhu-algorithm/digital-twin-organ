@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Callable
+from typing import Callable, Mapping
 import numpy as np
 import pandas as pd
 from scipy.integrate import solve_ivp
@@ -143,8 +143,18 @@ def _rhs(
     p: SpatialParameters,
     reactions: bool,
     checkpoint_occupancy: float | Callable[[float], float],
+    afferent_sources: Mapping[str, float | Callable[[float], float]],
 ) -> np.ndarray:
     dydt = _transport(y, p)
+    for species, source in afferent_sources.items():
+        value = source(time) if callable(source) else source
+        try:
+            value = float(value)
+        except (TypeError, ValueError) as error:
+            raise ValueError("afferent source callables must return numeric values") from error
+        if not np.isfinite(value) or value < 0:
+            raise ValueError("afferent source callables must return finite non-negative values")
+        dydt[_index(species, "afferent_lymph")] += value
     if reactions:
         # Antigen capture occurs in the subcapsular sinus; priming occurs in paracortex.
         scs_ag = max(y[_index("antigen", "subcapsular_sinus")], 0.0)
@@ -208,6 +218,7 @@ def simulate_spatial(
     initial: SpatialInitialState | pd.DataFrame | None = None,
     reactions: bool = True,
     checkpoint_occupancy: float | Callable[[float], float] = 0.0,
+    afferent_sources: Mapping[str, float | Callable[[float], float]] | None = None,
     rtol: float = 1e-8,
     atol: float = 1e-10,
 ) -> pd.DataFrame:
@@ -244,8 +255,24 @@ def simulate_spatial(
             raise ValueError("checkpoint_occupancy must be numeric") from error
         if not np.isfinite(checkpoint_occupancy) or not 0.0 <= checkpoint_occupancy <= 1.0:
             raise ValueError("checkpoint_occupancy must be finite and fall within [0, 1]")
+    sources = dict(afferent_sources or {})
+    invalid_source_species = sorted(set(sources) - {"antigen", "mature_dc"})
+    if invalid_source_species:
+        raise ValueError(
+            "afferent sources support only antigen and mature_dc; "
+            f"invalid={invalid_source_species}"
+        )
+    for species, source in sources.items():
+        if not callable(source):
+            try:
+                source = float(source)
+            except (TypeError, ValueError) as error:
+                raise ValueError("afferent sources must be numeric or callable") from error
+            if not np.isfinite(source) or source < 0:
+                raise ValueError("afferent sources must be finite and non-negative")
+            sources[species] = source
     solution = solve_ivp(_rhs, (0.0, days), initial_vector(initial),
-                         args=(p, reactions, checkpoint_occupancy),
+                         args=(p, reactions, checkpoint_occupancy, sources),
                          t_eval=times, rtol=rtol, atol=atol)
     if not solution.success:
         raise RuntimeError(solution.message)

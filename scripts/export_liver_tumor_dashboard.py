@@ -15,7 +15,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from tdln_pd1.liver_tumor import parameter_manifest, simulate_liver_tumour
 from tdln_pd1.liver_tdln_coupling import (LiverTDLNCouplingParameters,
                                           simulate_liver_tdln)
+from tdln_pd1.liver_tdln_spatial import liver_tdln_spatial_counterfactual
 from tdln_pd1.simulator import Dose
+from tdln_pd1.spatial import ZONES
 
 SCHEMA_VERSION = 1
 COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
@@ -54,6 +56,27 @@ def _immune_records(frame):
     return records
 
 
+def _spatial_records(frame):
+    records = {}
+    for arm in ("control", "anti_pd1"):
+        arm_frame = frame[frame.arm.eq(arm)]
+        arm_records = []
+        for day in np.arange(0.0, 28.01, 2.0):
+            values = {}
+            for species in ("antigen", "mature_dc", "tpex", "effector"):
+                values[species] = {}
+                for zone in (item.name for item in ZONES):
+                    series = arm_frame[arm_frame.species.eq(species) & arm_frame.zone.eq(zone)]
+                    value = float(np.interp(day, series.day, series.amount))
+                    values[species][zone] = round(value, 4 if species == "antigen" else -1)
+            source_rows = arm_frame[arm_frame.day.eq(day)]
+            source = float(source_rows.afferent_antigen_source.iloc[0])
+            arm_records.append({"day": float(day), "afferent_antigen_source": round(source, 4),
+                                "values": values})
+        records[arm] = arm_records
+    return records
+
+
 def build_dashboard_data() -> dict:
     scenarios = {
         "untreated": simulate_liver_tumour(),
@@ -65,6 +88,10 @@ def build_dashboard_data() -> dict:
         "anti_pd1": simulate_liver_tdln(
             days=84, doses=tuple(Dose(day, 1.0) for day in (0, 21, 42, 63))),
     }
+    spatial = liver_tdln_spatial_counterfactual(
+        doses=(Dose(0, 1.0), Dose(7, 1.0), Dose(14, 1.0), Dose(21, 1.0)),
+        days=28, step=0.25,
+    )
     return {
         "schema_version": SCHEMA_VERSION,
         "model_version": "liver-tumour/0.1.0",
@@ -73,6 +100,8 @@ def build_dashboard_data() -> dict:
         "state_units": "normalised fraction",
         "scenarios": {name: _records(frame) for name, frame in scenarios.items()},
         "immune_coupling": {name: _immune_records(frame) for name, frame in coupled.items()},
+        "tdln_zones": [{"id": zone.name, "role": zone.role} for zone in ZONES],
+        "liver_driven_tdln_spatial": _spatial_records(spatial),
         "anti_pd1_dose_days": [0, 21, 42, 63],
         "parameter_manifest": parameter_manifest(),
         "coupling_parameter_manifest": asdict(LiverTDLNCouplingParameters()),
