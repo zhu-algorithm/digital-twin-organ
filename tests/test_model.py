@@ -58,6 +58,10 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
                            0.62, 0.73, 0.79, 0.91, 1.02, 1.08],
         "twin_effector_gain": [0.3, 0.8, 0.4, 0.9, 0.5, 1.0,
                                1.4, 1.1, 1.7, 1.3, 1.9, 1.5],
+        "liver_cf_tumour_relative_reduction": [
+            0.01, 0.04, 0.02, 0.05, 0.03, 0.06,
+            0.10, 0.08, 0.13, 0.09, 0.15, 0.12,
+        ],
     })
     labels = pd.DataFrame({
         "patient_id": features.patient_id,
@@ -68,7 +72,9 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
     assert ablation["status"] == "evaluated"
     assert ablation["design"] == "paired_nested_patient_level_cross_validation_same_outer_folds"
     assert ablation["data_only"]["features"] == ["sig_exhaustion"]
-    assert ablation["mechanism_only"]["features"] == ["twin_effector_gain"]
+    assert ablation["mechanism_only"]["features"] == [
+        "twin_effector_gain", "liver_cf_tumour_relative_reduction",
+    ]
     assert set(ablation["hybrid_minus_data_only"]) == {
         "roc_auc", "average_precision", "brier_score_improvement", "log_loss_improvement",
     }

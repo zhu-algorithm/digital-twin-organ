@@ -243,8 +243,9 @@ def _fusion_ablation(
     hybrid_probability: np.ndarray,
 ) -> tuple[dict | None, dict[str, np.ndarray]]:
     """Compare data-only, mechanism-only and fused models on identical outer folds."""
-    mechanistic = [column for column in columns if column.startswith("twin_")]
-    measured = [column for column in columns if not column.startswith("twin_")]
+    mechanism_prefixes = ("twin_", "liver_cf_")
+    mechanistic = [column for column in columns if column.startswith(mechanism_prefixes)]
+    measured = [column for column in columns if not column.startswith(mechanism_prefixes)]
     if not mechanistic or not measured:
         return None, {}
     block_probabilities = {"hybrid": hybrid_probability}
@@ -965,7 +966,10 @@ def train_evaluate(
     metrics["mechanism_data_fusion_ablation"] = (
         ablation if ablation is not None else {
             "status": "not_evaluable",
-            "reason": "requires at least one twin_ mechanistic and one measured feature",
+            "reason": (
+                "requires at least one twin_ or liver_cf_ mechanistic feature "
+                "and one measured feature"
+            ),
         }
     )
     metrics["training_input_provenance"] = input_provenance

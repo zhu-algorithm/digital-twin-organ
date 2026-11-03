@@ -3,9 +3,12 @@ import json
 import pandas as pd
 import pytest
 
-from tdln_pd1.liver_bridge_features import (patient_liver_bridge_from_features,
+from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
+                                             patient_liver_bridge_from_features,
+                                             augment_with_liver_tdln_counterfactuals,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
+                                             verify_liver_counterfactual_augmentation,
                                              verify_patient_liver_tdln_audit)
 from tdln_pd1.simulator import Dose
 from tdln_pd1.provenance import sha256_file
@@ -114,3 +117,50 @@ def test_patient_counterfactual_requires_active_treatment():
     with pytest.raises(ValueError, match="positive dose schedule"):
         simulate_patient_liver_tdln_counterfactual(
             pd.Series(dtype=float), doses=(Dose(0, 0.0),), days=2)
+
+
+def test_cohort_counterfactual_augmentation_is_aligned_and_outcome_free():
+    features = pd.DataFrame({
+        "patient_id": ["p1", "p2"],
+        "sig_cytotoxic": [0.1, 1.0], "sig_exhaustion": [0.8, 0.1],
+        "frac_cd8_t": [0.1, 0.5],
+    })
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1.0),), days=5, step=0.5)
+    assert out.patient_id.tolist() == ["p1", "p2"]
+    assert "response" not in out
+    assert out.liver_cf_peak_pd1_occupancy.gt(0).all()
+    assert out.liver_cf_effector_tumour_auc_fold_change.gt(1).all()
+    assert out.liver_cf_tumour_relative_reduction.ge(0).all()
+    with pytest.raises(ValueError, match="outcome-free"):
+        augment_with_liver_tdln_counterfactuals(
+            features.assign(response=[0, 1]), doses=(Dose(0, 1),), days=2)
+
+
+def test_cohort_counterfactual_audit_replays_and_rejects_tampering(tmp_path):
+    features_path = tmp_path / "features.csv"
+    output_path = tmp_path / "augmented.csv"
+    audit_path = tmp_path / "augmented.csv.liver-counterfactual-audit.json"
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
+    features.to_csv(features_path, index=False)
+    mapping = FeatureBridgeMapping()
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1.0),), days=2, step=0.5, mapping=mapping)
+    out.to_csv(output_path, index=False)
+    audit = {
+        "schema_version": 1,
+        "stage": "label_free_liver_tdln_counterfactual_augmentation",
+        "labels_used": False,
+        "input": {"sha256": sha256_file(features_path)},
+        "output": {"sha256": sha256_file(output_path)},
+        "settings": {"days": 2, "step": 0.5, "dose_days": [0],
+                     "dose_amounts": [1.0]},
+        "mapping": FeatureBridgeMapping().__dict__,
+    }
+    audit_path.write_text(json.dumps(audit))
+    assert verify_liver_counterfactual_augmentation(
+        audit_path, features_path, output_path) == audit
+    output_path.write_text(output_path.read_text().replace("p1", "changed"))
+    with pytest.raises(ValueError, match="output hash mismatch"):
+        verify_liver_counterfactual_augmentation(
+            audit_path, features_path, output_path)

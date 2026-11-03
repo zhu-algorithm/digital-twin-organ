@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
+import hashlib
 import json
 from pathlib import Path
 
@@ -238,4 +239,78 @@ def simulate_patient_liver_tdln_counterfactual(
         / max(effect["control_efferent_effector_endpoint"], 1e-12))
     return (pd.concat(frames_systemic, ignore_index=True),
             pd.concat(frames_spatial, ignore_index=True), effect, audit or {})
+
+
+COUNTERFACTUAL_FEATURES = {
+    "control_final_liver_tumour_fraction": "liver_cf_control_final_tumour_fraction",
+    "anti_pd1_final_liver_tumour_fraction": "liver_cf_anti_pd1_final_tumour_fraction",
+    "final_liver_tumour_fraction_absolute_change": "liver_cf_tumour_absolute_change",
+    "final_liver_tumour_fraction_relative_reduction": "liver_cf_tumour_relative_reduction",
+    "control_effector_tumour_auc": "liver_cf_control_effector_tumour_auc",
+    "anti_pd1_effector_tumour_auc": "liver_cf_anti_pd1_effector_tumour_auc",
+    "effector_tumour_auc_fold_change": "liver_cf_effector_tumour_auc_fold_change",
+    "anti_pd1_peak_pd1_occupancy": "liver_cf_peak_pd1_occupancy",
+    "control_efferent_effector_endpoint": "liver_cf_control_efferent_effector_endpoint",
+    "anti_pd1_efferent_effector_endpoint": "liver_cf_anti_pd1_efferent_effector_endpoint",
+    "efferent_effector_endpoint_fold_change": "liver_cf_efferent_effector_fold_change",
+}
+
+
+def augment_with_liver_tdln_counterfactuals(
+    features: pd.DataFrame, *, doses: tuple[Dose, ...], days: float = 28.0,
+    step: float = 0.25, mapping: FeatureBridgeMapping | None = None,
+) -> pd.DataFrame:
+    """Append label-free matched liver–TDLN contrasts for every patient."""
+    if "patient_id" not in features:
+        raise ValueError("features need patient_id")
+    forbidden = _outcome_like_columns(features)
+    if forbidden:
+        raise ValueError(f"counterfactual augmentation must be outcome-free: {forbidden}")
+    out = features.copy()
+    if out.patient_id.isna().any():
+        raise ValueError("features need non-missing patient_id")
+    out["patient_id"] = out.patient_id.astype(str).str.strip()
+    if out.patient_id.eq("").any() or out.patient_id.duplicated().any():
+        raise ValueError("features must have one unique, non-empty row per patient")
+    rows = []
+    for _, row in out.iterrows():
+        _, _, effect, _ = simulate_patient_liver_tdln_counterfactual(
+            row, doses=doses, days=days, step=step, mapping=mapping)
+        values = {target: float(effect[source])
+                  for source, target in COUNTERFACTUAL_FEATURES.items()}
+        if not np.isfinite(list(values.values())).all():
+            raise RuntimeError(f"non-finite counterfactual feature for patient {row.patient_id}")
+        rows.append(values)
+    return pd.concat([out.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
+
+
+def verify_liver_counterfactual_augmentation(
+    audit_path: str | Path, features_path: str | Path, output_path: str | Path,
+) -> dict:
+    """Verify hashes and replay a cohort counterfactual augmentation exactly."""
+    audit_path, features_path, output_path = map(
+        Path, (audit_path, features_path, output_path))
+    audit = json.loads(audit_path.read_text())
+    if (audit.get("schema_version") != 1 or audit.get("labels_used") is not False
+            or audit.get("stage") != "label_free_liver_tdln_counterfactual_augmentation"):
+        raise ValueError("invalid liver counterfactual augmentation audit contract")
+    if audit.get("input", {}).get("sha256") != sha256_file(features_path):
+        raise ValueError("liver counterfactual augmentation input hash mismatch")
+    if audit.get("output", {}).get("sha256") != sha256_file(output_path):
+        raise ValueError("liver counterfactual augmentation output hash mismatch")
+    settings = audit.get("settings", {})
+    try:
+        doses = tuple(Dose(float(day), float(amount)) for day, amount in zip(
+            settings["dose_days"], settings["dose_amounts"], strict=True))
+        days, step = float(settings["days"]), float(settings["step"])
+        mapping = FeatureBridgeMapping(**audit["mapping"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("invalid liver counterfactual replay settings") from error
+    replay = augment_with_liver_tdln_counterfactuals(
+        pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping)
+    replay_sha = hashlib.sha256(
+        replay.to_csv(index=False).encode("utf-8")).hexdigest()
+    if replay_sha != audit["output"]["sha256"]:
+        raise ValueError("liver counterfactual augmentation derivation replay mismatch")
+    return audit
 
