@@ -16,6 +16,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--paired-counterfactual",
         "patient_liver_tdln_counterfactual.json",
         "augment_liver_tdln_counterfactual.py",
+        "--bridge-parameters /tmp/liver_bridge_calibration/fitted_liver_tdln_bridge.json",
         "--features /tmp/liver_cf_features.csv",
         "verify-sensitivity --audit /tmp/sensitivity/sensitivity_provenance.json",
         "verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters /tmp/calibration/fitted_parameters.json --initial-zones /tmp/spatial_initial.csv",

@@ -15,9 +15,12 @@ sys.path.insert(0, str(ROOT / "src"))
 from tdln_pd1.liver_bridge_features import (
     COUNTERFACTUAL_FEATURES, FeatureBridgeMapping,
     augment_with_liver_tdln_counterfactuals,
+    load_liver_bridge_parameters,
     verify_liver_counterfactual_augmentation,
 )
 from tdln_pd1.provenance import sha256_file
+from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
+from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
 from tdln_pd1.simulator import Dose
 
 
@@ -29,13 +32,19 @@ def main() -> None:
     parser.add_argument("--step", type=float, default=0.25)
     parser.add_argument("--dose-days", required=True)
     parser.add_argument("--dose", type=float, default=1.0)
+    parser.add_argument("--bridge-parameters", type=Path)
     args = parser.parse_args()
     doses = tuple(Dose(float(day), args.dose)
                   for day in args.dose_days.split(",") if day.strip())
     mapping = FeatureBridgeMapping()
+    if args.bridge_parameters:
+        base_coupling, base_bridge = load_liver_bridge_parameters(args.bridge_parameters)
+    else:
+        base_coupling, base_bridge = None, None
     augmented = augment_with_liver_tdln_counterfactuals(
         pd.read_csv(args.features), doses=doses, days=args.days,
-        step=args.step, mapping=mapping)
+        step=args.step, mapping=mapping, base_coupling=base_coupling,
+        base_bridge=base_bridge)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     augmented.to_csv(args.output, index=False)
     audit_path = Path(f"{args.output}.liver-counterfactual-audit.json")
@@ -51,12 +60,19 @@ def main() -> None:
                      "dose_amounts": [dose.amount for dose in doses],
                      "paired_control": True},
         "mapping": asdict(mapping),
+        "base_parameters": {
+            "coupling": asdict(base_coupling or LiverTDLNCouplingParameters()),
+            "spatial_bridge": asdict(base_bridge or LiverTDLNSpatialBridge()),
+        },
+        "bridge_parameters": ({"file": args.bridge_parameters.name,
+                                "sha256": sha256_file(args.bridge_parameters)}
+                               if args.bridge_parameters else None),
         "mechanistic_feature_columns": list(COUNTERFACTUAL_FEATURES.values()),
         "limitation": "Model-derived matched contrasts; not clinical response labels.",
     }
     audit_path.write_text(json.dumps(audit, indent=2, sort_keys=True) + "\n")
     verify_liver_counterfactual_augmentation(
-        audit_path, args.features, args.output)
+        audit_path, args.features, args.output, args.bridge_parameters)
     print(json.dumps({"n_patients": len(augmented),
                       "n_mechanistic_features": len(COUNTERFACTUAL_FEATURES),
                       "labels_used": False, "output": str(args.output)}, indent=2))

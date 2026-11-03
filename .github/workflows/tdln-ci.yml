@@ -36,7 +36,6 @@ jobs:
           python scripts/simulate_patient_liver_tdln.py --features /tmp/features.csv --patient-id p0 --days 3 --step 0.5 --dose-days 0 --paired-counterfactual --output /tmp/patient_liver_tdln
           test -f /tmp/patient_liver_tdln/patient_liver_tdln_audit.json
           test -f /tmp/patient_liver_tdln/patient_liver_tdln_counterfactual.json
-          python scripts/augment_liver_tdln_counterfactual.py --features /tmp/features.csv --days 3 --step 0.5 --dose-days 0 --output /tmp/liver_cf_features.csv
           tdln-pd1 calibrate-feature-state-mapping --observations examples/feature_state_mapping_observations.csv --fit tcf7_coefficient --base-mapping examples/feature_state_mapping.json --output /tmp/mapping_calibration
           tdln-pd1 verify-calibration --audit /tmp/mapping_calibration/mapping_calibration_provenance.json --observations examples/feature_state_mapping_observations.csv --base-mapping examples/feature_state_mapping.json
           tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output /tmp/qc.json
@@ -48,6 +47,7 @@ jobs:
           tdln-pd1 verify-calibration --audit /tmp/spatial_calibration/spatial_calibration_provenance.json --observations examples/spatial_longitudinal_observations.csv
           python scripts/calibrate_liver_tdln_bridge.py --observations examples/liver_tdln_bridge_observations.csv --fit bridge.antigen_drainage_gain --output /tmp/liver_bridge_calibration --max-nfev 60
           tdln-pd1 verify-calibration --audit /tmp/liver_bridge_calibration/liver_tdln_bridge_provenance.json --observations examples/liver_tdln_bridge_observations.csv
+          python scripts/augment_liver_tdln_counterfactual.py --features /tmp/features.csv --days 3 --step 0.5 --dose-days 0 --bridge-parameters /tmp/liver_bridge_calibration/fitted_liver_tdln_bridge.json --output /tmp/liver_cf_features.csv
           tdln-pd1 spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --time-column sampling_day --baseline-values 0 --output /tmp/spatial_cohort_initial.csv
           tdln-pd1 verify-spatial-features --audit /tmp/spatial_cohort_initial.csv.spatial-audit.json --spots examples/spatial_spots_cohort.csv --output /tmp/spatial_cohort_initial.csv
           tdln-pd1 propagate-spatial-uncertainty --parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --diagnostics /tmp/spatial_calibration/spatial_calibration_diagnostics.json --systemic-parameters /tmp/calibration/fitted_parameters.json --initial-zones /tmp/spatial_cohort_initial.csv --patient-id p0 --days 3 --dose-days 0 --samples 8 --output /tmp/spatial_uncertainty

@@ -65,5 +65,5 @@ python scripts/simulate_patient_liver_tdln.py \
 
 `--paired-counterfactual` 使用完全相同的患者特征、初始状态、桥接参数和数值设置，同时运行自然进展与给定抗 PD-1 方案。附加 JSON 报告最终肿瘤负荷的绝对变化／相对降低、肿瘤效应细胞时间积分、峰值 PD-1 占有率以及输出淋巴效应细胞端点。它是模型内部的机制处理效应，不是 RECIST 分类、临床应答概率或因果治疗效应估计。
 
-队列训练前可运行 `scripts/augment_liver_tdln_counterfactual.py`。它逐患者生成 11 个 `liver_cf_*` 机制特征，并保留原始单细胞特征。审计文件绑定输入、输出、剂量方案和映射系数，验证时会重新模拟整个队列并比较确定性输出哈希。CI 的 PD-1 训练管线实际使用这张增强表，因此这些反事实不是仅供展示的旁路结果。
+队列训练前可运行 `scripts/augment_liver_tdln_counterfactual.py`。它逐患者生成 11 个 `liver_cf_*` 机制特征，并保留原始单细胞特征。`--bridge-parameters` 可读取 `calibrate_liver_tdln_bridge.py` 产生的拟合参数；文件必须明确标记 `research_only=true`，内容及 SHA-256 会写入增强审计。验证时会重新模拟整个队列并比较确定性输出哈希。CI 按“桥接校准 → 队列反事实 → 预测训练”的顺序实际使用这张增强表，因此这些反事实不是仅供展示的旁路结果。
 

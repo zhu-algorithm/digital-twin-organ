@@ -13,7 +13,9 @@ import pandas as pd
 from .hybrid import (_outcome_like_columns, initial_state_from_features,
                      spatial_initial_state_from_features)
 from .liver_tdln_coupling import LiverTDLNCouplingParameters
+from .liver_tdln_coupling import _validate_coupling
 from .liver_tdln_spatial import (LiverTDLNSpatialBridge,
+                                 _validate_bridge,
                                  simulate_liver_tdln_spatial)
 from .provenance import sha256_file
 from .simulator import Dose
@@ -159,9 +161,14 @@ def patient_liver_bridge_from_features(
 def simulate_patient_liver_tdln(
     row: pd.Series, *, days: float = 28.0, step: float = 0.25,
     doses: tuple[Dose, ...] = (), mapping: FeatureBridgeMapping | None = None,
+    base_coupling: LiverTDLNCouplingParameters | None = None,
+    base_bridge: LiverTDLNSpatialBridge | None = None,
+    base_spatial: SpatialParameters | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """Run the full organ/system/six-zone model from one outcome-free feature row."""
-    patient = patient_liver_bridge_from_features(row, mapping=mapping)
+    patient = patient_liver_bridge_from_features(
+        row, mapping=mapping, base_coupling=base_coupling,
+        base_bridge=base_bridge, base_spatial=base_spatial)
     immune_initial = initial_state_from_features(row)
     spatial_initial = spatial_initial_state_from_features(row)
     systemic, spatial = simulate_liver_tdln_spatial(
@@ -189,6 +196,9 @@ def _spatial_endpoint(frame: pd.DataFrame, species: str, zone: str) -> float:
 def simulate_patient_liver_tdln_counterfactual(
     row: pd.Series, *, doses: tuple[Dose, ...], days: float = 28.0,
     step: float = 0.25, mapping: FeatureBridgeMapping | None = None,
+    base_coupling: LiverTDLNCouplingParameters | None = None,
+    base_bridge: LiverTDLNSpatialBridge | None = None,
+    base_spatial: SpatialParameters | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
     """Run matched natural-history and anti-PD-1 arms for one patient.
 
@@ -202,7 +212,9 @@ def simulate_patient_liver_tdln_counterfactual(
     audit: dict | None = None
     for arm, schedule in (("control", ()), ("anti_pd1", doses)):
         systemic, spatial, arm_audit = simulate_patient_liver_tdln(
-            row, days=days, step=step, doses=schedule, mapping=mapping)
+            row, days=days, step=step, doses=schedule, mapping=mapping,
+            base_coupling=base_coupling, base_bridge=base_bridge,
+            base_spatial=base_spatial)
         systemic, spatial = systemic.copy(), spatial.copy()
         systemic["arm"], spatial["arm"] = arm, arm
         frames_systemic.append(systemic)
@@ -259,6 +271,9 @@ COUNTERFACTUAL_FEATURES = {
 def augment_with_liver_tdln_counterfactuals(
     features: pd.DataFrame, *, doses: tuple[Dose, ...], days: float = 28.0,
     step: float = 0.25, mapping: FeatureBridgeMapping | None = None,
+    base_coupling: LiverTDLNCouplingParameters | None = None,
+    base_bridge: LiverTDLNSpatialBridge | None = None,
+    base_spatial: SpatialParameters | None = None,
 ) -> pd.DataFrame:
     """Append label-free matched liver–TDLN contrasts for every patient."""
     if "patient_id" not in features:
@@ -275,7 +290,9 @@ def augment_with_liver_tdln_counterfactuals(
     rows = []
     for _, row in out.iterrows():
         _, _, effect, _ = simulate_patient_liver_tdln_counterfactual(
-            row, doses=doses, days=days, step=step, mapping=mapping)
+            row, doses=doses, days=days, step=step, mapping=mapping,
+            base_coupling=base_coupling, base_bridge=base_bridge,
+            base_spatial=base_spatial)
         values = {target: float(effect[source])
                   for source, target in COUNTERFACTUAL_FEATURES.items()}
         if not np.isfinite(list(values.values())).all():
@@ -286,6 +303,7 @@ def augment_with_liver_tdln_counterfactuals(
 
 def verify_liver_counterfactual_augmentation(
     audit_path: str | Path, features_path: str | Path, output_path: str | Path,
+    bridge_parameters_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -298,19 +316,45 @@ def verify_liver_counterfactual_augmentation(
         raise ValueError("liver counterfactual augmentation input hash mismatch")
     if audit.get("output", {}).get("sha256") != sha256_file(output_path):
         raise ValueError("liver counterfactual augmentation output hash mismatch")
+    parameter_record = audit.get("bridge_parameters")
+    if parameter_record is not None:
+        if bridge_parameters_path is None:
+            raise ValueError("bridge parameter file is required to replay this augmentation")
+        if parameter_record.get("sha256") != sha256_file(bridge_parameters_path):
+            raise ValueError("liver counterfactual bridge parameter hash mismatch")
     settings = audit.get("settings", {})
     try:
         doses = tuple(Dose(float(day), float(amount)) for day, amount in zip(
             settings["dose_days"], settings["dose_amounts"], strict=True))
         days, step = float(settings["days"]), float(settings["step"])
         mapping = FeatureBridgeMapping(**audit["mapping"])
+        base_coupling = LiverTDLNCouplingParameters(**audit["base_parameters"]["coupling"])
+        base_bridge = LiverTDLNSpatialBridge(**audit["base_parameters"]["spatial_bridge"])
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("invalid liver counterfactual replay settings") from error
     replay = augment_with_liver_tdln_counterfactuals(
-        pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping)
+        pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
+        base_coupling=base_coupling, base_bridge=base_bridge)
     replay_sha = hashlib.sha256(
         replay.to_csv(index=False).encode("utf-8")).hexdigest()
     if replay_sha != audit["output"]["sha256"]:
         raise ValueError("liver counterfactual augmentation derivation replay mismatch")
     return audit
+
+
+def load_liver_bridge_parameters(
+    path: str | Path,
+) -> tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge]:
+    """Load and fail-closed validate a saved liver–TDLN calibration."""
+    payload = json.loads(Path(path).read_text())
+    if payload.get("research_only") is not True:
+        raise ValueError("liver bridge parameter file must declare research_only=true")
+    try:
+        coupling = LiverTDLNCouplingParameters(**payload["coupling"])
+        bridge = LiverTDLNSpatialBridge(**payload["spatial_bridge"])
+    except (KeyError, TypeError) as error:
+        raise ValueError("invalid liver bridge parameter schema") from error
+    _validate_coupling(coupling)
+    _validate_bridge(bridge)
+    return coupling, bridge
 

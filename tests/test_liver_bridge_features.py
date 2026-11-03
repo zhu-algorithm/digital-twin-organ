@@ -6,6 +6,7 @@ import pytest
 from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              patient_liver_bridge_from_features,
                                              augment_with_liver_tdln_counterfactuals,
+                                             load_liver_bridge_parameters,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
                                              verify_liver_counterfactual_augmentation,
@@ -156,6 +157,10 @@ def test_cohort_counterfactual_audit_replays_and_rejects_tampering(tmp_path):
         "settings": {"days": 2, "step": 0.5, "dose_days": [0],
                      "dose_amounts": [1.0]},
         "mapping": FeatureBridgeMapping().__dict__,
+        "base_parameters": {
+            "coupling": LiverTDLNCouplingParameters().__dict__,
+            "spatial_bridge": LiverTDLNSpatialBridge().__dict__,
+        },
     }
     audit_path.write_text(json.dumps(audit))
     assert verify_liver_counterfactual_augmentation(
@@ -164,3 +169,26 @@ def test_cohort_counterfactual_audit_replays_and_rejects_tampering(tmp_path):
     with pytest.raises(ValueError, match="output hash mismatch"):
         verify_liver_counterfactual_augmentation(
             audit_path, features_path, output_path)
+
+
+def test_saved_bridge_parameters_change_cohort_features_and_fail_closed(tmp_path):
+    parameter_path = tmp_path / "bridge.json"
+    parameter_path.write_text(json.dumps({
+        "coupling": LiverTDLNCouplingParameters(immune_killing_gain=0.02).__dict__,
+        "spatial_bridge": LiverTDLNSpatialBridge(antigen_drainage_gain=0.8).__dict__,
+        "research_only": True,
+    }))
+    coupling, bridge = load_liver_bridge_parameters(parameter_path)
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
+    default = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=5, step=0.5)
+    calibrated = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=5, step=0.5,
+        base_coupling=coupling, base_bridge=bridge)
+    assert calibrated.liver_cf_tumour_relative_reduction.item() > default[
+        "liver_cf_tumour_relative_reduction"].item()
+    parameter_path.write_text(json.dumps({
+        "coupling": {}, "spatial_bridge": {}, "research_only": False,
+    }))
+    with pytest.raises(ValueError, match="research_only"):
+        load_liver_bridge_parameters(parameter_path)
