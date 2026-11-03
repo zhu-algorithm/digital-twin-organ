@@ -69,3 +69,5 @@ python scripts/simulate_patient_liver_tdln.py \
 
 同时提供 `--bridge-diagnostics` 与至少 2 个 `--uncertainty-samples` 时，增强器按诊断文件中的局部对数参数协方差进行相关抽样。每个点估计特征增加 `_q025`、`_q50`、`_q975` 列；种子、样本数和诊断文件哈希都进入可重放审计。区间仅传播局部桥接参数的不确定性，不包含模型结构误差、患者抽样误差、域偏移或临床结局误差。
 
+真实队列应以 `--treatment-manifest` 取代一个全队列共用的 `--dose-days`。CSV 必须逐患者给出 `regimen_id,agent_class,dose_days,model_dose_amount,dose_scale,response_definition`；患者集合必须与特征表完全一致，当前机制只接受 `agent_class=anti_pd1` 和明确的 `arbitrary_model_exposure` 尺度，同一训练队列必须共享一种应答定义。每位患者可有不同的给药日与模型暴露量。该清单及解析后的治疗契约进入增强审计，防止在标签治疗背景与模拟方案不一致时静默训练。
+

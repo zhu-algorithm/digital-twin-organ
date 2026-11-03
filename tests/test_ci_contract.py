@@ -19,6 +19,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--bridge-parameters /tmp/liver_bridge_calibration/fitted_liver_tdln_bridge.json",
         "--bridge-diagnostics /tmp/liver_bridge_calibration/liver_tdln_bridge_diagnostics.json",
         "--uncertainty-samples 4",
+        "--treatment-manifest examples/treatment_manifest.csv",
         "--features /tmp/liver_cf_features.csv",
         "verify-sensitivity --audit /tmp/sensitivity/sensitivity_provenance.json",
         "verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters /tmp/calibration/fitted_parameters.json --initial-zones /tmp/spatial_initial.csv",

@@ -1,0 +1,9 @@
+patient_id,regimen_id,agent_class,dose_days,model_dose_amount,dose_scale,response_definition
+p0,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture
+p1,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture
+p2,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture
+p3,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture
+p4,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture
+p5,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture
+p6,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture
+p7,synthetic_pd1_day0,anti_pd1,0,1.0,arbitrary_model_exposure,synthetic_binary_software_fixture

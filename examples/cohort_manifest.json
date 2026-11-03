@@ -16,6 +16,11 @@
       "sha256": "76c2708cd1e8d9eb8c6dae7524ea409ba4657d1ebecb91345fc21125651a7097"
     },
     {
+      "path": "treatment_manifest.csv",
+      "role": "patient anti-PD-1 model-regimen contract",
+      "sha256": "15ea1cc1fe2812d3318712d2d4415f9aafe0882cf8cfa0a843775c508bfa505b"
+    },
+    {
       "path": "spatial_spots_cohort.csv",
       "role": "spatially resolved mechanistic-state fixture",
       "sha256": "053fa04f98e6d6bd7dc736e83f57badb1b6f3212a413c73546a7eef5356fb11d"

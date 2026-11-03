@@ -8,6 +8,7 @@ from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              augment_with_liver_tdln_counterfactuals,
                                              liver_bridge_parameter_draws,
                                              load_liver_bridge_parameters,
+                                             validate_treatment_manifest,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
                                              verify_liver_counterfactual_augmentation,
@@ -221,3 +222,32 @@ def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals()
     bad = {**diagnostics, "fit_parameters": {"bridge.antigen_drainage_gain": 0.8}}
     with pytest.raises(ValueError, match="different centers"):
         liver_bridge_parameter_draws(coupling, bridge, bad, 4, 1)
+
+
+def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():
+    manifest = pd.DataFrame({
+        "patient_id": ["p1", "p2"], "regimen_id": ["d0", "d0_d2"],
+        "agent_class": ["anti_pd1", "anti_pd1"], "dose_days": ["0", "0,2"],
+        "model_dose_amount": [1.0, 0.5],
+        "dose_scale": ["arbitrary_model_exposure"] * 2,
+        "response_definition": ["RECIST_1_1_best_overall_response"] * 2,
+    })
+    schedules, contract = validate_treatment_manifest(manifest, ["p1", "p2"], days=5)
+    assert [dose.day for dose in schedules["p2"]] == [0, 2]
+    assert [dose.amount for dose in schedules["p2"]] == [0.5, 0.5]
+    assert contract["response_definition"] == "RECIST_1_1_best_overall_response"
+    features = pd.DataFrame({"patient_id": ["p1", "p2"], "sig_cytotoxic": [0.2, 0.2]})
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(), patient_doses=schedules, days=5, step=0.5)
+    assert out.loc[1, "liver_cf_peak_pd1_occupancy"] != out.loc[
+        0, "liver_cf_peak_pd1_occupancy"]
+    with pytest.raises(ValueError, match="exactly match"):
+        validate_treatment_manifest(manifest.iloc[:1], ["p1", "p2"], days=5)
+    with pytest.raises(ValueError, match="only agent_class"):
+        validate_treatment_manifest(
+            manifest.assign(agent_class=["anti_pd1", "anti_ctla4"]),
+            ["p1", "p2"], days=5)
+    with pytest.raises(ValueError, match="shared response_definition"):
+        validate_treatment_manifest(
+            manifest.assign(response_definition=["RECIST", "irRECIST"]),
+            ["p1", "p2"], days=5)

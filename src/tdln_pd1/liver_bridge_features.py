@@ -324,6 +324,7 @@ def augment_with_liver_tdln_counterfactuals(
     parameter_draws: tuple[
         tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge], ...
     ] | None = None,
+    patient_doses: dict[str, tuple[Dose, ...]] | None = None,
 ) -> pd.DataFrame:
     """Append label-free matched liver–TDLN contrasts for every patient."""
     if "patient_id" not in features:
@@ -337,12 +338,15 @@ def augment_with_liver_tdln_counterfactuals(
     out["patient_id"] = out.patient_id.astype(str).str.strip()
     if out.patient_id.eq("").any() or out.patient_id.duplicated().any():
         raise ValueError("features must have one unique, non-empty row per patient")
+    if patient_doses is not None and set(patient_doses) != set(out.patient_id):
+        raise ValueError("patient treatment schedules must exactly match feature patients")
     rows = []
     if parameter_draws is not None and len(parameter_draws) < 2:
         raise ValueError("parameter_draws must contain at least two samples")
     for _, row in out.iterrows():
+        schedule = patient_doses[str(row.patient_id)] if patient_doses is not None else doses
         _, _, effect, _ = simulate_patient_liver_tdln_counterfactual(
-            row, doses=doses, days=days, step=step, mapping=mapping,
+            row, doses=schedule, days=days, step=step, mapping=mapping,
             base_coupling=base_coupling, base_bridge=base_bridge,
             base_spatial=base_spatial)
         values = {target: float(effect[source])
@@ -353,7 +357,7 @@ def augment_with_liver_tdln_counterfactuals(
             sampled = {source: [] for source in COUNTERFACTUAL_FEATURES}
             for sampled_coupling, sampled_bridge in parameter_draws:
                 _, _, draw_effect, _ = simulate_patient_liver_tdln_counterfactual(
-                    row, doses=doses, days=days, step=step, mapping=mapping,
+                    row, doses=schedule, days=days, step=step, mapping=mapping,
                     base_coupling=sampled_coupling, base_bridge=sampled_bridge,
                     base_spatial=base_spatial)
                 for source in sampled:
@@ -371,6 +375,7 @@ def verify_liver_counterfactual_augmentation(
     audit_path: str | Path, features_path: str | Path, output_path: str | Path,
     bridge_parameters_path: str | Path | None = None,
     bridge_diagnostics_path: str | Path | None = None,
+    treatment_manifest_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -413,10 +418,22 @@ def verify_liver_counterfactual_augmentation(
             json.loads(Path(bridge_diagnostics_path).read_text()), samples, seed)
     elif diagnostic_record is not None:
         raise ValueError("bridge diagnostics supplied without uncertainty samples")
+    patient_doses = None
+    treatment_record = audit.get("treatment_manifest")
+    if treatment_record is not None:
+        if treatment_manifest_path is None:
+            raise ValueError("treatment manifest is required to replay this augmentation")
+        if treatment_record.get("sha256") != sha256_file(treatment_manifest_path):
+            raise ValueError("liver counterfactual treatment manifest hash mismatch")
+        patient_doses, manifest_summary = validate_treatment_manifest(
+            pd.read_csv(treatment_manifest_path),
+            pd.read_csv(features_path).patient_id.astype(str).tolist(), days)
+        if manifest_summary != audit.get("treatment_contract"):
+            raise ValueError("treatment manifest contract mismatch")
     replay = augment_with_liver_tdln_counterfactuals(
         pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
         base_coupling=base_coupling, base_bridge=base_bridge,
-        parameter_draws=parameter_draws)
+        parameter_draws=parameter_draws, patient_doses=patient_doses)
     replay_sha = hashlib.sha256(
         replay.to_csv(index=False).encode("utf-8")).hexdigest()
     if replay_sha != audit["output"]["sha256"]:
@@ -439,4 +456,57 @@ def load_liver_bridge_parameters(
     _validate_coupling(coupling)
     _validate_bridge(bridge)
     return coupling, bridge
+
+
+def validate_treatment_manifest(
+    manifest: pd.DataFrame, patient_ids: list[str], days: float,
+) -> tuple[dict[str, tuple[Dose, ...]], dict]:
+    """Validate patient-specific anti-PD-1 schedules and outcome semantics."""
+    required = {"patient_id", "regimen_id", "agent_class", "dose_days",
+                "model_dose_amount", "dose_scale", "response_definition"}
+    missing = required - set(manifest)
+    if missing:
+        raise ValueError(f"treatment manifest missing columns: {sorted(missing)}")
+    table = manifest.copy()
+    if table[list(required)].isna().any().any():
+        raise ValueError("treatment manifest required fields must be complete")
+    text_fields = ("patient_id", "regimen_id", "agent_class", "dose_days",
+                   "dose_scale", "response_definition")
+    if any(table[field].astype(str).str.strip().eq("").any() for field in text_fields):
+        raise ValueError("treatment manifest required text fields must be non-empty")
+    table["patient_id"] = table.patient_id.astype(str).str.strip()
+    expected = {str(value).strip() for value in patient_ids}
+    if (table.patient_id.eq("").any() or table.patient_id.duplicated().any()
+            or set(table.patient_id) != expected):
+        raise ValueError("treatment manifest must exactly match unique feature patients")
+    agent_classes = set(table.agent_class.astype(str).str.strip().str.lower())
+    if agent_classes != {"anti_pd1"}:
+        raise ValueError("treatment manifest supports only agent_class=anti_pd1")
+    scales = set(table.dose_scale.astype(str).str.strip())
+    if scales != {"arbitrary_model_exposure"}:
+        raise ValueError("treatment manifest dose_scale must be arbitrary_model_exposure")
+    response_definitions = set(table.response_definition.astype(str).str.strip())
+    if len(response_definitions) != 1 or "" in response_definitions:
+        raise ValueError("treatment manifest requires one shared response_definition")
+    schedules = {}
+    for row in table.itertuples(index=False):
+        try:
+            amount = float(row.model_dose_amount)
+            dose_days = tuple(float(value.strip()) for value in str(row.dose_days).split(",")
+                              if value.strip())
+        except (TypeError, ValueError) as error:
+            raise ValueError("treatment manifest doses must be numeric") from error
+        if (not np.isfinite(amount) or amount <= 0 or not dose_days
+                or len(set(dose_days)) != len(dose_days)
+                or any(not np.isfinite(day) or day < 0 or day >= days for day in dose_days)):
+            raise ValueError("treatment manifest has invalid positive in-window schedule")
+        schedules[row.patient_id] = tuple(Dose(day, amount) for day in sorted(dose_days))
+    summary = {
+        "agent_class": "anti_pd1",
+        "dose_scale": "arbitrary_model_exposure",
+        "response_definition": next(iter(response_definitions)),
+        "regimen_ids": sorted(set(table.regimen_id.astype(str).str.strip())),
+        "patient_specific_schedules": True,
+    }
+    return schedules, summary
 
