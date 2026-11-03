@@ -1,0 +1,9 @@
+day,target,value,sd,source
+2,antigen@subcapsular_sinus,0.1117916099,0.002235832199,synthetic_demo_not_biological_evidence
+2,mature_dc@paracortex,56.74294664,1.134858933,synthetic_demo_not_biological_evidence
+4,antigen@subcapsular_sinus,0.2003493653,0.004006987305,synthetic_demo_not_biological_evidence
+4,mature_dc@paracortex,372.8992244,7.457984488,synthetic_demo_not_biological_evidence
+6,antigen@subcapsular_sinus,0.239586901,0.00479173802,synthetic_demo_not_biological_evidence
+6,mature_dc@paracortex,849.1021594,16.98204319,synthetic_demo_not_biological_evidence
+8,antigen@subcapsular_sinus,0.2622243945,0.00524448789,synthetic_demo_not_biological_evidence
+8,mature_dc@paracortex,1325.254287,26.50508573,synthetic_demo_not_biological_evidence
