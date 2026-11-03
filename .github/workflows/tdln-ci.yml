@@ -27,7 +27,8 @@ jobs:
       - name: Verify dashboard model export is reproducible
         run: |
           python scripts/export_tdln_dashboard.py
-          git diff --exit-code -- docs/data/tdln_dashboard.json
+          python scripts/export_liver_tumor_dashboard.py
+          git diff --exit-code -- docs/data/tdln_dashboard.json docs/data/liver_tumor_dashboard.json
       - name: Verify end-to-end digital twin pipeline
         run: |
           tdln-pd1 featurize --cells examples/cells.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output /tmp/features.csv
