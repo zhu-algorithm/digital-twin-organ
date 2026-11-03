@@ -23,6 +23,7 @@
 - 实现：`src/tdln_pd1/liver_tumor.py`
 - 肝肿瘤–TDLN 闭环：`src/tdln_pd1/liver_tdln_coupling.py`
 - 六区空间桥接：`src/tdln_pd1/liver_tdln_spatial.py`
+- 纵向桥接校准：`src/tdln_pd1/liver_bridge_assimilation.py`
 - 确定性数据导出：`scripts/export_liver_tumor_dashboard.py`
 - 固定网页数据：`docs/data/liver_tumor_dashboard.json`
 - 自动测试：`tests/test_liver_tumor.py` 与 `tests/test_liver_tumor_dashboard.py`
@@ -33,4 +34,17 @@
 - 没有空间网格、肿瘤克隆异质性、免疫浸润或药代动力学。
 - 页面上的细胞点是状态量的可视编码，不是一细胞一测序记录；正常肝脏页面中的单细胞层仍是本仓库的实测数据入口。
 - 参数用于产生稳定、可审计的参考轨迹；需要以纵向影像、灌注和病理数据进行外部标定后，才可讨论预测性能。
+
+## 纵向校准输入
+
+校准器接受长表 CSV：`day,target,value,sd`。系统目标包括 `liver_tumour_fraction`、`tumour_antigen`、`effector_tumour` 和 `pd1_occupancy`；空间目标写作 `species@zone`，例如 `antigen@subcapsular_sinus` 或 `mature_dc@paracortex`。每一行必须带正的测量标准差，时间–目标组合必须唯一。可拟合参数以命名空间区分，例如 `bridge.antigen_drainage_gain` 和 `coupling.immune_killing_gain`。
+
+```bash
+python scripts/calibrate_liver_tdln_bridge.py \
+  --observations observations.csv \
+  --fit bridge.antigen_drainage_gain,coupling.immune_killing_gain \
+  --dose-days 0,21,42 --output artifacts/liver_bridge
+```
+
+输出包括完整参数、加权残差、局部可辨识性诊断和绑定输入／输出 SHA-256 的审计清单。缺乏足够观测或雅可比秩不足会设置 `identifiability_warning`；优化器成功不等于生物学、外部或临床验证。
 
