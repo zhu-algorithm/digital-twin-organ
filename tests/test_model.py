@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from tdln_pd1.model import (evaluate_external, evaluate_probabilities,
                             leave_one_site_out, predict_locked, train_evaluate,
-                            _safe_group_splits)
+                            build_model, _safe_group_splits)
 
 
 def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
@@ -33,11 +33,22 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert len(artifact["bootstrap_models"]) == 8
     assert metrics["prediction_uncertainty"]["members"] == 8
     assert metrics["selection_metric"] == "negative_log_loss"
+    assert metrics["probability_estimand"].startswith("unweighted_logistic_likelihood")
     assert "n_cells" not in artifact["features"]
     assert artifact["excluded_features"]["n_cells"] == "technical cell-count/QC feature"
     assert metrics["feature_schema"]["included"] == ["sig_exhaustion", "frac_cd8_t"]
     assert set(artifact["training_domain"]["features"]) == {"sig_exhaustion", "frac_cd8_t"}
     assert metrics["mechanism_data_fusion_ablation"]["status"] == "not_evaluable"
+
+
+def test_probability_model_preserves_observed_prevalence_without_class_reweighting():
+    features = pd.DataFrame({"constant": [1.0] * 20})
+    outcomes = pd.Series([0] * 16 + [1] * 4)
+    model = build_model(["constant"], c=100.0).fit(features, outcomes)
+    classifier = model.named_steps["classifier"]
+    assert classifier.class_weight is None
+    probabilities = model.predict_proba(features)[:, 1]
+    assert probabilities.mean() == pytest.approx(outcomes.mean(), abs=0.02)
 
 
 def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):

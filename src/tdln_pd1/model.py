@@ -21,6 +21,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 DEFAULT_C_GRID = (0.01, 0.1, 1.0, 10.0, 100.0)
+PROBABILITY_ESTIMAND = "unweighted_logistic_likelihood_observed_development_prevalence"
 FORBIDDEN_FEATURE_TOKENS = (
     "response", "responder", "outcome", "label", "recist",
     "progression_free", "overall_survival", "pfs", "os_months",
@@ -190,7 +191,7 @@ def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
         ]), feature_columns)
     ])
     return Pipeline([("prep", prep), ("classifier", LogisticRegression(
-        C=c, max_iter=2000, class_weight="balanced", solver="liblinear", random_state=42,
+        C=c, max_iter=2000, class_weight=None, solver="liblinear", random_state=42,
     ))])
 
 
@@ -590,6 +591,8 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     point_method = artifact.get("point_prediction_method")
     if point_method != "full_cohort_locked_model":
         raise ValueError("locked model lacks the version 9 point-prediction contract")
+    if artifact.get("probability_estimand") != PROBABILITY_ESTIMAND:
+        raise ValueError("locked model lacks the v9 probability-estimand contract")
     features = _normalise_patient_ids(features, "features")
     contracts = artifact.get("preprocessing_contracts")
     contract_sources = artifact.get("preprocessing_contract_sources")
@@ -904,6 +907,8 @@ def train_evaluate(
     metrics.update({"n_patients": int(len(data)), "n_splits": n_splits,
                     "hyperparameter_selection": tuning,
                     "selection_metric": "negative_log_loss",
+                    "probability_estimand": PROBABILITY_ESTIMAND,
+                    "development_response_prevalence": float(y.mean()),
                     "C_grid": list(DEFAULT_C_GRID),
                     "feature_schema": {"included": cols, "excluded": excluded},
                     "evaluation_type": "internal_cross_validation",
@@ -964,6 +969,8 @@ def train_evaluate(
                  "excluded_features": excluded,
                  "training_patients": int(len(data)), "selected_C": final_c,
                  "selection_metric": "negative_log_loss", "C_grid": list(DEFAULT_C_GRID),
+                 "probability_estimand": PROBABILITY_ESTIMAND,
+                 "development_response_prevalence": float(y.mean()),
                  "training_patient_hashes": training_hashes,
                  "training_cohort_fingerprint": cohort_fingerprint,
                  "training_feature_row_hashes": training_feature_hashes,
