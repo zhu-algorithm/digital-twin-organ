@@ -48,6 +48,8 @@ These sources motivate model structure. They do not validate the default numeric
 
 ## Verification completed
 
+The repository separates compatibility bounds from its qualified numerical environment. Package metadata permits bounded major-version ranges, while `constraints/py310-312.txt` exactly pins NumPy, pandas, SciPy, scikit-learn, joblib and relevant test/runtime dependencies for Python 3.10 and 3.12. CI installs that constraint set, records versions and reruns unit, dashboard and end-to-end derivation replay checks on both interpreters. This controls software-environment drift for the qualified build; it is not a container digest or a guarantee for unrelated hardware or BLAS implementations.
+
 - State schema and finite/non-negative trajectories.
 - Raw ODE solutions are checked against a state-scaled numerical error budget before any clipping; material negativity, non-finite states or receptor occupancy outside physical support fail closed.
 - Fail-closed finite/non-negative parameter and initial-state domains before numerical integration.

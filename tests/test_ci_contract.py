@@ -38,3 +38,12 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
     )
     for marker in required:
         assert marker in workflow
+
+
+def test_ci_uses_exact_supported_numerical_constraints():
+    workflow = (ROOT / ".github/workflows/tdln-ci.yml").read_text()
+    assert "pip install -c constraints/py310-312.txt -e '.[test]'" in workflow
+    constraints = (ROOT / "constraints/py310-312.txt").read_text()
+    for package in ("numpy", "pandas", "scipy", "scikit-learn", "joblib", "pytest"):
+        lines = [line for line in constraints.splitlines() if line.startswith(f"{package}==")]
+        assert len(lines) == 1

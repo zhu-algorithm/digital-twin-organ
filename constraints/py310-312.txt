@@ -1,0 +1,15 @@
+# Qualified numerical/test stack for the supported Python 3.10 and 3.12 CI matrix.
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.13.1
+scikit-learn==1.5.2
+joblib==1.4.2
+threadpoolctl==3.5.0
+python-dateutil==2.9.0.post0
+pytz==2025.2
+tzdata==2025.2
+packaging==24.2
+six==1.17.0
+pytest==8.3.5
+pluggy==1.5.0
+iniconfig==2.0.0
