@@ -28,6 +28,67 @@ def _load_json(path: Path) -> dict:
     return payload
 
 
+def _treatment_contract(artifact: dict) -> dict | None:
+    provenance = artifact.get("training_input_provenance")
+    if not isinstance(provenance, dict):
+        return None
+    audit = provenance.get("augmentation_audit")
+    if not isinstance(audit, dict):
+        return None
+    derivation = audit.get("inputs", {}).get("features", {}).get("derivation_payload")
+    if not isinstance(derivation, dict):
+        return None
+    contract = derivation.get("treatment_contract")
+    return contract if isinstance(contract, dict) else None
+
+
+def validate_prediction_feature_lineage(
+    model_path: str | Path, features_path: str | Path,
+) -> dict:
+    """Fail closed when a treatment-aware model receives untraceable semantics."""
+    model_path, features_path = Path(model_path), Path(features_path)
+    artifact = joblib.load(model_path)
+    training_contract = _treatment_contract(artifact) if isinstance(artifact, dict) else None
+    if training_contract is None:
+        return {"required": False, "verified": False}
+    audit_path = Path(f"{features_path}.twin-audit.json")
+    if not audit_path.is_file():
+        raise ValueError("treatment-aware model requires a feature twin audit")
+    audit = _load_json(audit_path)
+    feature_sha = sha256_file(features_path)
+    output = audit.get("output", {})
+    if (audit.get("schema_version") != 1
+            or audit.get("stage") != "label_free_twin_augmentation"
+            or audit.get("labels_used") is not False
+            or output.get("file") != features_path.name
+            or output.get("sha256") != feature_sha):
+        raise ValueError("invalid or mismatched prediction feature twin audit")
+    derivation = audit.get("inputs", {}).get("features", {}).get("derivation_payload")
+    if (not isinstance(derivation, dict)
+            or derivation.get("stage")
+            != "label_free_liver_tdln_counterfactual_augmentation"
+            or derivation.get("labels_used") is not False):
+        raise ValueError("prediction features lack label-free liver treatment lineage")
+    external_contract = derivation.get("treatment_contract")
+    if not isinstance(external_contract, dict):
+        raise ValueError("prediction features lack a treatment contract")
+    semantic_fields = ("agent_class", "dose_scale", "response_definition")
+    mismatches = [field for field in semantic_fields
+                  if external_contract.get(field) != training_contract.get(field)]
+    if mismatches:
+        raise ValueError("prediction treatment contract mismatch: " + ", ".join(mismatches))
+    return {
+        "required": True,
+        "verified": True,
+        "audit_file": audit_path.name,
+        "audit_sha256": sha256_file(audit_path),
+        "feature_sha256": feature_sha,
+        "compatible_semantics": {field: external_contract[field]
+                                 for field in semantic_fields},
+        "external_regimen_ids": external_contract.get("regimen_ids", []),
+    }
+
+
 def write_prediction_audit(
     model_path: str | Path,
     features_path: str | Path,
@@ -45,6 +106,7 @@ def write_prediction_audit(
     if (artifact["artifact_version"] != 9
             or artifact["point_prediction_method"] != "full_cohort_locked_model"):
         raise ValueError("locked model lacks the version 9 point-prediction contract")
+    lineage = validate_prediction_feature_lineage(model_path, features_path)
     payload = {
         "schema_version": 3,
         "stage": "locked_prediction",
@@ -62,6 +124,7 @@ def write_prediction_audit(
             "model": {"file": model_path.name, "sha256": sha256_file(model_path)},
             "features": {"file": features_path.name, "sha256": sha256_file(features_path)},
         },
+        "feature_lineage": lineage,
         "output": {
             "predictions": {
                 "file": predictions_path.name,
@@ -102,6 +165,9 @@ def verify_prediction_audit(
     if model_path is None or features_path is None:
         raise ValueError("prediction replay requires the locked model and feature table")
     model_path, features_path = Path(model_path), Path(features_path)
+    lineage = validate_prediction_feature_lineage(model_path, features_path)
+    if payload.get("feature_lineage") != lineage:
+        raise ValueError("prediction feature lineage does not match locked-prediction audit")
     for name, path in (("model", model_path), ("features", features_path)):
         record = payload.get("inputs", {}).get(name, {})
         if (record.get("file") != path.name or not path.is_file()

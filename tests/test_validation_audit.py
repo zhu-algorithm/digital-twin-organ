@@ -8,7 +8,8 @@ import pytest
 
 from tdln_pd1.validation_audit import (verify_evaluation_audit, verify_prediction_audit,
                                        write_evaluation_audit,
-                                       write_prediction_audit)
+                                       write_prediction_audit,
+                                       validate_prediction_feature_lineage)
 
 
 def _files(tmp_path: Path):
@@ -24,6 +25,55 @@ def _files(tmp_path: Path):
     predictions = tmp_path / "predictions.csv"
     predictions.write_text("patient_id,probability\np1,0.7\n")
     return model, features, predictions
+
+
+def _add_treatment_lineage(model: Path, features: Path, response="RECIST 1.1"):
+    contract = {"agent_class": "anti_pd1", "dose_scale": "arbitrary_model_exposure",
+                "response_definition": response, "regimen_ids": ["q3w"]}
+    artifact = joblib.load(model)
+    artifact["training_input_provenance"] = {"augmentation_audit": {"inputs": {
+        "features": {"derivation_payload": {"treatment_contract": contract}}
+    }}}
+    joblib.dump(artifact, model)
+    payload = {
+        "schema_version": 1, "stage": "label_free_twin_augmentation",
+        "labels_used": False,
+        "inputs": {"features": {"derivation_payload": {
+            "stage": "label_free_liver_tdln_counterfactual_augmentation",
+            "labels_used": False, "treatment_contract": contract,
+        }}},
+        "output": {"file": features.name,
+                   "sha256": hashlib.sha256(features.read_bytes()).hexdigest()},
+    }
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
+    return payload
+
+
+def test_treatment_aware_prediction_requires_compatible_feature_lineage(tmp_path: Path):
+    model, features, _ = _files(tmp_path)
+    payload = _add_treatment_lineage(model, features)
+    result = validate_prediction_feature_lineage(model, features)
+    assert result["required"] is result["verified"] is True
+    assert result["compatible_semantics"]["response_definition"] == "RECIST 1.1"
+
+    Path(f"{features}.twin-audit.json").unlink()
+    with pytest.raises(ValueError, match="requires a feature twin audit"):
+        validate_prediction_feature_lineage(model, features)
+
+    audit = Path(f"{features}.twin-audit.json")
+    payload["inputs"]["features"]["derivation_payload"]["treatment_contract"][
+        "response_definition"] = "iRECIST"
+    audit.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="response_definition"):
+        validate_prediction_feature_lineage(model, features)
+
+
+def test_prediction_lineage_rejects_feature_or_audit_tampering(tmp_path: Path):
+    model, features, _ = _files(tmp_path)
+    _add_treatment_lineage(model, features)
+    features.write_text("patient_id,x\np1,2\n")
+    with pytest.raises(ValueError, match="mismatched prediction feature twin audit"):
+        validate_prediction_feature_lineage(model, features)
 
 
 def test_prediction_and_evaluation_audits_bind_every_file(tmp_path: Path, monkeypatch):

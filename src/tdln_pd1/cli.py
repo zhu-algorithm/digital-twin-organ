@@ -27,7 +27,8 @@ from .sensitivity_audit import verify_sensitivity_audit, write_sensitivity_audit
 from .provenance import attach_derivation_audit, verify_manifest
 from .qc import cohort_qc
 from .verification import verify_twin
-from .validation_audit import (verify_evaluation_audit, verify_prediction_audit,
+from .validation_audit import (validate_prediction_feature_lineage,
+                               verify_evaluation_audit, verify_prediction_audit,
                                write_evaluation_audit, write_prediction_audit)
 from .calibration_audit import verify_calibration_audit, write_calibration_audit
 from .augmentation_audit import verify_augmentation_audit, write_augmentation_audit
@@ -400,6 +401,7 @@ def main() -> None:
         print(json.dumps(metrics, indent=2))
     elif args.command == "predict":
         import pandas as pd
+        validate_prediction_feature_lineage(args.model, args.features)
         predictions = predict_locked(args.model, pd.read_csv(args.features))
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         predictions.to_csv(args.output, index=False)
