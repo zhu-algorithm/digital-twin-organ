@@ -14,7 +14,7 @@ from tdln_pd1.validation_audit import (verify_evaluation_audit, verify_predictio
 def _files(tmp_path: Path):
     model = tmp_path / "model.joblib"
     joblib.dump({
-        "artifact_version": 8,
+        "artifact_version": 9,
         "training_cohort_fingerprint": "a" * 64,
         "training_feature_cohort_fingerprint": "b" * 64,
         "point_prediction_method": "full_cohort_locked_model",

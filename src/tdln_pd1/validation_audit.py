@@ -42,9 +42,9 @@ def write_prediction_audit(
                 "training_feature_cohort_fingerprint", "point_prediction_method"}
     if not isinstance(artifact, dict) or not required.issubset(artifact):
         raise ValueError("locked model lacks versioned training fingerprints")
-    if (artifact["artifact_version"] != 8
+    if (artifact["artifact_version"] != 9
             or artifact["point_prediction_method"] != "full_cohort_locked_model"):
-        raise ValueError("locked model lacks the version 8 point-prediction contract")
+        raise ValueError("locked model lacks the version 9 point-prediction contract")
     payload = {
         "schema_version": 3,
         "stage": "locked_prediction",

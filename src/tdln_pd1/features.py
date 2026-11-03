@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import numpy as np
 import pandas as pd
@@ -196,6 +198,9 @@ def aggregate_cells(
     else:
         vocabulary = tuple(sorted(set(x["cell_type"])))
         cell_type_names = _cell_type_feature_names(x["cell_type"])
+    vocabulary_sha256 = hashlib.sha256(json.dumps(
+        vocabulary, ensure_ascii=False, separators=(",", ":"),
+    ).encode("utf-8")).hexdigest()
     coverage = signature_gene_coverage(x.columns, min_signature_gene_coverage)
     for name, genes in SIGNATURES.items():
         x[f"sig_{name}"] = _mean_present(x, genes, min_signature_gene_coverage)
@@ -212,6 +217,8 @@ def aggregate_cells(
         row: dict[str, float | str] = {
             "patient_id": patient, "n_cells": len(feature_group), "n_cells_total_selected": len(group),
             "qc_min_signature_gene_coverage": min_signature_gene_coverage,
+            "qc_cell_type_vocabulary_sha256": vocabulary_sha256,
+            "qc_cell_type_vocabulary_locked": int(cell_type_vocabulary is not None),
         }
         for cell_type in vocabulary:
             row[f"frac_{cell_type_names[cell_type]}"] = 0.0

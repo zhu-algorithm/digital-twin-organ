@@ -131,19 +131,19 @@ def _select_model_features(
     ]
     if forbidden:
         raise ValueError(f"forbidden outcome-like feature columns: {sorted(forbidden)}")
-    non_numeric = [column for column in candidates
-                   if not pd.api.types.is_numeric_dtype(features[column])]
-    if non_numeric:
-        raise ValueError(
-            "model features must be numeric; keep metadata in the label/cohort table: "
-            f"{sorted(non_numeric)}"
-        )
     excluded = {
         column: "technical cell-count/QC feature"
         for column in candidates
         if column == "n_cells" or column.startswith("n_cells_") or column.startswith("qc_")
     }
     included = [column for column in candidates if column not in excluded]
+    non_numeric = [column for column in included
+                   if not pd.api.types.is_numeric_dtype(features[column])]
+    if non_numeric:
+        raise ValueError(
+            "model features must be numeric; keep metadata in the label/cohort table: "
+            f"{sorted(non_numeric)}"
+        )
     if not included:
         raise ValueError("no eligible biological or mechanistic model features remain")
     _validate_model_matrix(features, included, "training")
@@ -159,6 +159,27 @@ def _select_model_features(
     if copied:
         raise ValueError(f"features exactly copy or invert the response labels: {sorted(copied)}")
     return included, excluded
+
+
+def _preprocessing_contracts(features: pd.DataFrame) -> dict[str, str]:
+    """Freeze constant cryptographic QC contracts without entering them into fitting."""
+    contracts = {}
+    for column in sorted(
+        name for name in features if name.startswith("qc_") and name.endswith("_sha256")
+    ):
+        values = features[column].dropna().astype(str).str.strip().unique().tolist()
+        if (len(values) != 1 or len(values[0]) != 64
+                or any(character not in "0123456789abcdef" for character in values[0].lower())):
+            raise ValueError(f"invalid or non-constant preprocessing contract: {column}")
+        contracts[column] = values[0].lower()
+    if "qc_cell_type_vocabulary_sha256" not in contracts:
+        fraction_schema = tuple(sorted(
+            column for column in features if column.startswith("frac_")
+        ))
+        contracts["qc_cell_type_vocabulary_sha256"] = hashlib.sha256(
+            json.dumps(fraction_schema, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+    return contracts
 
 
 def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
@@ -564,12 +585,35 @@ def _center_stratified_evaluation(
 def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFrame:
     """Apply an immutable fitted artifact to a new cohort without refitting."""
     artifact = joblib.load(model_path)
-    if not isinstance(artifact, dict) or artifact.get("artifact_version") != 8:
-        raise ValueError("locked prediction requires model artifact version 8")
+    if not isinstance(artifact, dict) or artifact.get("artifact_version") != 9:
+        raise ValueError("locked prediction requires model artifact version 9")
     point_method = artifact.get("point_prediction_method")
     if point_method != "full_cohort_locked_model":
-        raise ValueError("locked model lacks the version 8 point-prediction contract")
+        raise ValueError("locked model lacks the version 9 point-prediction contract")
     features = _normalise_patient_ids(features, "features")
+    contracts = artifact.get("preprocessing_contracts")
+    contract_sources = artifact.get("preprocessing_contract_sources")
+    if (not isinstance(contracts, dict)
+            or "qc_cell_type_vocabulary_sha256" not in contracts
+            or not isinstance(contract_sources, dict)):
+        raise ValueError("locked model lacks preprocessing contracts")
+    for column, expected in contracts.items():
+        if column not in features:
+            if (column == "qc_cell_type_vocabulary_sha256"
+                    and contract_sources.get(column) == "fraction_column_schema_fallback"):
+                fraction_schema = tuple(sorted(
+                    name for name in features if name.startswith("frac_")
+                ))
+                observed = hashlib.sha256(
+                    json.dumps(fraction_schema, separators=(",", ":")).encode("utf-8")
+                ).hexdigest()
+                values = [observed]
+            else:
+                raise ValueError(f"missing preprocessing contract: {column}")
+        else:
+            values = features[column].dropna().astype(str).str.strip().str.lower().unique().tolist()
+        if values != [expected]:
+            raise ValueError(f"preprocessing contract mismatch: {column}")
     required = artifact["features"]
     missing = set(required) - set(features.columns)
     if missing:
@@ -806,6 +850,11 @@ def train_evaluate(
     input_provenance: dict | None = None,
 ) -> dict:
     features, labels = _align_patients(features, labels)
+    preprocessing_contracts = _preprocessing_contracts(features)
+    preprocessing_contract_sources = {
+        name: ("embedded_feature_qc" if name in features else "fraction_column_schema_fallback")
+        for name in preprocessing_contracts
+    }
     data = features.merge(labels, on="patient_id", validate="one_to_one")
     if data["response"].nunique() != 2:
         raise ValueError("training needs both response classes")
@@ -920,11 +969,13 @@ def train_evaluate(
                  "training_feature_row_hashes": training_feature_hashes,
                  "training_feature_cohort_fingerprint": training_feature_cohort_fingerprint,
                  "training_domain": training_domain,
+                 "preprocessing_contracts": preprocessing_contracts,
+                 "preprocessing_contract_sources": preprocessing_contract_sources,
                  "training_input_provenance": input_provenance,
                  "bootstrap_models": bootstrap_models,
                  "uncertainty_method": "patient_bootstrap_refit",
                  "point_prediction_method": "full_cohort_locked_model",
-                 "artifact_version": 8}, output / "model.joblib")
+                 "artifact_version": 9}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     prediction_columns = {
         "patient_id": data["patient_id"], "response": y, "probability": prob,

@@ -24,7 +24,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert predictions.outer_fold.ge(1).all()
     assert predictions.fold_selected_C.isin([0.01, 0.1, 1.0, 10.0, 100.0]).all()
     artifact = joblib.load(tmp_path / "model.joblib")
-    assert artifact["artifact_version"] == 8
+    assert artifact["artifact_version"] == 9
     assert artifact["selected_C"] in artifact["C_grid"]
     assert len(artifact["training_patient_hashes"]) == 8
     assert len(artifact["training_cohort_fingerprint"]) == 64
@@ -64,6 +64,36 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
     predictions = pd.read_csv(tmp_path / "cv_predictions.csv")
     assert predictions.data_only_probability.notna().all()
     assert predictions.mechanism_only_probability.notna().all()
+
+
+def test_locked_prediction_enforces_embedded_preprocessing_contract(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    vocabulary_hash = "a" * 64
+    features = pd.DataFrame({
+        "patient_id": patients,
+        "frac_cd8_t": [0.2, 0.3, 0.25, 0.35, 0.6, 0.7, 0.65, 0.75],
+        "qc_cell_type_vocabulary_sha256": [vocabulary_hash] * 8,
+    })
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+    artifact = joblib.load(tmp_path / "model.joblib")
+    assert artifact["preprocessing_contracts"] == {
+        "qc_cell_type_vocabulary_sha256": vocabulary_hash,
+    }
+    assert artifact["preprocessing_contract_sources"] == {
+        "qc_cell_type_vocabulary_sha256": "embedded_feature_qc",
+    }
+    external = features.iloc[[0]].copy()
+    external["patient_id"] = "external"
+    assert predict_locked(tmp_path / "model.joblib", external).probability.notna().all()
+    external["qc_cell_type_vocabulary_sha256"] = "b" * 64
+    with pytest.raises(ValueError, match="preprocessing contract mismatch"):
+        predict_locked(tmp_path / "model.joblib", external)
+    with pytest.raises(ValueError, match="missing preprocessing contract"):
+        predict_locked(
+            tmp_path / "model.joblib",
+            external.drop(columns="qc_cell_type_vocabulary_sha256"),
+        )
 
 
 def test_probability_evaluation_reports_calibration_and_intervals():
@@ -271,9 +301,9 @@ def test_locked_prediction_rejects_legacy_or_ambiguous_point_estimate_artifacts(
     labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
     train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
     artifact = joblib.load(tmp_path / "model.joblib")
-    artifact["artifact_version"] = 7
+    artifact["artifact_version"] = 8
     joblib.dump(artifact, tmp_path / "legacy.joblib")
-    with pytest.raises(ValueError, match="version 8"):
+    with pytest.raises(ValueError, match="version 9"):
         predict_locked(
             tmp_path / "legacy.joblib",
             pd.DataFrame({"patient_id": ["external"], "x": [0.5]}),
