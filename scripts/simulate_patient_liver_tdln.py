@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from tdln_pd1.liver_bridge_features import (simulate_patient_liver_tdln,
+                                             simulate_patient_liver_tdln_counterfactual,
                                              verify_patient_liver_tdln_audit)
 from tdln_pd1.provenance import sha256_file
 from tdln_pd1.simulator import Dose
@@ -26,6 +27,7 @@ def main() -> None:
     parser.add_argument("--step", type=float, default=0.25)
     parser.add_argument("--dose-days", default="")
     parser.add_argument("--dose", type=float, default=1.0)
+    parser.add_argument("--paired-counterfactual", action="store_true")
     args = parser.parse_args()
     features = pd.read_csv(args.features)
     if "patient_id" not in features:
@@ -35,13 +37,21 @@ def main() -> None:
         raise ValueError("patient-id must select exactly one feature row")
     doses = tuple(Dose(float(day), args.dose)
                   for day in args.dose_days.split(",") if day.strip())
-    systemic, spatial, audit = simulate_patient_liver_tdln(
-        matches.iloc[0], days=args.days, step=args.step, doses=doses)
+    if args.paired_counterfactual:
+        systemic, spatial, effect, audit = simulate_patient_liver_tdln_counterfactual(
+            matches.iloc[0], days=args.days, step=args.step, doses=doses)
+    else:
+        systemic, spatial, audit = simulate_patient_liver_tdln(
+            matches.iloc[0], days=args.days, step=args.step, doses=doses)
+        effect = None
     args.output.mkdir(parents=True, exist_ok=True)
     systemic_path = args.output / "patient_liver_tdln_systemic.csv"
     spatial_path = args.output / "patient_liver_tdln_spatial.csv"
     systemic.to_csv(systemic_path, index=False)
     spatial.to_csv(spatial_path, index=False)
+    if effect is not None:
+        effect_path = args.output / "patient_liver_tdln_counterfactual.json"
+        effect_path.write_text(json.dumps(effect, indent=2, sort_keys=True) + "\n")
     audit.update({
         "patient_id": str(args.patient_id),
         "input": {"file": args.features.name, "sha256": sha256_file(args.features)},
@@ -52,12 +62,19 @@ def main() -> None:
             spatial_path.name: sha256_file(spatial_path),
         },
     })
+    audit["settings"]["paired_counterfactual"] = args.paired_counterfactual
+    if effect is not None:
+        audit["outputs"][effect_path.name] = sha256_file(effect_path)
     (args.output / "patient_liver_tdln_audit.json").write_text(
         json.dumps(audit, indent=2, sort_keys=True) + "\n")
     verify_patient_liver_tdln_audit(args.output, args.features)
     print(json.dumps({"patient_id": str(args.patient_id),
                       "final_liver_tumour_fraction": float(systemic.liver_tumour_fraction.iloc[-1]),
                       "peak_pd1_occupancy": float(systemic.pd1_occupancy.max()),
+                      "paired_counterfactual": args.paired_counterfactual,
+                      "mechanistic_relative_tumour_reduction": (
+                          effect["final_liver_tumour_fraction_relative_reduction"]
+                          if effect is not None else None),
                       "labels_used": False, "research_only": True}, indent=2))
 
 

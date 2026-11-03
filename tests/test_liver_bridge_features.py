@@ -5,7 +5,9 @@ import pytest
 
 from tdln_pd1.liver_bridge_features import (patient_liver_bridge_from_features,
                                              simulate_patient_liver_tdln,
+                                             simulate_patient_liver_tdln_counterfactual,
                                              verify_patient_liver_tdln_audit)
+from tdln_pd1.simulator import Dose
 from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
 from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
@@ -83,3 +85,32 @@ def test_patient_audit_verifier_detects_tampering(tmp_path):
     trajectory.write_text("day,tumour\n0,0.9\n")
     with pytest.raises(ValueError, match="output hash mismatch"):
         verify_patient_liver_tdln_audit(output, features)
+
+
+def test_patient_counterfactual_is_matched_and_reports_mechanistic_effect():
+    row = pd.Series({"sig_dendritic_activation": 0.5, "sig_cytotoxic": 0.5,
+                     "sig_exhaustion": 0.2, "frac_cd8_t": 0.3})
+    systemic, spatial, effect, audit = simulate_patient_liver_tdln_counterfactual(
+        row, doses=(Dose(0, 1.0), Dose(7, 1.0)), days=14, step=0.5)
+    control = systemic[systemic.arm.eq("control")].reset_index(drop=True)
+    treated = systemic[systemic.arm.eq("anti_pd1")].reset_index(drop=True)
+    assert control.iloc[0].liver_tumour_fraction == pytest.approx(
+        treated.iloc[0].liver_tumour_fraction)
+    assert control.pd1_occupancy.max() == pytest.approx(0.0)
+    assert treated.pd1_occupancy.max() > 0
+    assert effect["anti_pd1_final_liver_tumour_fraction"] < effect[
+        "control_final_liver_tumour_fraction"]
+    assert effect["effector_tumour_auc_fold_change"] > 1
+    assert effect["efferent_effector_endpoint_fold_change"] > 1
+    assert effect["interpretation"].endswith("not_clinical_response")
+    assert set(spatial.arm) == {"control", "anti_pd1"}
+    assert audit["labels_used"] is False
+
+
+def test_patient_counterfactual_requires_active_treatment():
+    with pytest.raises(ValueError, match="positive dose schedule"):
+        simulate_patient_liver_tdln_counterfactual(
+            pd.Series(dtype=float), doses=(), days=2)
+    with pytest.raises(ValueError, match="positive dose schedule"):
+        simulate_patient_liver_tdln_counterfactual(
+            pd.Series(dtype=float), doses=(Dose(0, 0.0),), days=2)

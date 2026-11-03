@@ -57,8 +57,11 @@ python scripts/calibrate_liver_tdln_bridge.py \
 ```bash
 python scripts/simulate_patient_liver_tdln.py \
   --features patient_features.csv --patient-id P001 \
-  --dose-days 0,21,42 --output artifacts/P001_liver_tdln
+  --dose-days 0,21,42 --paired-counterfactual \
+  --output artifacts/P001_liver_tdln
 ```
 
 命令输出系统层与六区空间轨迹，以及记录所用特征、回退项、映射系数、输入文件哈希和输出哈希的患者级审计。任何疑似治疗结局字段都会在模拟前被拒绝，防止应答标签泄漏进机制特征。
+
+`--paired-counterfactual` 使用完全相同的患者特征、初始状态、桥接参数和数值设置，同时运行自然进展与给定抗 PD-1 方案。附加 JSON 报告最终肿瘤负荷的绝对变化／相对降低、肿瘤效应细胞时间积分、峰值 PD-1 占有率以及输出淋巴效应细胞端点。它是模型内部的机制处理效应，不是 RECIST 分类、临床应答概率或因果治疗效应估计。
 

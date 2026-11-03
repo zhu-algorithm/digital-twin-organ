@@ -171,3 +171,71 @@ def simulate_patient_liver_tdln(
     )
     return systemic, spatial, patient.audit
 
+
+def _time_integral(frame: pd.DataFrame, column: str) -> float:
+    time = frame.day.to_numpy(dtype=float)
+    values = frame[column].to_numpy(dtype=float)
+    return float(np.sum(np.diff(time) * (values[:-1] + values[1:]) / 2.0))
+
+
+def _spatial_endpoint(frame: pd.DataFrame, species: str, zone: str) -> float:
+    selected = frame[frame.species.eq(species) & frame.zone.eq(zone)]
+    if selected.empty:
+        raise ValueError(f"missing spatial endpoint: {species}@{zone}")
+    return float(selected.sort_values("day").amount.iloc[-1])
+
+
+def simulate_patient_liver_tdln_counterfactual(
+    row: pd.Series, *, doses: tuple[Dose, ...], days: float = 28.0,
+    step: float = 0.25, mapping: FeatureBridgeMapping | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
+    """Run matched natural-history and anti-PD-1 arms for one patient.
+
+    The returned effect summary is a mechanistic model contrast, not a
+    calibrated probability or clinical response classification.
+    """
+    if not doses or not any(dose.amount > 0 for dose in doses):
+        raise ValueError("patient counterfactual requires an explicit positive dose schedule")
+    frames_systemic, frames_spatial = [], []
+    arm_runs: dict[str, tuple[pd.DataFrame, pd.DataFrame]] = {}
+    audit: dict | None = None
+    for arm, schedule in (("control", ()), ("anti_pd1", doses)):
+        systemic, spatial, arm_audit = simulate_patient_liver_tdln(
+            row, days=days, step=step, doses=schedule, mapping=mapping)
+        systemic, spatial = systemic.copy(), spatial.copy()
+        systemic["arm"], spatial["arm"] = arm, arm
+        frames_systemic.append(systemic)
+        frames_spatial.append(spatial)
+        arm_runs[arm] = systemic, spatial
+        audit = arm_audit
+
+    control, control_spatial = arm_runs["control"]
+    treated, treated_spatial = arm_runs["anti_pd1"]
+    control_endpoint = float(control.liver_tumour_fraction.iloc[-1])
+    treated_endpoint = float(treated.liver_tumour_fraction.iloc[-1])
+    relative_reduction = ((control_endpoint - treated_endpoint)
+                          / max(control_endpoint, 1e-12))
+    effect = {
+        "schema_version": 1,
+        "interpretation": "mechanistic_matched_counterfactual_not_clinical_response",
+        "control_final_liver_tumour_fraction": control_endpoint,
+        "anti_pd1_final_liver_tumour_fraction": treated_endpoint,
+        "final_liver_tumour_fraction_absolute_change": treated_endpoint - control_endpoint,
+        "final_liver_tumour_fraction_relative_reduction": relative_reduction,
+        "control_effector_tumour_auc": _time_integral(control, "effector_tumour"),
+        "anti_pd1_effector_tumour_auc": _time_integral(treated, "effector_tumour"),
+        "anti_pd1_peak_pd1_occupancy": float(treated.pd1_occupancy.max()),
+        "control_efferent_effector_endpoint": _spatial_endpoint(
+            control_spatial, "effector", "efferent_lymph"),
+        "anti_pd1_efferent_effector_endpoint": _spatial_endpoint(
+            treated_spatial, "effector", "efferent_lymph"),
+    }
+    effect["effector_tumour_auc_fold_change"] = (
+        effect["anti_pd1_effector_tumour_auc"]
+        / max(effect["control_effector_tumour_auc"], 1e-12))
+    effect["efferent_effector_endpoint_fold_change"] = (
+        effect["anti_pd1_efferent_effector_endpoint"]
+        / max(effect["control_efferent_effector_endpoint"], 1e-12))
+    return (pd.concat(frames_systemic, ignore_index=True),
+            pd.concat(frames_spatial, ignore_index=True), effect, audit or {})
+

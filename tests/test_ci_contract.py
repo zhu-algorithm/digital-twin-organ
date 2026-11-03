@@ -13,6 +13,8 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--initial-zones /tmp/spatial_initial.csv",
         "--patient-id example_patient",
         "--dose-days 0",
+        "--paired-counterfactual",
+        "patient_liver_tdln_counterfactual.json",
         "verify-sensitivity --audit /tmp/sensitivity/sensitivity_provenance.json",
         "verify-sensitivity --audit /tmp/spatial_sensitivity/spatial_sensitivity_provenance.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --systemic-parameters /tmp/calibration/fitted_parameters.json --initial-zones /tmp/spatial_initial.csv",
         "verify-calibration --audit /tmp/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv",
