@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from scipy.integrate import trapezoid
 
 from tdln_pd1.liver_tdln_coupling import (LiverTDLNCouplingParameters,
                                           simulate_liver_tdln)
@@ -26,7 +27,7 @@ def test_anti_pd1_closes_the_loop_back_to_lower_viable_liver_tumour():
     control = simulate_liver_tdln(days=56)
     treated = simulate_liver_tdln(days=56, doses=(Dose(0, 1.0), Dose(21, 1.0), Dose(42, 1.0)))
     assert treated.pd1_occupancy.max() > control.pd1_occupancy.max()
-    assert np.trapezoid(treated.effector_tumour, treated.day) > np.trapezoid(
+    assert trapezoid(treated.effector_tumour, treated.day) > trapezoid(
         control.effector_tumour, control.day)
     assert treated.tumour_cells.iloc[-1] < control.tumour_cells.iloc[-1]
 

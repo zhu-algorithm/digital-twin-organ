@@ -34,8 +34,24 @@ def _records(frame):
 
 def _immune_records(frame):
     days = np.arange(0.0, 84.01, 2.0)
-    return [{"day": float(day), **{name: round(float(np.interp(day, frame.day, frame[name])), 6)
-                                    for name in IMMUNE_COLUMNS}} for day in days]
+    # Dashboard values are deliberately quantised to their display resolution.
+    # This avoids presenting solver/BLAS-scale digits as biological precision
+    # and keeps the checked-in export byte-stable across the qualified matrix.
+    count_columns = {"mature_dc_tdln", "tpex_tdln", "effector_tdln", "effector_tumour"}
+    records = []
+    for day in days:
+        row = {"day": float(day)}
+        for name in IMMUNE_COLUMNS:
+            value = float(np.interp(day, frame.day, frame[name]))
+            if name == "tumour_cells":
+                value = round(value, -2)
+            elif name in count_columns:
+                value = round(value, -1)
+            else:
+                value = round(value, 4)
+            row[name] = value
+        records.append(row)
+    return records
 
 
 def build_dashboard_data() -> dict:
