@@ -57,6 +57,7 @@ def _immune_records(frame):
 
 
 def _spatial_records(frame):
+    display = lambda value: float(format(float(value), ".3g"))
     records = {}
     for arm in ("control", "anti_pd1"):
         arm_frame = frame[frame.arm.eq(arm)]
@@ -68,10 +69,10 @@ def _spatial_records(frame):
                 for zone in (item.name for item in ZONES):
                     series = arm_frame[arm_frame.species.eq(species) & arm_frame.zone.eq(zone)]
                     value = float(np.interp(day, series.day, series.amount))
-                    values[species][zone] = round(value, 4 if species == "antigen" else -1)
+                    values[species][zone] = display(value)
             source_rows = arm_frame[arm_frame.day.eq(day)]
             source = float(source_rows.afferent_antigen_source.iloc[0])
-            arm_records.append({"day": float(day), "afferent_antigen_source": round(source, 4),
+            arm_records.append({"day": float(day), "afferent_antigen_source": display(source),
                                 "values": values})
         records[arm] = arm_records
     return records
