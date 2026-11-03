@@ -149,6 +149,40 @@ def _assigned_clonotypes(series: pd.Series) -> pd.Series:
     return clones[~clones.str.lower().isin(UNASSIGNED_CLONOTYPES)]
 
 
+def _clonotype_summary(clones: pd.Series, prefix: str) -> dict[str, float]:
+    counts = clones.value_counts()
+    if not len(counts):
+        return {
+            f"{prefix}_clone_richness": 0.0,
+            f"{prefix}_simpson_concentration": np.nan,
+            f"{prefix}_normalized_entropy": np.nan,
+            f"{prefix}_top_clone_fraction": np.nan,
+        }
+    probabilities = counts.to_numpy(dtype=float) / counts.sum()
+    entropy = float(-(probabilities * np.log(probabilities)).sum())
+    return {
+        f"{prefix}_clone_richness": float(len(counts)),
+        f"{prefix}_simpson_concentration": float(np.square(probabilities).sum()),
+        f"{prefix}_normalized_entropy": (
+            float(entropy / np.log(len(counts))) if len(counts) > 1 else 0.0
+        ),
+        f"{prefix}_top_clone_fraction": float(probabilities.max()),
+    }
+
+
+def _morisita_horn(first: pd.Series, second: pd.Series) -> float:
+    """Abundance-weighted overlap on relative clone frequencies."""
+    if not len(first) or not len(second):
+        return np.nan
+    labels = sorted(set(first) | set(second))
+    first_counts = first.value_counts().reindex(labels, fill_value=0).to_numpy(dtype=float)
+    second_counts = second.value_counts().reindex(labels, fill_value=0).to_numpy(dtype=float)
+    p = first_counts / first_counts.sum()
+    q = second_counts / second_counts.sum()
+    denominator = float(np.square(p).sum() + np.square(q).sum())
+    return float(2.0 * np.dot(p, q) / denominator) if denominator else np.nan
+
+
 def aggregate_cells(
     cells: pd.DataFrame,
     time_column: str | None = None,
@@ -240,17 +274,7 @@ def aggregate_cells(
             )
         if "clonotype_id" in group:
             clones = _assigned_clonotypes(group["clonotype_id"])
-            counts = clones.value_counts()
-            if len(counts):
-                probabilities = counts.to_numpy(dtype=float) / counts.sum()
-                entropy = float(-(probabilities * np.log(probabilities)).sum())
-                row["tcr_clone_richness"] = float(len(counts))
-                row["tcr_simpson_concentration"] = float(np.square(probabilities).sum())
-                row["tcr_normalized_entropy"] = float(entropy / np.log(len(counts))) if len(counts) > 1 else 0.0
-                row["tcr_top_clone_fraction"] = float(probabilities.max())
-            else:
-                row.update({"tcr_clone_richness": 0.0, "tcr_simpson_concentration": np.nan,
-                            "tcr_normalized_entropy": np.nan, "tcr_top_clone_fraction": np.nan})
+            row.update(_clonotype_summary(clones, "tcr"))
             if "tissue" in group:
                 tissue = group["tissue"].astype(str).str.lower()
                 tdln_clones = _assigned_clonotypes(
@@ -262,14 +286,22 @@ def aggregate_cells(
                 tdln, tumour = set(tdln_clones), set(tumour_clones)
                 shared = tdln & tumour
                 union = tdln | tumour
+                row.update(_clonotype_summary(tdln_clones, "tcr_tdln"))
+                row.update(_clonotype_summary(tumour_clones, "tcr_tumour"))
                 row["tcr_tdln_tumour_shared_fraction"] = (
                     float(len(shared) / len(tdln)) if tdln else np.nan
                 )
                 row["tcr_tdln_tumour_shared_cell_fraction"] = (
                     float(tdln_clones.isin(shared).mean()) if len(tdln_clones) else np.nan
                 )
+                row["tcr_tumour_tdln_shared_cell_fraction"] = (
+                    float(tumour_clones.isin(shared).mean()) if len(tumour_clones) else np.nan
+                )
                 row["tcr_tdln_tumour_jaccard"] = (
                     float(len(shared) / len(union)) if union else np.nan
+                )
+                row["tcr_tdln_tumour_morisita_horn"] = _morisita_horn(
+                    tdln_clones, tumour_clones,
                 )
         rows.append(row)
     result = pd.DataFrame(rows)

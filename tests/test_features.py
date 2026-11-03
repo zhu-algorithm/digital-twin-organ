@@ -105,7 +105,13 @@ def test_tcr_clonality_and_cross_tissue_sharing():
     assert row.tcr_top_clone_fraction == 0.5
     assert row.tcr_tdln_tumour_shared_fraction == pytest.approx(1 / 3)
     assert row.tcr_tdln_tumour_shared_cell_fraction == pytest.approx(1 / 2)
+    assert row.tcr_tumour_tdln_shared_cell_fraction == pytest.approx(1 / 2)
     assert row.tcr_tdln_tumour_jaccard == pytest.approx(1 / 4)
+    assert row.tcr_tdln_clone_richness == 3
+    assert row.tcr_tumour_clone_richness == 2
+    assert row.tcr_tdln_top_clone_fraction == 0.5
+    assert row.tcr_tumour_top_clone_fraction == 0.5
+    assert row.tcr_tdln_tumour_morisita_horn == pytest.approx(4 / 7)
     assert 0 < row.tcr_simpson_concentration < 1
     assert row.n_cells == 4
     assert row.n_cells_total_selected == 6
@@ -123,7 +129,9 @@ def test_unassigned_clonotype_placeholders_never_create_false_sharing():
     assert row.tcr_clone_richness == 2
     assert row.tcr_tdln_tumour_shared_fraction == 0.0
     assert row.tcr_tdln_tumour_shared_cell_fraction == 0.0
+    assert row.tcr_tumour_tdln_shared_cell_fraction == 0.0
     assert row.tcr_tdln_tumour_jaccard == 0.0
+    assert row.tcr_tdln_tumour_morisita_horn == 0.0
 
 
 def test_temporal_input_requires_explicit_baseline_and_excludes_post_treatment():
