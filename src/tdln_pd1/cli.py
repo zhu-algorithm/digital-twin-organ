@@ -737,6 +737,10 @@ def main() -> None:
         })
         feature_record = _source_record(args.features)
         feature_audit = Path(f"{args.features}.feature-audit.json")
+        liver_counterfactual_audit = Path(
+            f"{args.features}.liver-counterfactual-audit.json")
+        if feature_audit.exists() and liver_counterfactual_audit.exists():
+            raise ValueError("ambiguous feature derivation audits")
         if feature_audit.exists():
             feature_payload = json.loads(feature_audit.read_text())
             if (feature_payload.get("stage") != "label_free_single_cell_featurization"
@@ -745,6 +749,22 @@ def main() -> None:
                     or feature_payload.get("output", {}).get("sha256") != feature_record["sha256"]):
                 raise ValueError("invalid or mismatched feature derivation audit")
             feature_record["derivation_audit"] = _source_record(str(feature_audit))
+            feature_record["derivation_audit"]["stage"] = feature_payload["stage"]
+            feature_record["derivation_payload"] = feature_payload
+        elif liver_counterfactual_audit.exists():
+            feature_payload = json.loads(liver_counterfactual_audit.read_text())
+            if (feature_payload.get("stage")
+                    != "label_free_liver_tdln_counterfactual_augmentation"
+                    or feature_payload.get("labels_used") is not False
+                    or feature_payload.get("output", {}).get("file")
+                    != Path(args.features).name
+                    or feature_payload.get("output", {}).get("sha256")
+                    != feature_record["sha256"]):
+                raise ValueError("invalid or mismatched liver counterfactual derivation audit")
+            feature_record["derivation_audit"] = _source_record(
+                str(liver_counterfactual_audit))
+            feature_record["derivation_audit"]["stage"] = feature_payload["stage"]
+            feature_record["derivation_payload"] = feature_payload
         spatial_record = None
         if args.spatial_initial_zones:
             spatial_record = _source_record(args.spatial_initial_zones)

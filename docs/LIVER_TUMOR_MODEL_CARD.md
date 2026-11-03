@@ -71,3 +71,5 @@ python scripts/simulate_patient_liver_tdln.py \
 
 真实队列应以 `--treatment-manifest` 取代一个全队列共用的 `--dose-days`。CSV 必须逐患者给出 `regimen_id,agent_class,dose_days,model_dose_amount,dose_scale,response_definition`；患者集合必须与特征表完全一致，当前机制只接受 `agent_class=anti_pd1` 和明确的 `arbitrary_model_exposure` 尺度，同一训练队列必须共享一种应答定义。每位患者可有不同的给药日与模型暴露量。该清单及解析后的治疗契约进入增强审计，防止在标签治疗背景与模拟方案不一致时静默训练。
 
+后续 `augment-twin` 会识别 `liver-counterfactual-audit.json`，核对它与输入特征表的哈希绑定，并把完整载荷嵌入混合增强审计。锁定预测模型因此保留从治疗清单、桥接参数、协方差诊断到最终特征的嵌套血缘，而不是只记录一个失去上游语义的中间 CSV 哈希。
+

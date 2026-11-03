@@ -108,6 +108,33 @@ def test_augmentation_audit_binds_upstream_spatial_derivation_audit(tmp_path):
         verify_augmentation_audit(audit, output, paths)
 
 
+def test_augmentation_audit_embeds_liver_counterfactual_lineage(tmp_path):
+    features, _, output, audit, paths = _case(tmp_path)
+    liver_audit = tmp_path / "features.csv.liver-counterfactual-audit.json"
+    liver_payload = {
+        "schema_version": 1,
+        "stage": "label_free_liver_tdln_counterfactual_augmentation",
+        "labels_used": False,
+        "treatment_manifest": {"file": "treatment.csv", "sha256": "a" * 64},
+        "output": {"file": features.name,
+                   "sha256": hashlib.sha256(features.read_bytes()).hexdigest()},
+    }
+    liver_audit.write_text(json.dumps(liver_payload))
+    payload = json.loads(audit.read_text())
+    payload["inputs"]["features"]["derivation_audit"] = {
+        "file": liver_audit.name,
+        "sha256": hashlib.sha256(liver_audit.read_bytes()).hexdigest(),
+        "stage": liver_payload["stage"],
+    }
+    payload["inputs"]["features"]["derivation_payload"] = liver_payload
+    audit.write_text(json.dumps(payload))
+    assert verify_augmentation_audit(audit, output, paths)["valid"] is True
+    payload["inputs"]["features"]["derivation_payload"]["labels_used"] = True
+    audit.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="embedded derivation payload mismatch"):
+        verify_augmentation_audit(audit, output, paths)
+
+
 def test_augmentation_replay_detects_setting_tampering(tmp_path):
     _, _, output, audit, paths = _case(tmp_path)
     payload = json.loads(audit.read_text())

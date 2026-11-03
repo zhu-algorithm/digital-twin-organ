@@ -97,17 +97,31 @@ def verify_augmentation_audit(
             raise ValueError(f"augmentation input SHA-256 mismatch: {name}")
         derivation = record.get("derivation_audit")
         if derivation is not None:
+            stage = derivation.get("stage") if isinstance(derivation, dict) else None
             suffixes = {
-                "features": ".feature-audit.json",
-                "spatial_initial_zones": ".spatial-audit.json",
+                "label_free_single_cell_featurization": ".feature-audit.json",
+                "label_free_liver_tdln_counterfactual_augmentation": (
+                    ".liver-counterfactual-audit.json"
+                ),
+                "label_free_spatial_state_featurization": ".spatial-audit.json",
             }
-            suffix = suffixes.get(name)
+            fallback = {"features": ".feature-audit.json",
+                        "spatial_initial_zones": ".spatial-audit.json"}
+            suffix = suffixes.get(stage, fallback.get(name))
             derived_audit = Path(f"{target}{suffix}") if suffix else None
             if (derived_audit is None or not isinstance(derivation, dict)
                     or derivation.get("file") != derived_audit.name
                     or not derived_audit.is_file()
                     or derivation.get("sha256") != sha256_file(derived_audit)):
                 raise ValueError(f"{name} derivation audit SHA-256 mismatch")
+            embedded = record.get("derivation_payload")
+            if embedded is not None:
+                try:
+                    observed_payload = json.loads(derived_audit.read_text())
+                except (OSError, json.JSONDecodeError) as error:
+                    raise ValueError(f"{name} derivation audit payload is invalid") from error
+                if embedded != observed_payload:
+                    raise ValueError(f"{name} embedded derivation payload mismatch")
         verified_inputs.append(name)
     settings = payload.get("settings")
     if (not isinstance(settings, dict) or settings.get("labels_used") is not False
