@@ -178,26 +178,26 @@ def aggregate_cells(
             raise ValueError(f"{column} must be non-empty")
     x = select_baseline_cells(x, time_column, baseline_values)
     x = _validate_expression_columns(x)
+    vocabulary_cells = x
+    if ("tissue" in x and feature_tissue_pattern
+            and feature_tissue_pattern.lower() != "all"):
+        vocabulary_cells = x.loc[
+            x.tissue.astype(str).str.contains(
+                feature_tissue_pattern, case=False, regex=True, na=False,
+            )
+        ]
     if cell_type_vocabulary is not None:
         vocabulary = tuple(str(value).strip() for value in cell_type_vocabulary)
         if (not vocabulary or any(not value for value in vocabulary)
                 or len(set(vocabulary)) != len(vocabulary)):
             raise ValueError("cell_type_vocabulary must contain unique non-empty labels")
-        vocabulary_cells = x
-        if ("tissue" in x and feature_tissue_pattern
-                and feature_tissue_pattern.lower() != "all"):
-            vocabulary_cells = x.loc[
-                x.tissue.astype(str).str.contains(
-                    feature_tissue_pattern, case=False, regex=True, na=False,
-                )
-            ]
         unknown = sorted(set(vocabulary_cells["cell_type"]) - set(vocabulary))
         if unknown:
             raise ValueError(f"cell types are outside the locked vocabulary: {unknown[:10]}")
         cell_type_names = _cell_type_feature_names(pd.Series(vocabulary, dtype=str))
     else:
-        vocabulary = tuple(sorted(set(x["cell_type"])))
-        cell_type_names = _cell_type_feature_names(x["cell_type"])
+        vocabulary = tuple(sorted(set(vocabulary_cells["cell_type"])))
+        cell_type_names = _cell_type_feature_names(vocabulary_cells["cell_type"])
     vocabulary_sha256 = hashlib.sha256(json.dumps(
         vocabulary, ensure_ascii=False, separators=(",", ":"),
     ).encode("utf-8")).hexdigest()

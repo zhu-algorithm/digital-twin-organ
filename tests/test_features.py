@@ -156,6 +156,21 @@ def test_signatures_use_tdln_while_tcr_sharing_uses_all_tissues():
     assert row.tcr_tdln_tumour_shared_fraction == pytest.approx(0.5)
 
 
+def test_inferred_composition_vocabulary_excludes_tumour_only_annotations():
+    cells = pd.DataFrame({
+        "patient_id": ["p1"] * 4,
+        "cell_type": ["Tpex", "DC", "Tumour-infiltrating T", "Malignant"],
+        "tissue": ["TDLN", "TDLN", "tumour", "tumour"],
+        "clonotype_id": ["a", None, "a", None],
+    })
+    row = aggregate_cells(cells).iloc[0]
+    assert row.frac_tpex == 0.5
+    assert row.frac_dc == 0.5
+    assert "frac_tumour_infiltrating_t" not in row.index
+    assert "frac_malignant" not in row.index
+    assert row.tcr_tdln_tumour_shared_fraction == 1.0
+
+
 def test_each_patient_must_have_selected_baseline_and_tdln_cells():
     temporal = pd.DataFrame({"patient_id": ["p1", "p2"], "cell_type": ["T", "T"],
                              "timepoint": ["baseline", "post"]})
