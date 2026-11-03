@@ -67,3 +67,5 @@ python scripts/simulate_patient_liver_tdln.py \
 
 队列训练前可运行 `scripts/augment_liver_tdln_counterfactual.py`。它逐患者生成 11 个 `liver_cf_*` 机制特征，并保留原始单细胞特征。`--bridge-parameters` 可读取 `calibrate_liver_tdln_bridge.py` 产生的拟合参数；文件必须明确标记 `research_only=true`，内容及 SHA-256 会写入增强审计。验证时会重新模拟整个队列并比较确定性输出哈希。CI 按“桥接校准 → 队列反事实 → 预测训练”的顺序实际使用这张增强表，因此这些反事实不是仅供展示的旁路结果。
 
+同时提供 `--bridge-diagnostics` 与至少 2 个 `--uncertainty-samples` 时，增强器按诊断文件中的局部对数参数协方差进行相关抽样。每个点估计特征增加 `_q025`、`_q50`、`_q975` 列；种子、样本数和诊断文件哈希都进入可重放审计。区间仅传播局部桥接参数的不确定性，不包含模型结构误差、患者抽样误差、域偏移或临床结局误差。
+

@@ -266,6 +266,53 @@ COUNTERFACTUAL_FEATURES = {
     "anti_pd1_efferent_effector_endpoint": "liver_cf_anti_pd1_efferent_effector_endpoint",
     "efferent_effector_endpoint_fold_change": "liver_cf_efferent_effector_fold_change",
 }
+UNCERTAINTY_QUANTILES = ((0.025, "q025"), (0.5, "q50"), (0.975, "q975"))
+
+
+def liver_bridge_parameter_draws(
+    coupling: LiverTDLNCouplingParameters, bridge: LiverTDLNSpatialBridge,
+    diagnostics: dict, n: int, seed: int,
+) -> tuple[tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge], ...]:
+    """Draw correlated positive namespaced bridge parameters in log space."""
+    if not isinstance(n, (int, np.integer)) or n < 2:
+        raise ValueError("liver bridge uncertainty requires at least two samples")
+    covariance_payload = diagnostics.get("local_log_parameter_covariance")
+    if not isinstance(covariance_payload, dict) or diagnostics.get(
+            "locally_identifiable") is not True:
+        raise ValueError("liver bridge diagnostics lack identifiable covariance")
+    names = covariance_payload.get("parameter_order")
+    covariance = np.asarray(covariance_payload.get("log_scale_covariance"), dtype=float)
+    available = {
+        **{f"coupling.{key}": value for key, value in asdict(coupling).items()},
+        **{f"bridge.{key}": value for key, value in asdict(bridge).items()},
+    }
+    fitted = diagnostics.get("fit_parameters")
+    if (not isinstance(names, list) or not names or len(set(names)) != len(names)
+            or any(name not in available for name in names)
+            or covariance.shape != (len(names), len(names))
+            or not np.isfinite(covariance).all()
+            or not np.allclose(covariance, covariance.T, rtol=1e-8, atol=1e-12)
+            or not isinstance(fitted, dict) or set(fitted) != set(names)):
+        raise ValueError("invalid namespaced liver bridge covariance")
+    centers = np.asarray([float(fitted[name]) for name in names], dtype=float)
+    loaded = np.asarray([available[name] for name in names], dtype=float)
+    if (not np.isfinite(centers).all() or np.any(centers <= 0)
+            or not np.allclose(centers, loaded, rtol=1e-10, atol=0.0)):
+        raise ValueError("liver bridge diagnostics and parameter file have different centers")
+    eigenvalues = np.linalg.eigvalsh(covariance)
+    if eigenvalues.min() < -1e-10 * max(1.0, float(np.abs(eigenvalues).max())):
+        raise ValueError("liver bridge covariance must be positive semidefinite")
+    vectors = np.random.default_rng(seed).multivariate_normal(
+        np.log(loaded), covariance, size=n, check_valid="raise")
+    draws = []
+    for vector in vectors:
+        coupling_updates, bridge_updates = {}, {}
+        for name, value in zip(names, np.exp(vector)):
+            group, field = name.split(".", 1)
+            (coupling_updates if group == "coupling" else bridge_updates)[field] = float(value)
+        draws.append((replace(coupling, **coupling_updates),
+                      replace(bridge, **bridge_updates)))
+    return tuple(draws)
 
 
 def augment_with_liver_tdln_counterfactuals(
@@ -274,6 +321,9 @@ def augment_with_liver_tdln_counterfactuals(
     base_coupling: LiverTDLNCouplingParameters | None = None,
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
+    parameter_draws: tuple[
+        tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge], ...
+    ] | None = None,
 ) -> pd.DataFrame:
     """Append label-free matched liver–TDLN contrasts for every patient."""
     if "patient_id" not in features:
@@ -288,6 +338,8 @@ def augment_with_liver_tdln_counterfactuals(
     if out.patient_id.eq("").any() or out.patient_id.duplicated().any():
         raise ValueError("features must have one unique, non-empty row per patient")
     rows = []
+    if parameter_draws is not None and len(parameter_draws) < 2:
+        raise ValueError("parameter_draws must contain at least two samples")
     for _, row in out.iterrows():
         _, _, effect, _ = simulate_patient_liver_tdln_counterfactual(
             row, doses=doses, days=days, step=step, mapping=mapping,
@@ -297,6 +349,20 @@ def augment_with_liver_tdln_counterfactuals(
                   for source, target in COUNTERFACTUAL_FEATURES.items()}
         if not np.isfinite(list(values.values())).all():
             raise RuntimeError(f"non-finite counterfactual feature for patient {row.patient_id}")
+        if parameter_draws is not None:
+            sampled = {source: [] for source in COUNTERFACTUAL_FEATURES}
+            for sampled_coupling, sampled_bridge in parameter_draws:
+                _, _, draw_effect, _ = simulate_patient_liver_tdln_counterfactual(
+                    row, doses=doses, days=days, step=step, mapping=mapping,
+                    base_coupling=sampled_coupling, base_bridge=sampled_bridge,
+                    base_spatial=base_spatial)
+                for source in sampled:
+                    sampled[source].append(float(draw_effect[source]))
+            for source, target in COUNTERFACTUAL_FEATURES.items():
+                for quantile, suffix in UNCERTAINTY_QUANTILES:
+                    values[f"{target}_{suffix}"] = float(np.quantile(
+                        sampled[source], quantile))
+            values["qc_liver_cf_uncertainty_samples"] = len(parameter_draws)
         rows.append(values)
     return pd.concat([out.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
 
@@ -304,6 +370,7 @@ def augment_with_liver_tdln_counterfactuals(
 def verify_liver_counterfactual_augmentation(
     audit_path: str | Path, features_path: str | Path, output_path: str | Path,
     bridge_parameters_path: str | Path | None = None,
+    bridge_diagnostics_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -332,9 +399,24 @@ def verify_liver_counterfactual_augmentation(
         base_bridge = LiverTDLNSpatialBridge(**audit["base_parameters"]["spatial_bridge"])
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("invalid liver counterfactual replay settings") from error
+    samples, seed = int(settings.get("uncertainty_samples", 0)), int(
+        settings.get("uncertainty_seed", 42))
+    parameter_draws = None
+    diagnostic_record = audit.get("bridge_diagnostics")
+    if samples:
+        if bridge_diagnostics_path is None or diagnostic_record is None:
+            raise ValueError("bridge diagnostics are required to replay uncertainty")
+        if diagnostic_record.get("sha256") != sha256_file(bridge_diagnostics_path):
+            raise ValueError("liver counterfactual bridge diagnostics hash mismatch")
+        parameter_draws = liver_bridge_parameter_draws(
+            base_coupling, base_bridge,
+            json.loads(Path(bridge_diagnostics_path).read_text()), samples, seed)
+    elif diagnostic_record is not None:
+        raise ValueError("bridge diagnostics supplied without uncertainty samples")
     replay = augment_with_liver_tdln_counterfactuals(
         pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
-        base_coupling=base_coupling, base_bridge=base_bridge)
+        base_coupling=base_coupling, base_bridge=base_bridge,
+        parameter_draws=parameter_draws)
     replay_sha = hashlib.sha256(
         replay.to_csv(index=False).encode("utf-8")).hexdigest()
     if replay_sha != audit["output"]["sha256"]:

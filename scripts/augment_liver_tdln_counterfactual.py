@@ -13,8 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from tdln_pd1.liver_bridge_features import (
-    COUNTERFACTUAL_FEATURES, FeatureBridgeMapping,
+    FeatureBridgeMapping,
     augment_with_liver_tdln_counterfactuals,
+    liver_bridge_parameter_draws,
     load_liver_bridge_parameters,
     verify_liver_counterfactual_augmentation,
 )
@@ -33,6 +34,9 @@ def main() -> None:
     parser.add_argument("--dose-days", required=True)
     parser.add_argument("--dose", type=float, default=1.0)
     parser.add_argument("--bridge-parameters", type=Path)
+    parser.add_argument("--bridge-diagnostics", type=Path)
+    parser.add_argument("--uncertainty-samples", type=int, default=0)
+    parser.add_argument("--uncertainty-seed", type=int, default=42)
     args = parser.parse_args()
     doses = tuple(Dose(float(day), args.dose)
                   for day in args.dose_days.split(",") if day.strip())
@@ -41,12 +45,27 @@ def main() -> None:
         base_coupling, base_bridge = load_liver_bridge_parameters(args.bridge_parameters)
     else:
         base_coupling, base_bridge = None, None
+    if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
+        raise ValueError("--uncertainty-samples must be 0 or at least 2")
+    if bool(args.bridge_diagnostics) != bool(args.uncertainty_samples):
+        raise ValueError("--bridge-diagnostics and --uncertainty-samples require each other")
+    if args.bridge_diagnostics and not args.bridge_parameters:
+        raise ValueError("--bridge-diagnostics requires --bridge-parameters")
+    parameter_draws = None
+    if args.bridge_diagnostics:
+        parameter_draws = liver_bridge_parameter_draws(
+            base_coupling, base_bridge,
+            json.loads(args.bridge_diagnostics.read_text()),
+            args.uncertainty_samples, args.uncertainty_seed)
     augmented = augment_with_liver_tdln_counterfactuals(
         pd.read_csv(args.features), doses=doses, days=args.days,
         step=args.step, mapping=mapping, base_coupling=base_coupling,
-        base_bridge=base_bridge)
+        base_bridge=base_bridge, parameter_draws=parameter_draws)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     augmented.to_csv(args.output, index=False)
+    mechanistic_columns = [
+        column for column in augmented.columns if column.startswith("liver_cf_")
+    ]
     audit_path = Path(f"{args.output}.liver-counterfactual-audit.json")
     audit = {
         "schema_version": 1,
@@ -58,7 +77,9 @@ def main() -> None:
         "settings": {"days": args.days, "step": args.step,
                      "dose_days": [dose.day for dose in doses],
                      "dose_amounts": [dose.amount for dose in doses],
-                     "paired_control": True},
+                     "paired_control": True,
+                     "uncertainty_samples": args.uncertainty_samples,
+                     "uncertainty_seed": args.uncertainty_seed},
         "mapping": asdict(mapping),
         "base_parameters": {
             "coupling": asdict(base_coupling or LiverTDLNCouplingParameters()),
@@ -67,14 +88,18 @@ def main() -> None:
         "bridge_parameters": ({"file": args.bridge_parameters.name,
                                 "sha256": sha256_file(args.bridge_parameters)}
                                if args.bridge_parameters else None),
-        "mechanistic_feature_columns": list(COUNTERFACTUAL_FEATURES.values()),
+        "bridge_diagnostics": ({"file": args.bridge_diagnostics.name,
+                                 "sha256": sha256_file(args.bridge_diagnostics)}
+                                if args.bridge_diagnostics else None),
+        "mechanistic_feature_columns": mechanistic_columns,
         "limitation": "Model-derived matched contrasts; not clinical response labels.",
     }
     audit_path.write_text(json.dumps(audit, indent=2, sort_keys=True) + "\n")
     verify_liver_counterfactual_augmentation(
-        audit_path, args.features, args.output, args.bridge_parameters)
+        audit_path, args.features, args.output, args.bridge_parameters,
+        args.bridge_diagnostics)
     print(json.dumps({"n_patients": len(augmented),
-                      "n_mechanistic_features": len(COUNTERFACTUAL_FEATURES),
+                      "n_mechanistic_features": len(mechanistic_columns),
                       "labels_used": False, "output": str(args.output)}, indent=2))
 
 

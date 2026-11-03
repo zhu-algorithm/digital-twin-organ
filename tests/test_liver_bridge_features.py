@@ -6,6 +6,7 @@ import pytest
 from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              patient_liver_bridge_from_features,
                                              augment_with_liver_tdln_counterfactuals,
+                                             liver_bridge_parameter_draws,
                                              load_liver_bridge_parameters,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
@@ -192,3 +193,31 @@ def test_saved_bridge_parameters_change_cohort_features_and_fail_closed(tmp_path
     }))
     with pytest.raises(ValueError, match="research_only"):
         load_liver_bridge_parameters(parameter_path)
+
+
+def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals():
+    coupling, bridge = LiverTDLNCouplingParameters(), LiverTDLNSpatialBridge()
+    diagnostics = {
+        "locally_identifiable": True,
+        "fit_parameters": {"bridge.antigen_drainage_gain": bridge.antigen_drainage_gain},
+        "local_log_parameter_covariance": {
+            "parameter_order": ["bridge.antigen_drainage_gain"],
+            "log_scale_covariance": [[0.04]],
+        },
+    }
+    draws = liver_bridge_parameter_draws(coupling, bridge, diagnostics, 8, 19)
+    repeated = liver_bridge_parameter_draws(coupling, bridge, diagnostics, 8, 19)
+    assert draws == repeated
+    assert all(draw_bridge.antigen_drainage_gain > 0 for _, draw_bridge in draws)
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=3, step=0.5,
+        base_coupling=coupling, base_bridge=bridge, parameter_draws=draws)
+    for base in ("liver_cf_tumour_relative_reduction",
+                 "liver_cf_efferent_effector_fold_change"):
+        assert out[f"{base}_q025"].item() <= out[f"{base}_q50"].item()
+        assert out[f"{base}_q50"].item() <= out[f"{base}_q975"].item()
+    assert out.qc_liver_cf_uncertainty_samples.item() == 8
+    bad = {**diagnostics, "fit_parameters": {"bridge.antigen_drainage_gain": 0.8}}
+    with pytest.raises(ValueError, match="different centers"):
+        liver_bridge_parameter_draws(coupling, bridge, bad, 4, 1)
