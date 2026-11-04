@@ -28,7 +28,7 @@ def _load_json(path: Path) -> dict:
     return payload
 
 
-def _treatment_contract(artifact: dict) -> dict | None:
+def _training_derivation(artifact: dict) -> dict | None:
     provenance = artifact.get("training_input_provenance")
     if not isinstance(provenance, dict):
         return None
@@ -38,8 +38,7 @@ def _treatment_contract(artifact: dict) -> dict | None:
     derivation = audit.get("inputs", {}).get("features", {}).get("derivation_payload")
     if not isinstance(derivation, dict):
         return None
-    contract = derivation.get("treatment_contract")
-    return contract if isinstance(contract, dict) else None
+    return derivation
 
 
 def validate_prediction_feature_lineage(
@@ -48,7 +47,9 @@ def validate_prediction_feature_lineage(
     """Fail closed when a treatment-aware model receives untraceable semantics."""
     model_path, features_path = Path(model_path), Path(features_path)
     artifact = joblib.load(model_path)
-    training_contract = _treatment_contract(artifact) if isinstance(artifact, dict) else None
+    training_derivation = _training_derivation(artifact) if isinstance(artifact, dict) else None
+    training_contract = (training_derivation.get("treatment_contract")
+                         if isinstance(training_derivation, dict) else None)
     if training_contract is None:
         return {"required": False, "verified": False}
     audit_path = Path(f"{features_path}.twin-audit.json")
@@ -77,6 +78,22 @@ def validate_prediction_feature_lineage(
                   if external_contract.get(field) != training_contract.get(field)]
     if mismatches:
         raise ValueError("prediction treatment contract mismatch: " + ", ".join(mismatches))
+    training_perfusion = training_derivation.get("perfusion_contract")
+    external_perfusion = derivation.get("perfusion_contract")
+    perfusion_semantics = None
+    if isinstance(training_perfusion, dict):
+        if not isinstance(external_perfusion, dict):
+            raise ValueError("prediction features lack a perfusion contract")
+        perfusion_fields = ("scale", "measurement_definition", "normalization_reference")
+        perfusion_mismatches = [field for field in perfusion_fields
+                                if external_perfusion.get(field)
+                                != training_perfusion.get(field)]
+        if perfusion_mismatches:
+            raise ValueError(
+                "prediction perfusion contract mismatch: "
+                + ", ".join(perfusion_mismatches))
+        perfusion_semantics = {field: external_perfusion[field]
+                               for field in perfusion_fields}
     return {
         "required": True,
         "verified": True,
@@ -86,6 +103,7 @@ def validate_prediction_feature_lineage(
         "compatible_semantics": {field: external_contract[field]
                                  for field in semantic_fields},
         "external_regimen_ids": external_contract.get("regimen_ids", []),
+        "compatible_perfusion_semantics": perfusion_semantics,
     }
 
 

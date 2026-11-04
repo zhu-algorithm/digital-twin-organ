@@ -30,9 +30,13 @@ def _files(tmp_path: Path):
 def _add_treatment_lineage(model: Path, features: Path, response="RECIST 1.1"):
     contract = {"agent_class": "anti_pd1", "dose_scale": "arbitrary_model_exposure",
                 "response_definition": response, "regimen_ids": ["q3w"]}
+    perfusion = {"scale": "dimensionless_multiplier",
+                 "measurement_definition": "duplex_ratio",
+                 "normalization_reference": "population_baseline", "patient_count": 1}
     artifact = joblib.load(model)
     artifact["training_input_provenance"] = {"augmentation_audit": {"inputs": {
-        "features": {"derivation_payload": {"treatment_contract": contract}}
+        "features": {"derivation_payload": {"treatment_contract": contract,
+                                               "perfusion_contract": perfusion}}
     }}}
     joblib.dump(artifact, model)
     payload = {
@@ -41,6 +45,7 @@ def _add_treatment_lineage(model: Path, features: Path, response="RECIST 1.1"):
         "inputs": {"features": {"derivation_payload": {
             "stage": "label_free_liver_tdln_counterfactual_augmentation",
             "labels_used": False, "treatment_contract": contract,
+            "perfusion_contract": perfusion,
         }}},
         "output": {"file": features.name,
                    "sha256": hashlib.sha256(features.read_bytes()).hexdigest()},
@@ -55,6 +60,8 @@ def test_treatment_aware_prediction_requires_compatible_feature_lineage(tmp_path
     result = validate_prediction_feature_lineage(model, features)
     assert result["required"] is result["verified"] is True
     assert result["compatible_semantics"]["response_definition"] == "RECIST 1.1"
+    assert result["compatible_perfusion_semantics"]["measurement_definition"] == (
+        "duplex_ratio")
 
     Path(f"{features}.twin-audit.json").unlink()
     with pytest.raises(ValueError, match="requires a feature twin audit"):
@@ -65,6 +72,20 @@ def test_treatment_aware_prediction_requires_compatible_feature_lineage(tmp_path
         "response_definition"] = "iRECIST"
     audit.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="response_definition"):
+        validate_prediction_feature_lineage(model, features)
+
+
+def test_prediction_requires_compatible_perfusion_semantics(tmp_path: Path):
+    model, features, _ = _files(tmp_path)
+    payload = _add_treatment_lineage(model, features)
+    derivation = payload["inputs"]["features"]["derivation_payload"]
+    derivation["perfusion_contract"]["normalization_reference"] = "liver_volume"
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="normalization_reference"):
+        validate_prediction_feature_lineage(model, features)
+    del derivation["perfusion_contract"]
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="lack a perfusion contract"):
         validate_prediction_feature_lineage(model, features)
 
 
