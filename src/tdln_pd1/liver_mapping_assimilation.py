@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import least_squares
 
-from .assimilation import _local_calibration_diagnostics
+from .assimilation import (_local_calibration_diagnostics,
+                           calibration_parameter_draws)
 from .hybrid import _outcome_like_columns
 from .liver_bridge_features import (FeatureBridgeMapping, _validate_mapping,
                                     patient_liver_bridge_from_features)
@@ -173,3 +174,16 @@ def load_feature_bridge_mapping(path: str | Path) -> FeatureBridgeMapping:
         raise ValueError("invalid feature-bridge mapping schema") from error
     _validate_mapping(mapping)
     return mapping
+
+
+def feature_bridge_mapping_draws(
+    mapping: FeatureBridgeMapping, diagnostics: dict, n: int, seed: int,
+) -> tuple[FeatureBridgeMapping, ...]:
+    """Draw a reproducible correlated ensemble around a fitted mapping."""
+    names, samples = calibration_parameter_draws(mapping, diagnostics, n, seed)
+    if any(name not in FIT_PARAMETERS for name in names):
+        raise ValueError("feature-bridge covariance contains a non-fittable parameter")
+    draws = tuple(replace(mapping, **sample) for sample in samples)
+    for draw in draws:
+        _validate_mapping(draw)
+    return draws

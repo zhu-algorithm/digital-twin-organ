@@ -7,7 +7,8 @@ import pytest
 from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              patient_liver_bridge_from_features)
 from tdln_pd1.liver_mapping_assimilation import (
-    calibrate_feature_bridge_mapping, load_feature_bridge_mapping,
+    calibrate_feature_bridge_mapping, feature_bridge_mapping_draws,
+    load_feature_bridge_mapping,
     save_feature_bridge_mapping_calibration, validate_feature_bridge_observations)
 
 
@@ -60,3 +61,17 @@ def test_feature_bridge_observation_contract_fails_closed(tmp_path):
                                "labels_used": True}))
     with pytest.raises(ValueError, match="label-free"):
         load_feature_bridge_mapping(bad)
+
+
+def test_feature_bridge_mapping_uncertainty_is_correlated_and_reproducible():
+    mapping, diagnostics, _ = calibrate_feature_bridge_mapping(
+        _observations(), fit_parameters=("killing_cytotoxic_coefficient",),
+        base_mapping=FeatureBridgeMapping(killing_cytotoxic_coefficient=0.4))
+    draws = feature_bridge_mapping_draws(mapping, diagnostics, 12, 7)
+    assert draws == feature_bridge_mapping_draws(mapping, diagnostics, 12, 7)
+    assert len(draws) == 12
+    assert all(draw.killing_cytotoxic_coefficient > 0 for draw in draws)
+    altered = {**diagnostics, "fit_parameters": {
+        "killing_cytotoxic_coefficient": 0.5}}
+    with pytest.raises(ValueError, match="different fit centers"):
+        feature_bridge_mapping_draws(mapping, altered, 4, 7)

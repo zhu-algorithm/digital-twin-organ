@@ -402,6 +402,7 @@ def augment_with_liver_tdln_counterfactuals(
         tuple[LiverTumourParameters, LiverTDLNCouplingParameters,
               LiverTDLNSpatialBridge], ...
     ] | None = None,
+    mapping_draws: tuple[FeatureBridgeMapping, ...] | None = None,
     patient_doses: dict[str, tuple[Dose, ...]] | None = None,
     patient_flows: dict[str, tuple[float, float]] | None = None,
 ) -> pd.DataFrame:
@@ -424,6 +425,11 @@ def augment_with_liver_tdln_counterfactuals(
     rows = []
     if parameter_draws is not None and len(parameter_draws) < 2:
         raise ValueError("parameter_draws must contain at least two samples")
+    if mapping_draws is not None and len(mapping_draws) < 2:
+        raise ValueError("mapping_draws must contain at least two samples")
+    if (parameter_draws is not None and mapping_draws is not None
+            and len(parameter_draws) != len(mapping_draws)):
+        raise ValueError("parameter and mapping draws must have equal sample counts")
     for _, row in out.iterrows():
         schedule = patient_doses[str(row.patient_id)] if patient_doses is not None else doses
         portal_flow, arterial_flow = (
@@ -439,11 +445,17 @@ def augment_with_liver_tdln_counterfactuals(
                   for source, target in COUNTERFACTUAL_FEATURES.items()}
         if not np.isfinite(list(values.values())).all():
             raise RuntimeError(f"non-finite counterfactual feature for patient {row.patient_id}")
-        if parameter_draws is not None:
+        if parameter_draws is not None or mapping_draws is not None:
             sampled = {source: [] for source in COUNTERFACTUAL_FEATURES}
-            for sampled_liver, sampled_coupling, sampled_bridge in parameter_draws:
+            sample_count = len(parameter_draws or mapping_draws or ())
+            for sample_index in range(sample_count):
+                sampled_liver, sampled_coupling, sampled_bridge = (
+                    parameter_draws[sample_index] if parameter_draws is not None
+                    else (base_liver, base_coupling, base_bridge))
+                sampled_mapping = (mapping_draws[sample_index]
+                                   if mapping_draws is not None else mapping)
                 _, _, draw_effect, _ = simulate_patient_liver_tdln_counterfactual(
-                    row, doses=schedule, days=days, step=step, mapping=mapping,
+                    row, doses=schedule, days=days, step=step, mapping=sampled_mapping,
                     base_coupling=sampled_coupling, base_bridge=sampled_bridge,
                     base_spatial=base_spatial, base_liver=sampled_liver,
                     portal_flow_multiplier=portal_flow,
@@ -454,7 +466,7 @@ def augment_with_liver_tdln_counterfactuals(
                 for quantile, suffix in UNCERTAINTY_QUANTILES:
                     values[f"{target}_{suffix}"] = float(np.quantile(
                         sampled[source], quantile))
-            values["qc_liver_cf_uncertainty_samples"] = len(parameter_draws)
+            values["qc_liver_cf_uncertainty_samples"] = sample_count
         rows.append(values)
     return pd.concat([out.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
 
@@ -466,6 +478,7 @@ def verify_liver_counterfactual_augmentation(
     treatment_manifest_path: str | Path | None = None,
     perfusion_manifest_path: str | Path | None = None,
     feature_bridge_mapping_path: str | Path | None = None,
+    feature_bridge_diagnostics_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -511,9 +524,9 @@ def verify_liver_counterfactual_augmentation(
         settings.get("uncertainty_seed", 42))
     parameter_draws = None
     diagnostic_record = audit.get("bridge_diagnostics")
-    if samples:
-        if bridge_diagnostics_path is None or diagnostic_record is None:
-            raise ValueError("bridge diagnostics are required to replay uncertainty")
+    if samples and diagnostic_record is not None:
+        if bridge_diagnostics_path is None:
+            raise ValueError("bridge diagnostics are required to replay bridge uncertainty")
         if diagnostic_record.get("sha256") != sha256_file(bridge_diagnostics_path):
             raise ValueError("liver counterfactual bridge diagnostics hash mismatch")
         parameter_draws = liver_bridge_parameter_draws(
@@ -521,6 +534,22 @@ def verify_liver_counterfactual_augmentation(
             json.loads(Path(bridge_diagnostics_path).read_text()), samples, seed)
     elif diagnostic_record is not None:
         raise ValueError("bridge diagnostics supplied without uncertainty samples")
+    mapping_draws = None
+    mapping_diagnostic_record = audit.get("feature_bridge_diagnostics")
+    if samples and mapping_diagnostic_record is not None:
+        if feature_bridge_diagnostics_path is None or feature_bridge_mapping_path is None:
+            raise ValueError("feature-bridge mapping and diagnostics are required for replay")
+        if mapping_diagnostic_record.get("sha256") != sha256_file(
+                feature_bridge_diagnostics_path):
+            raise ValueError("liver counterfactual feature-bridge diagnostics hash mismatch")
+        from .liver_mapping_assimilation import feature_bridge_mapping_draws
+        mapping_draws = feature_bridge_mapping_draws(
+            mapping, json.loads(Path(feature_bridge_diagnostics_path).read_text()),
+            samples, seed + 1_000_003)
+    elif mapping_diagnostic_record is not None:
+        raise ValueError("feature-bridge diagnostics supplied without uncertainty samples")
+    if samples and parameter_draws is None and mapping_draws is None:
+        raise ValueError("uncertainty samples require bridge or feature-bridge diagnostics")
     patient_doses = None
     treatment_record = audit.get("treatment_manifest")
     if treatment_record is not None:
@@ -549,7 +578,8 @@ def verify_liver_counterfactual_augmentation(
         pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
         base_coupling=base_coupling, base_bridge=base_bridge,
         base_liver=base_liver,
-        parameter_draws=parameter_draws, patient_doses=patient_doses,
+        parameter_draws=parameter_draws, mapping_draws=mapping_draws,
+        patient_doses=patient_doses,
         patient_flows=patient_flows)
     replay_sha = hashlib.sha256(
         replay.to_csv(index=False).encode("utf-8")).hexdigest()

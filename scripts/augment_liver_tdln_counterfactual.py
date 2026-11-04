@@ -25,7 +25,8 @@ from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
 from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
 from tdln_pd1.liver_tumor import LiverTumourParameters
-from tdln_pd1.liver_mapping_assimilation import load_feature_bridge_mapping
+from tdln_pd1.liver_mapping_assimilation import (feature_bridge_mapping_draws,
+                                                  load_feature_bridge_mapping)
 from tdln_pd1.simulator import Dose
 
 
@@ -39,6 +40,7 @@ def main() -> None:
     parser.add_argument("--dose", type=float, default=1.0)
     parser.add_argument("--bridge-parameters", type=Path)
     parser.add_argument("--feature-bridge-mapping", type=Path)
+    parser.add_argument("--feature-bridge-diagnostics", type=Path)
     parser.add_argument("--bridge-diagnostics", type=Path)
     parser.add_argument("--uncertainty-samples", type=int, default=0)
     parser.add_argument("--uncertainty-seed", type=int, default=42)
@@ -69,21 +71,33 @@ def main() -> None:
         base_liver, base_coupling, base_bridge = None, None, None
     if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
         raise ValueError("--uncertainty-samples must be 0 or at least 2")
-    if bool(args.bridge_diagnostics) != bool(args.uncertainty_samples):
-        raise ValueError("--bridge-diagnostics and --uncertainty-samples require each other")
+    if args.uncertainty_samples and not (
+            args.bridge_diagnostics or args.feature_bridge_diagnostics):
+        raise ValueError("--uncertainty-samples requires at least one diagnostics file")
+    if not args.uncertainty_samples and (
+            args.bridge_diagnostics or args.feature_bridge_diagnostics):
+        raise ValueError("diagnostics files require --uncertainty-samples")
     if args.bridge_diagnostics and not args.bridge_parameters:
         raise ValueError("--bridge-diagnostics requires --bridge-parameters")
+    if args.feature_bridge_diagnostics and not args.feature_bridge_mapping:
+        raise ValueError("--feature-bridge-diagnostics requires --feature-bridge-mapping")
     parameter_draws = None
     if args.bridge_diagnostics:
         parameter_draws = liver_bridge_parameter_draws(
             base_liver, base_coupling, base_bridge,
             json.loads(args.bridge_diagnostics.read_text()),
             args.uncertainty_samples, args.uncertainty_seed)
+    mapping_draws = None
+    if args.feature_bridge_diagnostics:
+        mapping_draws = feature_bridge_mapping_draws(
+            mapping, json.loads(args.feature_bridge_diagnostics.read_text()),
+            args.uncertainty_samples, args.uncertainty_seed + 1_000_003)
     augmented = augment_with_liver_tdln_counterfactuals(
         features, doses=doses, days=args.days,
         step=args.step, mapping=mapping, base_coupling=base_coupling,
         base_bridge=base_bridge, base_liver=base_liver,
         parameter_draws=parameter_draws,
+        mapping_draws=mapping_draws,
         patient_doses=patient_doses, patient_flows=patient_flows)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     augmented.to_csv(args.output, index=False)
@@ -109,6 +123,10 @@ def main() -> None:
             {"file": args.feature_bridge_mapping.name,
              "sha256": sha256_file(args.feature_bridge_mapping)}
             if args.feature_bridge_mapping else None),
+        "feature_bridge_diagnostics": (
+            {"file": args.feature_bridge_diagnostics.name,
+             "sha256": sha256_file(args.feature_bridge_diagnostics)}
+            if args.feature_bridge_diagnostics else None),
         "base_parameters": {
             "liver_tumour": asdict(base_liver or LiverTumourParameters()),
             "coupling": asdict(base_coupling or LiverTDLNCouplingParameters()),
@@ -135,7 +153,7 @@ def main() -> None:
     verify_liver_counterfactual_augmentation(
         audit_path, args.features, args.output, args.bridge_parameters,
         args.bridge_diagnostics, args.treatment_manifest, args.perfusion_manifest,
-        args.feature_bridge_mapping)
+        args.feature_bridge_mapping, args.feature_bridge_diagnostics)
     print(json.dumps({"n_patients": len(augmented),
                       "n_mechanistic_features": len(mechanistic_columns),
                       "labels_used": False, "output": str(args.output)}, indent=2))

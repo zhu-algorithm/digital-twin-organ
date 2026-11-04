@@ -336,6 +336,25 @@ def test_liver_bridge_uncertainty_rejects_nonphysiological_buffer_draws():
                for sampled, _, _ in draws)
 
 
+def test_mapping_uncertainty_propagates_without_bridge_parameter_draws():
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.8]})
+    mappings = tuple(FeatureBridgeMapping(killing_cytotoxic_coefficient=value)
+                     for value in (0.3, 0.6, 1.0, 1.4))
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=3, step=0.5,
+        mapping=FeatureBridgeMapping(), mapping_draws=mappings)
+    assert out.qc_liver_cf_uncertainty_samples.item() == 4
+    assert out.liver_cf_tumour_relative_reduction_q025.item() <= (
+        out.liver_cf_tumour_relative_reduction_q975.item())
+    with pytest.raises(ValueError, match="equal sample counts"):
+        augment_with_liver_tdln_counterfactuals(
+            features, doses=(Dose(0, 1),), days=3, step=0.5,
+            mapping_draws=mappings,
+            parameter_draws=((LiverTumourParameters(),
+                              LiverTDLNCouplingParameters(),
+                              LiverTDLNSpatialBridge()),) * 2)
+
+
 def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():
     manifest = pd.DataFrame({
         "patient_id": ["p1", "p2"], "regimen_id": ["d0", "d0_d2"],
