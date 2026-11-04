@@ -22,7 +22,8 @@ from tdln_pd1.spatial import ZONES
 SCHEMA_VERSION = 1
 COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
            "functional_vessels", "oxygen_normal", "oxygen_rim", "oxygen_core",
-           "perfusion", "portal_flow", "arterial_flow", "tumour_fraction")
+           "perfusion", "portal_flow", "arterial_flow", "oxygenated_inflow",
+           "arterial_flow_fraction", "tumour_fraction")
 IMMUNE_COLUMNS = ("tumour_antigen", "mature_dc_tdln", "tpex_tdln",
                   "effector_tdln", "effector_tumour", "pd1_occupancy",
                   "tumour_cells", "liver_tumour_fraction")
@@ -83,6 +84,8 @@ def build_dashboard_data() -> dict:
         "untreated": simulate_liver_tumour(),
         "antiangiogenic": simulate_liver_tumour(angiogenesis_inhibition=0.75),
         "low_perfusion": simulate_liver_tumour(flow_multiplier=0.65),
+        "portal_restriction": simulate_liver_tumour(portal_flow_multiplier=0.55),
+        "arterial_restriction": simulate_liver_tumour(arterial_flow_multiplier=0.05),
     }
     coupled = {
         "control": simulate_liver_tdln(days=84),
@@ -95,7 +98,7 @@ def build_dashboard_data() -> dict:
     )
     return {
         "schema_version": SCHEMA_VERSION,
-        "model_version": "liver-tumour/0.1.0",
+        "model_version": "liver-tumour/0.2.0",
         "research_only": True,
         "time_unit": "day",
         "state_units": "normalised fraction",

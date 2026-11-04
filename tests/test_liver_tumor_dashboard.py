@@ -15,7 +15,8 @@ def test_liver_tumour_dashboard_export_is_current():
     assert committed == expected
     assert expected["schema_version"] == 1
     assert expected["research_only"] is True
-    assert set(expected["scenarios"]) == {"untreated", "antiangiogenic", "low_perfusion"}
+    assert set(expected["scenarios"]) == {"untreated", "antiangiogenic", "low_perfusion",
+                                          "portal_restriction", "arterial_restriction"}
     assert all(len(records) == 61 for records in expected["scenarios"].values())
     assert set(expected["immune_coupling"]) == {"control", "anti_pd1"}
     assert all(len(records) == 43 for records in expected["immune_coupling"].values())
@@ -40,4 +41,6 @@ def test_liver_tumour_page_is_animated_accessible_and_local():
                    '@media(prefers-reduced-motion:reduce)', '正常肝细胞', '肿瘤细胞',
                    'id="scenario-anti_pd1"', 'id="tdln-node"', 'immune_coupling'):
         assert marker in page
+    assert 'id="scenario-portal_restriction"' in page
+    assert 'id="scenario-arterial_restriction"' in page
     assert "研究用途" in page

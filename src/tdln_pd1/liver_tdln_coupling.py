@@ -16,6 +16,7 @@ from scipy.integrate import solve_ivp
 
 from .liver_tumor import (LiverTumourInitialState, LiverTumourParameters,
                           STATE_NAMES as LIVER_STATES, _rhs as _liver_rhs,
+                          _inflow as _liver_inflow,
                           _validate as _validate_liver)
 from .simulator import (Dose, InitialState, STATE_NAMES as IMMUNE_STATES,
                         TwinParameters, _rhs as _immune_rhs,
@@ -42,7 +43,9 @@ def _validate_coupling(p: LiverTDLNCouplingParameters) -> None:
 
 def _combined_rhs(time: float, y: np.ndarray, liver_p: LiverTumourParameters,
                   immune_p: TwinParameters, coupling: LiverTDLNCouplingParameters,
-                  flow_multiplier: float, angiogenesis_inhibition: float) -> np.ndarray:
+                  flow_multiplier: float, angiogenesis_inhibition: float,
+                  portal_flow_multiplier: float | None,
+                  arterial_flow_multiplier: float | None) -> np.ndarray:
     liver = np.maximum(y[:len(LIVER_STATES)], 0.0)
     immune_dynamic = np.maximum(y[len(LIVER_STATES):], 0.0)
     rim = liver[LIVER_STATES.index("tumour_rim")]
@@ -54,7 +57,8 @@ def _combined_rhs(time: float, y: np.ndarray, liver_p: LiverTumourParameters,
     full_immune = np.concatenate(([viable_cells], immune_dynamic))
     immune_dydt = _immune_rhs(time, full_immune, immune_p)
     liver_dydt = _liver_rhs(time, liver, liver_p, flow_multiplier,
-                            angiogenesis_inhibition)
+                            angiogenesis_inhibition, portal_flow_multiplier,
+                            arterial_flow_multiplier)
 
     occupancy = np.clip(full_immune[IMMUNE_STATES.index("pd1_occupancy")], 0.0, 1.0)
     effector = full_immune[IMMUNE_STATES.index("effector_tumour")]
@@ -82,6 +86,8 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                         liver_initial: LiverTumourInitialState | None = None,
                         immune_initial: InitialState | None = None,
                         flow_multiplier: float = 1.0,
+                        portal_flow_multiplier: float | None = None,
+                        arterial_flow_multiplier: float | None = None,
                         angiogenesis_inhibition: float = 0.0) -> pd.DataFrame:
     """Simulate the simultaneous liver tumour–TDLN–anti-PD-1 feedback loop."""
     lp, ip = liver_parameters or LiverTumourParameters(), immune_parameters or TwinParameters()
@@ -95,6 +101,10 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
         raise ValueError("days and step must be finite and strictly positive")
     if not np.isfinite(flow_multiplier) or flow_multiplier <= 0:
         raise ValueError("flow_multiplier must be finite and strictly positive")
+    for name, value in (("portal_flow_multiplier", portal_flow_multiplier),
+                        ("arterial_flow_multiplier", arterial_flow_multiplier)):
+        if value is not None and (not np.isfinite(value) or value <= 0):
+            raise ValueError(f"{name} must be finite and strictly positive")
     if not np.isfinite(angiogenesis_inhibition) or not 0 <= angiogenesis_inhibition <= 1:
         raise ValueError("angiogenesis_inhibition must lie in [0, 1]")
     if any(not np.isfinite(d.day) or not np.isfinite(d.amount) or d.day < 0
@@ -114,7 +124,10 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
             y[plasma_index] += events[start]
         times = np.unique(np.append(np.arange(start, end, step), end))
         solved = solve_ivp(_combined_rhs, (start, end), y, t_eval=times,
-                           args=(lp, ip, cp, flow_multiplier, angiogenesis_inhibition),
+                           # Both inflows remain independently executable inside
+                           # the simultaneous tumour–immune feedback solve.
+                           args=(lp, ip, cp, flow_multiplier, angiogenesis_inhibition,
+                                 portal_flow_multiplier, arterial_flow_multiplier),
                            rtol=1e-7, atol=1e-9)
         if not solved.success or not np.isfinite(solved.y).all():
             raise RuntimeError(f"coupled liver–TDLN integration failed: {solved.message}")
@@ -136,9 +149,14 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                                   + out.liver_necrotic_tumour)
     out["liver_tumour_fraction"] = out.liver_total_tumour / (
         out.liver_normal_cells + out.liver_total_tumour).clip(lower=1e-12)
-    out["liver_perfusion"] = ((lp.portal_flow + lp.arterial_flow) * flow_multiplier
+    portal, arterial, oxygenated = _liver_inflow(
+        lp, flow_multiplier, portal_flow_multiplier, arterial_flow_multiplier)
+    out["liver_perfusion"] = ((portal + arterial)
                                * out.liver_functional_vessels
                                / (1.0 + lp.vessel_compression
                                   * (out.liver_tumour_rim + out.liver_tumour_core)))
+    out["liver_portal_flow"] = portal * out.liver_functional_vessels
+    out["liver_arterial_flow"] = arterial * out.liver_functional_vessels
+    out["liver_oxygenated_inflow"] = oxygenated * out.liver_functional_vessels
     return out
 

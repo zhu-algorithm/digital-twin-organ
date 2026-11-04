@@ -39,7 +39,18 @@ def test_zero_killing_gain_removes_treatment_effect_on_liver_burden():
     assert np.allclose(control.tumour_cells, treated.tumour_cells, rtol=1e-7, atol=1e-6)
 
 
+def test_independent_dual_inflow_propagates_through_closed_loop():
+    portal_loss = simulate_liver_tdln(days=28, portal_flow_multiplier=2 / 3)
+    arterial_loss = simulate_liver_tdln(days=28, arterial_flow_multiplier=0.001)
+    assert arterial_loss.liver_oxygenated_inflow.iloc[0] < (
+        portal_loss.liver_oxygenated_inflow.iloc[0])
+    assert arterial_loss.liver_oxygen_core.iloc[-1] < portal_loss.liver_oxygen_core.iloc[-1]
+    assert not np.allclose(arterial_loss.tumour_antigen, portal_loss.tumour_antigen)
+
+
 def test_invalid_coupling_contract_fails_closed():
     with pytest.raises(ValueError, match="tumour_cells_per_fraction"):
         simulate_liver_tdln(days=2, coupling_parameters=LiverTDLNCouplingParameters(
             tumour_cells_per_fraction=0))
+    with pytest.raises(ValueError, match="portal_flow_multiplier"):
+        simulate_liver_tdln(days=2, portal_flow_multiplier=0)

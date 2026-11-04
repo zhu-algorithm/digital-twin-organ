@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from tdln_pd1.liver_tumor import LiverTumourInitialState, simulate_liver_tumour
+from tdln_pd1.liver_tumor import (LiverTumourInitialState, LiverTumourParameters,
+                                  simulate_liver_tumour)
 
 
 def test_liver_tumour_simulation_is_finite_nonnegative_and_grows():
@@ -19,6 +20,26 @@ def test_reduced_blood_flow_reduces_oxygen_and_increases_necrosis():
     assert low.necrotic_tumour.iloc[-1] > normal.necrotic_tumour.iloc[-1]
 
 
+def test_portal_and_arterial_inflow_are_independently_executable():
+    # Both perturbations remove approximately one quarter of total inflow. Loss
+    # of the more oxygen-rich arterial stream must have the larger oxygen effect.
+    portal_loss = simulate_liver_tumour(days=60, portal_flow_multiplier=2 / 3)
+    arterial_loss = simulate_liver_tumour(days=60, arterial_flow_multiplier=0.001)
+    assert portal_loss.portal_flow.iloc[0] < simulate_liver_tumour(days=1).portal_flow.iloc[0]
+    assert arterial_loss.arterial_flow.iloc[0] < portal_loss.arterial_flow.iloc[0]
+    assert arterial_loss.oxygenated_inflow.iloc[0] < portal_loss.oxygenated_inflow.iloc[0]
+    assert arterial_loss.oxygen_core.iloc[-1] < portal_loss.oxygen_core.iloc[-1]
+    assert np.allclose(portal_loss.portal_flow + portal_loss.arterial_flow,
+                       (0.75 * 2 / 3 + 0.25) * portal_loss.functional_vessels)
+
+
+def test_legacy_total_flow_multiplier_equals_two_explicit_inflow_multipliers():
+    legacy = simulate_liver_tumour(days=10, flow_multiplier=0.65)
+    explicit = simulate_liver_tumour(
+        days=10, portal_flow_multiplier=0.65, arterial_flow_multiplier=0.65)
+    assert np.allclose(legacy.to_numpy(), explicit.to_numpy(), rtol=1e-10, atol=1e-12)
+
+
 def test_zero_tumour_does_not_spontaneously_create_tumour():
     state = LiverTumourInitialState(tumour_rim=0, tumour_core=0, necrotic_tumour=0)
     frame = simulate_liver_tumour(days=30, initial=state)
@@ -26,7 +47,10 @@ def test_zero_tumour_does_not_spontaneously_create_tumour():
 
 
 @pytest.mark.parametrize("kwargs", ({"days": 0}, {"step": -1}, {"flow_multiplier": 0},
-                                    {"angiogenesis_inhibition": 1.2}))
+                                    {"portal_flow_multiplier": 0},
+                                    {"arterial_flow_multiplier": float("nan")},
+                                    {"angiogenesis_inhibition": 1.2},
+                                    {"parameters": LiverTumourParameters(portal_flow=0)}))
 def test_invalid_simulation_contracts_fail(kwargs):
     with pytest.raises(ValueError):
         simulate_liver_tumour(**kwargs)
