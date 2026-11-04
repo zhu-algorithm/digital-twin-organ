@@ -8,6 +8,7 @@ from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              augment_with_liver_tdln_counterfactuals,
                                              liver_bridge_parameter_draws,
                                              load_liver_bridge_parameters,
+                                             validate_perfusion_manifest,
                                              validate_treatment_manifest,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
@@ -292,3 +293,78 @@ def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():
         validate_treatment_manifest(
             manifest.assign(response_definition=["RECIST", "irRECIST"]),
             ["p1", "p2"], days=5)
+
+
+def test_patient_perfusion_manifest_controls_cohort_dual_inflow_and_fails_closed():
+    manifest = pd.DataFrame({
+        "patient_id": ["p1", "p2"],
+        "portal_flow_multiplier": [1.0, 0.55],
+        "arterial_flow_multiplier": [1.0, 0.35],
+        "measurement_definition": ["synthetic_duplex_ratio"] * 2,
+        "normalization_reference": ["synthetic_population_baseline"] * 2,
+    })
+    flows, contract = validate_perfusion_manifest(manifest, ["p1", "p2"])
+    assert flows["p2"] == (0.55, 0.35)
+    assert contract["scale"] == "dimensionless_multiplier"
+    features = pd.DataFrame({"patient_id": ["p1", "p2"], "sig_cytotoxic": [0.2, 0.2]})
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1.0),), patient_flows=flows, days=5, step=0.5)
+    assert out.loc[1, "liver_cf_control_final_tumour_fraction"] != pytest.approx(
+        out.loc[0, "liver_cf_control_final_tumour_fraction"])
+    with pytest.raises(ValueError, match="exactly match"):
+        validate_perfusion_manifest(manifest.iloc[:1], ["p1", "p2"])
+    with pytest.raises(ValueError, match="strictly positive"):
+        validate_perfusion_manifest(
+            manifest.assign(portal_flow_multiplier=[1.0, 0.0]), ["p1", "p2"])
+    with pytest.raises(ValueError, match="shared measurement_definition"):
+        validate_perfusion_manifest(
+            manifest.assign(measurement_definition=["duplex", "dce_mri"]),
+            ["p1", "p2"])
+
+
+def test_cohort_audit_binds_and_replays_perfusion_manifest(tmp_path):
+    features_path = tmp_path / "features.csv"
+    output_path = tmp_path / "augmented.csv"
+    perfusion_path = tmp_path / "perfusion.csv"
+    audit_path = tmp_path / "augmented.csv.liver-counterfactual-audit.json"
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
+    perfusion = pd.DataFrame({
+        "patient_id": ["p1"], "portal_flow_multiplier": [0.7],
+        "arterial_flow_multiplier": [0.4],
+        "measurement_definition": ["synthetic_duplex_ratio"],
+        "normalization_reference": ["synthetic_baseline"],
+    })
+    features.to_csv(features_path, index=False)
+    perfusion.to_csv(perfusion_path, index=False)
+    flows, contract = validate_perfusion_manifest(perfusion, ["p1"])
+    mapping = FeatureBridgeMapping()
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1.0),), days=2, step=0.5,
+        mapping=mapping, patient_flows=flows)
+    out.to_csv(output_path, index=False)
+    audit = {
+        "schema_version": 1,
+        "stage": "label_free_liver_tdln_counterfactual_augmentation",
+        "labels_used": False,
+        "input": {"sha256": sha256_file(features_path)},
+        "output": {"sha256": sha256_file(output_path)},
+        "settings": {"days": 2, "step": 0.5, "dose_days": [0],
+                     "dose_amounts": [1.0]},
+        "mapping": mapping.__dict__,
+        "base_parameters": {
+            "coupling": LiverTDLNCouplingParameters().__dict__,
+            "spatial_bridge": LiverTDLNSpatialBridge().__dict__,
+        },
+        "perfusion_manifest": {"sha256": sha256_file(perfusion_path)},
+        "perfusion_contract": contract,
+    }
+    audit_path.write_text(json.dumps(audit))
+    assert verify_liver_counterfactual_augmentation(
+        audit_path, features_path, output_path,
+        perfusion_manifest_path=perfusion_path) == audit
+    perfusion.loc[0, "portal_flow_multiplier"] = 0.8
+    perfusion.to_csv(perfusion_path, index=False)
+    with pytest.raises(ValueError, match="perfusion manifest hash mismatch"):
+        verify_liver_counterfactual_augmentation(
+            audit_path, features_path, output_path,
+            perfusion_manifest_path=perfusion_path)

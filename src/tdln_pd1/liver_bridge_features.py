@@ -368,6 +368,7 @@ def augment_with_liver_tdln_counterfactuals(
         tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge], ...
     ] | None = None,
     patient_doses: dict[str, tuple[Dose, ...]] | None = None,
+    patient_flows: dict[str, tuple[float, float]] | None = None,
 ) -> pd.DataFrame:
     """Append label-free matched liver–TDLN contrasts for every patient."""
     if "patient_id" not in features:
@@ -383,15 +384,21 @@ def augment_with_liver_tdln_counterfactuals(
         raise ValueError("features must have one unique, non-empty row per patient")
     if patient_doses is not None and set(patient_doses) != set(out.patient_id):
         raise ValueError("patient treatment schedules must exactly match feature patients")
+    if patient_flows is not None and set(patient_flows) != set(out.patient_id):
+        raise ValueError("patient perfusion settings must exactly match feature patients")
     rows = []
     if parameter_draws is not None and len(parameter_draws) < 2:
         raise ValueError("parameter_draws must contain at least two samples")
     for _, row in out.iterrows():
         schedule = patient_doses[str(row.patient_id)] if patient_doses is not None else doses
+        portal_flow, arterial_flow = (
+            patient_flows[str(row.patient_id)] if patient_flows is not None
+            else (None, None))
         _, _, effect, _ = simulate_patient_liver_tdln_counterfactual(
             row, doses=schedule, days=days, step=step, mapping=mapping,
             base_coupling=base_coupling, base_bridge=base_bridge,
-            base_spatial=base_spatial)
+            base_spatial=base_spatial, portal_flow_multiplier=portal_flow,
+            arterial_flow_multiplier=arterial_flow)
         values = {target: float(effect[source])
                   for source, target in COUNTERFACTUAL_FEATURES.items()}
         if not np.isfinite(list(values.values())).all():
@@ -402,7 +409,8 @@ def augment_with_liver_tdln_counterfactuals(
                 _, _, draw_effect, _ = simulate_patient_liver_tdln_counterfactual(
                     row, doses=schedule, days=days, step=step, mapping=mapping,
                     base_coupling=sampled_coupling, base_bridge=sampled_bridge,
-                    base_spatial=base_spatial)
+                    base_spatial=base_spatial, portal_flow_multiplier=portal_flow,
+                    arterial_flow_multiplier=arterial_flow)
                 for source in sampled:
                     sampled[source].append(float(draw_effect[source]))
             for source, target in COUNTERFACTUAL_FEATURES.items():
@@ -419,6 +427,7 @@ def verify_liver_counterfactual_augmentation(
     bridge_parameters_path: str | Path | None = None,
     bridge_diagnostics_path: str | Path | None = None,
     treatment_manifest_path: str | Path | None = None,
+    perfusion_manifest_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -473,10 +482,23 @@ def verify_liver_counterfactual_augmentation(
             pd.read_csv(features_path).patient_id.astype(str).tolist(), days)
         if manifest_summary != audit.get("treatment_contract"):
             raise ValueError("treatment manifest contract mismatch")
+    patient_flows = None
+    perfusion_record = audit.get("perfusion_manifest")
+    if perfusion_record is not None:
+        if perfusion_manifest_path is None:
+            raise ValueError("perfusion manifest is required to replay this augmentation")
+        if perfusion_record.get("sha256") != sha256_file(perfusion_manifest_path):
+            raise ValueError("liver counterfactual perfusion manifest hash mismatch")
+        patient_flows, perfusion_summary = validate_perfusion_manifest(
+            pd.read_csv(perfusion_manifest_path),
+            pd.read_csv(features_path).patient_id.astype(str).tolist())
+        if perfusion_summary != audit.get("perfusion_contract"):
+            raise ValueError("perfusion manifest contract mismatch")
     replay = augment_with_liver_tdln_counterfactuals(
         pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
         base_coupling=base_coupling, base_bridge=base_bridge,
-        parameter_draws=parameter_draws, patient_doses=patient_doses)
+        parameter_draws=parameter_draws, patient_doses=patient_doses,
+        patient_flows=patient_flows)
     replay_sha = hashlib.sha256(
         replay.to_csv(index=False).encode("utf-8")).hexdigest()
     if replay_sha != audit["output"]["sha256"]:
@@ -552,4 +574,45 @@ def validate_treatment_manifest(
         "patient_specific_schedules": True,
     }
     return schedules, summary
+
+
+def validate_perfusion_manifest(
+    manifest: pd.DataFrame, patient_ids: list[str],
+) -> tuple[dict[str, tuple[float, float]], dict]:
+    """Validate patient-aligned dimensionless dual-inflow measurements."""
+    required = {"patient_id", "portal_flow_multiplier", "arterial_flow_multiplier",
+                "measurement_definition", "normalization_reference"}
+    missing = required - set(manifest)
+    if missing:
+        raise ValueError(f"perfusion manifest missing columns: {sorted(missing)}")
+    table = manifest.copy()
+    if table[list(required)].isna().any().any():
+        raise ValueError("perfusion manifest requires complete values")
+    table["patient_id"] = table.patient_id.astype(str).str.strip()
+    if table.patient_id.eq("").any() or table.patient_id.duplicated().any():
+        raise ValueError("perfusion manifest requires unique non-empty patient_id")
+    if set(table.patient_id) != {str(value).strip() for value in patient_ids}:
+        raise ValueError("perfusion manifest patients must exactly match feature patients")
+    definitions = set(table.measurement_definition.astype(str).str.strip())
+    references = set(table.normalization_reference.astype(str).str.strip())
+    if len(definitions) != 1 or "" in definitions:
+        raise ValueError("perfusion manifest requires one shared measurement_definition")
+    if len(references) != 1 or "" in references:
+        raise ValueError("perfusion manifest requires one shared normalization_reference")
+    flows = {}
+    for row in table.itertuples(index=False):
+        try:
+            portal = float(row.portal_flow_multiplier)
+            arterial = float(row.arterial_flow_multiplier)
+        except (TypeError, ValueError) as error:
+            raise ValueError("perfusion multipliers must be numeric") from error
+        if not np.isfinite((portal, arterial)).all() or portal <= 0 or arterial <= 0:
+            raise ValueError("perfusion multipliers must be finite and strictly positive")
+        flows[str(row.patient_id)] = (portal, arterial)
+    return flows, {
+        "scale": "dimensionless_multiplier",
+        "measurement_definition": next(iter(definitions)),
+        "normalization_reference": next(iter(references)),
+        "patient_count": len(flows),
+    }
 

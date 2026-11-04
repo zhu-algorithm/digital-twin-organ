@@ -17,6 +17,7 @@ from tdln_pd1.liver_bridge_features import (
     augment_with_liver_tdln_counterfactuals,
     liver_bridge_parameter_draws,
     load_liver_bridge_parameters,
+    validate_perfusion_manifest,
     validate_treatment_manifest,
     verify_liver_counterfactual_augmentation,
 )
@@ -39,6 +40,7 @@ def main() -> None:
     parser.add_argument("--uncertainty-samples", type=int, default=0)
     parser.add_argument("--uncertainty-seed", type=int, default=42)
     parser.add_argument("--treatment-manifest", type=Path)
+    parser.add_argument("--perfusion-manifest", type=Path)
     args = parser.parse_args()
     if bool(args.dose_days) == bool(args.treatment_manifest):
         raise ValueError("provide exactly one of --dose-days or --treatment-manifest")
@@ -50,6 +52,11 @@ def main() -> None:
         patient_doses, treatment_contract = validate_treatment_manifest(
             pd.read_csv(args.treatment_manifest),
             features.patient_id.astype(str).tolist(), args.days)
+    patient_flows = perfusion_contract = None
+    if args.perfusion_manifest:
+        patient_flows, perfusion_contract = validate_perfusion_manifest(
+            pd.read_csv(args.perfusion_manifest),
+            features.patient_id.astype(str).tolist())
     mapping = FeatureBridgeMapping()
     if args.bridge_parameters:
         base_coupling, base_bridge = load_liver_bridge_parameters(args.bridge_parameters)
@@ -71,7 +78,7 @@ def main() -> None:
         features, doses=doses, days=args.days,
         step=args.step, mapping=mapping, base_coupling=base_coupling,
         base_bridge=base_bridge, parameter_draws=parameter_draws,
-        patient_doses=patient_doses)
+        patient_doses=patient_doses, patient_flows=patient_flows)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     augmented.to_csv(args.output, index=False)
     mechanistic_columns = [
@@ -106,13 +113,17 @@ def main() -> None:
                                  "sha256": sha256_file(args.treatment_manifest)}
                                 if args.treatment_manifest else None),
         "treatment_contract": treatment_contract,
+        "perfusion_manifest": ({"file": args.perfusion_manifest.name,
+                                 "sha256": sha256_file(args.perfusion_manifest)}
+                                if args.perfusion_manifest else None),
+        "perfusion_contract": perfusion_contract,
         "mechanistic_feature_columns": mechanistic_columns,
         "limitation": "Model-derived matched contrasts; not clinical response labels.",
     }
     audit_path.write_text(json.dumps(audit, indent=2, sort_keys=True) + "\n")
     verify_liver_counterfactual_augmentation(
         audit_path, args.features, args.output, args.bridge_parameters,
-        args.bridge_diagnostics, args.treatment_manifest)
+        args.bridge_diagnostics, args.treatment_manifest, args.perfusion_manifest)
     print(json.dumps({"n_patients": len(augmented),
                       "n_mechanistic_features": len(mechanistic_columns),
                       "labels_used": False, "output": str(args.output)}, indent=2))

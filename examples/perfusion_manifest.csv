@@ -1,0 +1,9 @@
+patient_id,portal_flow_multiplier,arterial_flow_multiplier,measurement_definition,normalization_reference
+p0,1.00,1.00,synthetic_dual_inflow_software_fixture,synthetic_population_baseline
+p1,0.95,1.05,synthetic_dual_inflow_software_fixture,synthetic_population_baseline
+p2,0.90,1.10,synthetic_dual_inflow_software_fixture,synthetic_population_baseline
+p3,0.85,1.15,synthetic_dual_inflow_software_fixture,synthetic_population_baseline
+p4,1.10,0.90,synthetic_dual_inflow_software_fixture,synthetic_population_baseline
+p5,1.05,0.95,synthetic_dual_inflow_software_fixture,synthetic_population_baseline
+p6,0.80,0.75,synthetic_dual_inflow_software_fixture,synthetic_population_baseline
+p7,0.70,0.60,synthetic_dual_inflow_software_fixture,synthetic_population_baseline

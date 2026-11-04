@@ -2,7 +2,7 @@
   "cohort_id": "synthetic-tdln-demo-v1",
   "source": "Repository-generated synthetic software verification fixture",
   "license": "MIT (repository fixture; no human data)",
-  "modalities": ["synthetic cell table", "synthetic spatial state table", "synthetic binary outcome"],
+  "modalities": ["synthetic cell table", "synthetic spatial state table", "synthetic dual-inflow perfusion table", "synthetic binary outcome"],
   "outcome_definition": "Synthetic response label generated only to exercise the pipeline; no clinical meaning",
   "files": [
     {
@@ -19,6 +19,11 @@
       "path": "treatment_manifest.csv",
       "role": "patient anti-PD-1 model-regimen contract",
       "sha256": "15ea1cc1fe2812d3318712d2d4415f9aafe0882cf8cfa0a843775c508bfa505b"
+    },
+    {
+      "path": "perfusion_manifest.csv",
+      "role": "patient portal/arterial flow multiplier contract",
+      "sha256": "4d22fe30e258cdd4b7203c5803d5826ebe0d85fc4af7039be659fef1dcb73544"
     },
     {
       "path": "spatial_spots_cohort.csv",
