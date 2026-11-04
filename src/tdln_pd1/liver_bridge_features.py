@@ -62,6 +62,41 @@ def verify_patient_liver_tdln_audit(
         path = output_directory / Path(name).name
         if sha256_file(path) != expected:
             raise ValueError(f"patient liver-TDLN output hash mismatch: {path.name}")
+    settings = audit.get("settings")
+    if settings is not None:
+        try:
+            table = pd.read_csv(features_path)
+            selected = table[table.patient_id.astype(str).eq(str(audit["patient_id"]))]
+            if len(selected) != 1:
+                raise ValueError("patient audit must select exactly one feature row")
+            doses = tuple(Dose(float(day), float(settings["dose"]))
+                          for day in settings["dose_days"])
+            kwargs = {
+                "days": float(settings["days"]), "step": float(settings["step"]),
+                "doses": doses,
+                "portal_flow_multiplier": settings.get("portal_flow_multiplier"),
+                "arterial_flow_multiplier": settings.get("arterial_flow_multiplier"),
+            }
+            if settings.get("paired_counterfactual") is True:
+                systemic, spatial, effect, _ = simulate_patient_liver_tdln_counterfactual(
+                    selected.iloc[0], **kwargs)
+            else:
+                systemic, spatial, _ = simulate_patient_liver_tdln(selected.iloc[0], **kwargs)
+                effect = None
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError("invalid patient liver-TDLN replay settings") from error
+        replay = {
+            "patient_liver_tdln_systemic.csv": hashlib.sha256(
+                systemic.to_csv(index=False).encode("utf-8")).hexdigest(),
+            "patient_liver_tdln_spatial.csv": hashlib.sha256(
+                spatial.to_csv(index=False).encode("utf-8")).hexdigest(),
+        }
+        if effect is not None:
+            replay["patient_liver_tdln_counterfactual.json"] = hashlib.sha256(
+                (json.dumps(effect, indent=2, sort_keys=True) + "\n").encode("utf-8")
+            ).hexdigest()
+        if replay != outputs:
+            raise ValueError("patient liver-TDLN derivation replay mismatch")
     return audit
 
 
@@ -164,6 +199,8 @@ def simulate_patient_liver_tdln(
     base_coupling: LiverTDLNCouplingParameters | None = None,
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
+    portal_flow_multiplier: float | None = None,
+    arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """Run the full organ/system/six-zone model from one outcome-free feature row."""
     patient = patient_liver_bridge_from_features(
@@ -176,6 +213,8 @@ def simulate_patient_liver_tdln(
         spatial_parameters=patient.spatial_parameters,
         spatial_initial=spatial_initial, coupling_parameters=patient.coupling,
         immune_initial=immune_initial,
+        portal_flow_multiplier=portal_flow_multiplier,
+        arterial_flow_multiplier=arterial_flow_multiplier,
     )
     return systemic, spatial, patient.audit
 
@@ -199,6 +238,8 @@ def simulate_patient_liver_tdln_counterfactual(
     base_coupling: LiverTDLNCouplingParameters | None = None,
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
+    portal_flow_multiplier: float | None = None,
+    arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
     """Run matched natural-history and anti-PD-1 arms for one patient.
 
@@ -214,7 +255,9 @@ def simulate_patient_liver_tdln_counterfactual(
         systemic, spatial, arm_audit = simulate_patient_liver_tdln(
             row, days=days, step=step, doses=schedule, mapping=mapping,
             base_coupling=base_coupling, base_bridge=base_bridge,
-            base_spatial=base_spatial)
+            base_spatial=base_spatial,
+            portal_flow_multiplier=portal_flow_multiplier,
+            arterial_flow_multiplier=arterial_flow_multiplier)
         systemic, spatial = systemic.copy(), spatial.copy()
         systemic["arm"], spatial["arm"] = arm, arm
         frames_systemic.append(systemic)

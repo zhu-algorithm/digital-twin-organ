@@ -27,6 +27,8 @@ def main() -> None:
     parser.add_argument("--step", type=float, default=0.25)
     parser.add_argument("--dose-days", default="")
     parser.add_argument("--dose", type=float, default=1.0)
+    parser.add_argument("--portal-flow-multiplier", type=float)
+    parser.add_argument("--arterial-flow-multiplier", type=float)
     parser.add_argument("--paired-counterfactual", action="store_true")
     args = parser.parse_args()
     features = pd.read_csv(args.features)
@@ -39,10 +41,14 @@ def main() -> None:
                   for day in args.dose_days.split(",") if day.strip())
     if args.paired_counterfactual:
         systemic, spatial, effect, audit = simulate_patient_liver_tdln_counterfactual(
-            matches.iloc[0], days=args.days, step=args.step, doses=doses)
+            matches.iloc[0], days=args.days, step=args.step, doses=doses,
+            portal_flow_multiplier=args.portal_flow_multiplier,
+            arterial_flow_multiplier=args.arterial_flow_multiplier)
     else:
         systemic, spatial, audit = simulate_patient_liver_tdln(
-            matches.iloc[0], days=args.days, step=args.step, doses=doses)
+            matches.iloc[0], days=args.days, step=args.step, doses=doses,
+            portal_flow_multiplier=args.portal_flow_multiplier,
+            arterial_flow_multiplier=args.arterial_flow_multiplier)
         effect = None
     args.output.mkdir(parents=True, exist_ok=True)
     systemic_path = args.output / "patient_liver_tdln_systemic.csv"
@@ -56,7 +62,9 @@ def main() -> None:
         "patient_id": str(args.patient_id),
         "input": {"file": args.features.name, "sha256": sha256_file(args.features)},
         "settings": {"days": args.days, "step": args.step,
-                     "dose_days": [dose.day for dose in doses], "dose": args.dose},
+                     "dose_days": [dose.day for dose in doses], "dose": args.dose,
+                     "portal_flow_multiplier": args.portal_flow_multiplier,
+                     "arterial_flow_multiplier": args.arterial_flow_multiplier},
         "outputs": {
             systemic_path.name: sha256_file(systemic_path),
             spatial_path.name: sha256_file(spatial_path),

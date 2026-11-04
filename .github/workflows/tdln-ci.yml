@@ -33,7 +33,7 @@ jobs:
         run: |
           tdln-pd1 featurize --cells examples/cells.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output /tmp/features.csv
           tdln-pd1 verify-features --audit /tmp/features.csv.feature-audit.json --cells examples/cells.csv --output /tmp/features.csv
-          python scripts/simulate_patient_liver_tdln.py --features /tmp/features.csv --patient-id p0 --days 3 --step 0.5 --dose-days 0 --paired-counterfactual --output /tmp/patient_liver_tdln
+          python scripts/simulate_patient_liver_tdln.py --features /tmp/features.csv --patient-id p0 --days 3 --step 0.5 --dose-days 0 --paired-counterfactual --portal-flow-multiplier 0.8 --arterial-flow-multiplier 0.6 --output /tmp/patient_liver_tdln
           test -f /tmp/patient_liver_tdln/patient_liver_tdln_audit.json
           test -f /tmp/patient_liver_tdln/patient_liver_tdln_counterfactual.json
           tdln-pd1 calibrate-feature-state-mapping --observations examples/feature_state_mapping_observations.csv --fit tcf7_coefficient --base-mapping examples/feature_state_mapping.json --output /tmp/mapping_calibration

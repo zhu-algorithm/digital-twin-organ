@@ -58,8 +58,11 @@ python scripts/calibrate_liver_tdln_bridge.py \
 python scripts/simulate_patient_liver_tdln.py \
   --features patient_features.csv --patient-id P001 \
   --dose-days 0,21,42 --paired-counterfactual \
+  --portal-flow-multiplier 0.8 --arterial-flow-multiplier 0.6 \
   --output artifacts/P001_liver_tdln
 ```
+
+两路血流倍率也进入患者审计设置。验证器不仅重新核对输入和输出哈希，还会从绑定的患者特征行、给药方案、两路血流设置和配对反事实标志重新运行系统层与六区空间层，并比较规范化 CSV/JSON 哈希；修改审计中的血流设置而不重新生成轨迹会失败。
 
 命令输出系统层与六区空间轨迹，以及记录所用特征、回退项、映射系数、输入文件哈希和输出哈希的患者级审计。任何疑似治疗结局字段都会在模拟前被拒绝，防止应答标签泄漏进机制特征。
 

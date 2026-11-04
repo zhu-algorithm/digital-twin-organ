@@ -93,6 +93,35 @@ def test_patient_audit_verifier_detects_tampering(tmp_path):
         verify_patient_liver_tdln_audit(output, features)
 
 
+def test_patient_audit_replays_dual_inflow_settings(tmp_path):
+    features = tmp_path / "features.csv"
+    output = tmp_path / "output"
+    output.mkdir()
+    features.write_text("patient_id,sig_cytotoxic\np0,0.5\n")
+    systemic, spatial, bridge_audit = simulate_patient_liver_tdln(
+        pd.Series({"patient_id": "p0", "sig_cytotoxic": 0.5}), days=2, step=0.5,
+        portal_flow_multiplier=0.7, arterial_flow_multiplier=0.4)
+    systemic_path = output / "patient_liver_tdln_systemic.csv"
+    spatial_path = output / "patient_liver_tdln_spatial.csv"
+    systemic.to_csv(systemic_path, index=False)
+    spatial.to_csv(spatial_path, index=False)
+    audit = {**bridge_audit, "patient_id": "p0",
+             "input": {"sha256": sha256_file(features)},
+             "settings": {"days": 2, "step": 0.5, "dose_days": [], "dose": 1.0,
+                          "portal_flow_multiplier": 0.7,
+                          "arterial_flow_multiplier": 0.4,
+                          "paired_counterfactual": False},
+             "outputs": {systemic_path.name: sha256_file(systemic_path),
+                         spatial_path.name: sha256_file(spatial_path)}}
+    audit_path = output / "patient_liver_tdln_audit.json"
+    audit_path.write_text(json.dumps(audit))
+    assert verify_patient_liver_tdln_audit(output, features) == audit
+    audit["settings"]["portal_flow_multiplier"] = 0.8
+    audit_path.write_text(json.dumps(audit))
+    with pytest.raises(ValueError, match="derivation replay mismatch"):
+        verify_patient_liver_tdln_audit(output, features)
+
+
 def test_patient_counterfactual_is_matched_and_reports_mechanistic_effect():
     row = pd.Series({"sig_dendritic_activation": 0.5, "sig_cytotoxic": 0.5,
                      "sig_exhaustion": 0.2, "frac_cd8_t": 0.3})
@@ -111,6 +140,18 @@ def test_patient_counterfactual_is_matched_and_reports_mechanistic_effect():
     assert effect["interpretation"].endswith("not_clinical_response")
     assert set(spatial.arm) == {"control", "anti_pd1"}
     assert audit["labels_used"] is False
+
+
+def test_patient_counterfactual_preserves_same_dual_inflow_in_both_arms():
+    systemic, _, _, _ = simulate_patient_liver_tdln_counterfactual(
+        pd.Series({"sig_cytotoxic": 0.4}), doses=(Dose(0, 1.0),), days=4,
+        portal_flow_multiplier=0.6, arterial_flow_multiplier=0.3)
+    control = systemic[systemic.arm.eq("control")].reset_index(drop=True)
+    treated = systemic[systemic.arm.eq("anti_pd1")].reset_index(drop=True)
+    assert control.liver_portal_flow.iloc[0] == pytest.approx(
+        treated.liver_portal_flow.iloc[0])
+    assert control.liver_arterial_flow.iloc[0] == pytest.approx(
+        treated.liver_arterial_flow.iloc[0])
 
 
 def test_patient_counterfactual_requires_active_treatment():
