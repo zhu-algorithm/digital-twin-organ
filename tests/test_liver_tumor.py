@@ -21,16 +21,36 @@ def test_reduced_blood_flow_reduces_oxygen_and_increases_necrosis():
 
 
 def test_portal_and_arterial_inflow_are_independently_executable():
-    # Both perturbations remove approximately one quarter of total inflow. Loss
-    # of the more oxygen-rich arterial stream must have the larger oxygen effect.
+    # Portal loss triggers partial arterial buffering, whereas an explicitly
+    # measured arterial loss is never inferred away.
     portal_loss = simulate_liver_tumour(days=60, portal_flow_multiplier=2 / 3)
     arterial_loss = simulate_liver_tumour(days=60, arterial_flow_multiplier=0.001)
     assert portal_loss.portal_flow.iloc[0] < simulate_liver_tumour(days=1).portal_flow.iloc[0]
     assert arterial_loss.arterial_flow.iloc[0] < portal_loss.arterial_flow.iloc[0]
     assert arterial_loss.oxygenated_inflow.iloc[0] < portal_loss.oxygenated_inflow.iloc[0]
     assert arterial_loss.oxygen_core.iloc[-1] < portal_loss.oxygen_core.iloc[-1]
+    assert portal_loss.arterial_buffer_flow.iloc[0] > 0
     assert np.allclose(portal_loss.portal_flow + portal_loss.arterial_flow,
-                       (0.75 * 2 / 3 + 0.25) * portal_loss.functional_vessels)
+                       (0.75 * 2 / 3 + 0.25 + 0.25 * 0.75 / 3)
+                       * portal_loss.functional_vessels)
+
+
+def test_hepatic_arterial_buffer_is_partial_bounded_and_not_double_counted():
+    buffered = simulate_liver_tumour(days=2, portal_flow_multiplier=0.4)
+    disabled = simulate_liver_tumour(
+        days=2, portal_flow_multiplier=0.4,
+        parameters=LiverTumourParameters(arterial_buffer_fraction=0.0))
+    both_measured = simulate_liver_tumour(
+        days=2, portal_flow_multiplier=0.4, arterial_flow_multiplier=1.0)
+    assert buffered.arterial_flow.iloc[0] > disabled.arterial_flow.iloc[0]
+    assert buffered.perfusion.iloc[0] < simulate_liver_tumour(days=2).perfusion.iloc[0]
+    assert both_measured.arterial_buffer_flow.max() == pytest.approx(0.0)
+    capped = simulate_liver_tumour(
+        days=2, portal_flow_multiplier=0.01,
+        parameters=LiverTumourParameters(
+            arterial_buffer_fraction=1.0, arterial_buffer_max_multiplier=1.2))
+    assert capped.arterial_flow.iloc[0] <= (
+        0.25 * 1.2 * capped.functional_vessels.iloc[0] + 1e-12)
 
 
 def test_legacy_total_flow_multiplier_equals_two_explicit_inflow_multipliers():
@@ -50,7 +70,11 @@ def test_zero_tumour_does_not_spontaneously_create_tumour():
                                     {"portal_flow_multiplier": 0},
                                     {"arterial_flow_multiplier": float("nan")},
                                     {"angiogenesis_inhibition": 1.2},
-                                    {"parameters": LiverTumourParameters(portal_flow=0)}))
+                                    {"parameters": LiverTumourParameters(portal_flow=0)},
+                                    {"parameters": LiverTumourParameters(
+                                        arterial_buffer_fraction=1.2)},
+                                    {"parameters": LiverTumourParameters(
+                                        arterial_buffer_max_multiplier=0.9)}))
 def test_invalid_simulation_contracts_fail(kwargs):
     with pytest.raises(ValueError):
         simulate_liver_tumour(**kwargs)

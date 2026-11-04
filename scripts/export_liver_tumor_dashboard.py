@@ -22,7 +22,8 @@ from tdln_pd1.spatial import ZONES
 SCHEMA_VERSION = 1
 COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
            "functional_vessels", "oxygen_normal", "oxygen_rim", "oxygen_core",
-           "perfusion", "portal_flow", "arterial_flow", "oxygenated_inflow",
+           "perfusion", "portal_flow", "arterial_flow", "arterial_buffer_flow",
+           "oxygenated_inflow",
            "arterial_flow_fraction", "tumour_fraction")
 IMMUNE_COLUMNS = ("tumour_antigen", "mature_dc_tdln", "tpex_tdln",
                   "effector_tdln", "effector_tumour", "pd1_occupancy",

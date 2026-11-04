@@ -149,7 +149,7 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                                   + out.liver_necrotic_tumour)
     out["liver_tumour_fraction"] = out.liver_total_tumour / (
         out.liver_normal_cells + out.liver_total_tumour).clip(lower=1e-12)
-    portal, arterial, oxygenated = _liver_inflow(
+    portal, arterial, buffer_flow, oxygenated = _liver_inflow(
         lp, flow_multiplier, portal_flow_multiplier, arterial_flow_multiplier)
     out["liver_perfusion"] = ((portal + arterial)
                                * out.liver_functional_vessels
@@ -157,6 +157,7 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                                   * (out.liver_tumour_rim + out.liver_tumour_core)))
     out["liver_portal_flow"] = portal * out.liver_functional_vessels
     out["liver_arterial_flow"] = arterial * out.liver_functional_vessels
+    out["liver_arterial_buffer_flow"] = buffer_flow * out.liver_functional_vessels
     out["liver_oxygenated_inflow"] = oxygenated * out.liver_functional_vessels
     return out
 
