@@ -216,6 +216,46 @@ def test_cohort_counterfactual_audit_replays_and_rejects_tampering(tmp_path):
             audit_path, features_path, output_path)
 
 
+def test_cohort_audit_binds_calibrated_feature_bridge_mapping(tmp_path):
+    features_path = tmp_path / "features.csv"
+    output_path = tmp_path / "augmented.csv"
+    mapping_path = tmp_path / "mapping.json"
+    audit_path = tmp_path / "audit.json"
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
+    features.to_csv(features_path, index=False)
+    mapping = FeatureBridgeMapping(killing_cytotoxic_coefficient=1.3)
+    mapping_path.write_text(json.dumps({
+        "mapping": mapping.__dict__, "research_only": True, "labels_used": False,
+    }))
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1.0),), days=2, step=0.5, mapping=mapping)
+    out.to_csv(output_path, index=False)
+    audit = {
+        "schema_version": 1,
+        "stage": "label_free_liver_tdln_counterfactual_augmentation",
+        "labels_used": False,
+        "input": {"sha256": sha256_file(features_path)},
+        "output": {"sha256": sha256_file(output_path)},
+        "settings": {"days": 2, "step": 0.5, "dose_days": [0],
+                     "dose_amounts": [1.0]},
+        "mapping": mapping.__dict__,
+        "feature_bridge_mapping": {"sha256": sha256_file(mapping_path)},
+        "base_parameters": {
+            "coupling": LiverTDLNCouplingParameters().__dict__,
+            "spatial_bridge": LiverTDLNSpatialBridge().__dict__,
+        },
+    }
+    audit_path.write_text(json.dumps(audit))
+    assert verify_liver_counterfactual_augmentation(
+        audit_path, features_path, output_path,
+        feature_bridge_mapping_path=mapping_path) == audit
+    mapping_path.write_text(mapping_path.read_text().replace("1.3", "1.4"))
+    with pytest.raises(ValueError, match="mapping hash mismatch"):
+        verify_liver_counterfactual_augmentation(
+            audit_path, features_path, output_path,
+            feature_bridge_mapping_path=mapping_path)
+
+
 def test_saved_bridge_parameters_change_cohort_features_and_fail_closed(tmp_path):
     parameter_path = tmp_path / "bridge.json"
     parameter_path.write_text(json.dumps({

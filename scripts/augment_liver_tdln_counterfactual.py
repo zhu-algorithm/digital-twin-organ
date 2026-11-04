@@ -25,6 +25,7 @@ from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
 from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
 from tdln_pd1.liver_tumor import LiverTumourParameters
+from tdln_pd1.liver_mapping_assimilation import load_feature_bridge_mapping
 from tdln_pd1.simulator import Dose
 
 
@@ -37,6 +38,7 @@ def main() -> None:
     parser.add_argument("--dose-days")
     parser.add_argument("--dose", type=float, default=1.0)
     parser.add_argument("--bridge-parameters", type=Path)
+    parser.add_argument("--feature-bridge-mapping", type=Path)
     parser.add_argument("--bridge-diagnostics", type=Path)
     parser.add_argument("--uncertainty-samples", type=int, default=0)
     parser.add_argument("--uncertainty-seed", type=int, default=42)
@@ -58,7 +60,8 @@ def main() -> None:
         patient_flows, perfusion_contract = validate_perfusion_manifest(
             pd.read_csv(args.perfusion_manifest),
             features.patient_id.astype(str).tolist())
-    mapping = FeatureBridgeMapping()
+    mapping = (load_feature_bridge_mapping(args.feature_bridge_mapping)
+               if args.feature_bridge_mapping else FeatureBridgeMapping())
     if args.bridge_parameters:
         base_liver, base_coupling, base_bridge = load_liver_bridge_parameters(
             args.bridge_parameters)
@@ -102,6 +105,10 @@ def main() -> None:
                      "uncertainty_samples": args.uncertainty_samples,
                      "uncertainty_seed": args.uncertainty_seed},
         "mapping": asdict(mapping),
+        "feature_bridge_mapping": (
+            {"file": args.feature_bridge_mapping.name,
+             "sha256": sha256_file(args.feature_bridge_mapping)}
+            if args.feature_bridge_mapping else None),
         "base_parameters": {
             "liver_tumour": asdict(base_liver or LiverTumourParameters()),
             "coupling": asdict(base_coupling or LiverTDLNCouplingParameters()),
@@ -127,7 +134,8 @@ def main() -> None:
     audit_path.write_text(json.dumps(audit, indent=2, sort_keys=True) + "\n")
     verify_liver_counterfactual_augmentation(
         audit_path, args.features, args.output, args.bridge_parameters,
-        args.bridge_diagnostics, args.treatment_manifest, args.perfusion_manifest)
+        args.bridge_diagnostics, args.treatment_manifest, args.perfusion_manifest,
+        args.feature_bridge_mapping)
     print(json.dumps({"n_patients": len(augmented),
                       "n_mechanistic_features": len(mechanistic_columns),
                       "labels_used": False, "output": str(args.output)}, indent=2))

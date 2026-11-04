@@ -9,7 +9,7 @@ from .provenance import sha256_file, verify_bound_derivation_audit
 
 CALIBRATION_STAGES = {
     "systemic_calibration", "spatial_calibration", "feature_state_mapping_calibration",
-    "liver_tdln_bridge_calibration",
+    "liver_tdln_bridge_calibration", "liver_feature_bridge_mapping_calibration",
 }
 
 

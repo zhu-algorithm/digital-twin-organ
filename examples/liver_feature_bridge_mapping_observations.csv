@@ -1,0 +1,7 @@
+patient_id,target,value,sd,sig_cytotoxic_cd8_t,source
+p0,immune_killing_multiplier,1.150273798857,0.011502737989,0.10,synthetic_demo_not_biological_evidence
+p1,immune_killing_multiplier,1.323129812337,0.013231298123,0.20,synthetic_demo_not_biological_evidence
+p2,immune_killing_multiplier,1.632316219955,0.016323162200,0.35,synthetic_demo_not_biological_evidence
+p3,immune_killing_multiplier,2.013752707470,0.020137527075,0.50,synthetic_demo_not_biological_evidence
+p4,immune_killing_multiplier,2.664456241929,0.026644562419,0.70,synthetic_demo_not_biological_evidence
+p5,immune_killing_multiplier,3.525421487365,0.035254214874,0.90,synthetic_demo_not_biological_evidence

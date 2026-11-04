@@ -65,6 +65,22 @@ python scripts/calibrate_liver_tdln_bridge.py \
 
 `liver_bridge_features.py` 将标签无关的单细胞汇总特征有界映射到三个机制：DC 激活影响抗原引流和 DC 产出，CD8 细胞毒性／比例提高免疫杀伤，耗竭特征降低杀伤。优先使用谱系限制的 `*_cd8_t`、`*_dc` 特征，再回退到全局签名；真正缺失的特征保持群体基线，并记录在审计的 `fallback_features` 中。所有乘数限制在 0.25–4 倍，防止任意表达尺度生成负值或无界参数。映射系数仍是待校准假设。
 
+映射系数现在可用独立的机制测量长表进行加权鲁棒校准，而不接触 PD-1 应答标签。输入按患者提供单细胞特征，以及 `antigen_drainage_multiplier`、`dc_yield_multiplier` 或 `immune_killing_multiplier` 的正值与标准差；每位患者的重复特征必须一致。校准输出包含局部可辨识性、协方差、残差和输入／输出哈希。随后把拟合文件通过 `--feature-bridge-mapping` 传入队列反事实增强，其文件哈希、完整映射和 label-free 契约均进入可重放审计。
+
+```bash
+python scripts/calibrate_liver_feature_bridge.py \
+  --observations liver_feature_bridge_observations.csv \
+  --fit killing_cytotoxic_coefficient,killing_exhaustion_coefficient \
+  --output artifacts/liver_feature_bridge
+
+python scripts/augment_liver_tdln_counterfactual.py \
+  --features patient_features.csv --treatment-manifest treatment_manifest.csv \
+  --feature-bridge-mapping artifacts/liver_feature_bridge/fitted_liver_feature_bridge_mapping.json \
+  --output artifacts/liver_counterfactual_features.csv
+```
+
+仓库示例观测是由映射方程生成的合成恢复夹具，只证明校准、审计和下游加载可执行；它不是单细胞信号与人体免疫杀伤之间的实测换算。
+
 ```bash
 python scripts/simulate_patient_liver_tdln.py \
   --features patient_features.csv --patient-id P001 \

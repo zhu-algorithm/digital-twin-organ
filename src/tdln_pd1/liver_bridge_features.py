@@ -465,6 +465,7 @@ def verify_liver_counterfactual_augmentation(
     bridge_diagnostics_path: str | Path | None = None,
     treatment_manifest_path: str | Path | None = None,
     perfusion_manifest_path: str | Path | None = None,
+    feature_bridge_mapping_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -483,6 +484,17 @@ def verify_liver_counterfactual_augmentation(
             raise ValueError("bridge parameter file is required to replay this augmentation")
         if parameter_record.get("sha256") != sha256_file(bridge_parameters_path):
             raise ValueError("liver counterfactual bridge parameter hash mismatch")
+    mapping_record = audit.get("feature_bridge_mapping")
+    if mapping_record is not None:
+        if feature_bridge_mapping_path is None:
+            raise ValueError("feature-bridge mapping file is required to replay this augmentation")
+        if mapping_record.get("sha256") != sha256_file(feature_bridge_mapping_path):
+            raise ValueError("liver counterfactual feature-bridge mapping hash mismatch")
+        mapping_payload = json.loads(Path(feature_bridge_mapping_path).read_text())
+        if (mapping_payload.get("research_only") is not True
+                or mapping_payload.get("labels_used") is not False
+                or mapping_payload.get("mapping") != audit.get("mapping")):
+            raise ValueError("liver counterfactual feature-bridge mapping contract mismatch")
     settings = audit.get("settings", {})
     try:
         doses = tuple(Dose(float(day), float(amount)) for day, amount in zip(
