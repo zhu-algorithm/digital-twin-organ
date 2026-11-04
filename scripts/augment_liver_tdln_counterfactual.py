@@ -24,6 +24,7 @@ from tdln_pd1.liver_bridge_features import (
 from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
 from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
+from tdln_pd1.liver_tumor import LiverTumourParameters
 from tdln_pd1.simulator import Dose
 
 
@@ -59,9 +60,10 @@ def main() -> None:
             features.patient_id.astype(str).tolist())
     mapping = FeatureBridgeMapping()
     if args.bridge_parameters:
-        base_coupling, base_bridge = load_liver_bridge_parameters(args.bridge_parameters)
+        base_liver, base_coupling, base_bridge = load_liver_bridge_parameters(
+            args.bridge_parameters)
     else:
-        base_coupling, base_bridge = None, None
+        base_liver, base_coupling, base_bridge = None, None, None
     if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
         raise ValueError("--uncertainty-samples must be 0 or at least 2")
     if bool(args.bridge_diagnostics) != bool(args.uncertainty_samples):
@@ -71,13 +73,14 @@ def main() -> None:
     parameter_draws = None
     if args.bridge_diagnostics:
         parameter_draws = liver_bridge_parameter_draws(
-            base_coupling, base_bridge,
+            base_liver, base_coupling, base_bridge,
             json.loads(args.bridge_diagnostics.read_text()),
             args.uncertainty_samples, args.uncertainty_seed)
     augmented = augment_with_liver_tdln_counterfactuals(
         features, doses=doses, days=args.days,
         step=args.step, mapping=mapping, base_coupling=base_coupling,
-        base_bridge=base_bridge, parameter_draws=parameter_draws,
+        base_bridge=base_bridge, base_liver=base_liver,
+        parameter_draws=parameter_draws,
         patient_doses=patient_doses, patient_flows=patient_flows)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     augmented.to_csv(args.output, index=False)
@@ -100,6 +103,7 @@ def main() -> None:
                      "uncertainty_seed": args.uncertainty_seed},
         "mapping": asdict(mapping),
         "base_parameters": {
+            "liver_tumour": asdict(base_liver or LiverTumourParameters()),
             "coupling": asdict(base_coupling or LiverTDLNCouplingParameters()),
             "spatial_bridge": asdict(base_bridge or LiverTDLNSpatialBridge()),
         },

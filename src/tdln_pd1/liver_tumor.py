@@ -59,6 +59,18 @@ def _validate(values: object, label: str) -> None:
         raise ValueError(f"{label} must contain finite, non-negative values")
 
 
+def _validate_parameters(p: LiverTumourParameters) -> None:
+    """Validate numeric and physiological constraints shared by all solvers."""
+    _validate(p, "liver parameters")
+    if (p.portal_flow <= 0 or p.arterial_flow <= 0
+            or p.portal_oxygen_content <= 0 or p.arterial_oxygen_content <= 0):
+        raise ValueError("dual-inflow rates and oxygen contents must be strictly positive")
+    if not 0 <= p.arterial_buffer_fraction <= 1:
+        raise ValueError("arterial_buffer_fraction must lie in [0, 1]")
+    if p.arterial_buffer_max_multiplier < 1:
+        raise ValueError("arterial_buffer_max_multiplier must be at least 1")
+
+
 def _inflow(p: LiverTumourParameters, flow_multiplier: float,
             portal_flow_multiplier: float | None,
             arterial_flow_multiplier: float | None) -> tuple[float, float, float, float]:
@@ -128,15 +140,8 @@ def simulate_liver_tumour(*, days: float = 120.0, step: float = 0.5,
     """Simulate liver parenchyma, tumour, perfusion and oxygen trajectories."""
     p = parameters or LiverTumourParameters()
     state = initial or LiverTumourInitialState()
-    _validate(p, "parameters")
+    _validate_parameters(p)
     _validate(state, "initial state")
-    if (p.portal_flow <= 0 or p.arterial_flow <= 0
-            or p.portal_oxygen_content <= 0 or p.arterial_oxygen_content <= 0):
-        raise ValueError("dual-inflow rates and oxygen contents must be strictly positive")
-    if not 0 <= p.arterial_buffer_fraction <= 1:
-        raise ValueError("arterial_buffer_fraction must lie in [0, 1]")
-    if p.arterial_buffer_max_multiplier < 1:
-        raise ValueError("arterial_buffer_max_multiplier must be at least 1")
     if not np.isfinite(days) or days <= 0 or not np.isfinite(step) or step <= 0:
         raise ValueError("days and step must be finite and strictly positive")
     if not np.isfinite(flow_multiplier) or flow_multiplier <= 0:

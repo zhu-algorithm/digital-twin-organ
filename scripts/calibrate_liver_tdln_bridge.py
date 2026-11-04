@@ -26,15 +26,20 @@ def main() -> None:
     parser.add_argument("--dose-days", default="")
     parser.add_argument("--dose", type=float, default=1.0)
     parser.add_argument("--step", type=float, default=0.5)
+    parser.add_argument("--portal-flow-multiplier", type=float)
+    parser.add_argument("--arterial-flow-multiplier", type=float)
     parser.add_argument("--max-nfev", type=int, default=100)
     args = parser.parse_args()
     fit = tuple(name.strip() for name in args.fit.split(",") if name.strip())
     doses = tuple(Dose(float(day), args.dose)
                   for day in args.dose_days.split(",") if day.strip())
-    coupling, bridge, diagnostics, compared = calibrate_liver_bridge(
+    liver, coupling, bridge, diagnostics, compared = calibrate_liver_bridge(
         pd.read_csv(args.observations), fit_parameters=fit, doses=doses,
-        step=args.step, max_nfev=args.max_nfev)
-    save_liver_bridge_calibration(args.output, coupling, bridge, diagnostics, compared)
+        step=args.step, max_nfev=args.max_nfev,
+        portal_flow_multiplier=args.portal_flow_multiplier,
+        arterial_flow_multiplier=args.arterial_flow_multiplier)
+    save_liver_bridge_calibration(
+        args.output, liver, coupling, bridge, diagnostics, compared)
     write_calibration_audit(
         args.output, "liver_tdln_bridge_provenance.json",
         "liver_tdln_bridge_calibration",
@@ -43,6 +48,8 @@ def main() -> None:
         }},
         settings={"fit_parameters": list(fit), "dose_days": [d.day for d in doses],
                   "dose_amount": args.dose, "step": args.step,
+                  "portal_flow_multiplier": args.portal_flow_multiplier,
+                  "arterial_flow_multiplier": args.arterial_flow_multiplier,
                   "max_nfev": args.max_nfev},
         generated_filenames=("fitted_liver_tdln_bridge.json",
                              "liver_tdln_bridge_diagnostics.json",

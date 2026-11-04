@@ -17,7 +17,8 @@ from scipy.integrate import solve_ivp
 from .liver_tumor import (LiverTumourInitialState, LiverTumourParameters,
                           STATE_NAMES as LIVER_STATES, _rhs as _liver_rhs,
                           _inflow as _liver_inflow,
-                          _validate as _validate_liver)
+                          _validate as _validate_liver,
+                          _validate_parameters as _validate_liver_parameters)
 from .simulator import (Dose, InitialState, STATE_NAMES as IMMUNE_STATES,
                         TwinParameters, _rhs as _immune_rhs,
                         _validate_model_inputs)
@@ -93,7 +94,7 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
     lp, ip = liver_parameters or LiverTumourParameters(), immune_parameters or TwinParameters()
     cp = coupling_parameters or LiverTDLNCouplingParameters()
     li, ii = liver_initial or LiverTumourInitialState(), immune_initial or InitialState()
-    _validate_liver(lp, "liver parameters")
+    _validate_liver_parameters(lp)
     _validate_liver(li, "liver initial state")
     _validate_model_inputs(ip, ii)
     _validate_coupling(cp)

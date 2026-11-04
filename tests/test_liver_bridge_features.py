@@ -18,6 +18,7 @@ from tdln_pd1.simulator import Dose
 from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
 from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
+from tdln_pd1.liver_tumor import LiverTumourParameters
 from tdln_pd1.spatial_dynamics import SpatialParameters
 
 
@@ -222,7 +223,8 @@ def test_saved_bridge_parameters_change_cohort_features_and_fail_closed(tmp_path
         "spatial_bridge": LiverTDLNSpatialBridge(antigen_drainage_gain=0.8).__dict__,
         "research_only": True,
     }))
-    coupling, bridge = load_liver_bridge_parameters(parameter_path)
+    liver, coupling, bridge = load_liver_bridge_parameters(parameter_path)
+    assert liver.arterial_buffer_fraction > 0
     features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
     default = augment_with_liver_tdln_counterfactuals(
         features, doses=(Dose(0, 1),), days=5, step=0.5)
@@ -239,6 +241,7 @@ def test_saved_bridge_parameters_change_cohort_features_and_fail_closed(tmp_path
 
 
 def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals():
+    liver = LiverTumourParameters()
     coupling, bridge = LiverTDLNCouplingParameters(), LiverTDLNSpatialBridge()
     diagnostics = {
         "locally_identifiable": True,
@@ -248,10 +251,11 @@ def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals()
             "log_scale_covariance": [[0.04]],
         },
     }
-    draws = liver_bridge_parameter_draws(coupling, bridge, diagnostics, 8, 19)
-    repeated = liver_bridge_parameter_draws(coupling, bridge, diagnostics, 8, 19)
+    draws = liver_bridge_parameter_draws(liver, coupling, bridge, diagnostics, 8, 19)
+    repeated = liver_bridge_parameter_draws(liver, coupling, bridge, diagnostics, 8, 19)
     assert draws == repeated
-    assert all(draw_bridge.antigen_drainage_gain > 0 for _, draw_bridge in draws)
+    assert all(draw_bridge.antigen_drainage_gain > 0
+               for _, _, draw_bridge in draws)
     features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
     out = augment_with_liver_tdln_counterfactuals(
         features, doses=(Dose(0, 1),), days=3, step=0.5,
@@ -263,7 +267,7 @@ def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals()
     assert out.qc_liver_cf_uncertainty_samples.item() == 8
     bad = {**diagnostics, "fit_parameters": {"bridge.antigen_drainage_gain": 0.8}}
     with pytest.raises(ValueError, match="different centers"):
-        liver_bridge_parameter_draws(coupling, bridge, bad, 4, 1)
+        liver_bridge_parameter_draws(liver, coupling, bridge, bad, 4, 1)
 
 
 def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():

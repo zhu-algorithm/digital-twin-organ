@@ -12,6 +12,7 @@ from tdln_pd1.calibration_audit import (verify_calibration_audit,
 from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_spatial import (LiverTDLNSpatialBridge,
                                          simulate_liver_tdln_spatial)
+from tdln_pd1.liver_tumor import LiverTumourParameters
 
 
 def _synthetic_observations(gain=0.8):
@@ -30,13 +31,46 @@ def _synthetic_observations(gain=0.8):
 
 
 def test_calibration_recovers_spatial_drainage_gain():
-    fitted_coupling, fitted_bridge, diagnostics, residuals = calibrate_liver_bridge(
+    fitted_liver, fitted_coupling, fitted_bridge, diagnostics, residuals = calibrate_liver_bridge(
         _synthetic_observations(), base_bridge=LiverTDLNSpatialBridge(0.2), max_nfev=60)
     assert fitted_bridge.antigen_drainage_gain == pytest.approx(0.8, rel=2e-3)
     assert diagnostics["success"] is True
     assert diagnostics["weighted_rmse"] < 1e-3
     assert len(residuals) == 8
     assert fitted_coupling.immune_killing_gain > 0
+    assert fitted_liver.arterial_buffer_fraction > 0
+
+
+def test_calibration_recovers_hepatic_arterial_buffer_fraction():
+    truth = LiverTumourParameters(arterial_buffer_fraction=0.40)
+    systemic, _ = simulate_liver_tdln_spatial(
+        days=5, step=0.25, liver_parameters=truth, portal_flow_multiplier=0.4)
+    observations = pd.DataFrame([
+        {"day": day, "target": "liver_arterial_flow",
+         "value": float(np.interp(day, systemic.day, systemic.liver_arterial_flow)),
+         "sd": 0.001, "source": "synthetic_unit_test"}
+        for day in (1, 2, 3, 4, 5)
+    ])
+    liver, _, _, diagnostics, _ = calibrate_liver_bridge(
+        observations, fit_parameters=("liver.arterial_buffer_fraction",),
+        base_liver=LiverTumourParameters(arterial_buffer_fraction=0.10),
+        portal_flow_multiplier=0.4, max_nfev=60)
+    assert liver.arterial_buffer_fraction == pytest.approx(0.40, rel=2e-3)
+    assert diagnostics["success"] is True
+    assert diagnostics["weighted_rmse"] < 1e-3
+
+
+def test_buffer_calibration_requires_an_isolated_portal_perturbation():
+    observations = _synthetic_observations()
+    with pytest.raises(ValueError, match="isolated portal perturbation"):
+        calibrate_liver_bridge(
+            observations,
+            fit_parameters=("liver.arterial_buffer_fraction",))
+    with pytest.raises(ValueError, match="isolated portal perturbation"):
+        calibrate_liver_bridge(
+            observations,
+            fit_parameters=("liver.arterial_buffer_fraction",),
+            portal_flow_multiplier=0.5, arterial_flow_multiplier=1.2)
 
 
 def test_observation_contract_rejects_unknown_duplicates_and_bad_uncertainty():
@@ -52,11 +86,12 @@ def test_observation_contract_rejects_unknown_duplicates_and_bad_uncertainty():
 
 
 def test_saved_calibration_is_explicitly_research_only(tmp_path):
-    coupling, bridge, diagnostics, residuals = calibrate_liver_bridge(
+    liver, coupling, bridge, diagnostics, residuals = calibrate_liver_bridge(
         _synthetic_observations(), base_bridge=LiverTDLNSpatialBridge(0.4), max_nfev=30)
-    save_liver_bridge_calibration(tmp_path, coupling, bridge, diagnostics, residuals)
+    save_liver_bridge_calibration(tmp_path, liver, coupling, bridge, diagnostics, residuals)
     payload = json.loads((tmp_path / "fitted_liver_tdln_bridge.json").read_text())
     assert payload["research_only"] is True
+    assert "liver_tumour" in payload
     assert (tmp_path / "liver_tdln_bridge_diagnostics.json").is_file()
     assert (tmp_path / "liver_tdln_bridge_residuals.csv").is_file()
 
@@ -65,9 +100,9 @@ def test_bridge_calibration_outputs_are_cryptographically_bound(tmp_path):
     observations_path = tmp_path / "observations.csv"
     observations = _synthetic_observations()
     observations.to_csv(observations_path, index=False)
-    coupling, bridge, diagnostics, residuals = calibrate_liver_bridge(
+    liver, coupling, bridge, diagnostics, residuals = calibrate_liver_bridge(
         observations, base_bridge=LiverTDLNSpatialBridge(0.4), max_nfev=30)
-    save_liver_bridge_calibration(tmp_path, coupling, bridge, diagnostics, residuals)
+    save_liver_bridge_calibration(tmp_path, liver, coupling, bridge, diagnostics, residuals)
     audit = write_calibration_audit(
         tmp_path, "liver_tdln_bridge_provenance.json",
         "liver_tdln_bridge_calibration",

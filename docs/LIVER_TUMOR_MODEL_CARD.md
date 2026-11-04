@@ -37,7 +37,7 @@
 
 ## 纵向校准输入
 
-校准器接受长表 CSV：`day,target,value,sd`。系统目标包括 `liver_tumour_fraction`、`tumour_antigen`、`effector_tumour` 和 `pd1_occupancy`；空间目标写作 `species@zone`，例如 `antigen@subcapsular_sinus` 或 `mature_dc@paracortex`。每一行必须带正的测量标准差，时间–目标组合必须唯一。可拟合参数以命名空间区分，例如 `bridge.antigen_drainage_gain` 和 `coupling.immune_killing_gain`。
+校准器接受长表 CSV：`day,target,value,sd`。系统目标包括 `liver_tumour_fraction`、`tumour_antigen`、`effector_tumour`、`pd1_occupancy`，以及 `liver_portal_flow`、`liver_arterial_flow`、`liver_arterial_buffer_flow`、`liver_oxygenated_inflow` 和 `liver_perfusion`；空间目标写作 `species@zone`，例如 `antigen@subcapsular_sinus` 或 `mature_dc@paracortex`。每一行必须带正的测量标准差，时间–目标组合必须唯一。可拟合参数以命名空间区分，例如 `bridge.antigen_drainage_gain`、`coupling.immune_killing_gain`、`liver.arterial_buffer_fraction`、`liver.arterial_buffer_max_multiplier` 和两路氧含量。
 
 ```bash
 python scripts/calibrate_liver_tdln_bridge.py \
@@ -45,6 +45,17 @@ python scripts/calibrate_liver_tdln_bridge.py \
   --fit bridge.antigen_drainage_gain,coupling.immune_killing_gain \
   --dose-days 0,21,42 --output artifacts/liver_bridge
 ```
+
+HABR 参数只能在“孤立的门静脉扰动”实验语义下拟合：命令必须提供 `--portal-flow-multiplier`，并且不能同时提供 `--arterial-flow-multiplier`，否则实测动脉流已包含缓冲反应，模型会拒绝重复归因。例如：
+
+```bash
+python scripts/calibrate_liver_tdln_bridge.py \
+  --observations portal_restriction_observations.csv \
+  --fit liver.arterial_buffer_fraction \
+  --portal-flow-multiplier 0.4 --output artifacts/habr_calibration
+```
+
+这使肝参数与桥接参数一起进入拟合文件、残差、局部协方差、不确定性抽样和队列重放，但不解决实验可辨识性：若缓冲上限在观测范围内从未激活，`arterial_buffer_max_multiplier` 仍无法由数据估计；诊断中的秩、条件数和 `identifiability_warning` 必须审查。当前恢复测试使用模型生成的合成真值，只验证软件实现，不是人类 HABR 标定。
 
 输出包括完整参数、加权残差、局部可辨识性诊断和绑定输入／输出 SHA-256 的审计清单。缺乏足够观测或雅可比秩不足会设置 `identifiability_warning`；优化器成功不等于生物学、外部或临床验证。
 

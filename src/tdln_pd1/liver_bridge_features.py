@@ -14,6 +14,8 @@ from .hybrid import (_outcome_like_columns, initial_state_from_features,
                      spatial_initial_state_from_features)
 from .liver_tdln_coupling import LiverTDLNCouplingParameters
 from .liver_tdln_coupling import _validate_coupling
+from .liver_tumor import (LiverTumourParameters,
+                          _validate_parameters as _validate_liver_parameters)
 from .liver_tdln_spatial import (LiverTDLNSpatialBridge,
                                  _validate_bridge,
                                  simulate_liver_tdln_spatial)
@@ -199,6 +201,7 @@ def simulate_patient_liver_tdln(
     base_coupling: LiverTDLNCouplingParameters | None = None,
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
+    base_liver: LiverTumourParameters | None = None,
     portal_flow_multiplier: float | None = None,
     arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
@@ -212,7 +215,7 @@ def simulate_patient_liver_tdln(
         days=days, step=step, doses=doses, bridge=patient.spatial_bridge,
         spatial_parameters=patient.spatial_parameters,
         spatial_initial=spatial_initial, coupling_parameters=patient.coupling,
-        immune_initial=immune_initial,
+        immune_initial=immune_initial, liver_parameters=base_liver,
         portal_flow_multiplier=portal_flow_multiplier,
         arterial_flow_multiplier=arterial_flow_multiplier,
     )
@@ -238,6 +241,7 @@ def simulate_patient_liver_tdln_counterfactual(
     base_coupling: LiverTDLNCouplingParameters | None = None,
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
+    base_liver: LiverTumourParameters | None = None,
     portal_flow_multiplier: float | None = None,
     arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
@@ -256,6 +260,7 @@ def simulate_patient_liver_tdln_counterfactual(
             row, days=days, step=step, doses=schedule, mapping=mapping,
             base_coupling=base_coupling, base_bridge=base_bridge,
             base_spatial=base_spatial,
+            base_liver=base_liver,
             portal_flow_multiplier=portal_flow_multiplier,
             arterial_flow_multiplier=arterial_flow_multiplier)
         systemic, spatial = systemic.copy(), spatial.copy()
@@ -313,9 +318,11 @@ UNCERTAINTY_QUANTILES = ((0.025, "q025"), (0.5, "q50"), (0.975, "q975"))
 
 
 def liver_bridge_parameter_draws(
-    coupling: LiverTDLNCouplingParameters, bridge: LiverTDLNSpatialBridge,
+    liver: LiverTumourParameters, coupling: LiverTDLNCouplingParameters,
+    bridge: LiverTDLNSpatialBridge,
     diagnostics: dict, n: int, seed: int,
-) -> tuple[tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge], ...]:
+) -> tuple[tuple[LiverTumourParameters, LiverTDLNCouplingParameters,
+                 LiverTDLNSpatialBridge], ...]:
     """Draw correlated positive namespaced bridge parameters in log space."""
     if not isinstance(n, (int, np.integer)) or n < 2:
         raise ValueError("liver bridge uncertainty requires at least two samples")
@@ -326,6 +333,7 @@ def liver_bridge_parameter_draws(
     names = covariance_payload.get("parameter_order")
     covariance = np.asarray(covariance_payload.get("log_scale_covariance"), dtype=float)
     available = {
+        **{f"liver.{key}": value for key, value in asdict(liver).items()},
         **{f"coupling.{key}": value for key, value in asdict(coupling).items()},
         **{f"bridge.{key}": value for key, value in asdict(bridge).items()},
     }
@@ -349,11 +357,13 @@ def liver_bridge_parameter_draws(
         np.log(loaded), covariance, size=n, check_valid="raise")
     draws = []
     for vector in vectors:
-        coupling_updates, bridge_updates = {}, {}
+        liver_updates, coupling_updates, bridge_updates = {}, {}, {}
         for name, value in zip(names, np.exp(vector)):
             group, field = name.split(".", 1)
-            (coupling_updates if group == "coupling" else bridge_updates)[field] = float(value)
-        draws.append((replace(coupling, **coupling_updates),
+            {"liver": liver_updates, "coupling": coupling_updates,
+             "bridge": bridge_updates}[group][field] = float(value)
+        draws.append((replace(liver, **liver_updates),
+                      replace(coupling, **coupling_updates),
                       replace(bridge, **bridge_updates)))
     return tuple(draws)
 
@@ -364,8 +374,10 @@ def augment_with_liver_tdln_counterfactuals(
     base_coupling: LiverTDLNCouplingParameters | None = None,
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
+    base_liver: LiverTumourParameters | None = None,
     parameter_draws: tuple[
-        tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge], ...
+        tuple[LiverTumourParameters, LiverTDLNCouplingParameters,
+              LiverTDLNSpatialBridge], ...
     ] | None = None,
     patient_doses: dict[str, tuple[Dose, ...]] | None = None,
     patient_flows: dict[str, tuple[float, float]] | None = None,
@@ -397,7 +409,8 @@ def augment_with_liver_tdln_counterfactuals(
         _, _, effect, _ = simulate_patient_liver_tdln_counterfactual(
             row, doses=schedule, days=days, step=step, mapping=mapping,
             base_coupling=base_coupling, base_bridge=base_bridge,
-            base_spatial=base_spatial, portal_flow_multiplier=portal_flow,
+            base_spatial=base_spatial, base_liver=base_liver,
+            portal_flow_multiplier=portal_flow,
             arterial_flow_multiplier=arterial_flow)
         values = {target: float(effect[source])
                   for source, target in COUNTERFACTUAL_FEATURES.items()}
@@ -405,11 +418,12 @@ def augment_with_liver_tdln_counterfactuals(
             raise RuntimeError(f"non-finite counterfactual feature for patient {row.patient_id}")
         if parameter_draws is not None:
             sampled = {source: [] for source in COUNTERFACTUAL_FEATURES}
-            for sampled_coupling, sampled_bridge in parameter_draws:
+            for sampled_liver, sampled_coupling, sampled_bridge in parameter_draws:
                 _, _, draw_effect, _ = simulate_patient_liver_tdln_counterfactual(
                     row, doses=schedule, days=days, step=step, mapping=mapping,
                     base_coupling=sampled_coupling, base_bridge=sampled_bridge,
-                    base_spatial=base_spatial, portal_flow_multiplier=portal_flow,
+                    base_spatial=base_spatial, base_liver=sampled_liver,
+                    portal_flow_multiplier=portal_flow,
                     arterial_flow_multiplier=arterial_flow)
                 for source in sampled:
                     sampled[source].append(float(draw_effect[source]))
@@ -454,6 +468,8 @@ def verify_liver_counterfactual_augmentation(
         mapping = FeatureBridgeMapping(**audit["mapping"])
         base_coupling = LiverTDLNCouplingParameters(**audit["base_parameters"]["coupling"])
         base_bridge = LiverTDLNSpatialBridge(**audit["base_parameters"]["spatial_bridge"])
+        base_liver = LiverTumourParameters(**audit["base_parameters"].get(
+            "liver_tumour", asdict(LiverTumourParameters())))
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("invalid liver counterfactual replay settings") from error
     samples, seed = int(settings.get("uncertainty_samples", 0)), int(
@@ -466,7 +482,7 @@ def verify_liver_counterfactual_augmentation(
         if diagnostic_record.get("sha256") != sha256_file(bridge_diagnostics_path):
             raise ValueError("liver counterfactual bridge diagnostics hash mismatch")
         parameter_draws = liver_bridge_parameter_draws(
-            base_coupling, base_bridge,
+            base_liver, base_coupling, base_bridge,
             json.loads(Path(bridge_diagnostics_path).read_text()), samples, seed)
     elif diagnostic_record is not None:
         raise ValueError("bridge diagnostics supplied without uncertainty samples")
@@ -497,6 +513,7 @@ def verify_liver_counterfactual_augmentation(
     replay = augment_with_liver_tdln_counterfactuals(
         pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
         base_coupling=base_coupling, base_bridge=base_bridge,
+        base_liver=base_liver,
         parameter_draws=parameter_draws, patient_doses=patient_doses,
         patient_flows=patient_flows)
     replay_sha = hashlib.sha256(
@@ -508,19 +525,22 @@ def verify_liver_counterfactual_augmentation(
 
 def load_liver_bridge_parameters(
     path: str | Path,
-) -> tuple[LiverTDLNCouplingParameters, LiverTDLNSpatialBridge]:
+) -> tuple[LiverTumourParameters, LiverTDLNCouplingParameters,
+           LiverTDLNSpatialBridge]:
     """Load and fail-closed validate a saved liver–TDLN calibration."""
     payload = json.loads(Path(path).read_text())
     if payload.get("research_only") is not True:
         raise ValueError("liver bridge parameter file must declare research_only=true")
     try:
+        liver = LiverTumourParameters(**payload.get("liver_tumour", {}))
         coupling = LiverTDLNCouplingParameters(**payload["coupling"])
         bridge = LiverTDLNSpatialBridge(**payload["spatial_bridge"])
     except (KeyError, TypeError) as error:
         raise ValueError("invalid liver bridge parameter schema") from error
     _validate_coupling(coupling)
     _validate_bridge(bridge)
-    return coupling, bridge
+    _validate_liver_parameters(liver)
+    return liver, coupling, bridge
 
 
 def validate_treatment_manifest(
