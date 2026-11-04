@@ -270,6 +270,32 @@ def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals()
         liver_bridge_parameter_draws(liver, coupling, bridge, bad, 4, 1)
 
 
+def test_liver_bridge_uncertainty_rejects_nonphysiological_buffer_draws():
+    liver = LiverTumourParameters(
+        arterial_buffer_fraction=0.95, arterial_buffer_max_multiplier=1.05)
+    coupling, bridge = LiverTDLNCouplingParameters(), LiverTDLNSpatialBridge()
+    names = ["liver.arterial_buffer_fraction",
+             "liver.arterial_buffer_max_multiplier"]
+    diagnostics = {
+        "locally_identifiable": True,
+        "fit_parameters": {
+            names[0]: liver.arterial_buffer_fraction,
+            names[1]: liver.arterial_buffer_max_multiplier,
+        },
+        "local_log_parameter_covariance": {
+            "parameter_order": names,
+            "log_scale_covariance": [[0.50, 0.20], [0.20, 0.50]],
+        },
+    }
+    draws = liver_bridge_parameter_draws(
+        liver, coupling, bridge, diagnostics, 64, 31)
+    assert draws == liver_bridge_parameter_draws(
+        liver, coupling, bridge, diagnostics, 64, 31)
+    assert all(0 <= sampled.arterial_buffer_fraction <= 1
+               and sampled.arterial_buffer_max_multiplier >= 1
+               for sampled, _, _ in draws)
+
+
 def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():
     manifest = pd.DataFrame({
         "patient_id": ["p1", "p2"], "regimen_id": ["d0", "d0_d2"],

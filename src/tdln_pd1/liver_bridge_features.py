@@ -323,13 +323,16 @@ def liver_bridge_parameter_draws(
     diagnostics: dict, n: int, seed: int,
 ) -> tuple[tuple[LiverTumourParameters, LiverTDLNCouplingParameters,
                  LiverTDLNSpatialBridge], ...]:
-    """Draw correlated positive namespaced bridge parameters in log space."""
+    """Draw a physiologically truncated correlated ensemble in log space."""
     if not isinstance(n, (int, np.integer)) or n < 2:
         raise ValueError("liver bridge uncertainty requires at least two samples")
     covariance_payload = diagnostics.get("local_log_parameter_covariance")
     if not isinstance(covariance_payload, dict) or diagnostics.get(
             "locally_identifiable") is not True:
         raise ValueError("liver bridge diagnostics lack identifiable covariance")
+    _validate_liver_parameters(liver)
+    _validate_coupling(coupling)
+    _validate_bridge(bridge)
     names = covariance_payload.get("parameter_order")
     covariance = np.asarray(covariance_payload.get("log_scale_covariance"), dtype=float)
     available = {
@@ -353,18 +356,38 @@ def liver_bridge_parameter_draws(
     eigenvalues = np.linalg.eigvalsh(covariance)
     if eigenvalues.min() < -1e-10 * max(1.0, float(np.abs(eigenvalues).max())):
         raise ValueError("liver bridge covariance must be positive semidefinite")
-    vectors = np.random.default_rng(seed).multivariate_normal(
-        np.log(loaded), covariance, size=n, check_valid="raise")
+    rng = np.random.default_rng(seed)
     draws = []
-    for vector in vectors:
-        liver_updates, coupling_updates, bridge_updates = {}, {}, {}
-        for name, value in zip(names, np.exp(vector)):
-            group, field = name.split(".", 1)
-            {"liver": liver_updates, "coupling": coupling_updates,
-             "bridge": bridge_updates}[group][field] = float(value)
-        draws.append((replace(liver, **liver_updates),
-                      replace(coupling, **coupling_updates),
-                      replace(bridge, **bridge_updates)))
+    attempts, max_attempts = 0, max(1000, 1000 * n)
+    while len(draws) < n and attempts < max_attempts:
+        batch_size = min(max(4, n - len(draws)), max_attempts - attempts)
+        vectors = rng.multivariate_normal(
+            np.log(loaded), covariance, size=batch_size, check_valid="raise")
+        attempts += batch_size
+        with np.errstate(over="ignore", invalid="ignore"):
+            candidates = np.exp(vectors)
+        for vector in candidates:
+            liver_updates, coupling_updates, bridge_updates = {}, {}, {}
+            for name, value in zip(names, vector):
+                group, field = name.split(".", 1)
+                {"liver": liver_updates, "coupling": coupling_updates,
+                 "bridge": bridge_updates}[group][field] = float(value)
+            candidate = (replace(liver, **liver_updates),
+                         replace(coupling, **coupling_updates),
+                         replace(bridge, **bridge_updates))
+            try:
+                _validate_liver_parameters(candidate[0])
+                _validate_coupling(candidate[1])
+                _validate_bridge(candidate[2])
+            except ValueError:
+                continue
+            draws.append(candidate)
+            if len(draws) == n:
+                break
+    if len(draws) != n:
+        raise ValueError(
+            "unable to draw a physiological liver bridge ensemble from the "
+            "calibration covariance; inspect boundary contact and identifiability")
     return tuple(draws)
 
 
