@@ -13,6 +13,7 @@ from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              validate_treatment_manifest,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
+                                             systemic_parameter_draws,
                                              verify_liver_counterfactual_augmentation,
                                              verify_patient_liver_tdln_audit)
 from tdln_pd1.simulator import Dose, TwinParameters
@@ -381,6 +382,28 @@ def test_mapping_uncertainty_propagates_without_bridge_parameter_draws():
             parameter_draws=((LiverTumourParameters(),
                               LiverTDLNCouplingParameters(),
                               LiverTDLNSpatialBridge()),) * 2)
+
+
+def test_systemic_pk_uncertainty_propagates_into_liver_counterfactuals():
+    parameters = TwinParameters()
+    diagnostics = {
+        "locally_identifiable": True,
+        "fit_parameters": {"killing_rate": parameters.killing_rate},
+        "local_log_parameter_covariance": {
+            "parameter_order": ["killing_rate"],
+            "log_scale_covariance": [[0.16]],
+        },
+    }
+    draws = systemic_parameter_draws(parameters, diagnostics, 8, 73)
+    assert draws == systemic_parameter_draws(parameters, diagnostics, 8, 73)
+    assert all(draw.killing_rate > 0 for draw in draws)
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.8]})
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=3, step=0.5,
+        base_immune=parameters, immune_draws=draws)
+    assert out.qc_liver_cf_uncertainty_samples.item() == 8
+    assert out.liver_cf_tumour_relative_reduction_q025.item() < (
+        out.liver_cf_tumour_relative_reduction_q975.item())
 
 
 def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():

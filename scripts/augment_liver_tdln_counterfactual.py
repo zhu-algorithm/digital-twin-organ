@@ -18,6 +18,7 @@ from tdln_pd1.liver_bridge_features import (
     liver_bridge_parameter_draws,
     load_liver_bridge_parameters,
     load_systemic_parameters,
+    systemic_parameter_draws,
     validate_perfusion_manifest,
     validate_treatment_manifest,
     verify_liver_counterfactual_augmentation,
@@ -41,6 +42,7 @@ def main() -> None:
     parser.add_argument("--dose", type=float, default=1.0)
     parser.add_argument("--bridge-parameters", type=Path)
     parser.add_argument("--systemic-parameters", type=Path)
+    parser.add_argument("--systemic-diagnostics", type=Path)
     parser.add_argument("--feature-bridge-mapping", type=Path)
     parser.add_argument("--feature-bridge-diagnostics", type=Path)
     parser.add_argument("--bridge-diagnostics", type=Path)
@@ -76,15 +78,19 @@ def main() -> None:
     if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
         raise ValueError("--uncertainty-samples must be 0 or at least 2")
     if args.uncertainty_samples and not (
-            args.bridge_diagnostics or args.feature_bridge_diagnostics):
+            args.bridge_diagnostics or args.feature_bridge_diagnostics
+            or args.systemic_diagnostics):
         raise ValueError("--uncertainty-samples requires at least one diagnostics file")
     if not args.uncertainty_samples and (
-            args.bridge_diagnostics or args.feature_bridge_diagnostics):
+            args.bridge_diagnostics or args.feature_bridge_diagnostics
+            or args.systemic_diagnostics):
         raise ValueError("diagnostics files require --uncertainty-samples")
     if args.bridge_diagnostics and not args.bridge_parameters:
         raise ValueError("--bridge-diagnostics requires --bridge-parameters")
     if args.feature_bridge_diagnostics and not args.feature_bridge_mapping:
         raise ValueError("--feature-bridge-diagnostics requires --feature-bridge-mapping")
+    if args.systemic_diagnostics and not args.systemic_parameters:
+        raise ValueError("--systemic-diagnostics requires --systemic-parameters")
     parameter_draws = None
     if args.bridge_diagnostics:
         parameter_draws = liver_bridge_parameter_draws(
@@ -96,6 +102,11 @@ def main() -> None:
         mapping_draws = feature_bridge_mapping_draws(
             mapping, json.loads(args.feature_bridge_diagnostics.read_text()),
             args.uncertainty_samples, args.uncertainty_seed + 1_000_003)
+    immune_draws = None
+    if args.systemic_diagnostics:
+        immune_draws = systemic_parameter_draws(
+            base_immune, json.loads(args.systemic_diagnostics.read_text()),
+            args.uncertainty_samples, args.uncertainty_seed + 2_000_003)
     augmented = augment_with_liver_tdln_counterfactuals(
         features, doses=doses, days=args.days,
         step=args.step, mapping=mapping, base_coupling=base_coupling,
@@ -103,6 +114,7 @@ def main() -> None:
         base_immune=base_immune,
         parameter_draws=parameter_draws,
         mapping_draws=mapping_draws,
+        immune_draws=immune_draws,
         patient_doses=patient_doses, patient_flows=patient_flows)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     augmented.to_csv(args.output, index=False)
@@ -144,6 +156,9 @@ def main() -> None:
         "systemic_parameters": ({"file": args.systemic_parameters.name,
                                   "sha256": sha256_file(args.systemic_parameters)}
                                  if args.systemic_parameters else None),
+        "systemic_diagnostics": ({"file": args.systemic_diagnostics.name,
+                                   "sha256": sha256_file(args.systemic_diagnostics)}
+                                  if args.systemic_diagnostics else None),
         "bridge_diagnostics": ({"file": args.bridge_diagnostics.name,
                                  "sha256": sha256_file(args.bridge_diagnostics)}
                                 if args.bridge_diagnostics else None),
@@ -163,7 +178,7 @@ def main() -> None:
         audit_path, args.features, args.output, args.bridge_parameters,
         args.bridge_diagnostics, args.treatment_manifest, args.perfusion_manifest,
         args.feature_bridge_mapping, args.feature_bridge_diagnostics,
-        args.systemic_parameters)
+        args.systemic_parameters, args.systemic_diagnostics)
     print(json.dumps({"n_patients": len(augmented),
                       "n_mechanistic_features": len(mechanistic_columns),
                       "labels_used": False, "output": str(args.output)}, indent=2))
