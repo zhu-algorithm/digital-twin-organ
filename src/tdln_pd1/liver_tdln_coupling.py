@@ -89,7 +89,9 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                         flow_multiplier: float = 1.0,
                         portal_flow_multiplier: float | None = None,
                         arterial_flow_multiplier: float | None = None,
-                        angiogenesis_inhibition: float = 0.0) -> pd.DataFrame:
+                        angiogenesis_inhibition: float = 0.0,
+                        rtol: float = 1e-7,
+                        atol: float = 1e-9) -> pd.DataFrame:
     """Simulate the simultaneous liver tumour–TDLN–anti-PD-1 feedback loop."""
     lp, ip = liver_parameters or LiverTumourParameters(), immune_parameters or TwinParameters()
     cp = coupling_parameters or LiverTDLNCouplingParameters()
@@ -100,6 +102,8 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
     _validate_coupling(cp)
     if not np.isfinite(days) or not np.isfinite(step) or days <= 0 or step <= 0:
         raise ValueError("days and step must be finite and strictly positive")
+    if not np.isfinite(rtol) or not np.isfinite(atol) or rtol <= 0 or atol <= 0:
+        raise ValueError("solver tolerances must be finite and strictly positive")
     if not np.isfinite(flow_multiplier) or flow_multiplier <= 0:
         raise ValueError("flow_multiplier must be finite and strictly positive")
     for name, value in (("portal_flow_multiplier", portal_flow_multiplier),
@@ -129,7 +133,7 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                            # the simultaneous tumour–immune feedback solve.
                            args=(lp, ip, cp, flow_multiplier, angiogenesis_inhibition,
                                  portal_flow_multiplier, arterial_flow_multiplier),
-                           rtol=1e-7, atol=1e-9)
+                           rtol=rtol, atol=atol)
         if not solved.success or not np.isfinite(solved.y).all():
             raise RuntimeError(f"coupled liver–TDLN integration failed: {solved.message}")
         values = np.maximum(solved.y.T, 0.0)

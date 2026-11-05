@@ -29,6 +29,8 @@ def simulate_liver_tdln_spatial(*, days: float = 28.0, step: float = 0.25,
                                 bridge: LiverTDLNSpatialBridge | None = None,
                                 spatial_parameters: SpatialParameters | None = None,
                                 spatial_initial: SpatialInitialState | None = None,
+                                spatial_rtol: float = 1e-8,
+                                spatial_atol: float = 1e-10,
                                 **coupled_kwargs) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return simultaneous organ/system trajectory and its six-zone TDLN field."""
     b = bridge or LiverTDLNSpatialBridge()
@@ -43,7 +45,7 @@ def simulate_liver_tdln_spatial(*, days: float = 28.0, step: float = 0.25,
     spatial = simulate_spatial(
         days=days, step=step, parameters=spatial_parameters, initial=initial,
         reactions=True, checkpoint_occupancy=occupancy,
-        afferent_sources={"antigen": source},
+        afferent_sources={"antigen": source}, rtol=spatial_rtol, atol=spatial_atol,
     )
     spatial["pd1_occupancy"] = np.interp(spatial.day, timeline, occupancy_values)
     spatial["afferent_antigen_source"] = b.antigen_drainage_gain * np.interp(

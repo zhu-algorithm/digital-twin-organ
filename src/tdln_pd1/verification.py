@@ -5,6 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from .liver_tdln_coupling import (LiverTDLNCouplingParameters,
+                                  simulate_liver_tdln)
+from .liver_tdln_spatial import (LiverTDLNSpatialBridge,
+                                 simulate_liver_tdln_spatial)
+from .liver_tumor import LiverTumourParameters
 from .simulator import Dose, STATE_NAMES, TwinParameters, simulate
 from .spatial_dynamics import (SPECIES, ZONE_NAMES, SpatialParameters, simulate_spatial,
                                simulate_spatial_coupled)
@@ -196,5 +201,97 @@ def verify_twin() -> dict:
         "note": "Software direction check under default hypotheses, not a clinical dose response.",
     })
 
-    return {"schema_version": 1, "research_only": True,
+    liver_system, liver_spatial = simulate_liver_tdln_spatial(days=14, step=0.25)
+    liver_columns = [column for column in liver_system if column != "day"]
+    liver_values = liver_system[liver_columns].to_numpy(dtype=float)
+    liver_spatial_values = liver_spatial.amount.to_numpy(dtype=float)
+    checks.append({
+        "name": "liver_tdln_closed_loop_finite_nonnegative",
+        "passed": bool(
+            np.isfinite(liver_values).all() and (liver_values >= 0).all()
+            and np.isfinite(liver_spatial_values).all()
+            and (liver_spatial_values >= 0).all()),
+        "minimum_systemic_or_liver_state": float(liver_values.min()),
+        "minimum_spatial_amount": float(liver_spatial_values.min()),
+    })
+
+    liver_rejected = []
+    for layer, call in (
+        ("liver", lambda: simulate_liver_tdln(
+            days=1, liver_parameters=LiverTumourParameters(tumour_growth=-0.1))),
+        ("coupling", lambda: simulate_liver_tdln(
+            days=1, coupling_parameters=LiverTDLNCouplingParameters(
+                immune_killing_gain=-0.1))),
+        ("spatial_bridge", lambda: simulate_liver_tdln_spatial(
+            days=1, bridge=LiverTDLNSpatialBridge(antigen_drainage_gain=-0.1))),
+        ("solver_tolerance", lambda: simulate_liver_tdln(days=1, rtol=0)),
+    ):
+        try:
+            call()
+        except ValueError:
+            liver_rejected.append(layer)
+    checks.append({
+        "name": "liver_tdln_parameter_domain_guards",
+        "passed": set(liver_rejected) == {
+            "liver", "coupling", "spatial_bridge", "solver_tolerance"},
+        "rejected_invalid_layers": liver_rejected,
+    })
+
+    liver_dose_rows = []
+    for amount in dose_amounts:
+        schedule = () if amount == 0 else (Dose(0, amount),)
+        liver_arm, spatial_arm = simulate_liver_tdln_spatial(
+            days=14, step=0.25, doses=schedule)
+        liver_dose_rows.append({
+            "dose": amount,
+            "peak_pd1_occupancy": float(liver_arm.pd1_occupancy.max()),
+            "final_liver_tumour_fraction": float(
+                liver_arm.liver_tumour_fraction.iloc[-1]),
+            "final_liver_normal_cells": float(liver_arm.liver_normal_cells.iloc[-1]),
+            "final_efferent_effector": endpoint(
+                spatial_arm, "effector", "efferent_lymph"),
+        })
+    series = {
+        key: np.asarray([row[key] for row in liver_dose_rows])
+        for key in ("peak_pd1_occupancy", "final_liver_tumour_fraction",
+                    "final_liver_normal_cells", "final_efferent_effector")
+    }
+    checks.append({
+        "name": "liver_tdln_paired_dose_direction",
+        "passed": bool(
+            (np.diff(series["peak_pd1_occupancy"]) >= 0).all()
+            and (np.diff(series["final_liver_tumour_fraction"]) <= 0).all()
+            and (np.diff(series["final_liver_normal_cells"]) >= 0).all()
+            and (np.diff(series["final_efferent_effector"]) >= 0).all()),
+        "expected": (
+            "occupancy, normal hepatocytes and efferent effectors non-decreasing; "
+            "liver tumour fraction non-increasing over the prespecified dose series"),
+        "series": liver_dose_rows,
+        "note": "Software direction check under default hypotheses, not a clinical dose response.",
+    })
+
+    standard_liver, standard_liver_spatial = simulate_liver_tdln_spatial(
+        days=14, step=0.25, doses=(Dose(0, 1.0),))
+    strict_liver, strict_liver_spatial = simulate_liver_tdln_spatial(
+        days=14, step=0.25, doses=(Dose(0, 1.0),), rtol=1e-9, atol=1e-11,
+        spatial_rtol=1e-10, spatial_atol=1e-12)
+    liver_convergence = {
+        name: _relative_error(float(standard_liver[name].iloc[-1]),
+                              float(strict_liver[name].iloc[-1]))
+        for name in ("liver_tumour_fraction", "liver_normal_cells", "liver_perfusion",
+                     "liver_oxygen_normal", "pd1_occupancy", "effector_tumour")
+    }
+    liver_convergence["spatial_efferent_effector"] = _relative_error(
+        endpoint(standard_liver_spatial, "effector", "efferent_lymph"),
+        endpoint(strict_liver_spatial, "effector", "efferent_lymph"))
+    max_liver_error = max(liver_convergence.values())
+    checks.append({
+        "name": "liver_tdln_closed_loop_tolerance_convergence",
+        "passed": max_liver_error <= 1e-4,
+        "relative_endpoint_errors": liver_convergence,
+        "maximum_relative_error": max_liver_error,
+        "tolerance": 1e-4,
+    })
+
+    return {"schema_version": 2, "research_only": True,
             "passed": all(check["passed"] for check in checks), "checks": checks}

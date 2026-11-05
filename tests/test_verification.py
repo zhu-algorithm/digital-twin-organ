@@ -6,10 +6,10 @@ from tdln_pd1.verification import verify_twin
 
 def test_formal_verification_report_passes_all_prespecified_checks():
     report = verify_twin()
-    assert report["schema_version"] == 1
+    assert report["schema_version"] == 2
     assert report["research_only"] is True
     assert report["passed"] is True
-    assert len(report["checks"]) == 9
+    assert len(report["checks"]) == 13
     assert all(check["passed"] for check in report["checks"])
     guards = next(check for check in report["checks"]
                   if check["name"] == "input_parameter_domain_guards")
@@ -26,6 +26,18 @@ def test_formal_verification_report_passes_all_prespecified_checks():
                     if check["name"] == "spatial_tpex_niche_capacity")
     assert capacity["maximum_capacity_ratio"] <= 1.0002
     assert capacity["final_capacity_ratio"] == pytest.approx(1.0, rel=2e-4)
+    liver_direction = next(check for check in report["checks"]
+                           if check["name"] == "liver_tdln_paired_dose_direction")
+    assert [row["dose"] for row in liver_direction["series"]] == [0, 0.25, 0.5, 1, 2]
+    assert all(
+        later["final_liver_tumour_fraction"] <= earlier["final_liver_tumour_fraction"]
+        for earlier, later in zip(liver_direction["series"],
+                                  liver_direction["series"][1:])
+    )
+    liver_convergence = next(
+        check for check in report["checks"]
+        if check["name"] == "liver_tdln_closed_loop_tolerance_convergence")
+    assert liver_convergence["maximum_relative_error"] <= 1e-4
 
 
 def test_simulator_rejects_nonfinite_inputs_and_invalid_tolerances():

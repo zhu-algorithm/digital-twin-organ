@@ -54,3 +54,5 @@ def test_invalid_coupling_contract_fails_closed():
             tumour_cells_per_fraction=0))
     with pytest.raises(ValueError, match="portal_flow_multiplier"):
         simulate_liver_tdln(days=2, portal_flow_multiplier=0)
+    with pytest.raises(ValueError, match="solver tolerances"):
+        simulate_liver_tdln(days=2, rtol=0)
