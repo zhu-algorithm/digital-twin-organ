@@ -53,6 +53,10 @@ class PatientLiverBridge:
 def verify_patient_liver_tdln_audit(
     output_directory: str | Path, features_path: str | Path,
     systemic_parameters_path: str | Path | None = None,
+    spatial_parameters_path: str | Path | None = None,
+    liver_bridge_parameters_path: str | Path | None = None,
+    feature_bridge_mapping_path: str | Path | None = None,
+    feature_state_mapping_path: str | Path | None = None,
 ) -> dict:
     """Recompute every recorded file hash and reject incomplete audits."""
     output_directory = Path(output_directory)
@@ -69,6 +73,18 @@ def verify_patient_liver_tdln_audit(
             raise ValueError("patient liver-TDLN replay requires systemic parameters")
         if systemic_record.get("sha256") != sha256_file(systemic_parameters_path):
             raise ValueError("patient liver-TDLN systemic parameter hash mismatch")
+    for name, supplied in (
+        ("spatial_parameters", spatial_parameters_path),
+        ("liver_bridge_parameters", liver_bridge_parameters_path),
+        ("feature_bridge_mapping", feature_bridge_mapping_path),
+        ("feature_state_mapping", feature_state_mapping_path),
+    ):
+        record = audit.get(name)
+        if record is not None:
+            if supplied is None:
+                raise ValueError(f"patient liver-TDLN replay requires {name}")
+            if record.get("sha256") != sha256_file(supplied):
+                raise ValueError(f"patient liver-TDLN {name} hash mismatch")
     outputs = audit.get("outputs")
     if not isinstance(outputs, dict) or not outputs:
         raise ValueError("patient liver-TDLN audit has no outputs")
@@ -92,6 +108,21 @@ def verify_patient_liver_tdln_audit(
                 "arterial_flow_multiplier": settings.get("arterial_flow_multiplier"),
                 "base_immune": TwinParameters(**audit.get("base_parameters", {}).get(
                     "immune", asdict(TwinParameters()))),
+                "base_spatial": SpatialParameters(**audit.get("base_parameters", {}).get(
+                    "spatial", asdict(SpatialParameters()))),
+                "base_liver": LiverTumourParameters(**audit.get("base_parameters", {}).get(
+                    "liver_tumour", asdict(LiverTumourParameters()))),
+                "base_coupling": LiverTDLNCouplingParameters(**audit.get(
+                    "base_parameters", {}).get(
+                        "coupling", asdict(LiverTDLNCouplingParameters()))),
+                "base_bridge": LiverTDLNSpatialBridge(**audit.get(
+                    "base_parameters", {}).get(
+                        "spatial_bridge", asdict(LiverTDLNSpatialBridge()))),
+                "mapping": FeatureBridgeMapping(**audit.get(
+                    "mapping", asdict(FeatureBridgeMapping()))),
+                "feature_state_mapping": FeatureStateMapping(**audit.get(
+                    "base_parameters", {}).get(
+                        "feature_state_mapping", asdict(FeatureStateMapping()))),
             }
             if settings.get("paired_counterfactual") is True:
                 systemic, spatial, effect, _ = simulate_patient_liver_tdln_counterfactual(

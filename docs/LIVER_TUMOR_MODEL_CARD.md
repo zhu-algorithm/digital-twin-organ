@@ -91,11 +91,17 @@ python scripts/simulate_patient_liver_tdln.py \
   --features patient_features.csv --patient-id P001 \
   --dose-days 0,21,42 --paired-counterfactual \
   --systemic-parameters artifacts/systemic_calibration/fitted_parameters.json \
+  --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json \
+  --liver-bridge-parameters artifacts/liver_bridge/fitted_liver_tdln_bridge.json \
+  --feature-bridge-mapping artifacts/liver_feature_bridge/fitted_liver_feature_bridge_mapping.json \
+  --feature-state-mapping artifacts/feature_state_mapping/fitted_feature_state_mapping.json \
   --portal-flow-multiplier 0.8 --arterial-flow-multiplier 0.6 \
   --output artifacts/P001_liver_tdln
 ```
 
 `--systemic-parameters` 把纵向系统校准得到的完整 `TwinParameters` 同时用于肝–TDLN 闭环中的抗体清除、TDLN 交换、PD-1 占有率、T 细胞动力学和肿瘤杀伤。患者模拟与队列反事实都保存其 SHA-256 和完整参数，并在重放时验证；若省略则明确使用默认研究参数。这样可避免肝反事实使用默认药效参数、而后续混合增强使用另一套校准参数的跨层不一致。
+
+单患者命令与队列增强接受同一组系统、六区空间、肝桥接、单细胞到肝桥接以及单细胞到免疫初态校准文件。五类文件的 SHA-256 和完整点估计写入患者审计；验证器从原始患者特征重新运行并逐字节核对轨迹与反事实报告，防止“单患者演示”和训练数据由不同模型配置生成。
 
 队列增强的 `--spatial-parameters` 同样把六区 TDLN 的运输、抗原衰减/摄取、DC 产出、Tpex 容量与分化等校准值用于肝闭环；其文件与诊断哈希、完整空间参数和抽样种子均进入审计。省略时才使用默认空间研究参数。
 

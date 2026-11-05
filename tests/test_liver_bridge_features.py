@@ -102,6 +102,30 @@ def test_patient_audit_verifier_detects_tampering(tmp_path):
         verify_patient_liver_tdln_audit(output, features)
 
 
+def test_patient_audit_binds_calibrated_input_artifacts(tmp_path):
+    features = tmp_path / "features.csv"
+    features.write_text("patient_id,sig_cytotoxic\np0,0.5\n")
+    output = tmp_path / "output"
+    output.mkdir()
+    trajectory = output / "patient_liver_tdln_systemic.csv"
+    trajectory.write_text("day,tumour\n0,0.1\n")
+    mapping = tmp_path / "feature_state_mapping.json"
+    mapping.write_text(json.dumps(FeatureStateMapping().__dict__))
+    audit = {
+        "schema_version": 1, "labels_used": False,
+        "input": {"sha256": sha256_file(features)},
+        "feature_state_mapping": {"sha256": sha256_file(mapping)},
+        "outputs": {trajectory.name: sha256_file(trajectory)},
+    }
+    (output / "patient_liver_tdln_audit.json").write_text(json.dumps(audit))
+    assert verify_patient_liver_tdln_audit(
+        output, features, feature_state_mapping_path=mapping) == audit
+    mapping.write_text("{}")
+    with pytest.raises(ValueError, match="feature_state_mapping hash mismatch"):
+        verify_patient_liver_tdln_audit(
+            output, features, feature_state_mapping_path=mapping)
+
+
 def test_patient_audit_replays_dual_inflow_settings(tmp_path):
     features = tmp_path / "features.csv"
     output = tmp_path / "output"
