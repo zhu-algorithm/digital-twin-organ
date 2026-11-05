@@ -24,7 +24,7 @@ def _synthetic_observations(gain=0.8):
         days=8, step=0.5, bridge=LiverTDLNSpatialBridge(antigen_drainage_gain=gain))
     rows = []
     for day in (2.0, 4.0, 6.0, 8.0):
-        for species, zone in (("antigen", "subcapsular_sinus"),
+        for species, zone in (("antigen", "afferent_lymph"),
                               ("mature_dc", "paracortex")):
             series = spatial[spatial.species.eq(species) & spatial.zone.eq(zone)]
             value = float(np.interp(day, series.day, series.amount))
