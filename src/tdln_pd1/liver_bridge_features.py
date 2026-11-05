@@ -327,15 +327,33 @@ def simulate_patient_liver_tdln_counterfactual(
     treated, treated_spatial = arm_runs["anti_pd1"]
     control_endpoint = float(control.liver_tumour_fraction.iloc[-1])
     treated_endpoint = float(treated.liver_tumour_fraction.iloc[-1])
+    control_normal = float(control.liver_normal_cells.iloc[-1])
+    treated_normal = float(treated.liver_normal_cells.iloc[-1])
+    control_perfusion = float(control.liver_perfusion.iloc[-1])
+    treated_perfusion = float(treated.liver_perfusion.iloc[-1])
+    control_normal_oxygen = float(control.liver_oxygen_normal.min())
+    treated_normal_oxygen = float(treated.liver_oxygen_normal.min())
     relative_reduction = ((control_endpoint - treated_endpoint)
                           / max(control_endpoint, 1e-12))
     effect = {
-        "schema_version": 1,
+        "schema_version": 2,
         "interpretation": "mechanistic_matched_counterfactual_not_clinical_response",
         "control_final_liver_tumour_fraction": control_endpoint,
         "anti_pd1_final_liver_tumour_fraction": treated_endpoint,
         "final_liver_tumour_fraction_absolute_change": treated_endpoint - control_endpoint,
         "final_liver_tumour_fraction_relative_reduction": relative_reduction,
+        "control_final_liver_normal_cells": control_normal,
+        "anti_pd1_final_liver_normal_cells": treated_normal,
+        "final_liver_normal_cell_preservation": treated_normal - control_normal,
+        "control_final_liver_perfusion": control_perfusion,
+        "anti_pd1_final_liver_perfusion": treated_perfusion,
+        "final_liver_perfusion_relative_change": (
+            (treated_perfusion - control_perfusion)
+            / max(control_perfusion, 1e-12)),
+        "control_min_liver_normal_oxygen": control_normal_oxygen,
+        "anti_pd1_min_liver_normal_oxygen": treated_normal_oxygen,
+        "min_liver_normal_oxygen_change": (
+            treated_normal_oxygen - control_normal_oxygen),
         "control_effector_tumour_auc": _time_integral(control, "effector_tumour"),
         "anti_pd1_effector_tumour_auc": _time_integral(treated, "effector_tumour"),
         "anti_pd1_peak_pd1_occupancy": float(treated.pd1_occupancy.max()),
@@ -359,6 +377,15 @@ COUNTERFACTUAL_FEATURES = {
     "anti_pd1_final_liver_tumour_fraction": "liver_cf_anti_pd1_final_tumour_fraction",
     "final_liver_tumour_fraction_absolute_change": "liver_cf_tumour_absolute_change",
     "final_liver_tumour_fraction_relative_reduction": "liver_cf_tumour_relative_reduction",
+    "control_final_liver_normal_cells": "liver_cf_control_final_normal_cells",
+    "anti_pd1_final_liver_normal_cells": "liver_cf_anti_pd1_final_normal_cells",
+    "final_liver_normal_cell_preservation": "liver_cf_normal_cell_preservation",
+    "control_final_liver_perfusion": "liver_cf_control_final_perfusion",
+    "anti_pd1_final_liver_perfusion": "liver_cf_anti_pd1_final_perfusion",
+    "final_liver_perfusion_relative_change": "liver_cf_perfusion_relative_change",
+    "control_min_liver_normal_oxygen": "liver_cf_control_min_normal_oxygen",
+    "anti_pd1_min_liver_normal_oxygen": "liver_cf_anti_pd1_min_normal_oxygen",
+    "min_liver_normal_oxygen_change": "liver_cf_min_normal_oxygen_change",
     "control_effector_tumour_auc": "liver_cf_control_effector_tumour_auc",
     "anti_pd1_effector_tumour_auc": "liver_cf_anti_pd1_effector_tumour_auc",
     "effector_tumour_auc_fold_change": "liver_cf_effector_tumour_auc_fold_change",

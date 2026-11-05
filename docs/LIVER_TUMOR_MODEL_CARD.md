@@ -113,7 +113,7 @@ python scripts/simulate_patient_liver_tdln.py \
 
 `--paired-counterfactual` 使用完全相同的患者特征、初始状态、桥接参数和数值设置，同时运行自然进展与给定抗 PD-1 方案。附加 JSON 报告最终肿瘤负荷的绝对变化／相对降低、肿瘤效应细胞时间积分、峰值 PD-1 占有率以及输出淋巴效应细胞端点。它是模型内部的机制处理效应，不是 RECIST 分类、临床应答概率或因果治疗效应估计。
 
-队列训练前可运行 `scripts/augment_liver_tdln_counterfactual.py`。它逐患者生成 11 个 `liver_cf_*` 机制特征，并保留原始单细胞特征。`--bridge-parameters` 可读取 `calibrate_liver_tdln_bridge.py` 产生的拟合参数；文件必须明确标记 `research_only=true`，内容及 SHA-256 会写入增强审计。验证时会重新模拟整个队列并比较确定性输出哈希。CI 按“桥接校准 → 队列反事实 → 预测训练”的顺序实际使用这张增强表，因此这些反事实不是仅供展示的旁路结果。
+队列训练前可运行 `scripts/augment_liver_tdln_counterfactual.py`。它逐患者生成 20 个 `liver_cf_*` 机制特征，并保留原始单细胞特征。除肿瘤负荷、效应 T 细胞、PD-1 占有率和输出淋巴效应细胞外，特征还显式包含两臂最终正常肝细胞、正常细胞保存量、最终灌注及相对变化、正常组织最低氧供及其变化；这些是模型内部宿主组织/灌注端点，不是临床肝毒性分级。`--bridge-parameters` 可读取 `calibrate_liver_tdln_bridge.py` 产生的拟合参数；文件必须明确标记 `research_only=true`，内容及 SHA-256 会写入增强审计。验证时会重新模拟整个队列并比较确定性输出哈希。CI 按“桥接校准 → 队列反事实 → 预测训练”的顺序实际使用这张增强表，因此这些反事实不是仅供展示的旁路结果。
 
 提供至少 2 个 `--uncertainty-samples` 时，增强器可从 `--systemic-diagnostics`、`--spatial-diagnostics`、`--bridge-diagnostics`、`--feature-bridge-diagnostics`、`--feature-state-diagnostics` 中任意一种或多种局部对数参数协方差进行相关抽样。系统免疫/PK、六区空间动力学、肝桥接、单细胞到肝桥接映射和单细胞到免疫初态映射五组校准来自不同实验、没有联合协方差，因此使用五个不同但可重放的随机流独立抽样，再按样本序号成对运行，避免笛卡尔积爆炸；这不虚构跨层相关性。涉及 HABR 时采用联合拒绝抽样，将整体相关分布截断在同一套可执行生理边界内（缓冲比例 0–1、动脉扩张上限至少为 1），而不是逐参数裁剪；若协方差在合理尝试次数内无法产生足量合法样本则失败并要求检查边界接触与可辨识性。每个点估计特征增加 `_q025`、`_q50`、`_q975` 列；种子、样本数和五类诊断文件哈希都进入可重放审计。区间仅传播这些局部参数的不确定性，不包含模型结构误差、患者抽样误差、域偏移或临床结局误差。
 

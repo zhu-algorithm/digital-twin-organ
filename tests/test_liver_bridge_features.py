@@ -168,6 +168,21 @@ def test_patient_counterfactual_is_matched_and_reports_mechanistic_effect():
     assert treated.pd1_occupancy.max() > 0
     assert effect["anti_pd1_final_liver_tumour_fraction"] < effect[
         "control_final_liver_tumour_fraction"]
+    assert effect["schema_version"] == 2
+    assert effect["control_final_liver_normal_cells"] == pytest.approx(
+        control.liver_normal_cells.iloc[-1])
+    assert effect["anti_pd1_final_liver_normal_cells"] == pytest.approx(
+        treated.liver_normal_cells.iloc[-1])
+    assert effect["final_liver_normal_cell_preservation"] == pytest.approx(
+        treated.liver_normal_cells.iloc[-1] - control.liver_normal_cells.iloc[-1])
+    assert effect["control_final_liver_perfusion"] == pytest.approx(
+        control.liver_perfusion.iloc[-1])
+    assert effect["anti_pd1_final_liver_perfusion"] == pytest.approx(
+        treated.liver_perfusion.iloc[-1])
+    assert effect["control_min_liver_normal_oxygen"] == pytest.approx(
+        control.liver_oxygen_normal.min())
+    assert effect["anti_pd1_min_liver_normal_oxygen"] == pytest.approx(
+        treated.liver_oxygen_normal.min())
     assert effect["effector_tumour_auc_fold_change"] > 1
     assert effect["efferent_effector_endpoint_fold_change"] > 1
     assert effect["interpretation"].endswith("not_clinical_response")
@@ -209,6 +224,18 @@ def test_cohort_counterfactual_augmentation_is_aligned_and_outcome_free():
     assert out.liver_cf_peak_pd1_occupancy.gt(0).all()
     assert out.liver_cf_effector_tumour_auc_fold_change.gt(1).all()
     assert out.liver_cf_tumour_relative_reduction.ge(0).all()
+    for column in (
+        "liver_cf_control_final_normal_cells",
+        "liver_cf_anti_pd1_final_normal_cells",
+        "liver_cf_normal_cell_preservation",
+        "liver_cf_control_final_perfusion",
+        "liver_cf_anti_pd1_final_perfusion",
+        "liver_cf_perfusion_relative_change",
+        "liver_cf_control_min_normal_oxygen",
+        "liver_cf_anti_pd1_min_normal_oxygen",
+        "liver_cf_min_normal_oxygen_change",
+    ):
+        assert column in out and out[column].map(pd.notna).all()
     with pytest.raises(ValueError, match="outcome-free"):
         augment_with_liver_tdln_counterfactuals(
             features.assign(response=[0, 1]), doses=(Dose(0, 1),), days=2)
