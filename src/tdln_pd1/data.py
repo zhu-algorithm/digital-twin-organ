@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 
-from .features import TEMPORAL_COLUMNS
+from .features import SAMPLE_COLUMNS, TEMPORAL_COLUMNS
 
 
 def _validate_cell_identifiers(frame: pd.DataFrame) -> pd.DataFrame:
@@ -88,6 +88,7 @@ def load_cells(
         matrix.insert(0, "cell_type", adata.obs["cell_type"].values)
         matrix.insert(0, "patient_id", adata.obs["patient_id"].values)
         metadata = dict.fromkeys(("clonotype_id", "tissue", *TEMPORAL_COLUMNS,
+                                  *SAMPLE_COLUMNS,
                                   *metadata_columns))
         for column in metadata:
             if column in adata.obs:

@@ -11,7 +11,7 @@ DEFAULT_SETTINGS = {
     "time_column": None, "baseline_values": [],
     "feature_tissue_pattern": "tdln|lymph",
     "minimum_signature_gene_coverage": 0.5,
-    "gene_symbol_column": None, "expression_layer": None,
+    "gene_symbol_column": None, "expression_layer": None, "sample_column": None,
     "labels_used": False,
 }
 

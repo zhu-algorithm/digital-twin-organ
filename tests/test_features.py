@@ -240,3 +240,37 @@ def test_cell_type_fraction_names_cannot_silently_collide():
             pd.DataFrame({"patient_id": ["p1"], "cell_type": [None]}),
             feature_tissue_pattern="all",
         )
+
+
+def test_multiple_samples_are_explicit_and_equally_weighted():
+    cells = pd.DataFrame({
+        "patient_id": ["p1"] * 10,
+        "sample_id": ["small"] * 2 + ["large"] * 8,
+        "cell_type": ["CD8 T", "DC"] + ["CD8 T"] * 8,
+        "NKG7": [2.0, 0.0] + [10.0] * 8,
+        "GZMB": [2.0, 0.0] + [10.0] * 8,
+    })
+    with pytest.raises(ValueError, match="sample columns detected"):
+        aggregate_cells(cells, feature_tissue_pattern="all")
+    row = aggregate_cells(
+        cells, feature_tissue_pattern="all", sample_column="sample_id",
+    ).iloc[0]
+    # Per-sample CD8 fractions are 1/2 and 1; per-sample signature means are
+    # 1 and 10. Neither result is weighted by the 2-vs-8 recovered cell counts.
+    assert row.frac_cd8_t == pytest.approx(0.75)
+    assert row.frac_dc == pytest.approx(0.25)
+    assert row.sig_cytotoxic == pytest.approx(5.5)
+    assert row.qc_sample_equal_aggregation == 1
+    assert row.qc_n_feature_samples == 2
+
+
+def test_sample_identifiers_fail_closed_when_invalid():
+    cells = pd.DataFrame({
+        "patient_id": ["p1", "p1"], "cell_type": ["T", "T"],
+        "batch": ["a", None],
+    })
+    with pytest.raises(ValueError, match="non-missing"):
+        aggregate_cells(cells, feature_tissue_pattern="all", sample_column="batch")
+    with pytest.raises(ValueError, match="not found"):
+        aggregate_cells(cells.drop(columns="batch"), feature_tissue_pattern="all",
+                        sample_column="batch")

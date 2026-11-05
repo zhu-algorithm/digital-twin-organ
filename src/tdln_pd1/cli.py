@@ -164,6 +164,10 @@ def main() -> None:
     featurize.add_argument("--cells", required=True)
     featurize.add_argument("--output", required=True)
     featurize.add_argument("--time-column")
+    featurize.add_argument(
+        "--sample-column",
+        help="cell metadata column defining baseline samples; samples are equally weighted",
+    )
     featurize.add_argument("--baseline-values", default="")
     featurize.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     featurize.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
@@ -336,6 +340,7 @@ def main() -> None:
     qc.add_argument("--manifest")
     qc.add_argument("--output", required=True)
     qc.add_argument("--time-column")
+    qc.add_argument("--sample-column")
     qc.add_argument("--baseline-values", default="")
     qc.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     qc.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
@@ -390,12 +395,15 @@ def main() -> None:
             value.strip() for value in args.cell_type_vocabulary.split(",") if value.strip()
         )
         aggregate_cells(load_cells(
-                            args.cells, (args.time_column,) if args.time_column else (),
+                            args.cells, tuple(dict.fromkeys(
+                                value for value in (args.time_column, args.sample_column)
+                                if value)),
                             args.gene_symbol_column, args.expression_layer),
                         args.time_column, baseline_values or None,
                         args.feature_tissue_pattern,
                         args.min_signature_gene_coverage,
-                        cell_type_vocabulary or None).to_csv(args.output, index=False)
+                        cell_type_vocabulary or None,
+                        args.sample_column).to_csv(args.output, index=False)
         write_feature_audit(args.cells, args.output, {
             "time_column": args.time_column,
             "baseline_values": list(baseline_values),
@@ -404,6 +412,7 @@ def main() -> None:
             "cell_type_vocabulary": list(cell_type_vocabulary),
             "gene_symbol_column": args.gene_symbol_column,
             "expression_layer": args.expression_layer,
+            "sample_column": args.sample_column,
             "labels_used": False,
         })
     elif args.command == "train":
@@ -1020,12 +1029,14 @@ def main() -> None:
         import pandas as pd
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
         report = cohort_qc(load_cells(
-            args.cells, (args.time_column,) if args.time_column else (),
+            args.cells, tuple(dict.fromkeys(
+                value for value in (args.time_column, args.sample_column) if value)),
             args.gene_symbol_column, args.expression_layer,
         ), pd.read_csv(args.labels),
                            args.time_column, baseline_values or None,
                            args.feature_tissue_pattern,
-                           args.min_signature_gene_coverage)
+                           args.min_signature_gene_coverage,
+                           args.sample_column)
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)
             report["passed"] = report["passed"] and report["provenance"]["valid"]

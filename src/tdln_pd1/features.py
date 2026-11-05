@@ -27,6 +27,7 @@ LINEAGE_SIGNATURES = {
     "sig_dendritic_activation_dc": ("dendritic_activation", r"\bdc\b|dendritic"),
 }
 TEMPORAL_COLUMNS = ("sampling_day", "timepoint", "visit", "collection_timepoint")
+SAMPLE_COLUMNS = ("sample_id", "library_id")
 UNASSIGNED_CLONOTYPES = {"", "nan", "none", "unassigned", "na", "n/a"}
 MIN_SIGNATURE_GENE_COVERAGE = 0.5
 
@@ -190,6 +191,7 @@ def aggregate_cells(
     feature_tissue_pattern: str | None = r"tdln|lymph",
     min_signature_gene_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
     cell_type_vocabulary: tuple[str, ...] | None = None,
+    sample_column: str | None = None,
 ) -> pd.DataFrame:
     """Aggregate long cell rows into one leakage-safe row per patient.
 
@@ -212,6 +214,20 @@ def aggregate_cells(
             raise ValueError(f"{column} must be non-empty")
     x = select_baseline_cells(x, time_column, baseline_values)
     x = _validate_expression_columns(x)
+    detected_samples = [column for column in SAMPLE_COLUMNS if column in x.columns]
+    if sample_column is None and detected_samples:
+        raise ValueError(
+            f"sample columns detected {detected_samples}; specify sample_column "
+            "to prevent cell-count-weighted pooling"
+        )
+    if sample_column is not None:
+        if sample_column not in x:
+            raise ValueError(f"sample column not found: {sample_column}")
+        if x[sample_column].isna().any():
+            raise ValueError("sample identifiers must be non-missing")
+        x[sample_column] = x[sample_column].astype(str).str.strip()
+        if x[sample_column].eq("").any():
+            raise ValueError("sample identifiers must be non-empty")
     vocabulary_cells = x
     if ("tissue" in x and feature_tissue_pattern
             and feature_tissue_pattern.lower() != "all"):
@@ -253,25 +269,37 @@ def aggregate_cells(
             "qc_min_signature_gene_coverage": min_signature_gene_coverage,
             "qc_cell_type_vocabulary_sha256": vocabulary_sha256,
             "qc_cell_type_vocabulary_locked": int(cell_type_vocabulary is not None),
+            "qc_sample_equal_aggregation": int(sample_column is not None),
+            "qc_n_feature_samples": (
+                int(feature_group[sample_column].nunique()) if sample_column else 1
+            ),
         }
         for cell_type in vocabulary:
             row[f"frac_{cell_type_names[cell_type]}"] = 0.0
-        fractions = feature_group["cell_type"].astype(str).value_counts(normalize=True)
+        if sample_column:
+            fractions = pd.crosstab(
+                feature_group[sample_column], feature_group["cell_type"], normalize="index",
+            ).reindex(columns=vocabulary, fill_value=0.0).mean(axis=0)
+        else:
+            fractions = feature_group["cell_type"].astype(str).value_counts(normalize=True)
         for cell_type, value in fractions.items():
             safe = cell_type_names[cell_type]
             row[f"frac_{safe}"] = float(value)
         for name in SIGNATURES:
-            row[f"sig_{name}"] = float(feature_group[f"sig_{name}"].mean())
+            values = feature_group.groupby(sample_column)[f"sig_{name}"].mean() if sample_column else feature_group[f"sig_{name}"]
+            row[f"sig_{name}"] = float(values.mean())
             row[f"qc_sig_{name}_gene_coverage"] = coverage[name]["fraction"]
         normalized_cell_type = feature_group["cell_type"].astype(str).str.lower()
         for feature_name, (signature_name, lineage_pattern) in LINEAGE_SIGNATURES.items():
             lineage = feature_group.loc[
                 normalized_cell_type.str.contains(lineage_pattern, regex=True, na=False)
             ]
-            row[feature_name] = (
-                float(lineage[f"sig_{signature_name}"].mean())
-                if not lineage.empty else np.nan
-            )
+            if lineage.empty:
+                row[feature_name] = np.nan
+            else:
+                values = (lineage.groupby(sample_column)[f"sig_{signature_name}"].mean()
+                          if sample_column else lineage[f"sig_{signature_name}"])
+                row[feature_name] = float(values.mean())
         if "clonotype_id" in group:
             clones = _assigned_clonotypes(group["clonotype_id"])
             row.update(_clonotype_summary(clones, "tcr"))
