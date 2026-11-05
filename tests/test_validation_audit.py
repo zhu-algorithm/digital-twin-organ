@@ -54,6 +54,28 @@ def _add_treatment_lineage(model: Path, features: Path, response="RECIST 1.1"):
     return payload
 
 
+def _add_mechanistic_contract(model: Path, payload: dict):
+    contract = {
+        "bridge_parameters": {"sha256": "1" * 64},
+        "bridge_diagnostics": {"sha256": "2" * 64},
+        "feature_bridge_mapping": {"sha256": "3" * 64},
+        "feature_bridge_diagnostics": {"sha256": "4" * 64},
+        "mapping": {"killing_cytotoxic_coefficient": 1.4},
+        "base_parameters": {"coupling": {"immune_killing_gain": 0.004}},
+        "mechanistic_feature_columns": ["liver_cf_tumour_relative_reduction"],
+        "settings": {"days": 28.0, "step": 0.25, "paired_control": True,
+                     "uncertainty_samples": 100, "uncertainty_seed": 42},
+    }
+    artifact = joblib.load(model)
+    training = artifact["training_input_provenance"]["augmentation_audit"][
+        "inputs"]["features"]["derivation_payload"]
+    training.update(json.loads(json.dumps(contract)))
+    joblib.dump(artifact, model)
+    external = payload["inputs"]["features"]["derivation_payload"]
+    external.update(json.loads(json.dumps(contract)))
+    return external
+
+
 def test_treatment_aware_prediction_requires_compatible_feature_lineage(tmp_path: Path):
     model, features, _ = _files(tmp_path)
     payload = _add_treatment_lineage(model, features)
@@ -86,6 +108,29 @@ def test_prediction_requires_compatible_perfusion_semantics(tmp_path: Path):
     del derivation["perfusion_contract"]
     Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="lack a perfusion contract"):
+        validate_prediction_feature_lineage(model, features)
+
+
+@pytest.mark.parametrize("mutation,field", [
+    (lambda contract: contract["feature_bridge_mapping"].update(sha256="f" * 64),
+     "feature_bridge_mapping_sha256"),
+    (lambda contract: contract["settings"].update(days=21.0), "settings"),
+    (lambda contract: contract["mapping"].update(killing_cytotoxic_coefficient=0.8),
+     "mapping"),
+    (lambda contract: contract["base_parameters"]["coupling"].update(
+        immune_killing_gain=0.02), "base_parameters"),
+])
+def test_prediction_locks_mechanistic_feature_semantics(tmp_path: Path, mutation, field):
+    model, features, _ = _files(tmp_path)
+    payload = _add_treatment_lineage(model, features)
+    external = _add_mechanistic_contract(model, payload)
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
+    verified = validate_prediction_feature_lineage(model, features)
+    assert verified["compatible_mechanistic_feature_contract"][
+        "feature_bridge_mapping_sha256"] == "3" * 64
+    mutation(external)
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match=field):
         validate_prediction_feature_lineage(model, features)
 
 

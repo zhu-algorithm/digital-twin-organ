@@ -41,6 +41,29 @@ def _training_derivation(artifact: dict) -> dict | None:
     return derivation
 
 
+def _mechanistic_feature_contract(derivation: dict) -> dict:
+    """Extract only semantics that must remain fixed for locked model features."""
+    contract = {}
+    for name in ("bridge_parameters", "bridge_diagnostics",
+                 "feature_bridge_mapping", "feature_bridge_diagnostics"):
+        record = derivation.get(name)
+        if isinstance(record, dict) and isinstance(record.get("sha256"), str):
+            contract[f"{name}_sha256"] = record["sha256"]
+    for name in ("mapping", "base_parameters", "mechanistic_feature_columns"):
+        if name in derivation:
+            contract[name] = derivation[name]
+    settings = derivation.get("settings")
+    if isinstance(settings, dict):
+        locked_settings = {
+            name: settings[name] for name in (
+                "days", "step", "paired_control", "uncertainty_samples",
+                "uncertainty_seed") if name in settings
+        }
+        if locked_settings:
+            contract["settings"] = locked_settings
+    return contract
+
+
 def validate_prediction_feature_lineage(
     model_path: str | Path, features_path: str | Path,
 ) -> dict:
@@ -94,6 +117,16 @@ def validate_prediction_feature_lineage(
                 + ", ".join(perfusion_mismatches))
         perfusion_semantics = {field: external_perfusion[field]
                                for field in perfusion_fields}
+    training_mechanistic = _mechanistic_feature_contract(training_derivation)
+    external_mechanistic = _mechanistic_feature_contract(derivation)
+    mechanistic_mismatches = [
+        field for field, expected in training_mechanistic.items()
+        if field not in external_mechanistic or external_mechanistic[field] != expected
+    ]
+    if mechanistic_mismatches:
+        raise ValueError(
+            "prediction mechanistic feature contract mismatch: "
+            + ", ".join(mechanistic_mismatches))
     return {
         "required": True,
         "verified": True,
@@ -104,6 +137,7 @@ def validate_prediction_feature_lineage(
                                  for field in semantic_fields},
         "external_regimen_ids": external_contract.get("regimen_ids", []),
         "compatible_perfusion_semantics": perfusion_semantics,
+        "compatible_mechanistic_feature_contract": external_mechanistic,
     }
 
 
