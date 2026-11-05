@@ -51,6 +51,19 @@ class SpatialInitialState:
     paracortex_effector: float = 2.0e4
 
 
+def _validate_parameters(p: SpatialParameters) -> None:
+    invalid = [name for name, value in asdict(p).items()
+               if not np.isfinite(value) or value < 0]
+    if invalid:
+        raise ValueError(
+            "spatial parameters must be finite and non-negative: "
+            f"{sorted(invalid)}")
+    if p.antigen_half_saturation <= 0:
+        raise ValueError("antigen_half_saturation must be strictly positive")
+    if p.tpex_carrying_capacity <= 0:
+        raise ValueError("tpex_carrying_capacity must be strictly positive")
+
+
 # Directed first-order transport rates per day.  Movement is conservative:
 # material removed from the source is added to the destination.
 TRANSPORT = {
@@ -234,19 +247,7 @@ def simulate_spatial(
     if not np.isfinite(rtol) or not np.isfinite(atol) or rtol <= 0 or atol <= 0:
         raise ValueError("solver tolerances must be finite and positive")
     p = parameters or SpatialParameters()
-    invalid_parameters = [
-        name for name, value in asdict(p).items()
-        if not np.isfinite(value) or value < 0
-    ]
-    if invalid_parameters:
-        raise ValueError(
-            "spatial parameters must be finite and non-negative: "
-            f"{sorted(invalid_parameters)}"
-        )
-    if p.antigen_half_saturation <= 0:
-        raise ValueError("antigen_half_saturation must be strictly positive")
-    if p.tpex_carrying_capacity <= 0:
-        raise ValueError("tpex_carrying_capacity must be strictly positive")
+    _validate_parameters(p)
     times = np.unique(np.append(np.arange(0.0, days, step), days))
     if not callable(checkpoint_occupancy):
         try:

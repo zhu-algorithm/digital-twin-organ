@@ -46,6 +46,7 @@ def _mechanistic_feature_contract(derivation: dict) -> dict:
     """Extract only semantics that must remain fixed for locked model features."""
     contract = {}
     for name in ("systemic_parameters", "systemic_diagnostics",
+                 "spatial_parameters", "spatial_diagnostics",
                  "bridge_parameters", "bridge_diagnostics",
                  "feature_bridge_mapping", "feature_bridge_diagnostics"):
         record = derivation.get(name)

@@ -8,11 +8,13 @@ from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              augment_with_liver_tdln_counterfactuals,
                                              liver_bridge_parameter_draws,
                                              load_liver_bridge_parameters,
+                                             load_spatial_parameters,
                                              load_systemic_parameters,
                                              validate_perfusion_manifest,
                                              validate_treatment_manifest,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
+                                             spatial_parameter_draws,
                                              systemic_parameter_draws,
                                              verify_liver_counterfactual_augmentation,
                                              verify_patient_liver_tdln_audit)
@@ -404,6 +406,36 @@ def test_systemic_pk_uncertainty_propagates_into_liver_counterfactuals():
     assert out.qc_liver_cf_uncertainty_samples.item() == 8
     assert out.liver_cf_tumour_relative_reduction_q025.item() < (
         out.liver_cf_tumour_relative_reduction_q975.item())
+
+
+def test_spatial_uncertainty_propagates_into_liver_tdln_endpoints(tmp_path):
+    parameters = SpatialParameters()
+    parameter_path = tmp_path / "spatial.json"
+    parameter_path.write_text(json.dumps(parameters.__dict__))
+    loaded = load_spatial_parameters(parameter_path)
+    assert loaded == parameters
+    diagnostics = {
+        "locally_identifiable": True,
+        "fit_parameters": {"antigen_decay": parameters.antigen_decay},
+        "local_log_parameter_covariance": {
+            "parameter_order": ["antigen_decay"],
+            "log_scale_covariance": [[0.16]],
+        },
+    }
+    draws = spatial_parameter_draws(parameters, diagnostics, 8, 91)
+    assert draws == spatial_parameter_draws(parameters, diagnostics, 8, 91)
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.8]})
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=3, step=0.5,
+        base_spatial=parameters, spatial_draws=draws)
+    assert out.qc_liver_cf_uncertainty_samples.item() == 8
+    assert out.liver_cf_efferent_effector_fold_change_q025.item() < (
+        out.liver_cf_efferent_effector_fold_change_q975.item())
+    payload = parameters.__dict__.copy()
+    payload.pop("antigen_decay")
+    parameter_path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="schema"):
+        load_spatial_parameters(parameter_path)
 
 
 def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():
