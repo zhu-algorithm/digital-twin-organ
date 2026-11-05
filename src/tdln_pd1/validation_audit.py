@@ -7,6 +7,7 @@ import hashlib
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from .data import load_labels
@@ -101,6 +102,29 @@ def validate_prediction_feature_lineage(
                   if external_contract.get(field) != training_contract.get(field)]
     if mismatches:
         raise ValueError("prediction treatment contract mismatch: " + ", ".join(mismatches))
+    training_schedule_support = training_contract.get("schedule_support")
+    external_schedule_support = external_contract.get("schedule_support")
+    if isinstance(training_schedule_support, dict):
+        if not isinstance(external_schedule_support, dict):
+            raise ValueError("prediction features lack treatment schedule support")
+        schedule_mismatches = []
+        for field, training_range in training_schedule_support.items():
+            external_range = external_schedule_support.get(field)
+            try:
+                train = np.asarray(training_range, dtype=float)
+                external = np.asarray(external_range, dtype=float)
+            except (TypeError, ValueError):
+                schedule_mismatches.append(field)
+                continue
+            if (train.shape != (2,) or external.shape != (2,)
+                    or not np.isfinite(train).all() or not np.isfinite(external).all()
+                    or train[0] > train[1] or external[0] > external[1]
+                    or external[0] < train[0] or external[1] > train[1]):
+                schedule_mismatches.append(field)
+        if schedule_mismatches:
+            raise ValueError(
+                "prediction treatment schedule outside training support: "
+                + ", ".join(schedule_mismatches))
     training_perfusion = training_derivation.get("perfusion_contract")
     external_perfusion = derivation.get("perfusion_contract")
     perfusion_semantics = None
@@ -136,6 +160,7 @@ def validate_prediction_feature_lineage(
         "compatible_semantics": {field: external_contract[field]
                                  for field in semantic_fields},
         "external_regimen_ids": external_contract.get("regimen_ids", []),
+        "compatible_treatment_schedule_support": external_schedule_support,
         "compatible_perfusion_semantics": perfusion_semantics,
         "compatible_mechanistic_feature_contract": external_mechanistic,
     }

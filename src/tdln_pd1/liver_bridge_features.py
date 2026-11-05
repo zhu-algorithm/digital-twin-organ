@@ -657,6 +657,30 @@ def validate_treatment_manifest(
         "response_definition": next(iter(response_definitions)),
         "regimen_ids": sorted(set(table.regimen_id.astype(str).str.strip())),
         "patient_specific_schedules": True,
+        "schedule_support": {
+            "model_dose_amount": [
+                float(min(schedule[0].amount for schedule in schedules.values())),
+                float(max(schedule[0].amount for schedule in schedules.values())),
+            ],
+            "dose_count": [
+                int(min(len(schedule) for schedule in schedules.values())),
+                int(max(len(schedule) for schedule in schedules.values())),
+            ],
+            "total_model_exposure": [
+                float(min(sum(dose.amount for dose in schedule)
+                          for schedule in schedules.values())),
+                float(max(sum(dose.amount for dose in schedule)
+                          for schedule in schedules.values())),
+            ],
+            "first_dose_day": [
+                float(min(schedule[0].day for schedule in schedules.values())),
+                float(max(schedule[0].day for schedule in schedules.values())),
+            ],
+            "last_dose_day": [
+                float(min(schedule[-1].day for schedule in schedules.values())),
+                float(max(schedule[-1].day for schedule in schedules.values())),
+            ],
+        },
     }
     return schedules, summary
 

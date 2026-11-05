@@ -111,6 +111,31 @@ def test_prediction_requires_compatible_perfusion_semantics(tmp_path: Path):
         validate_prediction_feature_lineage(model, features)
 
 
+def test_prediction_rejects_treatment_schedule_extrapolation(tmp_path: Path):
+    model, features, _ = _files(tmp_path)
+    payload = _add_treatment_lineage(model, features)
+    support = {
+        "model_dose_amount": [0.5, 1.0], "dose_count": [1, 3],
+        "total_model_exposure": [1.0, 2.0], "first_dose_day": [0.0, 1.0],
+        "last_dose_day": [0.0, 14.0],
+    }
+    artifact = joblib.load(model)
+    training = artifact["training_input_provenance"]["augmentation_audit"][
+        "inputs"]["features"]["derivation_payload"]["treatment_contract"]
+    training["schedule_support"] = json.loads(json.dumps(support))
+    joblib.dump(artifact, model)
+    external = payload["inputs"]["features"]["derivation_payload"][
+        "treatment_contract"]
+    external["schedule_support"] = json.loads(json.dumps(support))
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
+    result = validate_prediction_feature_lineage(model, features)
+    assert result["compatible_treatment_schedule_support"] == support
+    external["schedule_support"]["total_model_exposure"] = [1.0, 3.0]
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="total_model_exposure"):
+        validate_prediction_feature_lineage(model, features)
+
+
 @pytest.mark.parametrize("mutation,field", [
     (lambda contract: contract["feature_bridge_mapping"].update(sha256="f" * 64),
      "feature_bridge_mapping_sha256"),

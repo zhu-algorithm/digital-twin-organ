@@ -367,6 +367,13 @@ def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():
     assert [dose.day for dose in schedules["p2"]] == [0, 2]
     assert [dose.amount for dose in schedules["p2"]] == [0.5, 0.5]
     assert contract["response_definition"] == "RECIST_1_1_best_overall_response"
+    assert contract["schedule_support"] == {
+        "model_dose_amount": [0.5, 1.0],
+        "dose_count": [1, 2],
+        "total_model_exposure": [1.0, 1.0],
+        "first_dose_day": [0.0, 0.0],
+        "last_dose_day": [0.0, 2.0],
+    }
     features = pd.DataFrame({"patient_id": ["p1", "p2"], "sig_cytotoxic": [0.2, 0.2]})
     out = augment_with_liver_tdln_counterfactuals(
         features, doses=(), patient_doses=schedules, days=5, step=0.5)
