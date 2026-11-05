@@ -10,7 +10,9 @@ from tdln_pd1.features import aggregate_cells
 DEFAULT_SETTINGS = {
     "time_column": None, "baseline_values": [],
     "feature_tissue_pattern": "tdln|lymph",
-    "minimum_signature_gene_coverage": 0.5, "labels_used": False,
+    "minimum_signature_gene_coverage": 0.5,
+    "gene_symbol_column": None, "expression_layer": None,
+    "labels_used": False,
 }
 
 
@@ -73,4 +75,15 @@ def test_feature_audit_replay_detects_setting_tampering(tmp_path):
     payload["settings"]["minimum_signature_gene_coverage"] = 1.0
     audit.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="derivation replay mismatch"):
+        verify_feature_audit(audit, cells, output)
+
+
+def test_feature_audit_rejects_invalid_anndata_matrix_contract(tmp_path):
+    cells, output = tmp_path / "cells.csv", tmp_path / "features.csv"
+    _write_cells_and_features(cells, output)
+    audit = write_feature_audit(cells, output, DEFAULT_SETTINGS)
+    payload = json.loads(audit.read_text())
+    payload["settings"]["expression_layer"] = ""
+    audit.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="expression_layer"):
         verify_feature_audit(audit, cells, output)

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import numpy as np
 import pandas as pd
+from scipy import sparse
 
 from .features import TEMPORAL_COLUMNS
 
@@ -25,9 +27,15 @@ def _validate_cell_identifiers(frame: pd.DataFrame) -> pd.DataFrame:
 def load_cells(
     path: str | Path,
     metadata_columns: tuple[str, ...] = (),
+    gene_symbol_column: str | None = None,
+    expression_layer: str | None = None,
 ) -> pd.DataFrame:
     path = Path(path)
     if path.suffix.lower() == ".csv":
+        if gene_symbol_column or expression_layer:
+            raise ValueError(
+                "gene_symbol_column and expression_layer apply only to .h5ad input"
+            )
         return _validate_cell_identifiers(pd.read_csv(path))
     if path.suffix.lower() == ".h5ad":
         try:
@@ -40,8 +48,43 @@ def load_cells(
             raise ValueError("AnnData obs must contain patient_id and cell_type")
         if adata.obs[["patient_id", "cell_type"]].isna().any().any():
             raise ValueError("AnnData patient_id and cell_type must be non-missing")
-        genes = [g for g in adata.var_names if g in _signature_genes()]
-        matrix = adata[:, genes].to_df()
+        if gene_symbol_column:
+            if gene_symbol_column not in adata.var.columns:
+                raise ValueError(
+                    f"AnnData var gene-symbol column not found: {gene_symbol_column}"
+                )
+            raw_symbols = adata.var[gene_symbol_column]
+            if raw_symbols.isna().any():
+                raise ValueError("AnnData gene symbols must be complete")
+            symbols = raw_symbols.astype(str).str.strip().tolist()
+            if any(not symbol for symbol in symbols):
+                raise ValueError("AnnData gene symbols must be non-empty")
+        else:
+            symbols = [str(value).strip() for value in adata.var_names]
+        selected = [index for index, symbol in enumerate(symbols)
+                    if symbol in _signature_genes()]
+        genes = [symbols[index] for index in selected]
+        duplicates = sorted({gene for gene in genes if genes.count(gene) > 1})
+        if duplicates:
+            raise ValueError(
+                f"AnnData signature gene symbols must be unique: {duplicates}"
+            )
+        if expression_layer:
+            if expression_layer not in adata.layers:
+                raise ValueError(f"AnnData expression layer not found: {expression_layer}")
+            values = adata.layers[expression_layer][:, selected]
+            if sparse.issparse(values):
+                values = values.toarray()
+            matrix = pd.DataFrame(np.asarray(values), columns=genes)
+        elif gene_symbol_column:
+            values = adata.X[:, selected]
+            if sparse.issparse(values):
+                values = values.toarray()
+            matrix = pd.DataFrame(np.asarray(values), columns=genes)
+        else:
+            # Preserve AnnData's own backed/sparse slicing behavior while only
+            # materializing the small prespecified signature-gene panel.
+            matrix = adata[:, genes].to_df()
         matrix.insert(0, "cell_type", adata.obs["cell_type"].values)
         matrix.insert(0, "patient_id", adata.obs["patient_id"].values)
         metadata = dict.fromkeys(("clonotype_id", "tissue", *TEMPORAL_COLUMNS,

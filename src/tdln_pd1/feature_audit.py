@@ -70,12 +70,19 @@ def verify_feature_audit(
     if pattern is not None and not isinstance(pattern, str):
         raise ValueError("invalid single-cell tissue-pattern setting")
     vocabulary = settings.get("cell_type_vocabulary", [])
+    gene_symbol_column = settings.get("gene_symbol_column")
+    expression_layer = settings.get("expression_layer")
+    for name, value in (("gene_symbol_column", gene_symbol_column),
+                        ("expression_layer", expression_layer)):
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(f"invalid single-cell {name} setting")
     if (not isinstance(vocabulary, list)
             or any(not isinstance(value, str) or not value.strip() for value in vocabulary)
             or len(set(vocabulary)) != len(vocabulary)):
         raise ValueError("invalid single-cell cell-type vocabulary")
     replayed = aggregate_cells(
-        load_cells(cells, (time_column,) if time_column else ()),
+        load_cells(cells, (time_column,) if time_column else (),
+                   gene_symbol_column, expression_layer),
         time_column,
         tuple(str(value) for value in settings["baseline_values"]) or None,
         pattern,

@@ -168,6 +168,14 @@ def main() -> None:
     featurize.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     featurize.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
     featurize.add_argument(
+        "--gene-symbol-column",
+        help="AnnData var column containing gene symbols when var_names are IDs",
+    )
+    featurize.add_argument(
+        "--expression-layer",
+        help="AnnData layer containing the prespecified normalized expression matrix",
+    )
+    featurize.add_argument(
         "--cell-type-vocabulary", default="",
         help="comma-separated locked annotation labels; unknown labels fail",
     )
@@ -331,6 +339,8 @@ def main() -> None:
     qc.add_argument("--baseline-values", default="")
     qc.add_argument("--feature-tissue-pattern", default="tdln|lymph")
     qc.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
+    qc.add_argument("--gene-symbol-column")
+    qc.add_argument("--expression-layer")
     verify = sub.add_parser("verify")
     verify.add_argument("--output", required=True)
     verify_sensitivity = sub.add_parser("verify-sensitivity")
@@ -379,7 +389,9 @@ def main() -> None:
         cell_type_vocabulary = tuple(
             value.strip() for value in args.cell_type_vocabulary.split(",") if value.strip()
         )
-        aggregate_cells(load_cells(args.cells, (args.time_column,) if args.time_column else ()),
+        aggregate_cells(load_cells(
+                            args.cells, (args.time_column,) if args.time_column else (),
+                            args.gene_symbol_column, args.expression_layer),
                         args.time_column, baseline_values or None,
                         args.feature_tissue_pattern,
                         args.min_signature_gene_coverage,
@@ -390,6 +402,8 @@ def main() -> None:
             "feature_tissue_pattern": args.feature_tissue_pattern,
             "minimum_signature_gene_coverage": args.min_signature_gene_coverage,
             "cell_type_vocabulary": list(cell_type_vocabulary),
+            "gene_symbol_column": args.gene_symbol_column,
+            "expression_layer": args.expression_layer,
             "labels_used": False,
         })
     elif args.command == "train":
@@ -1007,6 +1021,7 @@ def main() -> None:
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
         report = cohort_qc(load_cells(
             args.cells, (args.time_column,) if args.time_column else (),
+            args.gene_symbol_column, args.expression_layer,
         ), pd.read_csv(args.labels),
                            args.time_column, baseline_values or None,
                            args.feature_tissue_pattern,
