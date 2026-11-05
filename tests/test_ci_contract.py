@@ -26,7 +26,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "verify-calibration --audit /tmp/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv",
         "verify-calibration --audit /tmp/spatial_calibration/spatial_calibration_provenance.json --observations examples/spatial_longitudinal_observations.csv",
         "calibrate_liver_tdln_bridge.py --observations examples/liver_tdln_bridge_observations.csv",
-        "--fit bridge.antigen_drainage_gain --output /tmp/liver_bridge_calibration",
+        "--fit bridge.antigen_drainage_gain,bridge.dc_migration_gain --output /tmp/liver_bridge_calibration",
         "verify-calibration --audit /tmp/liver_bridge_calibration/liver_tdln_bridge_provenance.json --observations examples/liver_tdln_bridge_observations.csv",
         "verify-augmentation --audit /tmp/hybrid.csv.twin-audit.json",
         "--systemic-diagnostics /tmp/calibration/calibration_diagnostics.json",

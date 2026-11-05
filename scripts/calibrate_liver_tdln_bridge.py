@@ -22,7 +22,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--observations", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--fit", default="bridge.antigen_drainage_gain")
+    parser.add_argument(
+        "--fit",
+        default="bridge.antigen_drainage_gain,bridge.dc_migration_gain",
+    )
     parser.add_argument("--dose-days", default="")
     parser.add_argument("--dose", type=float, default=1.0)
     parser.add_argument("--step", type=float, default=0.5)

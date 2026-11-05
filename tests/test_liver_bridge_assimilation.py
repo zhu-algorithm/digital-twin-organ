@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,9 @@ from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_spatial import (LiverTDLNSpatialBridge,
                                          simulate_liver_tdln_spatial)
 from tdln_pd1.liver_tumor import LiverTumourParameters
+
+
+ROOT = Path(__file__).parents[1]
 
 
 def _synthetic_observations(gain=0.8):
@@ -58,6 +62,22 @@ def test_calibration_recovers_independent_migratory_dc_gain():
             antigen_drainage_gain=0, dc_migration_gain=25), max_nfev=60)
     assert fitted.dc_migration_gain == pytest.approx(180, rel=2e-3)
     assert diagnostics["success"] is True
+
+
+def test_bundled_demo_jointly_recovers_both_afferent_route_gains():
+    observations = pd.read_csv(ROOT / "examples/liver_tdln_bridge_observations.csv")
+    _, _, fitted, diagnostics, residuals = calibrate_liver_bridge(
+        observations,
+        fit_parameters=("bridge.antigen_drainage_gain", "bridge.dc_migration_gain"),
+        max_nfev=60,
+    )
+    assert fitted.antigen_drainage_gain == pytest.approx(0.8, rel=2e-3)
+    assert fitted.dc_migration_gain == pytest.approx(180, rel=2e-3)
+    assert diagnostics["success"] is True
+    assert diagnostics["locally_identifiable"] is True
+    assert diagnostics["identifiability_warning"] is False
+    assert diagnostics["jacobian_rank"] == 2
+    assert len(residuals) == 12
 
 
 def test_calibration_recovers_hepatic_arterial_buffer_fraction():

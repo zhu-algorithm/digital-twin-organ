@@ -45,7 +45,7 @@ jobs:
           tdln-pd1 verify-uncertainty --audit /tmp/uncertainty/uncertainty_provenance.json --parameters /tmp/calibration/fitted_parameters.json --diagnostics /tmp/calibration/calibration_diagnostics.json
           tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --max-nfev 80 --profile-points 5 --output /tmp/spatial_calibration
           tdln-pd1 verify-calibration --audit /tmp/spatial_calibration/spatial_calibration_provenance.json --observations examples/spatial_longitudinal_observations.csv
-          python scripts/calibrate_liver_tdln_bridge.py --observations examples/liver_tdln_bridge_observations.csv --fit bridge.antigen_drainage_gain --output /tmp/liver_bridge_calibration --max-nfev 60
+          python scripts/calibrate_liver_tdln_bridge.py --observations examples/liver_tdln_bridge_observations.csv --fit bridge.antigen_drainage_gain,bridge.dc_migration_gain --output /tmp/liver_bridge_calibration --max-nfev 60
           tdln-pd1 verify-calibration --audit /tmp/liver_bridge_calibration/liver_tdln_bridge_provenance.json --observations examples/liver_tdln_bridge_observations.csv
           python scripts/calibrate_liver_feature_bridge.py --observations examples/liver_feature_bridge_mapping_observations.csv --fit killing_cytotoxic_coefficient --output /tmp/liver_feature_bridge_calibration --max-nfev 60
           tdln-pd1 verify-calibration --audit /tmp/liver_feature_bridge_calibration/liver_feature_bridge_mapping_provenance.json --observations examples/liver_feature_bridge_mapping_observations.csv

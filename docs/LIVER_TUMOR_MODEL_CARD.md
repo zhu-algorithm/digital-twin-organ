@@ -46,7 +46,7 @@
 ```bash
 python scripts/calibrate_liver_tdln_bridge.py \
   --observations observations.csv \
-  --fit bridge.antigen_drainage_gain,coupling.immune_killing_gain \
+  --fit bridge.antigen_drainage_gain,bridge.dc_migration_gain \
   --dose-days 0,21,42 --output artifacts/liver_bridge
 ```
 
@@ -63,7 +63,7 @@ python scripts/calibrate_liver_tdln_bridge.py \
 
 输出包括完整参数、加权残差、局部可辨识性诊断和绑定输入／输出 SHA-256 的审计清单。缺乏足够观测或雅可比秩不足会设置 `identifiability_warning`；优化器成功不等于生物学、外部或临床验证。
 
-仓库中的 `examples/liver_tdln_bridge_observations.csv` 仅用于 CI 参数恢复。它由模型在引流增益 0.8 下合成，每行均标记 `synthetic_demo_not_biological_evidence`；它不是患者数据、真实队列或机制有效性的证据。
+仓库中的 `examples/liver_tdln_bridge_observations.csv` 仅用于 CI 参数恢复。它由模型在抗原引流增益 0.8、迁移 DC 增益 180 下合成，同时包含被膜下窦抗原、传入淋巴成熟 DC 和旁皮质成熟 DC；直接观测传入淋巴 DC 可避免只凭下游 DC 混淆两种来源。每行均标记 `synthetic_demo_not_biological_evidence`；它不是患者数据、真实队列或机制有效性的证据。
 
 ## 单细胞患者特征映射
 
