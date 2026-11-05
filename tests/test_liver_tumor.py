@@ -1,8 +1,10 @@
 import numpy as np
 import pytest
+from types import SimpleNamespace
 
+import tdln_pd1.liver_tumor as liver_module
 from tdln_pd1.liver_tumor import (LiverTumourInitialState, LiverTumourParameters,
-                                  simulate_liver_tumour)
+                                  STATE_NAMES, simulate_liver_tumour)
 
 
 def test_liver_tumour_simulation_is_finite_nonnegative_and_grows():
@@ -78,3 +80,25 @@ def test_zero_tumour_does_not_spontaneously_create_tumour():
 def test_invalid_simulation_contracts_fail(kwargs):
     with pytest.raises(ValueError):
         simulate_liver_tumour(**kwargs)
+
+
+def test_liver_solver_cannot_hide_material_state_bound_violations(monkeypatch):
+    def invalid_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(STATE_NAMES), len(t_eval)))
+        values[STATE_NAMES.index("normal_cells"), -1] = -1.0
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(liver_module, "solve_ivp", invalid_solver)
+    with pytest.raises(RuntimeError, match="physical state bounds"):
+        simulate_liver_tumour(days=1)
+
+
+def test_liver_solver_clips_only_tolerance_scale_drift(monkeypatch):
+    def tiny_drift_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(STATE_NAMES), len(t_eval)))
+        values[STATE_NAMES.index("normal_cells"), -1] = -1e-11
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(liver_module, "solve_ivp", tiny_drift_solver)
+    out = simulate_liver_tumour(days=1)
+    assert out.normal_cells.min() == 0.0

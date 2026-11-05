@@ -1,8 +1,11 @@
 import numpy as np
 import pytest
 from scipy.integrate import trapezoid
+from types import SimpleNamespace
 
+import tdln_pd1.liver_tdln_coupling as coupling_module
 from tdln_pd1.liver_tdln_coupling import (LiverTDLNCouplingParameters,
+                                          COMBINED_STATE_NAMES,
                                           simulate_liver_tdln)
 from tdln_pd1.simulator import Dose
 
@@ -56,3 +59,27 @@ def test_invalid_coupling_contract_fails_closed():
         simulate_liver_tdln(days=2, portal_flow_multiplier=0)
     with pytest.raises(ValueError, match="solver tolerances"):
         simulate_liver_tdln(days=2, rtol=0)
+
+
+def test_coupled_solver_cannot_hide_material_state_bound_violations(monkeypatch):
+    def invalid_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(COMBINED_STATE_NAMES), len(t_eval)))
+        values[COMBINED_STATE_NAMES.index("liver_normal_cells"), -1] = -1.0
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(coupling_module, "solve_ivp", invalid_solver)
+    with pytest.raises(RuntimeError, match="physical state bounds"):
+        simulate_liver_tdln(days=1)
+
+
+def test_coupled_solver_clips_only_tolerance_scale_drift(monkeypatch):
+    def tiny_drift_solver(*args, t_eval, **kwargs):
+        values = np.zeros((len(COMBINED_STATE_NAMES), len(t_eval)))
+        values[COMBINED_STATE_NAMES.index("liver_normal_cells"), -1] = -1e-10
+        values[COMBINED_STATE_NAMES.index("pd1_occupancy"), -1] = 1.0 + 1e-10
+        return SimpleNamespace(success=True, message="", t=np.asarray(t_eval), y=values)
+
+    monkeypatch.setattr(coupling_module, "solve_ivp", tiny_drift_solver)
+    out = simulate_liver_tdln(days=1)
+    assert out.liver_normal_cells.min() == 0.0
+    assert out.pd1_occupancy.max() == 1.0

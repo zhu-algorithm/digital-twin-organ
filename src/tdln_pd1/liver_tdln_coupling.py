@@ -79,6 +79,35 @@ def _combined_rhs(time: float, y: np.ndarray, liver_p: LiverTumourParameters,
     return np.where((y <= 0.0) & (out < 0.0), 0.0, out)
 
 
+COMBINED_STATE_NAMES = tuple(f"liver_{name}" for name in LIVER_STATES) + tuple(
+    IMMUNE_DYNAMIC_STATES)
+
+
+def _validated_combined_states(values: np.ndarray, rtol: float, atol: float) -> np.ndarray:
+    """Enforce physical bounds before any tolerance-scale clipping."""
+    states = np.asarray(values, dtype=float)
+    if not np.isfinite(states).all():
+        raise RuntimeError("coupled liver–TDLN solver returned non-finite state values")
+    scales = np.maximum(np.max(np.abs(states), axis=1), 1.0)
+    tolerance = 10.0 * (atol + rtol * scales)
+    minima = np.min(states, axis=1)
+    invalid_negative = [
+        COMBINED_STATE_NAMES[index]
+        for index in np.flatnonzero(minima < -tolerance)
+    ]
+    occupancy_index = len(LIVER_STATES) + IMMUNE_DYNAMIC_STATES.index("pd1_occupancy")
+    occupancy_max = float(np.max(states[occupancy_index]))
+    invalid_occupancy = occupancy_max > 1.0 + tolerance[occupancy_index]
+    if invalid_negative or invalid_occupancy:
+        raise RuntimeError(
+            "coupled liver–TDLN solver violated physical state bounds: "
+            f"negative={invalid_negative}, pd1_occupancy_max={occupancy_max}"
+        )
+    states = np.maximum(states, 0.0)
+    states[occupancy_index] = np.minimum(states[occupancy_index], 1.0)
+    return states
+
+
 def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                         doses: tuple[Dose, ...] = (),
                         liver_parameters: LiverTumourParameters | None = None,
@@ -134,11 +163,11 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                            args=(lp, ip, cp, flow_multiplier, angiogenesis_inhibition,
                                  portal_flow_multiplier, arterial_flow_multiplier),
                            rtol=rtol, atol=atol)
-        if not solved.success or not np.isfinite(solved.y).all():
+        if not solved.success:
             raise RuntimeError(f"coupled liver–TDLN integration failed: {solved.message}")
-        values = np.maximum(solved.y.T, 0.0)
-        frame = pd.DataFrame(values, columns=[f"liver_{x}" for x in LIVER_STATES]
-                             + list(IMMUNE_DYNAMIC_STATES))
+        physical_states = _validated_combined_states(solved.y, rtol, atol)
+        values = physical_states.T
+        frame = pd.DataFrame(values, columns=COMBINED_STATE_NAMES)
         frame.insert(0, "day", solved.t)
         if frames:
             frames[-1] = frames[-1].iloc[:-1] if start in events else frames[-1]

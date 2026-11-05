@@ -130,13 +130,31 @@ def _rhs(_time: float, y: np.ndarray, p: LiverTumourParameters,
     return np.asarray((dh, drim, dcore, dnec, dvessel, do_h, do_r, do_c))
 
 
+def _validated_solution_states(values: np.ndarray, rtol: float, atol: float) -> np.ndarray:
+    """Clip only solver-scale undershoot and reject material negative tissue states."""
+    states = np.asarray(values, dtype=float)
+    if not np.isfinite(states).all():
+        raise RuntimeError("liver tumour solver returned non-finite state values")
+    scales = np.maximum(np.max(np.abs(states), axis=1), 1.0)
+    tolerance = 10.0 * (atol + rtol * scales)
+    minima = np.min(states, axis=1)
+    invalid = [STATE_NAMES[index] for index in np.flatnonzero(minima < -tolerance)]
+    if invalid:
+        raise RuntimeError(
+            f"liver tumour solver violated physical state bounds: negative={invalid}"
+        )
+    return np.maximum(states, 0.0)
+
+
 def simulate_liver_tumour(*, days: float = 120.0, step: float = 0.5,
                           parameters: LiverTumourParameters | None = None,
                           initial: LiverTumourInitialState | None = None,
                           flow_multiplier: float = 1.0,
                           portal_flow_multiplier: float | None = None,
                           arterial_flow_multiplier: float | None = None,
-                          angiogenesis_inhibition: float = 0.0) -> pd.DataFrame:
+                          angiogenesis_inhibition: float = 0.0,
+                          rtol: float = 1e-8,
+                          atol: float = 1e-10) -> pd.DataFrame:
     """Simulate liver parenchyma, tumour, perfusion and oxygen trajectories."""
     p = parameters or LiverTumourParameters()
     state = initial or LiverTumourInitialState()
@@ -144,6 +162,8 @@ def simulate_liver_tumour(*, days: float = 120.0, step: float = 0.5,
     _validate(state, "initial state")
     if not np.isfinite(days) or days <= 0 or not np.isfinite(step) or step <= 0:
         raise ValueError("days and step must be finite and strictly positive")
+    if not np.isfinite(rtol) or not np.isfinite(atol) or rtol <= 0 or atol <= 0:
+        raise ValueError("solver tolerances must be finite and strictly positive")
     if not np.isfinite(flow_multiplier) or flow_multiplier <= 0:
         raise ValueError("flow_multiplier must be finite and strictly positive")
     for name, value in (("portal_flow_multiplier", portal_flow_multiplier),
@@ -156,10 +176,10 @@ def simulate_liver_tumour(*, days: float = 120.0, step: float = 0.5,
     solved = solve_ivp(_rhs, (0.0, days), list(asdict(state).values()), t_eval=t_eval,
                        args=(p, flow_multiplier, angiogenesis_inhibition,
                              portal_flow_multiplier, arterial_flow_multiplier),
-                       method="LSODA", rtol=1e-8, atol=1e-10)
-    if not solved.success or not np.all(np.isfinite(solved.y)):
+                       method="LSODA", rtol=rtol, atol=atol)
+    if not solved.success:
         raise RuntimeError(f"liver tumour integration failed: {solved.message}")
-    values = np.maximum(solved.y.T, 0.0)
+    values = _validated_solution_states(solved.y, rtol, atol).T
     frame = pd.DataFrame(values, columns=STATE_NAMES)
     frame.insert(0, "day", solved.t)
     frame["viable_tumour"] = frame.tumour_rim + frame.tumour_core
