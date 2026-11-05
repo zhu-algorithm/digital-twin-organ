@@ -152,8 +152,20 @@ def calibrate_liver_bridge(
         systemic, spatial = run(log_values)
         return (_predictions(systemic, spatial, obs) - obs.value.to_numpy()) / obs.sd.to_numpy()
 
-    result = least_squares(residual, x0, bounds=(lower, upper), loss="soft_l1",
-                           diff_step=1e-3, max_nfev=max_nfev)
+    # A direct robust fit can have an almost flat score when the initial
+    # residuals are large: soft-L1 deliberately caps their influence, and
+    # older SciPy releases can then terminate in a wrong local basin.  First
+    # locate the weighted-least-squares basin, then refine with the declared
+    # robust objective.  This keeps outlier resistance while making recovery
+    # reproducible across the supported numerical stack.
+    warm_start = least_squares(
+        residual, x0, bounds=(lower, upper), loss="linear",
+        diff_step=1e-3, max_nfev=max_nfev,
+    )
+    result = least_squares(
+        residual, warm_start.x, bounds=(lower, upper), loss="soft_l1",
+        diff_step=1e-3, max_nfev=max_nfev,
+    )
     fitted_liver, fitted_coupling, fitted_bridge = unpack(result.x)
     systemic, spatial = run(result.x)
     prediction = _predictions(systemic, spatial, obs)
@@ -162,7 +174,8 @@ def calibrate_liver_bridge(
     diagnostics = {
         "success": bool(result.success), "message": result.message,
         "n_observations": int(len(obs)), "n_parameters": len(names),
-        "nfev": int(result.nfev),
+        "nfev": int(warm_start.nfev + result.nfev),
+        "optimizer_initialization": "weighted_least_squares_then_soft_l1_refinement",
         "weighted_rmse": float(np.sqrt(np.mean(weighted ** 2))),
         "fit_parameters": {name: float(np.exp(value)) for name, value in zip(names, result.x)},
         **local,

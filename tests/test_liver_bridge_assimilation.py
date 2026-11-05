@@ -39,6 +39,9 @@ def test_calibration_recovers_spatial_drainage_gain():
         _synthetic_observations(), base_bridge=LiverTDLNSpatialBridge(0.2), max_nfev=60)
     assert fitted_bridge.antigen_drainage_gain == pytest.approx(0.8, rel=2e-3)
     assert diagnostics["success"] is True
+    assert diagnostics["optimizer_initialization"] == (
+        "weighted_least_squares_then_soft_l1_refinement"
+    )
     assert diagnostics["weighted_rmse"] < 1e-3
     assert len(residuals) == 8
     assert fitted_coupling.immune_killing_gain > 0
