@@ -15,8 +15,10 @@ sys.path.insert(0, str(ROOT / "src"))
 from tdln_pd1.liver_bridge_features import (
     FeatureBridgeMapping,
     augment_with_liver_tdln_counterfactuals,
+    feature_state_mapping_draws,
     liver_bridge_parameter_draws,
     load_liver_bridge_parameters,
+    load_feature_state_mapping,
     load_spatial_parameters,
     load_systemic_parameters,
     spatial_parameter_draws,
@@ -31,6 +33,7 @@ from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
 from tdln_pd1.liver_tumor import LiverTumourParameters
 from tdln_pd1.liver_mapping_assimilation import (feature_bridge_mapping_draws,
                                                   load_feature_bridge_mapping)
+from tdln_pd1.hybrid import FeatureStateMapping
 from tdln_pd1.simulator import Dose, TwinParameters
 from tdln_pd1.spatial_dynamics import SpatialParameters
 
@@ -48,6 +51,8 @@ def main() -> None:
     parser.add_argument("--systemic-diagnostics", type=Path)
     parser.add_argument("--spatial-parameters", type=Path)
     parser.add_argument("--spatial-diagnostics", type=Path)
+    parser.add_argument("--feature-state-mapping", type=Path)
+    parser.add_argument("--feature-state-diagnostics", type=Path)
     parser.add_argument("--feature-bridge-mapping", type=Path)
     parser.add_argument("--feature-bridge-diagnostics", type=Path)
     parser.add_argument("--bridge-diagnostics", type=Path)
@@ -82,15 +87,19 @@ def main() -> None:
                    if args.systemic_parameters else None)
     base_spatial = (load_spatial_parameters(args.spatial_parameters)
                     if args.spatial_parameters else None)
+    state_mapping = (load_feature_state_mapping(args.feature_state_mapping)
+                     if args.feature_state_mapping else None)
     if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
         raise ValueError("--uncertainty-samples must be 0 or at least 2")
     if args.uncertainty_samples and not (
             args.bridge_diagnostics or args.feature_bridge_diagnostics
-            or args.systemic_diagnostics or args.spatial_diagnostics):
+            or args.systemic_diagnostics or args.spatial_diagnostics
+            or args.feature_state_diagnostics):
         raise ValueError("--uncertainty-samples requires at least one diagnostics file")
     if not args.uncertainty_samples and (
             args.bridge_diagnostics or args.feature_bridge_diagnostics
-            or args.systemic_diagnostics or args.spatial_diagnostics):
+            or args.systemic_diagnostics or args.spatial_diagnostics
+            or args.feature_state_diagnostics):
         raise ValueError("diagnostics files require --uncertainty-samples")
     if args.bridge_diagnostics and not args.bridge_parameters:
         raise ValueError("--bridge-diagnostics requires --bridge-parameters")
@@ -100,6 +109,8 @@ def main() -> None:
         raise ValueError("--systemic-diagnostics requires --systemic-parameters")
     if args.spatial_diagnostics and not args.spatial_parameters:
         raise ValueError("--spatial-diagnostics requires --spatial-parameters")
+    if args.feature_state_diagnostics and not args.feature_state_mapping:
+        raise ValueError("--feature-state-diagnostics requires --feature-state-mapping")
     parameter_draws = None
     if args.bridge_diagnostics:
         parameter_draws = liver_bridge_parameter_draws(
@@ -121,15 +132,22 @@ def main() -> None:
         spatial_draws = spatial_parameter_draws(
             base_spatial, json.loads(args.spatial_diagnostics.read_text()),
             args.uncertainty_samples, args.uncertainty_seed + 3_000_017)
+    state_mapping_draws = None
+    if args.feature_state_diagnostics:
+        state_mapping_draws = feature_state_mapping_draws(
+            state_mapping, json.loads(args.feature_state_diagnostics.read_text()),
+            args.uncertainty_samples, args.uncertainty_seed + 4_000_037)
     augmented = augment_with_liver_tdln_counterfactuals(
         features, doses=doses, days=args.days,
         step=args.step, mapping=mapping, base_coupling=base_coupling,
         base_bridge=base_bridge, base_liver=base_liver,
         base_immune=base_immune, base_spatial=base_spatial,
+        feature_state_mapping=state_mapping,
         parameter_draws=parameter_draws,
         mapping_draws=mapping_draws,
         immune_draws=immune_draws,
         spatial_draws=spatial_draws,
+        state_mapping_draws=state_mapping_draws,
         patient_doses=patient_doses, patient_flows=patient_flows)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     augmented.to_csv(args.output, index=False)
@@ -163,6 +181,7 @@ def main() -> None:
             "liver_tumour": asdict(base_liver or LiverTumourParameters()),
             "immune": asdict(base_immune or TwinParameters()),
             "spatial": asdict(base_spatial or SpatialParameters()),
+            "feature_state_mapping": asdict(state_mapping or FeatureStateMapping()),
             "coupling": asdict(base_coupling or LiverTDLNCouplingParameters()),
             "spatial_bridge": asdict(base_bridge or LiverTDLNSpatialBridge()),
         },
@@ -181,6 +200,13 @@ def main() -> None:
         "spatial_diagnostics": ({"file": args.spatial_diagnostics.name,
                                   "sha256": sha256_file(args.spatial_diagnostics)}
                                  if args.spatial_diagnostics else None),
+        "feature_state_mapping": ({"file": args.feature_state_mapping.name,
+                                    "sha256": sha256_file(args.feature_state_mapping)}
+                                   if args.feature_state_mapping else None),
+        "feature_state_diagnostics": (
+            {"file": args.feature_state_diagnostics.name,
+             "sha256": sha256_file(args.feature_state_diagnostics)}
+            if args.feature_state_diagnostics else None),
         "bridge_diagnostics": ({"file": args.bridge_diagnostics.name,
                                  "sha256": sha256_file(args.bridge_diagnostics)}
                                 if args.bridge_diagnostics else None),
@@ -201,7 +227,8 @@ def main() -> None:
         args.bridge_diagnostics, args.treatment_manifest, args.perfusion_manifest,
         args.feature_bridge_mapping, args.feature_bridge_diagnostics,
         args.systemic_parameters, args.systemic_diagnostics,
-        args.spatial_parameters, args.spatial_diagnostics)
+        args.spatial_parameters, args.spatial_diagnostics,
+        args.feature_state_mapping, args.feature_state_diagnostics)
 
     print(json.dumps({"n_patients": len(augmented),
                       "n_mechanistic_features": len(mechanistic_columns),

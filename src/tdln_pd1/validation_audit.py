@@ -47,6 +47,7 @@ def _mechanistic_feature_contract(derivation: dict) -> dict:
     contract = {}
     for name in ("systemic_parameters", "systemic_diagnostics",
                  "spatial_parameters", "spatial_diagnostics",
+                 "feature_state_mapping", "feature_state_diagnostics",
                  "bridge_parameters", "bridge_diagnostics",
                  "feature_bridge_mapping", "feature_bridge_diagnostics"):
         record = derivation.get(name)

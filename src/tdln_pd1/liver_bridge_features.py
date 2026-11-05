@@ -11,7 +11,9 @@ import numpy as np
 import pandas as pd
 
 from .assimilation import calibration_parameter_draws
-from .hybrid import (_outcome_like_columns, initial_state_from_features,
+from .hybrid import (FeatureStateMapping, _outcome_like_columns,
+                     _validate_mapping as _validate_state_mapping,
+                     initial_state_from_features,
                      spatial_initial_state_from_features)
 from .liver_tdln_coupling import LiverTDLNCouplingParameters
 from .liver_tdln_coupling import _validate_coupling
@@ -215,6 +217,7 @@ def simulate_patient_liver_tdln(
     base_spatial: SpatialParameters | None = None,
     base_liver: LiverTumourParameters | None = None,
     base_immune: TwinParameters | None = None,
+    feature_state_mapping: FeatureStateMapping | None = None,
     portal_flow_multiplier: float | None = None,
     arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
@@ -222,8 +225,9 @@ def simulate_patient_liver_tdln(
     patient = patient_liver_bridge_from_features(
         row, mapping=mapping, base_coupling=base_coupling,
         base_bridge=base_bridge, base_spatial=base_spatial)
-    immune_initial = initial_state_from_features(row)
-    spatial_initial = spatial_initial_state_from_features(row)
+    immune_initial = initial_state_from_features(row, mapping=feature_state_mapping)
+    spatial_initial = spatial_initial_state_from_features(
+        row, mapping=feature_state_mapping)
     systemic, spatial = simulate_liver_tdln_spatial(
         days=days, step=step, doses=doses, bridge=patient.spatial_bridge,
         spatial_parameters=patient.spatial_parameters,
@@ -257,6 +261,7 @@ def simulate_patient_liver_tdln_counterfactual(
     base_spatial: SpatialParameters | None = None,
     base_liver: LiverTumourParameters | None = None,
     base_immune: TwinParameters | None = None,
+    feature_state_mapping: FeatureStateMapping | None = None,
     portal_flow_multiplier: float | None = None,
     arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
@@ -277,6 +282,7 @@ def simulate_patient_liver_tdln_counterfactual(
             base_spatial=base_spatial,
             base_liver=base_liver,
             base_immune=base_immune,
+            feature_state_mapping=feature_state_mapping,
             portal_flow_multiplier=portal_flow_multiplier,
             arterial_flow_multiplier=arterial_flow_multiplier)
         systemic, spatial = systemic.copy(), spatial.copy()
@@ -429,6 +435,17 @@ def spatial_parameter_draws(
     return draws
 
 
+def feature_state_mapping_draws(
+    mapping: FeatureStateMapping, diagnostics: dict, n: int, seed: int,
+) -> tuple[FeatureStateMapping, ...]:
+    """Draw and validate assay-to-initial-state mapping coefficients."""
+    _, samples = calibration_parameter_draws(mapping, diagnostics, n, seed)
+    draws = tuple(replace(mapping, **sample) for sample in samples)
+    for draw in draws:
+        _validate_state_mapping(draw)
+    return draws
+
+
 def augment_with_liver_tdln_counterfactuals(
     features: pd.DataFrame, *, doses: tuple[Dose, ...], days: float = 28.0,
     step: float = 0.25, mapping: FeatureBridgeMapping | None = None,
@@ -437,6 +454,7 @@ def augment_with_liver_tdln_counterfactuals(
     base_spatial: SpatialParameters | None = None,
     base_liver: LiverTumourParameters | None = None,
     base_immune: TwinParameters | None = None,
+    feature_state_mapping: FeatureStateMapping | None = None,
     parameter_draws: tuple[
         tuple[LiverTumourParameters, LiverTDLNCouplingParameters,
               LiverTDLNSpatialBridge], ...
@@ -444,6 +462,7 @@ def augment_with_liver_tdln_counterfactuals(
     mapping_draws: tuple[FeatureBridgeMapping, ...] | None = None,
     immune_draws: tuple[TwinParameters, ...] | None = None,
     spatial_draws: tuple[SpatialParameters, ...] | None = None,
+    state_mapping_draws: tuple[FeatureStateMapping, ...] | None = None,
     patient_doses: dict[str, tuple[Dose, ...]] | None = None,
     patient_flows: dict[str, tuple[float, float]] | None = None,
 ) -> pd.DataFrame:
@@ -472,8 +491,11 @@ def augment_with_liver_tdln_counterfactuals(
         raise ValueError("immune_draws must contain at least two samples")
     if spatial_draws is not None and len(spatial_draws) < 2:
         raise ValueError("spatial_draws must contain at least two samples")
+    if state_mapping_draws is not None and len(state_mapping_draws) < 2:
+        raise ValueError("state_mapping_draws must contain at least two samples")
     draw_lengths = {len(draws) for draws in (
-        parameter_draws, mapping_draws, immune_draws, spatial_draws)
+        parameter_draws, mapping_draws, immune_draws, spatial_draws,
+        state_mapping_draws)
                     if draws is not None}
     if len(draw_lengths) > 1:
         raise ValueError("all uncertainty draws must have equal sample counts")
@@ -487,6 +509,7 @@ def augment_with_liver_tdln_counterfactuals(
             base_coupling=base_coupling, base_bridge=base_bridge,
             base_spatial=base_spatial, base_liver=base_liver,
             base_immune=base_immune,
+            feature_state_mapping=feature_state_mapping,
             portal_flow_multiplier=portal_flow,
             arterial_flow_multiplier=arterial_flow)
         values = {target: float(effect[source])
@@ -494,7 +517,8 @@ def augment_with_liver_tdln_counterfactuals(
         if not np.isfinite(list(values.values())).all():
             raise RuntimeError(f"non-finite counterfactual feature for patient {row.patient_id}")
         if any(draws is not None for draws in (
-                parameter_draws, mapping_draws, immune_draws, spatial_draws)):
+                parameter_draws, mapping_draws, immune_draws, spatial_draws,
+                state_mapping_draws)):
             sampled = {source: [] for source in COUNTERFACTUAL_FEATURES}
             sample_count = next(iter(draw_lengths))
             for sample_index in range(sample_count):
@@ -507,11 +531,15 @@ def augment_with_liver_tdln_counterfactuals(
                                   if immune_draws is not None else base_immune)
                 sampled_spatial = (spatial_draws[sample_index]
                                    if spatial_draws is not None else base_spatial)
+                sampled_state_mapping = (
+                    state_mapping_draws[sample_index]
+                    if state_mapping_draws is not None else feature_state_mapping)
                 _, _, draw_effect, _ = simulate_patient_liver_tdln_counterfactual(
                     row, doses=schedule, days=days, step=step, mapping=sampled_mapping,
                     base_coupling=sampled_coupling, base_bridge=sampled_bridge,
                     base_spatial=sampled_spatial, base_liver=sampled_liver,
                     base_immune=sampled_immune,
+                    feature_state_mapping=sampled_state_mapping,
                     portal_flow_multiplier=portal_flow,
                     arterial_flow_multiplier=arterial_flow)
                 for source in sampled:
@@ -537,6 +565,8 @@ def verify_liver_counterfactual_augmentation(
     systemic_diagnostics_path: str | Path | None = None,
     spatial_parameters_path: str | Path | None = None,
     spatial_diagnostics_path: str | Path | None = None,
+    feature_state_mapping_path: str | Path | None = None,
+    feature_state_diagnostics_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -591,6 +621,19 @@ def verify_liver_counterfactual_augmentation(
             raise ValueError("spatial diagnostics are required to replay uncertainty")
         if spatial_diagnostic_record.get("sha256") != sha256_file(spatial_diagnostics_path):
             raise ValueError("liver counterfactual spatial diagnostics hash mismatch")
+    state_mapping_record = audit.get("feature_state_mapping")
+    if state_mapping_record is not None:
+        if feature_state_mapping_path is None:
+            raise ValueError("feature-state mapping is required to replay this augmentation")
+        if state_mapping_record.get("sha256") != sha256_file(feature_state_mapping_path):
+            raise ValueError("liver counterfactual feature-state mapping hash mismatch")
+    state_diagnostic_record = audit.get("feature_state_diagnostics")
+    if state_diagnostic_record is not None:
+        if feature_state_diagnostics_path is None:
+            raise ValueError("feature-state diagnostics are required to replay uncertainty")
+        if state_diagnostic_record.get("sha256") != sha256_file(
+                feature_state_diagnostics_path):
+            raise ValueError("liver counterfactual feature-state diagnostics hash mismatch")
     settings = audit.get("settings", {})
     try:
         doses = tuple(Dose(float(day), float(amount)) for day, amount in zip(
@@ -605,6 +648,8 @@ def verify_liver_counterfactual_augmentation(
             "immune", asdict(TwinParameters())))
         base_spatial = SpatialParameters(**audit["base_parameters"].get(
             "spatial", asdict(SpatialParameters())))
+        feature_state_mapping = FeatureStateMapping(**audit["base_parameters"].get(
+            "feature_state_mapping", asdict(FeatureStateMapping())))
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("invalid liver counterfactual replay settings") from error
     samples, seed = int(settings.get("uncertainty_samples", 0)), int(
@@ -649,8 +694,17 @@ def verify_liver_counterfactual_augmentation(
             samples, seed + 3_000_017)
     elif spatial_diagnostic_record is not None:
         raise ValueError("spatial diagnostics supplied without uncertainty samples")
+    state_mapping_draws = None
+    if samples and state_diagnostic_record is not None:
+        state_mapping_draws = feature_state_mapping_draws(
+            feature_state_mapping,
+            json.loads(Path(feature_state_diagnostics_path).read_text()),
+            samples, seed + 4_000_037)
+    elif state_diagnostic_record is not None:
+        raise ValueError("feature-state diagnostics supplied without uncertainty samples")
     if (samples and parameter_draws is None and mapping_draws is None
-            and immune_draws is None and spatial_draws is None):
+            and immune_draws is None and spatial_draws is None
+            and state_mapping_draws is None):
         raise ValueError("uncertainty samples require at least one diagnostics file")
     patient_doses = None
     treatment_record = audit.get("treatment_manifest")
@@ -680,11 +734,13 @@ def verify_liver_counterfactual_augmentation(
         pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
         base_coupling=base_coupling, base_bridge=base_bridge,
         base_spatial=base_spatial,
+        feature_state_mapping=feature_state_mapping,
         base_liver=base_liver,
         base_immune=base_immune,
         parameter_draws=parameter_draws, mapping_draws=mapping_draws,
         immune_draws=immune_draws,
         spatial_draws=spatial_draws,
+        state_mapping_draws=state_mapping_draws,
         patient_doses=patient_doses,
         patient_flows=patient_flows)
     replay_sha = hashlib.sha256(
@@ -740,6 +796,20 @@ def load_spatial_parameters(path: str | Path) -> SpatialParameters:
         raise ValueError("spatial parameters must be numeric") from error
     _validate_spatial_parameters(parameters)
     return parameters
+
+
+def load_feature_state_mapping(path: str | Path) -> FeatureStateMapping:
+    """Load an exact calibrated assay-to-state mapping for liver coupling."""
+    payload = json.loads(Path(path).read_text())
+    expected = {field.name for field in fields(FeatureStateMapping)}
+    if not isinstance(payload, dict) or set(payload) != expected:
+        raise ValueError("invalid feature-state mapping schema for liver counterfactuals")
+    try:
+        mapping = FeatureStateMapping(**{name: float(payload[name]) for name in expected})
+    except (TypeError, ValueError) as error:
+        raise ValueError("feature-state mapping coefficients must be numeric") from error
+    _validate_state_mapping(mapping)
+    return mapping
 
 
 def validate_treatment_manifest(

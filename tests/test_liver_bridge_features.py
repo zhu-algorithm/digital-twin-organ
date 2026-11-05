@@ -6,7 +6,9 @@ import pytest
 from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              patient_liver_bridge_from_features,
                                              augment_with_liver_tdln_counterfactuals,
+                                             feature_state_mapping_draws,
                                              liver_bridge_parameter_draws,
+                                             load_feature_state_mapping,
                                              load_liver_bridge_parameters,
                                              load_spatial_parameters,
                                              load_systemic_parameters,
@@ -24,6 +26,7 @@ from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
 from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
 from tdln_pd1.liver_tumor import LiverTumourParameters
 from tdln_pd1.spatial_dynamics import SpatialParameters
+from tdln_pd1.hybrid import FeatureStateMapping
 
 
 def test_single_cell_states_change_only_linked_bridge_mechanisms():
@@ -436,6 +439,38 @@ def test_spatial_uncertainty_propagates_into_liver_tdln_endpoints(tmp_path):
     parameter_path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="schema"):
         load_spatial_parameters(parameter_path)
+
+
+def test_feature_state_mapping_uncertainty_changes_liver_tdln_initialization(
+        tmp_path):
+    mapping = FeatureStateMapping()
+    mapping_path = tmp_path / "feature_state_mapping.json"
+    mapping_path.write_text(json.dumps(mapping.__dict__))
+    assert load_feature_state_mapping(mapping_path) == mapping
+    diagnostics = {
+        "locally_identifiable": True,
+        "fit_parameters": {"tcf7_coefficient": mapping.tcf7_coefficient},
+        "local_log_parameter_covariance": {
+            "parameter_order": ["tcf7_coefficient"],
+            "log_scale_covariance": [[0.16]],
+        },
+    }
+    draws = feature_state_mapping_draws(mapping, diagnostics, 8, 111)
+    assert draws == feature_state_mapping_draws(mapping, diagnostics, 8, 111)
+    features = pd.DataFrame({
+        "patient_id": ["p1"], "sig_tcf7_memory_cd8_t": [0.8],
+    })
+    out = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=3, step=0.5,
+        feature_state_mapping=mapping, state_mapping_draws=draws)
+    assert out.qc_liver_cf_uncertainty_samples.item() == 8
+    assert out.liver_cf_efferent_effector_fold_change_q025.item() < (
+        out.liver_cf_efferent_effector_fold_change_q975.item())
+    payload = mapping.__dict__.copy()
+    payload.pop("tcf7_coefficient")
+    mapping_path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="schema"):
+        load_feature_state_mapping(mapping_path)
 
 
 def test_patient_treatment_manifest_controls_schedules_and_fails_mismatch():
