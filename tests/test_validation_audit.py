@@ -56,6 +56,7 @@ def _add_treatment_lineage(model: Path, features: Path, response="RECIST 1.1"):
 
 def _add_mechanistic_contract(model: Path, payload: dict):
     contract = {
+        "systemic_parameters": {"sha256": "0" * 64},
         "bridge_parameters": {"sha256": "1" * 64},
         "bridge_diagnostics": {"sha256": "2" * 64},
         "feature_bridge_mapping": {"sha256": "3" * 64},
@@ -137,6 +138,8 @@ def test_prediction_rejects_treatment_schedule_extrapolation(tmp_path: Path):
 
 
 @pytest.mark.parametrize("mutation,field", [
+    (lambda contract: contract["systemic_parameters"].update(sha256="e" * 64),
+     "systemic_parameters_sha256"),
     (lambda contract: contract["feature_bridge_mapping"].update(sha256="f" * 64),
      "feature_bridge_mapping_sha256"),
     (lambda contract: contract["settings"].update(days=21.0), "settings"),

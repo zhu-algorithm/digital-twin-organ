@@ -45,7 +45,7 @@ def _training_derivation(artifact: dict) -> dict | None:
 def _mechanistic_feature_contract(derivation: dict) -> dict:
     """Extract only semantics that must remain fixed for locked model features."""
     contract = {}
-    for name in ("bridge_parameters", "bridge_diagnostics",
+    for name in ("systemic_parameters", "bridge_parameters", "bridge_diagnostics",
                  "feature_bridge_mapping", "feature_bridge_diagnostics"):
         record = derivation.get(name)
         if isinstance(record, dict) and isinstance(record.get("sha256"), str):

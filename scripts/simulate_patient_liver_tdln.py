@@ -13,9 +13,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from tdln_pd1.liver_bridge_features import (simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
+                                             load_systemic_parameters,
                                              verify_patient_liver_tdln_audit)
 from tdln_pd1.provenance import sha256_file
-from tdln_pd1.simulator import Dose
+from tdln_pd1.simulator import Dose, TwinParameters
 
 
 def main() -> None:
@@ -27,6 +28,7 @@ def main() -> None:
     parser.add_argument("--step", type=float, default=0.25)
     parser.add_argument("--dose-days", default="")
     parser.add_argument("--dose", type=float, default=1.0)
+    parser.add_argument("--systemic-parameters", type=Path)
     parser.add_argument("--portal-flow-multiplier", type=float)
     parser.add_argument("--arterial-flow-multiplier", type=float)
     parser.add_argument("--paired-counterfactual", action="store_true")
@@ -39,14 +41,18 @@ def main() -> None:
         raise ValueError("patient-id must select exactly one feature row")
     doses = tuple(Dose(float(day), args.dose)
                   for day in args.dose_days.split(",") if day.strip())
+    systemic_parameters = (load_systemic_parameters(args.systemic_parameters)
+                           if args.systemic_parameters else None)
     if args.paired_counterfactual:
         systemic, spatial, effect, audit = simulate_patient_liver_tdln_counterfactual(
             matches.iloc[0], days=args.days, step=args.step, doses=doses,
+            base_immune=systemic_parameters,
             portal_flow_multiplier=args.portal_flow_multiplier,
             arterial_flow_multiplier=args.arterial_flow_multiplier)
     else:
         systemic, spatial, audit = simulate_patient_liver_tdln(
             matches.iloc[0], days=args.days, step=args.step, doses=doses,
+            base_immune=systemic_parameters,
             portal_flow_multiplier=args.portal_flow_multiplier,
             arterial_flow_multiplier=args.arterial_flow_multiplier)
         effect = None
@@ -61,6 +67,13 @@ def main() -> None:
     audit.update({
         "patient_id": str(args.patient_id),
         "input": {"file": args.features.name, "sha256": sha256_file(args.features)},
+        "systemic_parameters": (
+            {"file": args.systemic_parameters.name,
+             "sha256": sha256_file(args.systemic_parameters)}
+            if args.systemic_parameters else None),
+        "base_parameters": {
+            "immune": (systemic_parameters or TwinParameters()).__dict__,
+        },
         "settings": {"days": args.days, "step": args.step,
                      "dose_days": [dose.day for dose in doses], "dose": args.dose,
                      "portal_flow_multiplier": args.portal_flow_multiplier,
@@ -75,7 +88,8 @@ def main() -> None:
         audit["outputs"][effect_path.name] = sha256_file(effect_path)
     (args.output / "patient_liver_tdln_audit.json").write_text(
         json.dumps(audit, indent=2, sort_keys=True) + "\n")
-    verify_patient_liver_tdln_audit(args.output, args.features)
+    verify_patient_liver_tdln_audit(
+        args.output, args.features, args.systemic_parameters)
     print(json.dumps({"patient_id": str(args.patient_id),
                       "final_liver_tumour_fraction": float(systemic.liver_tumour_fraction.iloc[-1]),
                       "peak_pd1_occupancy": float(systemic.pd1_occupancy.max()),

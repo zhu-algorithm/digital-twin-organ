@@ -75,6 +75,7 @@ python scripts/calibrate_liver_feature_bridge.py \
 
 python scripts/augment_liver_tdln_counterfactual.py \
   --features patient_features.csv --treatment-manifest treatment_manifest.csv \
+  --systemic-parameters artifacts/systemic_calibration/fitted_parameters.json \
   --feature-bridge-mapping artifacts/liver_feature_bridge/fitted_liver_feature_bridge_mapping.json \
   --output artifacts/liver_counterfactual_features.csv
 ```
@@ -85,9 +86,12 @@ python scripts/augment_liver_tdln_counterfactual.py \
 python scripts/simulate_patient_liver_tdln.py \
   --features patient_features.csv --patient-id P001 \
   --dose-days 0,21,42 --paired-counterfactual \
+  --systemic-parameters artifacts/systemic_calibration/fitted_parameters.json \
   --portal-flow-multiplier 0.8 --arterial-flow-multiplier 0.6 \
   --output artifacts/P001_liver_tdln
 ```
+
+`--systemic-parameters` 把纵向系统校准得到的完整 `TwinParameters` 同时用于肝–TDLN 闭环中的抗体清除、TDLN 交换、PD-1 占有率、T 细胞动力学和肿瘤杀伤。患者模拟与队列反事实都保存其 SHA-256 和完整参数，并在重放时验证；若省略则明确使用默认研究参数。这样可避免肝反事实使用默认药效参数、而后续混合增强使用另一套校准参数的跨层不一致。
 
 两路血流倍率也进入患者审计设置。验证器不仅重新核对输入和输出哈希，还会从绑定的患者特征行、给药方案、两路血流设置和配对反事实标志重新运行系统层与六区空间层，并比较规范化 CSV/JSON 哈希；修改审计中的血流设置而不重新生成轨迹会失败。
 

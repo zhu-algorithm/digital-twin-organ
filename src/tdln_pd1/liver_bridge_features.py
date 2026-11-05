@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass, fields, replace
 import hashlib
 import json
 from pathlib import Path
@@ -20,7 +20,8 @@ from .liver_tdln_spatial import (LiverTDLNSpatialBridge,
                                  _validate_bridge,
                                  simulate_liver_tdln_spatial)
 from .provenance import sha256_file
-from .simulator import Dose
+from .simulator import (Dose, InitialState, TwinParameters,
+                        _validate_model_inputs)
 from .spatial_dynamics import SpatialParameters
 
 
@@ -47,6 +48,7 @@ class PatientLiverBridge:
 
 def verify_patient_liver_tdln_audit(
     output_directory: str | Path, features_path: str | Path,
+    systemic_parameters_path: str | Path | None = None,
 ) -> dict:
     """Recompute every recorded file hash and reject incomplete audits."""
     output_directory = Path(output_directory)
@@ -57,6 +59,12 @@ def verify_patient_liver_tdln_audit(
         raise ValueError("invalid patient liver-TDLN audit contract")
     if audit.get("input", {}).get("sha256") != sha256_file(features_path):
         raise ValueError("patient liver-TDLN input hash mismatch")
+    systemic_record = audit.get("systemic_parameters")
+    if systemic_record is not None:
+        if systemic_parameters_path is None:
+            raise ValueError("patient liver-TDLN replay requires systemic parameters")
+        if systemic_record.get("sha256") != sha256_file(systemic_parameters_path):
+            raise ValueError("patient liver-TDLN systemic parameter hash mismatch")
     outputs = audit.get("outputs")
     if not isinstance(outputs, dict) or not outputs:
         raise ValueError("patient liver-TDLN audit has no outputs")
@@ -78,6 +86,8 @@ def verify_patient_liver_tdln_audit(
                 "doses": doses,
                 "portal_flow_multiplier": settings.get("portal_flow_multiplier"),
                 "arterial_flow_multiplier": settings.get("arterial_flow_multiplier"),
+                "base_immune": TwinParameters(**audit.get("base_parameters", {}).get(
+                    "immune", asdict(TwinParameters()))),
             }
             if settings.get("paired_counterfactual") is True:
                 systemic, spatial, effect, _ = simulate_patient_liver_tdln_counterfactual(
@@ -202,6 +212,7 @@ def simulate_patient_liver_tdln(
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
     base_liver: LiverTumourParameters | None = None,
+    base_immune: TwinParameters | None = None,
     portal_flow_multiplier: float | None = None,
     arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
@@ -215,7 +226,8 @@ def simulate_patient_liver_tdln(
         days=days, step=step, doses=doses, bridge=patient.spatial_bridge,
         spatial_parameters=patient.spatial_parameters,
         spatial_initial=spatial_initial, coupling_parameters=patient.coupling,
-        immune_initial=immune_initial, liver_parameters=base_liver,
+        immune_initial=immune_initial, immune_parameters=base_immune,
+        liver_parameters=base_liver,
         portal_flow_multiplier=portal_flow_multiplier,
         arterial_flow_multiplier=arterial_flow_multiplier,
     )
@@ -242,6 +254,7 @@ def simulate_patient_liver_tdln_counterfactual(
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
     base_liver: LiverTumourParameters | None = None,
+    base_immune: TwinParameters | None = None,
     portal_flow_multiplier: float | None = None,
     arterial_flow_multiplier: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict, dict]:
@@ -261,6 +274,7 @@ def simulate_patient_liver_tdln_counterfactual(
             base_coupling=base_coupling, base_bridge=base_bridge,
             base_spatial=base_spatial,
             base_liver=base_liver,
+            base_immune=base_immune,
             portal_flow_multiplier=portal_flow_multiplier,
             arterial_flow_multiplier=arterial_flow_multiplier)
         systemic, spatial = systemic.copy(), spatial.copy()
@@ -398,6 +412,7 @@ def augment_with_liver_tdln_counterfactuals(
     base_bridge: LiverTDLNSpatialBridge | None = None,
     base_spatial: SpatialParameters | None = None,
     base_liver: LiverTumourParameters | None = None,
+    base_immune: TwinParameters | None = None,
     parameter_draws: tuple[
         tuple[LiverTumourParameters, LiverTDLNCouplingParameters,
               LiverTDLNSpatialBridge], ...
@@ -439,6 +454,7 @@ def augment_with_liver_tdln_counterfactuals(
             row, doses=schedule, days=days, step=step, mapping=mapping,
             base_coupling=base_coupling, base_bridge=base_bridge,
             base_spatial=base_spatial, base_liver=base_liver,
+            base_immune=base_immune,
             portal_flow_multiplier=portal_flow,
             arterial_flow_multiplier=arterial_flow)
         values = {target: float(effect[source])
@@ -458,6 +474,7 @@ def augment_with_liver_tdln_counterfactuals(
                     row, doses=schedule, days=days, step=step, mapping=sampled_mapping,
                     base_coupling=sampled_coupling, base_bridge=sampled_bridge,
                     base_spatial=base_spatial, base_liver=sampled_liver,
+                    base_immune=base_immune,
                     portal_flow_multiplier=portal_flow,
                     arterial_flow_multiplier=arterial_flow)
                 for source in sampled:
@@ -479,6 +496,7 @@ def verify_liver_counterfactual_augmentation(
     perfusion_manifest_path: str | Path | None = None,
     feature_bridge_mapping_path: str | Path | None = None,
     feature_bridge_diagnostics_path: str | Path | None = None,
+    systemic_parameters_path: str | Path | None = None,
 ) -> dict:
     """Verify hashes and replay a cohort counterfactual augmentation exactly."""
     audit_path, features_path, output_path = map(
@@ -508,6 +526,12 @@ def verify_liver_counterfactual_augmentation(
                 or mapping_payload.get("labels_used") is not False
                 or mapping_payload.get("mapping") != audit.get("mapping")):
             raise ValueError("liver counterfactual feature-bridge mapping contract mismatch")
+    systemic_record = audit.get("systemic_parameters")
+    if systemic_record is not None:
+        if systemic_parameters_path is None:
+            raise ValueError("systemic parameter file is required to replay this augmentation")
+        if systemic_record.get("sha256") != sha256_file(systemic_parameters_path):
+            raise ValueError("liver counterfactual systemic parameter hash mismatch")
     settings = audit.get("settings", {})
     try:
         doses = tuple(Dose(float(day), float(amount)) for day, amount in zip(
@@ -518,6 +542,8 @@ def verify_liver_counterfactual_augmentation(
         base_bridge = LiverTDLNSpatialBridge(**audit["base_parameters"]["spatial_bridge"])
         base_liver = LiverTumourParameters(**audit["base_parameters"].get(
             "liver_tumour", asdict(LiverTumourParameters())))
+        base_immune = TwinParameters(**audit["base_parameters"].get(
+            "immune", asdict(TwinParameters())))
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("invalid liver counterfactual replay settings") from error
     samples, seed = int(settings.get("uncertainty_samples", 0)), int(
@@ -578,6 +604,7 @@ def verify_liver_counterfactual_augmentation(
         pd.read_csv(features_path), doses=doses, days=days, step=step, mapping=mapping,
         base_coupling=base_coupling, base_bridge=base_bridge,
         base_liver=base_liver,
+        base_immune=base_immune,
         parameter_draws=parameter_draws, mapping_draws=mapping_draws,
         patient_doses=patient_doses,
         patient_flows=patient_flows)
@@ -606,6 +633,20 @@ def load_liver_bridge_parameters(
     _validate_bridge(bridge)
     _validate_liver_parameters(liver)
     return liver, coupling, bridge
+
+
+def load_systemic_parameters(path: str | Path) -> TwinParameters:
+    """Load an exact calibrated systemic parameter artifact for liver coupling."""
+    payload = json.loads(Path(path).read_text())
+    expected = {field.name for field in fields(TwinParameters)}
+    if not isinstance(payload, dict) or set(payload) != expected:
+        raise ValueError("invalid systemic parameter schema for liver counterfactuals")
+    try:
+        parameters = TwinParameters(**{name: float(payload[name]) for name in expected})
+    except (TypeError, ValueError) as error:
+        raise ValueError("systemic parameters must be numeric") from error
+    _validate_model_inputs(parameters, InitialState())
+    return parameters
 
 
 def validate_treatment_manifest(

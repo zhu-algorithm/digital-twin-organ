@@ -17,6 +17,7 @@ from tdln_pd1.liver_bridge_features import (
     augment_with_liver_tdln_counterfactuals,
     liver_bridge_parameter_draws,
     load_liver_bridge_parameters,
+    load_systemic_parameters,
     validate_perfusion_manifest,
     validate_treatment_manifest,
     verify_liver_counterfactual_augmentation,
@@ -27,7 +28,7 @@ from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
 from tdln_pd1.liver_tumor import LiverTumourParameters
 from tdln_pd1.liver_mapping_assimilation import (feature_bridge_mapping_draws,
                                                   load_feature_bridge_mapping)
-from tdln_pd1.simulator import Dose
+from tdln_pd1.simulator import Dose, TwinParameters
 
 
 def main() -> None:
@@ -39,6 +40,7 @@ def main() -> None:
     parser.add_argument("--dose-days")
     parser.add_argument("--dose", type=float, default=1.0)
     parser.add_argument("--bridge-parameters", type=Path)
+    parser.add_argument("--systemic-parameters", type=Path)
     parser.add_argument("--feature-bridge-mapping", type=Path)
     parser.add_argument("--feature-bridge-diagnostics", type=Path)
     parser.add_argument("--bridge-diagnostics", type=Path)
@@ -69,6 +71,8 @@ def main() -> None:
             args.bridge_parameters)
     else:
         base_liver, base_coupling, base_bridge = None, None, None
+    base_immune = (load_systemic_parameters(args.systemic_parameters)
+                   if args.systemic_parameters else None)
     if args.uncertainty_samples < 0 or args.uncertainty_samples == 1:
         raise ValueError("--uncertainty-samples must be 0 or at least 2")
     if args.uncertainty_samples and not (
@@ -96,6 +100,7 @@ def main() -> None:
         features, doses=doses, days=args.days,
         step=args.step, mapping=mapping, base_coupling=base_coupling,
         base_bridge=base_bridge, base_liver=base_liver,
+        base_immune=base_immune,
         parameter_draws=parameter_draws,
         mapping_draws=mapping_draws,
         patient_doses=patient_doses, patient_flows=patient_flows)
@@ -129,12 +134,16 @@ def main() -> None:
             if args.feature_bridge_diagnostics else None),
         "base_parameters": {
             "liver_tumour": asdict(base_liver or LiverTumourParameters()),
+            "immune": asdict(base_immune or TwinParameters()),
             "coupling": asdict(base_coupling or LiverTDLNCouplingParameters()),
             "spatial_bridge": asdict(base_bridge or LiverTDLNSpatialBridge()),
         },
         "bridge_parameters": ({"file": args.bridge_parameters.name,
                                 "sha256": sha256_file(args.bridge_parameters)}
                                if args.bridge_parameters else None),
+        "systemic_parameters": ({"file": args.systemic_parameters.name,
+                                  "sha256": sha256_file(args.systemic_parameters)}
+                                 if args.systemic_parameters else None),
         "bridge_diagnostics": ({"file": args.bridge_diagnostics.name,
                                  "sha256": sha256_file(args.bridge_diagnostics)}
                                 if args.bridge_diagnostics else None),
@@ -153,7 +162,8 @@ def main() -> None:
     verify_liver_counterfactual_augmentation(
         audit_path, args.features, args.output, args.bridge_parameters,
         args.bridge_diagnostics, args.treatment_manifest, args.perfusion_manifest,
-        args.feature_bridge_mapping, args.feature_bridge_diagnostics)
+        args.feature_bridge_mapping, args.feature_bridge_diagnostics,
+        args.systemic_parameters)
     print(json.dumps({"n_patients": len(augmented),
                       "n_mechanistic_features": len(mechanistic_columns),
                       "labels_used": False, "output": str(args.output)}, indent=2))

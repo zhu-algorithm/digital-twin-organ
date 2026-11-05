@@ -8,13 +8,14 @@ from tdln_pd1.liver_bridge_features import (FeatureBridgeMapping,
                                              augment_with_liver_tdln_counterfactuals,
                                              liver_bridge_parameter_draws,
                                              load_liver_bridge_parameters,
+                                             load_systemic_parameters,
                                              validate_perfusion_manifest,
                                              validate_treatment_manifest,
                                              simulate_patient_liver_tdln,
                                              simulate_patient_liver_tdln_counterfactual,
                                              verify_liver_counterfactual_augmentation,
                                              verify_patient_liver_tdln_audit)
-from tdln_pd1.simulator import Dose
+from tdln_pd1.simulator import Dose, TwinParameters
 from tdln_pd1.provenance import sha256_file
 from tdln_pd1.liver_tdln_coupling import LiverTDLNCouplingParameters
 from tdln_pd1.liver_tdln_spatial import LiverTDLNSpatialBridge
@@ -187,6 +188,8 @@ def test_cohort_counterfactual_audit_replays_and_rejects_tampering(tmp_path):
     features_path = tmp_path / "features.csv"
     output_path = tmp_path / "augmented.csv"
     audit_path = tmp_path / "augmented.csv.liver-counterfactual-audit.json"
+    systemic_path = tmp_path / "systemic.json"
+    systemic_path.write_text(json.dumps(TwinParameters().__dict__))
     features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
     features.to_csv(features_path, index=False)
     mapping = FeatureBridgeMapping()
@@ -202,18 +205,22 @@ def test_cohort_counterfactual_audit_replays_and_rejects_tampering(tmp_path):
         "settings": {"days": 2, "step": 0.5, "dose_days": [0],
                      "dose_amounts": [1.0]},
         "mapping": FeatureBridgeMapping().__dict__,
+        "systemic_parameters": {"sha256": sha256_file(systemic_path)},
         "base_parameters": {
+            "immune": TwinParameters().__dict__,
             "coupling": LiverTDLNCouplingParameters().__dict__,
             "spatial_bridge": LiverTDLNSpatialBridge().__dict__,
         },
     }
     audit_path.write_text(json.dumps(audit))
     assert verify_liver_counterfactual_augmentation(
-        audit_path, features_path, output_path) == audit
+        audit_path, features_path, output_path,
+        systemic_parameters_path=systemic_path) == audit
     output_path.write_text(output_path.read_text().replace("p1", "changed"))
     with pytest.raises(ValueError, match="output hash mismatch"):
         verify_liver_counterfactual_augmentation(
-            audit_path, features_path, output_path)
+            audit_path, features_path, output_path,
+            systemic_parameters_path=systemic_path)
 
 
 def test_cohort_audit_binds_calibrated_feature_bridge_mapping(tmp_path):
@@ -278,6 +285,27 @@ def test_saved_bridge_parameters_change_cohort_features_and_fail_closed(tmp_path
     }))
     with pytest.raises(ValueError, match="research_only"):
         load_liver_bridge_parameters(parameter_path)
+
+
+def test_calibrated_systemic_parameters_drive_liver_counterfactuals(tmp_path):
+    parameter_path = tmp_path / "systemic.json"
+    calibrated_parameters = TwinParameters(killing_rate=1e-6)
+    parameter_path.write_text(json.dumps(calibrated_parameters.__dict__))
+    loaded = load_systemic_parameters(parameter_path)
+    assert loaded == calibrated_parameters
+    features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
+    default = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=5, step=0.5)
+    calibrated = augment_with_liver_tdln_counterfactuals(
+        features, doses=(Dose(0, 1),), days=5, step=0.5,
+        base_immune=loaded)
+    assert calibrated.liver_cf_tumour_relative_reduction.item() > 10 * default[
+        "liver_cf_tumour_relative_reduction"].item()
+    payload = calibrated_parameters.__dict__.copy()
+    payload.pop("occupancy_off")
+    parameter_path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="schema"):
+        load_systemic_parameters(parameter_path)
 
 
 def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals():
