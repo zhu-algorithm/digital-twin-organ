@@ -16,7 +16,7 @@ Repository history and all branches were checked. At reconstruction time the rep
 
 The mechanistic digital-twin layer additionally simulates the tumour–blood–TDLN axis, antigen transport, DC migration, Tpex self-renewal/differentiation, effector export, exhaustion/reinvigoration, anti-PD-1 pharmacokinetics, TDLN exposure, and receptor occupancy. See [`docs/TDLN_MODEL_CARD.md`](docs/TDLN_MODEL_CARD.md) for evidence, verification and the validation ladder.
 
-The zone-resolved layer is a directed reaction–transport network across afferent lymph, subcapsular sinus, paracortex, follicle, medulla and efferent lymph. It transports antigen, mature DCs, Tpex and effectors, with antigen capture in the sinus and priming/differentiation in the paracortex. `--transport-only` disables reactions for mass-conservation audits.
+The zone-resolved layer is a directed reaction–transport network across afferent lymph, subcapsular sinus, paracortex, follicle, medulla and efferent lymph. It transports antigen, mature DCs, Tpex and effectors. The liver bridge now supplies separate calibratable afferent sources for soluble antigen and migratory mature DCs; sinus antigen capture creates an additional DC route, while the DC-only route cannot create soluble antigen. Priming/differentiation occurs in paracortex. `--transport-only` disables reactions for mass-conservation audits.
 
 The six-zone network can consume the systemic model's time-varying PD-1 receptor occupancy. This makes treated and untreated spatial counterfactuals distinct while preserving exact zero-occupancy equivalence and transport-only mass conservation. Coupling gains remain calibration parameters rather than fitted clinical effects.
 

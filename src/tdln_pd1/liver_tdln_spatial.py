@@ -16,6 +16,7 @@ from .spatial_dynamics import (SpatialInitialState, SpatialParameters,
 @dataclass(frozen=True)
 class LiverTDLNSpatialBridge:
     antigen_drainage_gain: float = 0.45
+    dc_migration_gain: float = 100.0
 
 
 def _validate_bridge(bridge: LiverTDLNSpatialBridge) -> None:
@@ -39,16 +40,22 @@ def simulate_liver_tdln_spatial(*, days: float = 28.0, step: float = 0.25,
     timeline = systemic.day.to_numpy(dtype=float)
     antigen = systemic.tumour_antigen.to_numpy(dtype=float)
     occupancy_values = systemic.pd1_occupancy.to_numpy(dtype=float)
-    source = lambda time: b.antigen_drainage_gain * float(np.interp(time, timeline, antigen))
+    antigen_source = lambda time: b.antigen_drainage_gain * float(
+        np.interp(time, timeline, antigen))
+    dc_source = lambda time: b.dc_migration_gain * float(
+        np.interp(time, timeline, antigen))
     occupancy = lambda time: float(np.interp(time, timeline, occupancy_values))
     initial = spatial_initial or SpatialInitialState(afferent_antigen=0.0, afferent_dc=0.0)
     spatial = simulate_spatial(
         days=days, step=step, parameters=spatial_parameters, initial=initial,
         reactions=True, checkpoint_occupancy=occupancy,
-        afferent_sources={"antigen": source}, rtol=spatial_rtol, atol=spatial_atol,
+        afferent_sources={"antigen": antigen_source, "mature_dc": dc_source},
+        rtol=spatial_rtol, atol=spatial_atol,
     )
     spatial["pd1_occupancy"] = np.interp(spatial.day, timeline, occupancy_values)
     spatial["afferent_antigen_source"] = b.antigen_drainage_gain * np.interp(
+        spatial.day, timeline, antigen)
+    spatial["afferent_dc_source"] = b.dc_migration_gain * np.interp(
         spatial.day, timeline, antigen)
     spatial["liver_tumour_fraction"] = np.interp(
         spatial.day, timeline, systemic.liver_tumour_fraction)

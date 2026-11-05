@@ -18,7 +18,7 @@
 
 闭环反事实检查分别验证受体占有率、肿瘤内效应细胞时间积分和最终活肿瘤负荷；模型并不假定每个晚期时间点的效应细胞数都随治疗单调增加。
 
-肝来源抗原还通过一个非负、时间变化的输入进入六区 TDLN 网络：`afferent_lymph → subcapsular_sinus → paracortex`。抗原在被膜下窦被摄取并产生成熟 DC，旁皮质内发生 Tpex 扩增和分化，效应细胞经髓质进入输出淋巴。运输层在关闭反应时满足“区室总量变化 = 累计输入”的质量平衡测试；把引流增益设为零会同时消除肝来源的窦内抗原与旁皮质 DC 信号。
+肝来源信号通过两条独立、非负、时间变化的路径进入六区 TDLN 网络：游离抗原由 `bridge.antigen_drainage_gain` 驱动，迁移性成熟 DC 由 `bridge.dc_migration_gain` 驱动；两者均从传入淋巴进入，但可分别关闭和校准。游离抗原在被膜下窦被摄取并产生额外成熟 DC，迁移 DC 则沿窦–旁皮质通路携带细胞性抗原呈递信号；旁皮质内发生 Tpex 扩增和分化，效应细胞经髓质进入输出淋巴。机器验证要求“仅游离抗原”和“仅迁移 DC”两种极限均可执行，且 DC-only 路径不得凭空生成游离抗原。默认增益是量纲桥接假设，不是人类迁移率测量。
 
 ## 可重复性
 
@@ -41,7 +41,7 @@
 
 ## 纵向校准输入
 
-校准器接受长表 CSV：`day,target,value,sd`。系统目标包括 `liver_tumour_fraction`、`tumour_antigen`、`effector_tumour`、`pd1_occupancy`，以及 `liver_portal_flow`、`liver_arterial_flow`、`liver_arterial_buffer_flow`、`liver_oxygenated_inflow` 和 `liver_perfusion`；空间目标写作 `species@zone`，例如 `antigen@subcapsular_sinus` 或 `mature_dc@paracortex`。每一行必须带正的测量标准差，时间–目标组合必须唯一。可拟合参数以命名空间区分，例如 `bridge.antigen_drainage_gain`、`coupling.immune_killing_gain`、`liver.arterial_buffer_fraction`、`liver.arterial_buffer_max_multiplier` 和两路氧含量。
+校准器接受长表 CSV：`day,target,value,sd`。系统目标包括 `liver_tumour_fraction`、`tumour_antigen`、`effector_tumour`、`pd1_occupancy`，以及 `liver_portal_flow`、`liver_arterial_flow`、`liver_arterial_buffer_flow`、`liver_oxygenated_inflow` 和 `liver_perfusion`；空间目标写作 `species@zone`，例如 `antigen@subcapsular_sinus`、`mature_dc@afferent_lymph` 或 `mature_dc@paracortex`。每一行必须带正的测量标准差，时间–目标组合必须唯一。可拟合参数以命名空间区分，例如 `bridge.antigen_drainage_gain`、`bridge.dc_migration_gain`、`coupling.immune_killing_gain`、`liver.arterial_buffer_fraction`、`liver.arterial_buffer_max_multiplier` 和两路氧含量。
 
 ```bash
 python scripts/calibrate_liver_tdln_bridge.py \

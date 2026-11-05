@@ -6,10 +6,10 @@ from tdln_pd1.verification import verify_twin
 
 def test_formal_verification_report_passes_all_prespecified_checks():
     report = verify_twin()
-    assert report["schema_version"] == 2
+    assert report["schema_version"] == 3
     assert report["research_only"] is True
     assert report["passed"] is True
-    assert len(report["checks"]) == 13
+    assert len(report["checks"]) == 14
     assert all(check["passed"] for check in report["checks"])
     guards = next(check for check in report["checks"]
                   if check["name"] == "input_parameter_domain_guards")
@@ -38,6 +38,10 @@ def test_formal_verification_report_passes_all_prespecified_checks():
         check for check in report["checks"]
         if check["name"] == "liver_tdln_closed_loop_tolerance_convergence")
     assert liver_convergence["maximum_relative_error"] <= 1e-4
+    routes = next(check for check in report["checks"]
+                  if check["name"] == "liver_tdln_independent_afferent_routes")
+    assert routes["dc_only_final_sinus_antigen"] == pytest.approx(0.0, abs=1e-12)
+    assert routes["dc_only_final_paracortex_dc"] > 0
 
 
 def test_simulator_rejects_nonfinite_inputs_and_invalid_tolerances():

@@ -11,21 +11,37 @@ def _series(frame, species, zone):
     return frame[frame.species.eq(species) & frame.zone.eq(zone)].amount
 
 
-def test_liver_antigen_enters_sinus_and_drives_paracortical_dc():
+def test_liver_antigen_and_migratory_dc_enter_the_spatial_tdln():
     systemic, spatial = simulate_liver_tdln_spatial(days=10, step=0.5)
     assert systemic.tumour_antigen.max() > 0
     assert spatial.afferent_antigen_source.max() > 0
+    assert spatial.afferent_dc_source.max() > 0
     assert _series(spatial, "antigen", "subcapsular_sinus").max() > 0
+    assert _series(spatial, "mature_dc", "afferent_lymph").max() > 0
     assert _series(spatial, "mature_dc", "paracortex").max() > 0
 
 
 def test_zero_drainage_removes_liver_driven_antigen_and_dc_signal():
     _, connected = simulate_liver_tdln_spatial(days=8, step=0.5)
     _, disconnected = simulate_liver_tdln_spatial(
-        days=8, step=0.5, bridge=LiverTDLNSpatialBridge(antigen_drainage_gain=0))
+        days=8, step=0.5, bridge=LiverTDLNSpatialBridge(
+            antigen_drainage_gain=0, dc_migration_gain=0))
     assert _series(disconnected, "antigen", "subcapsular_sinus").max() == pytest.approx(0)
     assert _series(disconnected, "mature_dc", "paracortex").max() == pytest.approx(0)
     assert _series(connected, "mature_dc", "paracortex").max() > 0
+
+
+def test_soluble_antigen_and_migratory_dc_routes_are_independently_executable():
+    _, dc_only = simulate_liver_tdln_spatial(
+        days=8, step=0.5, bridge=LiverTDLNSpatialBridge(
+            antigen_drainage_gain=0, dc_migration_gain=100))
+    _, antigen_only = simulate_liver_tdln_spatial(
+        days=8, step=0.5, bridge=LiverTDLNSpatialBridge(
+            antigen_drainage_gain=0.45, dc_migration_gain=0))
+    assert _series(dc_only, "antigen", "subcapsular_sinus").max() == pytest.approx(0)
+    assert _series(dc_only, "mature_dc", "paracortex").max() > 0
+    assert _series(antigen_only, "antigen", "subcapsular_sinus").max() > 0
+    assert _series(antigen_only, "mature_dc", "paracortex").max() > 0
 
 
 def test_anti_pd1_increases_efferent_effector_output_in_matched_closed_loop():

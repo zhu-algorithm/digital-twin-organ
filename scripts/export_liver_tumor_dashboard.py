@@ -15,11 +15,12 @@ sys.path.insert(0, str(ROOT / "src"))
 from tdln_pd1.liver_tumor import parameter_manifest, simulate_liver_tumour
 from tdln_pd1.liver_tdln_coupling import (LiverTDLNCouplingParameters,
                                           simulate_liver_tdln)
-from tdln_pd1.liver_tdln_spatial import liver_tdln_spatial_counterfactual
+from tdln_pd1.liver_tdln_spatial import (LiverTDLNSpatialBridge,
+                                         liver_tdln_spatial_counterfactual)
 from tdln_pd1.simulator import Dose
 from tdln_pd1.spatial import ZONES
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
            "functional_vessels", "oxygen_normal", "oxygen_rim", "oxygen_core",
            "perfusion", "portal_flow", "arterial_flow", "arterial_buffer_flow",
@@ -82,8 +83,11 @@ def _spatial_records(frame):
                     value = float(np.interp(day, series.day, series.amount))
                     values[species][zone] = display(value, 3 if species == "antigen" else 2)
             source_rows = arm_frame[arm_frame.day.eq(day)]
-            source = float(source_rows.afferent_antigen_source.iloc[0])
-            arm_records.append({"day": float(day), "afferent_antigen_source": display(source, 3),
+            antigen_source = float(source_rows.afferent_antigen_source.iloc[0])
+            dc_source = float(source_rows.afferent_dc_source.iloc[0])
+            arm_records.append({"day": float(day),
+                                "afferent_antigen_source": display(antigen_source, 3),
+                                "afferent_dc_source": display(dc_source, 3),
                                 "values": values})
         records[arm] = arm_records
     return records
@@ -119,6 +123,7 @@ def build_dashboard_data() -> dict:
         "anti_pd1_dose_days": [0, 21, 42, 63],
         "parameter_manifest": parameter_manifest(),
         "coupling_parameter_manifest": asdict(LiverTDLNCouplingParameters()),
+        "spatial_bridge_parameter_manifest": asdict(LiverTDLNSpatialBridge()),
     }
 
 

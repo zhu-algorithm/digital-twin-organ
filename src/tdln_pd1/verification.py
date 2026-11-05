@@ -293,5 +293,28 @@ def verify_twin() -> dict:
         "tolerance": 1e-4,
     })
 
-    return {"schema_version": 2, "research_only": True,
+    _, soluble_only = simulate_liver_tdln_spatial(
+        days=7, step=0.25, bridge=LiverTDLNSpatialBridge(
+            antigen_drainage_gain=0.45, dc_migration_gain=0))
+    _, dc_only = simulate_liver_tdln_spatial(
+        days=7, step=0.25, bridge=LiverTDLNSpatialBridge(
+            antigen_drainage_gain=0, dc_migration_gain=100))
+    soluble_antigen = endpoint(soluble_only, "antigen", "subcapsular_sinus")
+    soluble_dc = endpoint(soluble_only, "mature_dc", "paracortex")
+    dc_only_antigen = endpoint(dc_only, "antigen", "subcapsular_sinus")
+    migrated_dc = endpoint(dc_only, "mature_dc", "paracortex")
+    checks.append({
+        "name": "liver_tdln_independent_afferent_routes",
+        "passed": bool(soluble_antigen > 0 and soluble_dc > 0
+                       and abs(dc_only_antigen) <= 1e-12 and migrated_dc > 0),
+        "soluble_only_final_sinus_antigen": soluble_antigen,
+        "soluble_only_final_paracortex_dc": soluble_dc,
+        "dc_only_final_sinus_antigen": dc_only_antigen,
+        "dc_only_final_paracortex_dc": migrated_dc,
+        "expected": (
+            "soluble antigen can generate sinus antigen/DC activation; migratory DCs "
+            "can reach paracortex without creating soluble antigen"),
+    })
+
+    return {"schema_version": 3, "research_only": True,
             "passed": all(check["passed"] for check in checks), "checks": checks}

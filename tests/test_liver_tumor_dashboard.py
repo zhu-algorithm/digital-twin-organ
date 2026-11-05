@@ -13,7 +13,7 @@ def test_liver_tumour_dashboard_export_is_current():
     expected = EXPORTER.build_dashboard_data()
     committed = json.loads((ROOT / "docs/data/liver_tumor_dashboard.json").read_text())
     assert committed == expected
-    assert expected["schema_version"] == 2
+    assert expected["schema_version"] == 3
     assert expected["research_only"] is True
     assert set(expected["scenarios"]) == {"untreated", "antiangiogenic", "low_perfusion",
                                           "portal_restriction", "arterial_restriction"}
@@ -41,6 +41,9 @@ def test_liver_tumour_dashboard_export_is_current():
     spatial_control = expected["liver_driven_tdln_spatial"]["control"]
     assert len(spatial_control) == 15
     assert spatial_control[-1]["values"]["antigen"]["subcapsular_sinus"] > 0
+    assert spatial_control[-1]["afferent_antigen_source"] > 0
+    assert spatial_control[-1]["afferent_dc_source"] > 0
+    assert expected["spatial_bridge_parameter_manifest"]["dc_migration_gain"] > 0
     spatial_treated = expected["liver_driven_tdln_spatial"]["anti_pd1"]
     assert spatial_treated[-1]["values"]["effector"]["efferent_lymph"] > (
         spatial_control[-1]["values"]["effector"]["efferent_lymph"])

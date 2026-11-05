@@ -41,6 +41,25 @@ def test_calibration_recovers_spatial_drainage_gain():
     assert fitted_liver.arterial_buffer_fraction > 0
 
 
+def test_calibration_recovers_independent_migratory_dc_gain():
+    truth = LiverTDLNSpatialBridge(antigen_drainage_gain=0, dc_migration_gain=180)
+    _, spatial = simulate_liver_tdln_spatial(days=8, step=0.5, bridge=truth)
+    rows = []
+    for day in (2.0, 4.0, 6.0, 8.0):
+        series = spatial[
+            spatial.species.eq("mature_dc")
+            & spatial.zone.eq("afferent_lymph")]
+        value = float(np.interp(day, series.day, series.amount))
+        rows.append({"day": day, "target": "mature_dc@afferent_lymph",
+                     "value": value, "sd": max(value * 0.01, 1e-4)})
+    _, _, fitted, diagnostics, _ = calibrate_liver_bridge(
+        pd.DataFrame(rows), fit_parameters=("bridge.dc_migration_gain",),
+        base_bridge=LiverTDLNSpatialBridge(
+            antigen_drainage_gain=0, dc_migration_gain=25), max_nfev=60)
+    assert fitted.dc_migration_gain == pytest.approx(180, rel=2e-3)
+    assert diagnostics["success"] is True
+
+
 def test_calibration_recovers_hepatic_arterial_buffer_fraction():
     truth = LiverTumourParameters(arterial_buffer_fraction=0.40)
     systemic, _ = simulate_liver_tdln_spatial(
