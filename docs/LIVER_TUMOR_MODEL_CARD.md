@@ -28,6 +28,8 @@
 - 固定网页数据：`docs/data/liver_tumor_dashboard.json`
 - 自动测试：`tests/test_liver_tumor.py` 与 `tests/test_liver_tumor_dashboard.py`
 
+网页的抗 PD-1 场景使用同一次肝肿瘤–TDLN 闭环求解中的正常肝细胞、活性/坏死肿瘤、功能血管、双路血流、灌注与分区氧供；不会把治疗后的肿瘤比例与未治疗独立肝模型的正常细胞或血流拼接。导出 schema 2 明确携带这些 `liver_*` 状态，测试锁定其存在以及治疗/对照两臂的方向性差异。
+
 ## 已知限制
 
 - 使用归一化细胞量和氧供，而非影像体积、绝对细胞数或 mmHg。

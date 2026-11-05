@@ -13,7 +13,7 @@ def test_liver_tumour_dashboard_export_is_current():
     expected = EXPORTER.build_dashboard_data()
     committed = json.loads((ROOT / "docs/data/liver_tumor_dashboard.json").read_text())
     assert committed == expected
-    assert expected["schema_version"] == 1
+    assert expected["schema_version"] == 2
     assert expected["research_only"] is True
     assert set(expected["scenarios"]) == {"untreated", "antiangiogenic", "low_perfusion",
                                           "portal_restriction", "arterial_restriction"}
@@ -22,8 +22,20 @@ def test_liver_tumour_dashboard_export_is_current():
     assert all(len(records) == 43 for records in expected["immune_coupling"].values())
     treated = expected["immune_coupling"]["anti_pd1"]
     control = expected["immune_coupling"]["control"]
+    coupled_liver_columns = {
+        "liver_normal_cells", "liver_tumour_rim", "liver_tumour_core",
+        "liver_necrotic_tumour", "liver_functional_vessels",
+        "liver_oxygen_normal", "liver_oxygen_rim", "liver_oxygen_core",
+        "liver_perfusion", "liver_portal_flow", "liver_arterial_flow",
+        "liver_arterial_buffer_flow", "liver_oxygenated_inflow",
+    }
+    assert coupled_liver_columns <= treated[0].keys()
     assert max(row["pd1_occupancy"] for row in treated) > max(
         row["pd1_occupancy"] for row in control)
+    assert treated[-1]["liver_tumour_fraction"] < control[-1][
+        "liver_tumour_fraction"]
+    assert treated[-1]["liver_normal_cells"] > control[-1][
+        "liver_normal_cells"]
     assert len(expected["tdln_zones"]) == 6
     assert set(expected["liver_driven_tdln_spatial"]) == {"control", "anti_pd1"}
     spatial_control = expected["liver_driven_tdln_spatial"]["control"]
@@ -44,3 +56,7 @@ def test_liver_tumour_page_is_animated_accessible_and_local():
     assert 'id="scenario-portal_restriction"' in page
     assert 'id="scenario-arterial_restriction"' in page
     assert "研究用途" in page
+    for field in ("liver_normal_cells", "liver_functional_vessels",
+                  "liver_perfusion", "liver_oxygen_core",
+                  "liver_portal_flow", "liver_arterial_flow"):
+        assert field in page

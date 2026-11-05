@@ -19,7 +19,7 @@ from tdln_pd1.liver_tdln_spatial import liver_tdln_spatial_counterfactual
 from tdln_pd1.simulator import Dose
 from tdln_pd1.spatial import ZONES
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
            "functional_vessels", "oxygen_normal", "oxygen_rim", "oxygen_core",
            "perfusion", "portal_flow", "arterial_flow", "arterial_buffer_flow",
@@ -27,7 +27,14 @@ COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
            "arterial_flow_fraction", "tumour_fraction")
 IMMUNE_COLUMNS = ("tumour_antigen", "mature_dc_tdln", "tpex_tdln",
                   "effector_tdln", "effector_tumour", "pd1_occupancy",
-                  "tumour_cells", "liver_tumour_fraction")
+                  "tumour_cells", "liver_tumour_fraction",
+                  "liver_normal_cells", "liver_tumour_rim",
+                  "liver_tumour_core", "liver_necrotic_tumour",
+                  "liver_functional_vessels", "liver_oxygen_normal",
+                  "liver_oxygen_rim", "liver_oxygen_core",
+                  "liver_perfusion", "liver_portal_flow",
+                  "liver_arterial_flow", "liver_arterial_buffer_flow",
+                  "liver_oxygenated_inflow")
 
 
 def _records(frame):
@@ -51,6 +58,8 @@ def _immune_records(frame):
                 value = round(value, -2)
             elif name in count_columns:
                 value = round(value, -1)
+            elif name.startswith("liver_"):
+                value = round(value, 6)
             else:
                 value = round(value, 4)
             row[name] = value
@@ -99,7 +108,7 @@ def build_dashboard_data() -> dict:
     )
     return {
         "schema_version": SCHEMA_VERSION,
-        "model_version": "liver-tumour/0.2.0",
+        "model_version": "liver-tumour/0.3.0",
         "research_only": True,
         "time_unit": "day",
         "state_units": "normalised fraction",
