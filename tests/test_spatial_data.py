@@ -78,3 +78,38 @@ def test_spatial_baseline_selection_must_retain_every_patient():
         aggregate_spatial_spots(
             longitudinal, "area", "timepoint", ("baseline",)
         )
+
+
+def test_spatial_samples_require_an_explicit_estimand_and_equal_weighting():
+    small = _spots().iloc[[0]].assign(section_id="small", spot_id="same")
+    large = pd.concat([_spots().iloc[[0]].assign(section_id="large", spot_id=f"l{i}")
+                       for i in range(4)], ignore_index=True)
+    sections = pd.concat([small, large], ignore_index=True)
+    with pytest.raises(ValueError, match="sample identifiers detected"):
+        aggregate_spatial_spots(sections, "area")
+    equal = aggregate_spatial_spots(
+        sections, "area", sample_column="section_id", sample_aggregation="equal_samples"
+    ).set_index(["species", "zone"]).amount
+    summed = aggregate_spatial_spots(
+        sections, "area", sample_column="section_id", sample_aggregation="sum_samples"
+    ).set_index(["species", "zone"]).amount
+    assert equal[("tpex", "paracortex")] == 15.0
+    assert summed[("tpex", "paracortex")] == 30.0
+
+
+def test_spot_ids_may_repeat_between_declared_sections_only():
+    sections = pd.concat([
+        _spots().iloc[[0]].assign(section_id="a", spot_id="s1"),
+        _spots().iloc[[0]].assign(section_id="b", spot_id="s1"),
+    ], ignore_index=True)
+    states = aggregate_spatial_spots(
+        sections, "area", sample_column="section_id", sample_aggregation="equal_samples"
+    )
+    assert states.set_index(["species", "zone"]).amount[("tpex", "paracortex")] == 6.0
+
+
+def test_spatial_sample_column_must_be_a_distinct_sampling_identifier():
+    with pytest.raises(ValueError, match="sample column must be distinct"):
+        aggregate_spatial_spots(
+            _spots(), "area", sample_column="zone", sample_aggregation="equal_samples"
+        )

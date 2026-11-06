@@ -70,6 +70,8 @@
 实际核查结果、数据契约、运行方法与临床适用边界见 [`TDLN_PD1_README.md`](TDLN_PD1_README.md)。
 系统层的 Naive CD8 稳态、Tpex/耗竭细胞死亡、Treg 诱导/死亡，以及空间层的抗原半饱和常数均为显式参数；默认值仅用于保持参考轨迹，尚未构成生物学或临床标定。
 
+空间组学入口对多切片采样实行显式契约：出现 `sample_id`、`library_id`、`slide_id` 或 `section_id` 时，必须通过 `--sample-column` 指定采样单位，并用 `--sample-aggregation equal_samples`（切片等权）或 `sum_samples`（声明为物理总量）选择估计目标。该选择会进入可重放审计，避免切片数量在不知情时放大患者信号。
+
 ## 肝脏肿瘤虚拟器官
 
 新增的肝脏肿瘤病理层把门静脉／肝动脉灌注、氧供、正常肝细胞、肿瘤活性边缘、缺氧核心和坏死区连接为可运行的机制模型，并导出到可播放的交互页面。模型入口、方程边界与验证说明见 [`docs/LIVER_TUMOR_MODEL_CARD.md`](docs/LIVER_TUMOR_MODEL_CARD.md)；这是研究原型，不是临床预测工具。

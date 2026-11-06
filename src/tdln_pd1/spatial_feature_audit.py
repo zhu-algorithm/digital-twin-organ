@@ -17,6 +17,8 @@ def write_spatial_feature_audit(
     weight_column: str | None,
     time_column: str | None = None,
     baseline_values: tuple[str, ...] | None = None,
+    sample_column: str | None = None,
+    sample_aggregation: str | None = None,
 ) -> Path:
     spots, output = Path(spots_path), Path(output_path)
     if not spots.is_file() or not output.is_file():
@@ -31,6 +33,8 @@ def write_spatial_feature_audit(
             "weight_column": weight_column,
             "time_column": time_column,
             "baseline_values": list(baseline_values or ()),
+            "sample_column": sample_column,
+            "sample_aggregation": sample_aggregation,
             "anatomy_policy": "curated_zone_labels_no_coordinate_inference",
             "missing_zone_policy": "explicit_zero_with_zone_observed_false",
             "labels_used": False,
@@ -65,7 +69,9 @@ def verify_spatial_feature_audit(
             or settings.get("anatomy_policy") != "curated_zone_labels_no_coordinate_inference"
             or settings.get("missing_zone_policy") != "explicit_zero_with_zone_observed_false"
             or settings.get("labels_used") is not False
-            or not isinstance(settings.get("baseline_values"), list)):
+            or not isinstance(settings.get("baseline_values"), list)
+            or ((settings.get("sample_column") is None)
+                != (settings.get("sample_aggregation") is None))):
         raise ValueError("invalid spatial feature derivation settings")
     for name, path, record in (
         ("spatial spot input", spots, payload.get("input", {})),
@@ -77,6 +83,7 @@ def verify_spatial_feature_audit(
     replayed = aggregate_spatial_spots(
         pd.read_csv(spots), settings.get("weight_column"), settings.get("time_column"),
         tuple(str(value) for value in settings["baseline_values"]) or None,
+        settings.get("sample_column"), settings.get("sample_aggregation"),
     )
     replayed_sha = hashlib.sha256(
         replayed.to_csv(index=False).encode("utf-8")

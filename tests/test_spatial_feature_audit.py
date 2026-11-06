@@ -69,3 +69,24 @@ def test_spatial_feature_audit_replay_detects_setting_tampering(tmp_path):
     audit.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="derivation replay mismatch"):
         verify_spatial_feature_audit(audit, spots, output)
+
+
+def test_spatial_feature_audit_binds_sample_estimand(tmp_path):
+    spots, output = tmp_path / "spots.csv", tmp_path / "states.csv"
+    frame = pd.DataFrame({
+        "patient_id": ["p1", "p1"], "spot_id": ["s1", "s1"],
+        "section_id": ["a", "b"], "zone": ["paracortex", "paracortex"],
+        "area": [1.0, 1.0], "antigen": [0.0, 0.0], "mature_dc": [1.0, 3.0],
+        "tpex": [2.0, 4.0], "effector": [3.0, 5.0],
+    })
+    frame.to_csv(spots, index=False)
+    aggregate_spatial_spots(
+        frame, "area", sample_column="section_id", sample_aggregation="equal_samples"
+    ).to_csv(output, index=False)
+    audit = write_spatial_feature_audit(
+        spots, output, "area", sample_column="section_id",
+        sample_aggregation="equal_samples",
+    )
+    verified = verify_spatial_feature_audit(audit, spots, output)
+    assert verified["payload"]["settings"]["sample_column"] == "section_id"
+    assert verified["payload"]["settings"]["sample_aggregation"] == "equal_samples"
