@@ -1020,19 +1020,42 @@ def train_evaluate(
     final_c = float(final_search.best_params_["classifier__C"])
     rng = np.random.default_rng(42)
     bootstrap_models = []
+    ensemble_groups = (
+        np.asarray(evaluation_groups) if evaluation_groups is not None else None
+    )
+    unique_ensemble_groups = (
+        np.unique(ensemble_groups) if ensemble_groups is not None else None
+    )
+    uncertainty_method = (
+        "centre_cluster_bootstrap_refit"
+        if ensemble_groups is not None else "patient_bootstrap_refit"
+    )
     attempts = 0
     while len(bootstrap_models) < ensemble_members and attempts < max(100, ensemble_members * 20):
         attempts += 1
-        index = rng.integers(0, len(data), len(data))
+        if unique_ensemble_groups is None:
+            index = rng.integers(0, len(data), len(data))
+        else:
+            sampled_groups = rng.choice(
+                unique_ensemble_groups, len(unique_ensemble_groups), replace=True,
+            )
+            index = np.concatenate([
+                np.flatnonzero(ensemble_groups == group) for group in sampled_groups
+            ])
         y_bootstrap = y.iloc[index]
         if y_bootstrap.nunique() < 2:
             continue
         member = build_model(cols, c=final_c).fit(X.iloc[index], y_bootstrap)
         bootstrap_models.append(member)
     if len(bootstrap_models) != ensemble_members:
-        raise RuntimeError("could not construct requested two-class patient bootstrap ensemble")
+        raise RuntimeError("could not construct requested two-class bootstrap ensemble")
     metrics["prediction_uncertainty"] = {
-        "method": "patient_bootstrap_refit",
+        "method": uncertainty_method,
+        "unit": "centre" if ensemble_groups is not None else "patient",
+        "groups": (
+            int(len(unique_ensemble_groups))
+            if unique_ensemble_groups is not None else int(len(data))
+        ),
         "members": ensemble_members,
         "interval": "2.5th to 97.5th percentile",
         "fixed_selected_C": final_c,
@@ -1067,7 +1090,15 @@ def train_evaluate(
                  "preprocessing_contract_sources": preprocessing_contract_sources,
                  "training_input_provenance": input_provenance,
                  "bootstrap_models": bootstrap_models,
-                 "uncertainty_method": "patient_bootstrap_refit",
+                 "uncertainty_method": uncertainty_method,
+                 "uncertainty_bootstrap_design": {
+                     "unit": "centre" if ensemble_groups is not None else "patient",
+                     "groups": (
+                         int(len(unique_ensemble_groups))
+                         if unique_ensemble_groups is not None else int(len(data))
+                     ),
+                     "seed": 42,
+                 },
                  "point_prediction_method": "full_cohort_locked_model",
                  "artifact_version": 9}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")

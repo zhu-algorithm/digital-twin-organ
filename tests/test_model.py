@@ -32,6 +32,11 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert len(artifact["training_feature_cohort_fingerprint"]) == 64
     assert len(artifact["bootstrap_models"]) == 8
     assert metrics["prediction_uncertainty"]["members"] == 8
+    assert metrics["prediction_uncertainty"]["unit"] == "patient"
+    assert artifact["uncertainty_method"] == "patient_bootstrap_refit"
+    assert artifact["uncertainty_bootstrap_design"] == {
+        "unit": "patient", "groups": 8, "seed": 42,
+    }
     assert metrics["selection_metric"] == "negative_log_loss"
     assert metrics["probability_estimand"].startswith("unweighted_logistic_likelihood")
     assert "n_cells" not in artifact["features"]
@@ -102,7 +107,7 @@ def test_training_and_fusion_ablation_bootstrap_whole_centres(tmp_path: Path):
     labels = pd.DataFrame({
         "patient_id": features.patient_id,
         "response": [0, 1, 0, 1] * 3,
-        "center": ["a"] * 4 + ["b"] * 4 + ["c"] * 4,
+        "center": ["a"] * 2 + ["b"] * 4 + ["c"] * 6,
     })
     metrics = train_evaluate(features, labels, tmp_path, folds=3, ensemble_members=2)
     assert metrics["bootstrap_design"]["unit"] == "centre"
@@ -110,6 +115,17 @@ def test_training_and_fusion_ablation_bootstrap_whole_centres(tmp_path: Path):
     paired = metrics["mechanism_data_fusion_ablation"]["paired_bootstrap"]
     assert paired["unit"] == "centre"
     assert paired["groups"] == 3
+    assert metrics["prediction_uncertainty"]["method"] == "centre_cluster_bootstrap_refit"
+    assert metrics["prediction_uncertainty"]["unit"] == "centre"
+    artifact = joblib.load(tmp_path / "model.joblib")
+    assert artifact["uncertainty_method"] == "centre_cluster_bootstrap_refit"
+    assert artifact["uncertainty_bootstrap_design"] == {
+        "unit": "centre", "groups": 3, "seed": 42,
+    }
+    second_scaler = artifact["bootstrap_models"][1].named_steps["prep"].named_transformers_[
+        "numeric"
+    ].named_steps["scale"]
+    assert second_scaler.n_samples_seen_ == 14
 
 
 def test_training_rejects_empty_center_identifiers(tmp_path: Path):
