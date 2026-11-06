@@ -42,6 +42,9 @@ def test_calibration_recovers_spatial_drainage_gain():
     assert diagnostics["optimizer_initialization"] == (
         "weighted_least_squares_then_soft_l1_refinement"
     )
+    assert diagnostics["jacobian_scheme"] == (
+        "three_point_log_parameter_central_difference_1pct"
+    )
     assert diagnostics["weighted_rmse"] < 1e-3
     assert len(residuals) == 8
     assert fitted_coupling.immune_killing_gain > 0
