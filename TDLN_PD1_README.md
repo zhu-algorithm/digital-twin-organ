@@ -60,7 +60,7 @@ tdln-pd1 verify-evaluation --audit external_metrics.json.audit.json --prediction
 tdln-pd1 site-cv --features artifacts/hybrid_features.csv --labels labels_with_center.csv --output artifacts/site_cv
 tdln-pd1 verify-site-cv --audit artifacts/site_cv/site_cv_provenance.json --features artifacts/hybrid_features.csv --labels labels_with_center.csv --metrics artifacts/site_cv/site_cv_metrics.json --predictions artifacts/site_cv/site_cv_predictions.csv
 tdln-pd1 simulate --days 42 --dose-days 0,14,28 --dose 1 --parameters artifacts/calibration/fitted_parameters.json --output artifacts/tdln_trajectory.csv
-tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --output artifacts/spatial_initial.csv
+tdln-pd1 spatial-featurize --spots examples/spatial_spots.csv --weight-column area --sample-column section_id --sample-aggregation equal_samples --output artifacts/spatial_initial.csv
 tdln-pd1 simulate-spatial --initial-zones artifacts/spatial_initial.csv --patient-id example_patient --systemic-parameters artifacts/calibration/fitted_parameters.json --spatial-parameters artifacts/spatial_calibration/fitted_spatial_parameters.json --days 14 --dose-days 0 --dose 1 --paired-counterfactual --output artifacts/spatial_patient.csv
 tdln-pd1 simulate-spatial --days 14 --output artifacts/spatial_tdln.csv
 tdln-pd1 sensitivity --base-parameters artifacts/calibration/fitted_parameters.json --days 42 --samples 128 --output artifacts/sensitivity
