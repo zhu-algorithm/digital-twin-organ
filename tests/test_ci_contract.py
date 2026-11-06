@@ -45,6 +45,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "calibrated_patient_liver_tdln/patient_liver_tdln_audit.json",
         "patient_liver_tdln/patient_liver_tdln_audit.json",
         "featurize --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg'",
+        "qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg'",
         "verify-spatial-features --audit /tmp/spatial_cohort_initial.csv.spatial-audit.json --spots examples/spatial_spots_cohort.csv",
         "spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --time-column sampling_day --baseline-values 0",
         "propagate-uncertainty --parameters /tmp/calibration/fitted_parameters.json",

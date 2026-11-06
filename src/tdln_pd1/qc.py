@@ -19,6 +19,7 @@ def cohort_qc(
     min_signature_gene_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
     sample_column: str | None = None,
     cell_type_mapping: dict[str, str] | None = None,
+    cell_type_vocabulary: tuple[str, ...] | None = None,
 ) -> dict:
     try:
         min_signature_gene_coverage = _validate_signature_coverage_threshold(
@@ -48,7 +49,9 @@ def cohort_qc(
         # cell-type naming, temporal or tissue-compartment contracts.
         derived_features = aggregate_cells(
             cells, time_column, baseline_values, feature_tissue_pattern,
-            min_signature_gene_coverage, sample_column=sample_column,
+            min_signature_gene_coverage,
+            cell_type_vocabulary=cell_type_vocabulary,
+            sample_column=sample_column,
             cell_type_mapping=cell_type_mapping,
         )
     except ValueError as error:
@@ -134,6 +137,10 @@ def cohort_qc(
         "cell_type_mapping": {
             "applied": cell_type_mapping is not None,
             "mapped_raw_labels": len(cell_type_mapping or {}),
+        },
+        "cell_type_vocabulary": {
+            "locked": cell_type_vocabulary is not None,
+            "labels": list(cell_type_vocabulary or ()),
         },
         "feature_compartment": {"pattern": feature_tissue_pattern,
                                 "n_cells": int(feature_cell_count)},

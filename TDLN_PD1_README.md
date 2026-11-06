@@ -38,7 +38,7 @@ source .venv/bin/activate
 pip install -e '.[test]'
 tdln-pd1 featurize --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output examples/features.csv
 tdln-pd1 verify-features --audit examples/features.csv.feature-audit.json --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv --output examples/features.csv
-tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output artifacts/qc.json
+tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output artifacts/qc.json
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --profile-points 7 --output artifacts/calibration
 tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --profile-points 7 --output artifacts/spatial_calibration
 tdln-pd1 verify-calibration --audit artifacts/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv
@@ -119,7 +119,7 @@ Install `.[single-cell,test]` to read `.h5ad` directly.
 
 `qc` is the mandatory pre-training gate for imported cohorts. It checks cryptographic provenance, licensing/source metadata, patient matching, duplicate labels, binary outcomes, class balance, cell counts, per-signature marker-gene coverage and usability, paired TDLN–tumour samples and clonotype assignment. Sub-threshold signatures are listed as warnings and emitted as missing rather than silently estimated from an inadequate panel. The same pre-registered coverage value must be supplied to QC and featurization; both outputs record it for comparison. Invalid zero, above-one or non-finite thresholds fail closed. A failed gate exits non-zero so CI and workflow systems cannot silently continue.
 
-QC also executes the same `aggregate_cells` transformation used by `featurize`, with the identical baseline and tissue-compartment arguments. Its report records whether feature derivation was validated and the resulting patient-row count. Invalid expression values, identifier failures, cell-type feature-name collisions or any other aggregation contract can therefore not pass QC and fail only later during feature construction.
+QC also executes the same `aggregate_cells` transformation used by `featurize`, with identical baseline, tissue-compartment, sample, cell-type mapping and locked harmonized-vocabulary arguments. Its report records whether feature derivation was validated, the mapping/vocabulary contract and the resulting patient-row count. Invalid expression values, identifiers, incomplete maps, out-of-vocabulary harmonized labels, cell-type feature-name collisions or any other aggregation contract therefore cannot pass QC and fail only later during feature construction.
 
 Patient and outcome contracts are shared by training, site validation and locked external evaluation: identifiers must be present, non-empty and unique, while every response must be explicitly observed and equal to integer 0 or 1. Missing outcomes are never treated as a third class or silently removed.
 

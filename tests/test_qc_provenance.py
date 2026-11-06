@@ -131,6 +131,33 @@ def test_qc_executes_expression_and_cell_type_feature_contracts():
     assert any("collide" in error for error in report["errors"])
 
 
+def test_qc_uses_same_mapping_and_locked_vocabulary_as_featurization():
+    cells = pd.DataFrame({
+        "patient_id": ["a", "b", "c", "d"],
+        "cell_type": ["CTL", "CTL", "myDC", "unexpected"],
+    })
+    labels = pd.DataFrame({
+        "patient_id": ["a", "b", "c", "d"], "response": [0, 0, 1, 1],
+    })
+    mapping = {"CTL": "CD8 T", "myDC": "DC", "unexpected": "B cell"}
+    report = cohort_qc(
+        cells, labels, feature_tissue_pattern="all",
+        cell_type_mapping=mapping, cell_type_vocabulary=("CD8 T", "DC"),
+    )
+    assert report["passed"] is False
+    assert any("outside the locked vocabulary" in error for error in report["errors"])
+    accepted = cohort_qc(
+        cells.iloc[:3], labels.iloc[:3], feature_tissue_pattern="all",
+        cell_type_mapping={"CTL": "CD8 T", "myDC": "DC"},
+        cell_type_vocabulary=("CD8 T", "DC"),
+    )
+    assert accepted["feature_derivation"]["validated"] is True
+    assert accepted["cell_type_mapping"]["applied"] is True
+    assert accepted["cell_type_vocabulary"] == {
+        "locked": True, "labels": ["CD8 T", "DC"],
+    }
+
+
 def test_manifest_hash_verification_detects_tampering(tmp_path: Path):
     data = tmp_path / "cells.csv"
     data.write_text("patient_id,cell_type\na,T cell\n")

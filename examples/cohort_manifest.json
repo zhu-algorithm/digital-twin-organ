@@ -11,6 +11,11 @@
       "sha256": "1c09fc0fbbea29a7fa4b133b7275c4717ebd70cd6f0ef1f645dc1778a07bf3c9"
     },
     {
+      "path": "cell_type_map.csv",
+      "role": "explicit raw-to-harmonized cell-type annotation contract",
+      "sha256": "856497e94ecf058e424c8ad2e2c6cd17ca2dd6ab73ac9b30779f635856c2b50d"
+    },
+    {
       "path": "labels.csv",
       "role": "patient labels",
       "sha256": "76c2708cd1e8d9eb8c6dae7524ea409ba4657d1ebecb91345fc21125651a7097"

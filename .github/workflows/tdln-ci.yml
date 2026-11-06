@@ -38,7 +38,7 @@ jobs:
           test -f /tmp/patient_liver_tdln/patient_liver_tdln_counterfactual.json
           tdln-pd1 calibrate-feature-state-mapping --observations examples/feature_state_mapping_observations.csv --fit tcf7_coefficient --base-mapping examples/feature_state_mapping.json --output /tmp/mapping_calibration
           tdln-pd1 verify-calibration --audit /tmp/mapping_calibration/mapping_calibration_provenance.json --observations examples/feature_state_mapping_observations.csv --base-mapping examples/feature_state_mapping.json
-          tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output /tmp/qc.json
+          tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output /tmp/qc.json
           tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --profile-points 5 --output /tmp/calibration
           tdln-pd1 verify-calibration --audit /tmp/calibration/calibration_provenance.json --observations examples/longitudinal_observations.csv
           tdln-pd1 propagate-uncertainty --parameters /tmp/calibration/fitted_parameters.json --diagnostics /tmp/calibration/calibration_diagnostics.json --days 7 --dose-days 0 --samples 8 --output /tmp/uncertainty

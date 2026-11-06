@@ -358,6 +358,10 @@ def main() -> None:
     qc.add_argument("--gene-symbol-column")
     qc.add_argument("--expression-layer")
     qc.add_argument("--cell-type-map")
+    qc.add_argument(
+        "--cell-type-vocabulary", default="",
+        help="comma-separated harmonized labels; must match featurize",
+    )
     verify = sub.add_parser("verify")
     verify.add_argument("--output", required=True)
     verify_sensitivity = sub.add_parser("verify-sensitivity")
@@ -1056,6 +1060,9 @@ def main() -> None:
     elif args.command == "qc":
         import pandas as pd
         baseline_values = tuple(value.strip() for value in args.baseline_values.split(",") if value.strip())
+        cell_type_vocabulary = tuple(
+            value.strip() for value in args.cell_type_vocabulary.split(",") if value.strip()
+        )
         report = cohort_qc(load_cells(
             args.cells, tuple(dict.fromkeys(
                 value for value in (args.time_column, args.sample_column) if value)),
@@ -1066,7 +1073,8 @@ def main() -> None:
                            args.min_signature_gene_coverage,
                            args.sample_column,
                            (load_cell_type_mapping(args.cell_type_map)
-                            if args.cell_type_map else None))
+                            if args.cell_type_map else None),
+                           cell_type_vocabulary or None)
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)
             report["passed"] = report["passed"] and report["provenance"]["valid"]
