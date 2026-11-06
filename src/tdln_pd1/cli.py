@@ -30,6 +30,7 @@ from .verification import verify_twin
 from .validation_audit import (validate_prediction_feature_lineage,
                                verify_evaluation_audit, verify_prediction_audit,
                                write_evaluation_audit, write_prediction_audit)
+from .site_cv_audit import verify_site_cv_audit, write_site_cv_audit
 from .calibration_audit import verify_calibration_audit, write_calibration_audit
 from .augmentation_audit import verify_augmentation_audit, write_augmentation_audit
 from .feature_audit import verify_feature_audit, write_feature_audit
@@ -216,6 +217,12 @@ def main() -> None:
     site_cv.add_argument("--site-column", default="center")
     site_cv.add_argument("--bootstrap", type=int, default=500)
     site_cv.add_argument("--output", required=True)
+    verify_site_cv = sub.add_parser("verify-site-cv")
+    verify_site_cv.add_argument("--audit", required=True)
+    verify_site_cv.add_argument("--features", required=True)
+    verify_site_cv.add_argument("--labels", required=True)
+    verify_site_cv.add_argument("--metrics", required=True)
+    verify_site_cv.add_argument("--predictions", required=True)
     sim = sub.add_parser("simulate")
     sim.add_argument("--days", type=float, default=42.0)
     sim.add_argument("--dose-days", default="0,14,28")
@@ -460,7 +467,17 @@ def main() -> None:
         output.mkdir(parents=True, exist_ok=True)
         predictions.to_csv(output / "site_cv_predictions.csv", index=False)
         (output / "site_cv_metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
+        audit = write_site_cv_audit(
+            args.features, args.labels, output,
+            site_column=args.site_column, bootstrap=args.bootstrap,
+        )
+        metrics["audit"] = str(audit)
         print(json.dumps(metrics, indent=2))
+    elif args.command == "verify-site-cv":
+        report = verify_site_cv_audit(
+            args.audit, args.features, args.labels, args.metrics, args.predictions,
+        )
+        print(json.dumps(report, indent=2))
     elif args.command == "verify-evaluation":
         report = verify_evaluation_audit(
             args.audit, args.predictions, args.model, args.features, args.labels,
