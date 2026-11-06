@@ -18,6 +18,7 @@ def cohort_qc(
     feature_tissue_pattern: str | None = r"tdln|lymph",
     min_signature_gene_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
     sample_column: str | None = None,
+    cell_type_mapping: dict[str, str] | None = None,
 ) -> dict:
     try:
         min_signature_gene_coverage = _validate_signature_coverage_threshold(
@@ -48,6 +49,7 @@ def cohort_qc(
         derived_features = aggregate_cells(
             cells, time_column, baseline_values, feature_tissue_pattern,
             min_signature_gene_coverage, sample_column=sample_column,
+            cell_type_mapping=cell_type_mapping,
         )
     except ValueError as error:
         derivation_error = f"feature derivation failed: {error}"
@@ -129,6 +131,10 @@ def cohort_qc(
                                "baseline_values": list(baseline_values or ())},
         "sample_aggregation": {"sample_column": sample_column,
                                "weighting": ("equal_samples" if sample_column else "cells")},
+        "cell_type_mapping": {
+            "applied": cell_type_mapping is not None,
+            "mapped_raw_labels": len(cell_type_mapping or {}),
+        },
         "feature_compartment": {"pattern": feature_tissue_pattern,
                                 "n_cells": int(feature_cell_count)},
         "feature_derivation": {

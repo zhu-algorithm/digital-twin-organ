@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import numpy as np
 from .data import load_cells, load_labels
-from .features import aggregate_cells
+from .features import aggregate_cells, load_cell_type_mapping
 from .model import evaluate_external, leave_one_site_out, predict_locked, train_evaluate
 from .simulator import Dose, TwinParameters, simulate
 from .assimilation import (calibrate, calibration_ensemble, calibration_parameter_draws,
@@ -184,6 +184,10 @@ def main() -> None:
         "--cell-type-vocabulary", default="",
         help="comma-separated locked annotation labels; unknown labels fail",
     )
+    featurize.add_argument(
+        "--cell-type-map",
+        help="CSV with unique raw_label,harmonized_label; every selected label must map",
+    )
     train = sub.add_parser("train")
     train.add_argument("--features", required=True)
     train.add_argument("--labels", required=True)
@@ -353,6 +357,7 @@ def main() -> None:
     qc.add_argument("--min-signature-gene-coverage", type=float, default=0.5)
     qc.add_argument("--gene-symbol-column")
     qc.add_argument("--expression-layer")
+    qc.add_argument("--cell-type-map")
     verify = sub.add_parser("verify")
     verify.add_argument("--output", required=True)
     verify_sensitivity = sub.add_parser("verify-sensitivity")
@@ -381,6 +386,7 @@ def main() -> None:
     verify_features.add_argument("--audit", required=True)
     verify_features.add_argument("--cells", required=True)
     verify_features.add_argument("--output", required=True)
+    verify_features.add_argument("--cell-type-map")
     verify_spatial_features = sub.add_parser("verify-spatial-features")
     verify_spatial_features.add_argument("--audit", required=True)
     verify_spatial_features.add_argument("--spots", required=True)
@@ -401,6 +407,9 @@ def main() -> None:
         cell_type_vocabulary = tuple(
             value.strip() for value in args.cell_type_vocabulary.split(",") if value.strip()
         )
+        cell_type_mapping = (
+            load_cell_type_mapping(args.cell_type_map) if args.cell_type_map else None
+        )
         aggregate_cells(load_cells(
                             args.cells, tuple(dict.fromkeys(
                                 value for value in (args.time_column, args.sample_column)
@@ -410,7 +419,8 @@ def main() -> None:
                         args.feature_tissue_pattern,
                         args.min_signature_gene_coverage,
                         cell_type_vocabulary or None,
-                        args.sample_column).to_csv(args.output, index=False)
+                        args.sample_column,
+                        cell_type_mapping).to_csv(args.output, index=False)
         write_feature_audit(args.cells, args.output, {
             "time_column": args.time_column,
             "baseline_values": list(baseline_values),
@@ -420,8 +430,9 @@ def main() -> None:
             "gene_symbol_column": args.gene_symbol_column,
             "expression_layer": args.expression_layer,
             "sample_column": args.sample_column,
+            "cell_type_mapping_applied": cell_type_mapping is not None,
             "labels_used": False,
-        })
+        }, args.cell_type_map)
     elif args.command == "train":
         import pandas as pd
         metrics = train_evaluate(
@@ -1053,7 +1064,9 @@ def main() -> None:
                            args.time_column, baseline_values or None,
                            args.feature_tissue_pattern,
                            args.min_signature_gene_coverage,
-                           args.sample_column)
+                           args.sample_column,
+                           (load_cell_type_mapping(args.cell_type_map)
+                            if args.cell_type_map else None))
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)
             report["passed"] = report["passed"] and report["provenance"]["valid"]
@@ -1115,7 +1128,9 @@ def main() -> None:
             "audit_sha256": report["audit_sha256"],
         }, indent=2))
     elif args.command == "verify-features":
-        report = verify_feature_audit(args.audit, args.cells, args.output)
+        report = verify_feature_audit(
+            args.audit, args.cells, args.output, args.cell_type_map,
+        )
         print(json.dumps({
             "valid": report["valid"],
             "derivation_replayed": report["derivation_replayed"],

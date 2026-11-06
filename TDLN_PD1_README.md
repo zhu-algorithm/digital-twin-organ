@@ -36,8 +36,8 @@ Multiple baseline samples from one patient require an explicit `--sample-column`
 python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[test]'
-tdln-pd1 featurize --cells examples/cells.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output examples/features.csv
-tdln-pd1 verify-features --audit examples/features.csv.feature-audit.json --cells examples/cells.csv --output examples/features.csv
+tdln-pd1 featurize --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg' --output examples/features.csv
+tdln-pd1 verify-features --audit examples/features.csv.feature-audit.json --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv --output examples/features.csv
 tdln-pd1 qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --output artifacts/qc.json
 tdln-pd1 calibrate --observations examples/longitudinal_observations.csv --fit tumour_growth --profile-points 7 --output artifacts/calibration
 tdln-pd1 calibrate-spatial --observations examples/spatial_longitudinal_observations.csv --fit antigen_decay --profile-points 7 --output artifacts/spatial_calibration
@@ -96,6 +96,8 @@ When clonotypes and tissue labels are present, TCR features separate pooled, TDL
 Cell-type proportions are rendered as a complete patient-by-cell-type composition over the selected baseline feature compartment. If a cell type is observed elsewhere in the cohort but absent from one patient's selected cells, its fraction is an explicit zero and all fractions for that patient sum to one; it is never represented as missing and median-imputed. Expression signatures and clonotype summaries retain true missing values when the assay or required coverage is unavailable, preserving the distinction between biological absence and unavailable measurement.
 
 For model development and locked external use, `--cell-type-vocabulary` freezes the annotation labels and therefore the fraction-column schema across cohorts. Every vocabulary member is emitted for every patient, including explicit zeros when absent; a selected-compartment annotation outside the vocabulary fails rather than creating an unreviewed feature. The ordered vocabulary is stored in the feature derivation audit and used during deterministic replay. Tumour cells used only for cross-tissue TCR sharing do not have to enter the TDLN composition vocabulary. Annotation harmonisation remains a scientific preprocessing responsibility—the option enforces a declared schema but cannot make incompatible annotations equivalent.
+
+`--cell-type-map` makes that harmonisation explicit and label-free. Its CSV must contain unique, non-empty `raw_label,harmonized_label` pairs and must cover every cell retained after baseline selection, including paired tissues used for repertoire features; partial mappings fail. Mapping occurs before lineage signatures and cell fractions, its exact file hash is bound into the feature audit, and a canonical mapping hash is emitted into every patient row and locked by the trained model. External prediction therefore cannot silently use different raw-label semantics even when the final harmonized vocabulary looks identical. The map records a curator decision; it does not prove ontology correctness.
 
 When no explicit vocabulary is supplied, the inferred vocabulary is built only from cells in the selected feature compartment, not from every tissue used for auxiliary TCR sharing. Tumour-only or malignant annotations therefore cannot create constant zero columns in a TDLN composition. This inferred mode is convenient for exploration; a locked explicit vocabulary remains recommended for development-to-external transfer.
 

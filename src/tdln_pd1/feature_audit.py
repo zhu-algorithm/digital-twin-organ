@@ -7,7 +7,7 @@ import hashlib
 from pathlib import Path
 
 from .data import load_cells
-from .features import aggregate_cells
+from .features import aggregate_cells, load_cell_type_mapping
 from .provenance import sha256_file
 
 
@@ -15,6 +15,7 @@ def write_feature_audit(
     cells_path: str | Path,
     output_path: str | Path,
     settings: dict,
+    cell_type_map_path: str | Path | None = None,
 ) -> Path:
     cells, output = Path(cells_path), Path(output_path)
     if not cells.is_file() or not output.is_file():
@@ -25,6 +26,11 @@ def write_feature_audit(
         "research_only": True,
         "labels_used": False,
         "input": {"file": cells.name, "sha256": sha256_file(cells)},
+        "cell_type_map": (
+            {"file": Path(cell_type_map_path).name,
+             "sha256": sha256_file(cell_type_map_path)}
+            if cell_type_map_path else None
+        ),
         "settings": settings,
         "output": {"file": output.name, "sha256": sha256_file(output)},
         "limitation": (
@@ -41,6 +47,7 @@ def verify_feature_audit(
     audit_path: str | Path,
     cells_path: str | Path,
     output_path: str | Path,
+    cell_type_map_path: str | Path | None = None,
 ) -> dict:
     audit, cells, output = Path(audit_path), Path(cells_path), Path(output_path)
     try:
@@ -63,6 +70,19 @@ def verify_feature_audit(
         if (not path.is_file() or record.get("file") != path.name
                 or record.get("sha256") != sha256_file(path)):
             raise ValueError(f"{name} SHA-256 mismatch")
+    mapping_record = payload.get("cell_type_map")
+    if mapping_record is None:
+        if cell_type_map_path is not None:
+            raise ValueError("feature audit did not use a cell-type map")
+        cell_type_mapping = None
+    else:
+        if cell_type_map_path is None:
+            raise ValueError("feature replay requires the recorded cell-type map")
+        mapping_path = Path(cell_type_map_path)
+        if (mapping_record.get("file") != mapping_path.name or not mapping_path.is_file()
+                or mapping_record.get("sha256") != sha256_file(mapping_path)):
+            raise ValueError("cell-type map SHA-256 mismatch")
+        cell_type_mapping = load_cell_type_mapping(mapping_path)
     time_column = settings.get("time_column")
     if time_column is not None and not isinstance(time_column, str):
         raise ValueError("invalid single-cell time-column setting")
@@ -94,6 +114,7 @@ def verify_feature_audit(
         float(settings["minimum_signature_gene_coverage"]),
         tuple(vocabulary) or None,
         sample_column,
+        cell_type_mapping,
     )
     replayed_sha = hashlib.sha256(
         replayed.to_csv(index=False).encode("utf-8")

@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from tdln_pd1.features import aggregate_cells
+from tdln_pd1.features import aggregate_cells, load_cell_type_mapping
 
 
 def test_aggregate_cells_builds_fractions_and_signatures():
@@ -61,6 +61,43 @@ def test_locked_cell_type_vocabulary_stabilizes_external_feature_schema():
         aggregate_cells(
             unknown, feature_tissue_pattern="all", cell_type_vocabulary=vocabulary,
         )
+
+
+def test_explicit_cell_type_mapping_harmonizes_before_lineage_and_fractions(tmp_path):
+    mapping_path = tmp_path / "cell_types.csv"
+    mapping_path.write_text(
+        "raw_label,harmonized_label\nCTL,CD8 T\ncytotoxic lymphocyte,CD8 T\nmyDC,DC\n"
+    )
+    mapping = load_cell_type_mapping(mapping_path)
+    cells = pd.DataFrame({
+        "patient_id": ["p1", "p1", "p2"],
+        "cell_type": ["CTL", "myDC", "cytotoxic lymphocyte"],
+        "PDCD1": [2.0, 0.0, 4.0], "CTLA4": [2.0, 0.0, 4.0],
+        "LAG3": [2.0, 0.0, 4.0],
+    })
+    out = aggregate_cells(
+        cells, feature_tissue_pattern="all",
+        cell_type_vocabulary=("CD8 T", "DC"), cell_type_mapping=mapping,
+    ).set_index("patient_id")
+    assert out.loc["p1", "frac_cd8_t"] == 0.5
+    assert out.loc["p1", "frac_dc"] == 0.5
+    assert out.loc["p2", "sig_exhaustion_cd8_t"] == 4.0
+    assert out.qc_cell_type_mapping_applied.eq(1).all()
+    assert out.qc_cell_type_mapping_sha256.str.len().eq(64).all()
+    with pytest.raises(ValueError, match="does not cover"):
+        aggregate_cells(cells, feature_tissue_pattern="all",
+                        cell_type_mapping={"CTL": "CD8 T"})
+
+
+def test_cell_type_mapping_file_rejects_ambiguous_or_empty_rows(tmp_path):
+    duplicate = tmp_path / "duplicate.csv"
+    duplicate.write_text("raw_label,harmonized_label\nCTL,CD8 T\nCTL,T cell\n")
+    with pytest.raises(ValueError, match="must be unique"):
+        load_cell_type_mapping(duplicate)
+    empty = tmp_path / "empty.csv"
+    empty.write_text("raw_label,harmonized_label\nCTL,\n")
+    with pytest.raises(ValueError, match="non-missing"):
+        load_cell_type_mapping(empty)
 
 
 def test_lineage_restricted_signatures_separate_state_from_composition():

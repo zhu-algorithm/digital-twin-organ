@@ -87,3 +87,26 @@ def test_feature_audit_rejects_invalid_anndata_matrix_contract(tmp_path):
     audit.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="expression_layer"):
         verify_feature_audit(audit, cells, output)
+
+
+def test_feature_audit_binds_and_replays_cell_type_mapping(tmp_path):
+    cells = tmp_path / "cells.csv"
+    mapping = tmp_path / "cell_type_map.csv"
+    output = tmp_path / "features.csv"
+    pd.DataFrame({"patient_id": ["p1"], "cell_type": ["CTL"]}).to_csv(
+        cells, index=False
+    )
+    mapping.write_text("raw_label,harmonized_label\nCTL,CD8 T\n")
+    aggregate_cells(
+        pd.read_csv(cells), cell_type_mapping={"CTL": "CD8 T"},
+    ).to_csv(output, index=False)
+    settings = {**DEFAULT_SETTINGS, "cell_type_mapping_applied": True}
+    audit = write_feature_audit(cells, output, settings, mapping)
+    verified = verify_feature_audit(audit, cells, output, mapping)
+    assert verified["valid"] is True
+    assert verified["payload"]["cell_type_map"]["file"] == mapping.name
+    with pytest.raises(ValueError, match="requires the recorded"):
+        verify_feature_audit(audit, cells, output)
+    mapping.write_text("raw_label,harmonized_label\nCTL,T cell\n")
+    with pytest.raises(ValueError, match="map SHA-256 mismatch"):
+        verify_feature_audit(audit, cells, output, mapping)

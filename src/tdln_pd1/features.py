@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 import re
 import numpy as np
 import pandas as pd
@@ -30,6 +31,48 @@ TEMPORAL_COLUMNS = ("sampling_day", "timepoint", "visit", "collection_timepoint"
 SAMPLE_COLUMNS = ("sample_id", "library_id")
 UNASSIGNED_CLONOTYPES = {"", "nan", "none", "unassigned", "na", "n/a"}
 MIN_SIGNATURE_GENE_COVERAGE = 0.5
+
+
+def load_cell_type_mapping(path: str | Path) -> dict[str, str]:
+    """Load one explicit, total raw-to-harmonized annotation mapping."""
+    frame = pd.read_csv(path)
+    required = {"raw_label", "harmonized_label"}
+    if not required.issubset(frame.columns) or frame.empty:
+        raise ValueError("cell-type map needs non-empty raw_label,harmonized_label columns")
+    mapping_frame = frame[["raw_label", "harmonized_label"]].copy()
+    if mapping_frame.isna().any().any():
+        raise ValueError("cell-type map labels must be non-missing")
+    for column in mapping_frame:
+        mapping_frame[column] = mapping_frame[column].astype(str).str.strip()
+    if mapping_frame.eq("").any().any():
+        raise ValueError("cell-type map labels must be non-empty")
+    if mapping_frame.raw_label.duplicated().any():
+        raise ValueError("cell-type map raw_label values must be unique")
+    return dict(zip(mapping_frame.raw_label, mapping_frame.harmonized_label))
+
+
+def _cell_type_mapping_sha256(mapping: dict[str, str] | None) -> str:
+    canonical = sorted((str(raw), str(harmonized)) for raw, harmonized in (mapping or {}).items())
+    return hashlib.sha256(
+        json.dumps(canonical, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _apply_cell_type_mapping(
+    cells: pd.DataFrame, mapping: dict[str, str] | None,
+) -> pd.DataFrame:
+    if mapping is None:
+        return cells
+    if not mapping or any(not str(key).strip() or not str(value).strip()
+                          for key, value in mapping.items()):
+        raise ValueError("cell-type mapping must contain non-empty labels")
+    observed = set(cells.cell_type.astype(str))
+    missing = sorted(observed - set(mapping))
+    if missing:
+        raise ValueError(f"cell-type map does not cover selected labels: {missing[:10]}")
+    out = cells.copy()
+    out["cell_type"] = out.cell_type.map(mapping)
+    return out
 
 
 def select_baseline_cells(
@@ -192,6 +235,7 @@ def aggregate_cells(
     min_signature_gene_coverage: float = MIN_SIGNATURE_GENE_COVERAGE,
     cell_type_vocabulary: tuple[str, ...] | None = None,
     sample_column: str | None = None,
+    cell_type_mapping: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Aggregate long cell rows into one leakage-safe row per patient.
 
@@ -213,6 +257,7 @@ def aggregate_cells(
         if x[column].eq("").any():
             raise ValueError(f"{column} must be non-empty")
     x = select_baseline_cells(x, time_column, baseline_values)
+    x = _apply_cell_type_mapping(x, cell_type_mapping)
     x = _validate_expression_columns(x)
     detected_samples = [column for column in SAMPLE_COLUMNS if column in x.columns]
     if sample_column is None and detected_samples:
@@ -269,6 +314,8 @@ def aggregate_cells(
             "qc_min_signature_gene_coverage": min_signature_gene_coverage,
             "qc_cell_type_vocabulary_sha256": vocabulary_sha256,
             "qc_cell_type_vocabulary_locked": int(cell_type_vocabulary is not None),
+            "qc_cell_type_mapping_sha256": _cell_type_mapping_sha256(cell_type_mapping),
+            "qc_cell_type_mapping_applied": int(cell_type_mapping is not None),
             "qc_sample_equal_aggregation": int(sample_column is not None),
             "qc_n_feature_samples": (
                 int(feature_group[sample_column].nunique()) if sample_column else 1
