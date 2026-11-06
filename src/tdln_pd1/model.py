@@ -245,6 +245,7 @@ def _fusion_ablation(
     columns: list[str],
     outer_cv: list[tuple[np.ndarray, np.ndarray]],
     hybrid_probability: np.ndarray,
+    bootstrap_groups=None,
 ) -> tuple[dict | None, dict[str, np.ndarray]]:
     """Compare data-only, mechanism-only and fused models on identical outer folds."""
     mechanism_prefixes = ("twin_", "liver_cf_")
@@ -270,8 +271,16 @@ def _fusion_ablation(
     )}
     data_probability = block_probabilities["data_only"]
     outcome = y.to_numpy(dtype=int)
+    groups = None if bootstrap_groups is None else np.asarray(bootstrap_groups)
+    unique_groups = np.unique(groups) if groups is not None else None
     for _ in range(FUSION_ABLATION_BOOTSTRAP_DRAWS):
-        index = rng.integers(0, len(outcome), len(outcome))
+        if unique_groups is None:
+            index = rng.integers(0, len(outcome), len(outcome))
+        else:
+            sampled_groups = rng.choice(unique_groups, len(unique_groups), replace=True)
+            index = np.concatenate([
+                np.flatnonzero(groups == group) for group in sampled_groups
+            ])
         if len(np.unique(outcome[index])) < 2:
             continue
         sampled_y = outcome[index]
@@ -318,12 +327,17 @@ def _fusion_ablation(
                 data_metrics["log_loss"] - hybrid_metrics["log_loss"]
             ),
         },
-        "paired_patient_bootstrap": {
+        "paired_bootstrap": {
             "draws": FUSION_ABLATION_BOOTSTRAP_DRAWS,
             "seed": 42,
+            "unit": "centre" if groups is not None else "patient",
+            "groups": int(len(unique_groups)) if unique_groups is not None else int(len(outcome)),
             "intervals": paired_intervals,
             "estimand": "paired_difference_of_fixed_out_of_fold_predictions",
             "limitation": (
+                "Resamples whole centres with their paired predictions; does not repeat model "
+                "training or capture cross-validation split uncertainty."
+                if groups is not None else
                 "Resamples patients and their paired predictions; does not repeat model "
                 "training or capture cross-validation split uncertainty."
             ),
@@ -588,7 +602,10 @@ def _available_cluster_groups(frame: pd.DataFrame, column: str = "center"):
         return None
     if frame[column].isna().any():
         raise ValueError(f"{column} must be complete when supplied for clustered evaluation")
-    return frame[column] if frame[column].nunique() >= 2 else None
+    normalized = frame[column].astype(str).str.strip()
+    if normalized.eq("").any():
+        raise ValueError(f"{column} must be non-empty when supplied for clustered evaluation")
+    return normalized if normalized.nunique() >= 2 else None
 
 
 def _center_stratified_evaluation(
@@ -967,7 +984,8 @@ def train_evaluate(
                        "mode": mode, "n_train": int(len(train_index)), "n_test": int(len(test_index))})
     if np.isnan(prob).any() or (fold_id < 1).any():
         raise RuntimeError("outer cross-validation did not predict every patient exactly once")
-    metrics = evaluate_probabilities(y, prob)
+    evaluation_groups = _available_cluster_groups(data)
+    metrics = evaluate_probabilities(y, prob, bootstrap_groups=evaluation_groups)
     metrics.update({"n_patients": int(len(data)), "n_splits": n_splits,
                     "hyperparameter_selection": tuning,
                     "selection_metric": "negative_log_loss",
@@ -977,7 +995,9 @@ def train_evaluate(
                     "feature_schema": {"included": cols, "excluded": excluded},
                     "evaluation_type": "internal_cross_validation",
                     "note": "Nested patient-level cross-validation; not external or clinical validation."})
-    ablation, ablation_probabilities = _fusion_ablation(data, y, cols, outer_cv, prob)
+    ablation, ablation_probabilities = _fusion_ablation(
+        data, y, cols, outer_cv, prob, bootstrap_groups=evaluation_groups,
+    )
     metrics["mechanism_data_fusion_ablation"] = (
         ablation if ablation is not None else {
             "status": "not_evaluable",

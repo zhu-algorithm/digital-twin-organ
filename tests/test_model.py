@@ -78,15 +78,51 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
     assert set(ablation["hybrid_minus_data_only"]) == {
         "roc_auc", "average_precision", "brier_score_improvement", "log_loss_improvement",
     }
-    paired = ablation["paired_patient_bootstrap"]
+    paired = ablation["paired_bootstrap"]
     assert paired["draws"] == 500
     assert paired["seed"] == 42
+    assert paired["unit"] == "patient"
+    assert paired["groups"] == 12
     assert paired["estimand"] == "paired_difference_of_fixed_out_of_fold_predictions"
     assert set(paired["intervals"]) == set(ablation["hybrid_minus_data_only"])
     assert all(value["valid_draws"] > 0 for value in paired["intervals"].values())
     predictions = pd.read_csv(tmp_path / "cv_predictions.csv")
     assert predictions.data_only_probability.notna().all()
     assert predictions.mechanism_only_probability.notna().all()
+
+
+def test_training_and_fusion_ablation_bootstrap_whole_centres(tmp_path: Path):
+    features = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(12)],
+        "sig_exhaustion": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+                           0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
+        "twin_effector_gain": [0.2, 0.4, 0.3, 0.5, 0.4, 0.6,
+                               1.0, 0.8, 1.2, 0.9, 1.4, 1.1],
+    })
+    labels = pd.DataFrame({
+        "patient_id": features.patient_id,
+        "response": [0, 1, 0, 1] * 3,
+        "center": ["a"] * 4 + ["b"] * 4 + ["c"] * 4,
+    })
+    metrics = train_evaluate(features, labels, tmp_path, folds=3, ensemble_members=2)
+    assert metrics["bootstrap_design"]["unit"] == "centre"
+    assert metrics["bootstrap_design"]["groups"] == 3
+    paired = metrics["mechanism_data_fusion_ablation"]["paired_bootstrap"]
+    assert paired["unit"] == "centre"
+    assert paired["groups"] == 3
+
+
+def test_training_rejects_empty_center_identifiers(tmp_path: Path):
+    features = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(8)],
+        "sig_exhaustion": [0.1, 0.2, 0.3, 0.4, 0.7, 0.8, 0.9, 1.0],
+    })
+    labels = pd.DataFrame({
+        "patient_id": features.patient_id, "response": [0] * 4 + [1] * 4,
+        "center": ["a", "a", "b", "b", "c", "c", "d", ""],
+    })
+    with pytest.raises(ValueError, match="center must be non-empty"):
+        train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
 
 
 def test_locked_prediction_enforces_embedded_preprocessing_contract(tmp_path: Path):
