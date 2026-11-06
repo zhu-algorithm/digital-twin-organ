@@ -119,6 +119,37 @@ def test_locked_prediction_enforces_embedded_preprocessing_contract(tmp_path: Pa
         )
 
 
+def test_locked_prediction_rejects_unreviewed_model_features_but_allows_audit_columns(
+    tmp_path: Path,
+):
+    patients = [f"p{i}" for i in range(8)]
+    features = pd.DataFrame({
+        "patient_id": patients,
+        "sig_exhaustion": [0.1, 0.2, 0.3, 0.4, 1.1, 1.2, 1.3, 1.4],
+        "n_cells": [100] * 8,
+        "qc_feature_audit_sha256": ["a" * 64] * 8,
+    })
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+    external = pd.DataFrame({
+        "patient_id": ["external"],
+        "sig_exhaustion": [0.5],
+        "n_cells": [90],
+        "n_cells_tdln": [80],
+        "qc_feature_audit_sha256": ["a" * 64],
+        "qc_external_batch": ["recorded_not_modelled"],
+    })
+    assert predict_locked(tmp_path / "model.joblib", external).probability.notna().all()
+    for column in ("sig_unreviewed", "twin_new_endpoint"):
+        drifted = external.assign(**{column: 1.0})
+        with pytest.raises(ValueError, match="unexpected unlocked model features"):
+            predict_locked(tmp_path / "model.joblib", drifted)
+    with pytest.raises(ValueError, match="preprocessing contract mismatch"):
+        predict_locked(
+            tmp_path / "model.joblib", external.assign(frac_new_annotation=1.0)
+        )
+
+
 def test_probability_evaluation_reports_calibration_and_intervals():
     metrics = evaluate_probabilities([0, 0, 1, 1], [0.1, 0.2, 0.8, 0.9], bootstrap=20)
     assert metrics["roc_auc"] == 1.0

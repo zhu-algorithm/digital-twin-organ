@@ -120,6 +120,11 @@ def _validate_model_matrix(
         )
 
 
+def _technical_audit_feature(column: str) -> bool:
+    """Return whether a column is explicitly excluded technical/QC metadata."""
+    return column == "n_cells" or column.startswith("n_cells_") or column.startswith("qc_")
+
+
 def _select_model_features(
     features: pd.DataFrame,
     labels: pd.DataFrame,
@@ -135,8 +140,7 @@ def _select_model_features(
         raise ValueError(f"forbidden outcome-like feature columns: {sorted(forbidden)}")
     excluded = {
         column: "technical cell-count/QC feature"
-        for column in candidates
-        if column == "n_cells" or column.startswith("n_cells_") or column.startswith("qc_")
+        for column in candidates if _technical_audit_feature(column)
     }
     included = [column for column in candidates if column not in excluded]
     non_numeric = [column for column in included
@@ -670,6 +674,17 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
     missing = set(required) - set(features.columns)
     if missing:
         raise ValueError(f"missing locked-model features: {sorted(missing)}")
+    unexpected = sorted(
+        column for column in features.columns
+        if column != "patient_id"
+        and column not in required
+        and not _technical_audit_feature(column)
+    )
+    if unexpected:
+        raise ValueError(
+            "unexpected unlocked model features; external biological and mechanistic "
+            f"schema must exactly match the artifact: {unexpected}"
+        )
     _validate_model_matrix(features, required, "prediction")
     # The primary point estimate comes from the model fitted to the complete
     # development cohort with the locked selected C. Bootstrap refits describe
