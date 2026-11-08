@@ -24,7 +24,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert predictions.outer_fold.ge(1).all()
     assert predictions.fold_selected_C.isin([0.01, 0.1, 1.0, 10.0, 100.0]).all()
     artifact = joblib.load(tmp_path / "model.joblib")
-    assert artifact["artifact_version"] == 9
+    assert artifact["artifact_version"] == 10
     assert artifact["selected_C"] in artifact["C_grid"]
     assert len(artifact["training_patient_hashes"]) == 8
     assert len(artifact["training_cohort_fingerprint"]) == 64
@@ -259,6 +259,9 @@ def test_locked_prediction_and_external_evaluation(tmp_path: Path):
     })
     external_labels = labels.assign(patient_id=external_features.patient_id)
     predictions = predict_locked(tmp_path / "model.joblib", external_features)
+    assert predictions.uncertainty_method.eq("patient_bootstrap_refit").all()
+    assert predictions.uncertainty_bootstrap_unit.eq("patient").all()
+    assert predictions.uncertainty_bootstrap_groups.eq(8).all()
     artifact = joblib.load(tmp_path / "model.joblib")
     expected_point = artifact["model"].predict_proba(external_features[["x"]])[:, 1]
     assert predictions.probability.tolist() == pytest.approx(expected_point)
@@ -409,9 +412,24 @@ def test_locked_prediction_rejects_legacy_or_ambiguous_point_estimate_artifacts(
     artifact = joblib.load(tmp_path / "model.joblib")
     artifact["artifact_version"] = 8
     joblib.dump(artifact, tmp_path / "legacy.joblib")
-    with pytest.raises(ValueError, match="version 9"):
+    with pytest.raises(ValueError, match="version 10"):
         predict_locked(
             tmp_path / "legacy.joblib",
+            pd.DataFrame({"patient_id": ["external"], "x": [0.5]}),
+        )
+
+
+def test_locked_prediction_rejects_tampered_uncertainty_bootstrap_contract(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    features = pd.DataFrame({"patient_id": patients, "x": range(8)})
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+    artifact = joblib.load(tmp_path / "model.joblib")
+    artifact["uncertainty_bootstrap_design"]["unit"] = "centre"
+    joblib.dump(artifact, tmp_path / "tampered.joblib")
+    with pytest.raises(ValueError, match="invalid v10 uncertainty-bootstrap"):
+        predict_locked(
+            tmp_path / "tampered.joblib",
             pd.DataFrame({"patient_id": ["external"], "x": [0.5]}),
         )
 

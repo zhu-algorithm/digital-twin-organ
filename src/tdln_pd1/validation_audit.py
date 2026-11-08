@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 
 from .data import load_labels
-from .model import evaluate_external, predict_locked
+from .model import (ARTIFACT_VERSION, evaluate_external, predict_locked,
+                    validate_uncertainty_bootstrap_contract)
 from .provenance import sha256_file
 
 
@@ -183,9 +184,10 @@ def write_prediction_audit(
                 "training_feature_cohort_fingerprint", "point_prediction_method"}
     if not isinstance(artifact, dict) or not required.issubset(artifact):
         raise ValueError("locked model lacks versioned training fingerprints")
-    if (artifact["artifact_version"] != 9
+    if (artifact["artifact_version"] != ARTIFACT_VERSION
             or artifact["point_prediction_method"] != "full_cohort_locked_model"):
-        raise ValueError("locked model lacks the version 9 point-prediction contract")
+        raise ValueError("locked model lacks the version 10 point-prediction contract")
+    uncertainty_contract = validate_uncertainty_bootstrap_contract(artifact)
     lineage = validate_prediction_feature_lineage(model_path, features_path)
     payload = {
         "schema_version": 3,
@@ -195,6 +197,7 @@ def write_prediction_audit(
         "patient_count": int(patient_count),
         "artifact_version": int(artifact["artifact_version"]),
         "point_prediction_method": artifact["point_prediction_method"],
+        "uncertainty_bootstrap_contract": uncertainty_contract,
         "decision_threshold": float(artifact.get("threshold", 0.5)),
         "training_cohort_fingerprint": artifact["training_cohort_fingerprint"],
         "training_feature_cohort_fingerprint": artifact[

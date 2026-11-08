@@ -30,6 +30,7 @@ FORBIDDEN_FEATURE_TOKENS = (
 DOMAIN_MAX_ABS_Z = 4.0
 DOMAIN_MAX_OUTSIDE_FRACTION = 0.2
 DOMAIN_MAX_MISSINGNESS_INCREASE = 0.2
+ARTIFACT_VERSION = 10
 
 
 def _normalise_patient_ids(frame: pd.DataFrame, name: str) -> pd.DataFrame:
@@ -198,6 +199,25 @@ def build_model(feature_columns: list[str], c: float = 1.0) -> Pipeline:
     return Pipeline([("prep", prep), ("classifier", LogisticRegression(
         C=c, max_iter=2000, class_weight=None, solver="liblinear", random_state=42,
     ))])
+
+
+def validate_uncertainty_bootstrap_contract(artifact: dict) -> dict:
+    """Require one internally consistent locked refit-uncertainty design."""
+    method = artifact.get("uncertainty_method")
+    design = artifact.get("uncertainty_bootstrap_design")
+    expected_unit = {
+        "patient_bootstrap_refit": "patient",
+        "centre_cluster_bootstrap_refit": "centre",
+    }.get(method)
+    if expected_unit is None or not isinstance(design, dict):
+        raise ValueError("locked model lacks the v10 uncertainty-bootstrap contract")
+    groups, seed = design.get("groups"), design.get("seed")
+    if (design.get("unit") != expected_unit
+            or not isinstance(groups, (int, np.integer)) or isinstance(groups, bool)
+            or groups < (2 if expected_unit == "centre" else 1)
+            or seed != 42):
+        raise ValueError("invalid v10 uncertainty-bootstrap contract")
+    return {"method": method, "unit": expected_unit, "groups": int(groups), "seed": 42}
 
 
 def _nested_oof_for_columns(
@@ -656,13 +676,14 @@ def _center_stratified_evaluation(
 def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFrame:
     """Apply an immutable fitted artifact to a new cohort without refitting."""
     artifact = joblib.load(model_path)
-    if not isinstance(artifact, dict) or artifact.get("artifact_version") != 9:
-        raise ValueError("locked prediction requires model artifact version 9")
+    if not isinstance(artifact, dict) or artifact.get("artifact_version") != ARTIFACT_VERSION:
+        raise ValueError(f"locked prediction requires model artifact version {ARTIFACT_VERSION}")
     point_method = artifact.get("point_prediction_method")
     if point_method != "full_cohort_locked_model":
-        raise ValueError("locked model lacks the version 9 point-prediction contract")
+        raise ValueError("locked model lacks the version 10 point-prediction contract")
     if artifact.get("probability_estimand") != PROBABILITY_ESTIMAND:
-        raise ValueError("locked model lacks the v9 probability-estimand contract")
+        raise ValueError("locked model lacks the v10 probability-estimand contract")
+    uncertainty_contract = validate_uncertainty_bootstrap_contract(artifact)
     features = _normalise_patient_ids(features, "features")
     contracts = artifact.get("preprocessing_contracts")
     contract_sources = artifact.get("preprocessing_contract_sources")
@@ -739,6 +760,9 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
                          "probability_interval_width": upper - lower,
                          "uncertainty_available": uncertainty_available,
                          "point_prediction_method": point_method,
+                         "uncertainty_method": uncertainty_contract["method"],
+                         "uncertainty_bootstrap_unit": uncertainty_contract["unit"],
+                         "uncertainty_bootstrap_groups": uncertainty_contract["groups"],
                          "predicted_response": (probability >= threshold).astype(int),
                          "decision_threshold": threshold,
                          "training_overlap": overlap,
@@ -1100,7 +1124,7 @@ def train_evaluate(
                      "seed": 42,
                  },
                  "point_prediction_method": "full_cohort_locked_model",
-                 "artifact_version": 9}, output / "model.joblib")
+                 "artifact_version": ARTIFACT_VERSION}, output / "model.joblib")
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     prediction_columns = {
         "patient_id": data["patient_id"], "response": y, "probability": prob,
