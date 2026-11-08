@@ -219,6 +219,52 @@ def test_locked_prediction_rejects_spatial_fusion_semantic_drift(tmp_path: Path)
         predict_locked(tmp_path / "model.joblib", external)
 
 
+def test_spatial_evidence_support_marks_lower_coverage_as_domain_shift(tmp_path: Path):
+    features = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(8)],
+        "x": [0.1, 0.2, 0.3, 0.4, 0.7, 0.8, 0.9, 1.0],
+        "qc_spatial_zone_coverage": [0.8, 0.9, 1.0, 0.8, 0.9, 1.0, 0.9, 0.8],
+        "qc_spatial_feature_prior_imputed_fraction": [
+            0.2, 0.1, 0.0, 0.2, 0.1, 0.0, 0.1, 0.2,
+        ],
+    })
+    labels = pd.DataFrame({
+        "patient_id": features.patient_id, "response": [0] * 4 + [1] * 4,
+    })
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=0)
+    artifact = joblib.load(tmp_path / "model.joblib")
+    assert artifact["spatial_evidence_support"]["features"][
+        "qc_spatial_zone_coverage"
+    ] == {"minimum": 0.8, "maximum": 1.0}
+
+    external = pd.DataFrame({
+        "patient_id": ["external"], "x": [0.5],
+        "qc_spatial_zone_coverage": [1 / 6],
+        "qc_spatial_feature_prior_imputed_fraction": [5 / 6],
+    })
+    prediction = predict_locked(tmp_path / "model.joblib", external)
+    assert prediction.spatial_evidence_check_available.item()
+    assert prediction.spatial_evidence_outside_training_range.item()
+    assert prediction.domain_shift_flag.item()
+
+
+def test_spatial_evidence_support_requires_external_qc(tmp_path: Path):
+    features = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(8)],
+        "x": [0.1, 0.2, 0.3, 0.4, 0.7, 0.8, 0.9, 1.0],
+        "qc_spatial_zone_coverage": [1.0] * 8,
+    })
+    labels = pd.DataFrame({
+        "patient_id": features.patient_id, "response": [0] * 4 + [1] * 4,
+    })
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=0)
+    with pytest.raises(ValueError, match="missing spatial evidence QC"):
+        predict_locked(
+            tmp_path / "model.joblib",
+            pd.DataFrame({"patient_id": ["external"], "x": [0.5]}),
+        )
+
+
 def test_locked_prediction_rejects_unreviewed_model_features_but_allows_audit_columns(
     tmp_path: Path,
 ):

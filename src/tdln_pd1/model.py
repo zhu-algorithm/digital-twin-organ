@@ -30,6 +30,12 @@ FORBIDDEN_FEATURE_TOKENS = (
 DOMAIN_MAX_ABS_Z = 4.0
 DOMAIN_MAX_OUTSIDE_FRACTION = 0.2
 DOMAIN_MAX_MISSINGNESS_INCREASE = 0.2
+SPATIAL_EVIDENCE_COLUMNS = (
+    "qc_spatial_zone_coverage",
+    "qc_spatial_sampling_coverage_mean",
+    "qc_spatial_sampling_coverage_min",
+    "qc_spatial_feature_prior_imputed_fraction",
+)
 ARTIFACT_VERSION = 10
 
 
@@ -462,6 +468,57 @@ def _domain_diagnostics(features: pd.DataFrame, required: list[str], reference: 
             "flag": flag}
 
 
+def _spatial_evidence_reference(features: pd.DataFrame) -> dict | None:
+    """Freeze development support for model-excluded spatial evidence QC."""
+    support = {}
+    for column in SPATIAL_EVIDENCE_COLUMNS:
+        if column not in features:
+            continue
+        values = pd.to_numeric(features[column], errors="coerce").to_numpy(dtype=float)
+        finite = values[np.isfinite(values)]
+        if not len(finite):
+            continue
+        if ((finite < 0) | (finite > 1)).any() or len(finite) != len(values):
+            raise ValueError(
+                f"spatial evidence QC must be complete and within [0,1]: {column}"
+            )
+        support[column] = {
+            "minimum": float(np.min(finite)), "maximum": float(np.max(finite)),
+        }
+    if not support:
+        return None
+    return {
+        "method": "closed_development_range_for_spatial_evidence_qc",
+        "features": support,
+        "note": (
+            "Applicability evidence only; coverage support is not a biological confidence score."
+        ),
+    }
+
+
+def _spatial_evidence_diagnostics(features: pd.DataFrame, reference: dict | None) -> dict:
+    n = len(features)
+    if not isinstance(reference, dict) or not isinstance(reference.get("features"), dict):
+        return {"available": np.zeros(n, dtype=bool), "outside": np.zeros(n, dtype=bool)}
+    columns = list(reference["features"])
+    missing = [column for column in columns if column not in features]
+    if missing:
+        raise ValueError(f"missing spatial evidence QC: {missing}")
+    outside = np.zeros(n, dtype=bool)
+    for column in columns:
+        values = pd.to_numeric(features[column], errors="coerce").to_numpy(dtype=float)
+        bounds = reference["features"][column]
+        if (not np.isfinite(values).all() or ((values < 0) | (values > 1)).any()
+                or not isinstance(bounds, dict)):
+            raise ValueError(f"invalid spatial evidence QC: {column}")
+        lower, upper = bounds.get("minimum"), bounds.get("maximum")
+        if (not isinstance(lower, (int, float)) or not isinstance(upper, (int, float))
+                or not np.isfinite([lower, upper]).all() or lower > upper):
+            raise ValueError("locked model has invalid spatial evidence support")
+        outside |= (values < lower - 1e-12) | (values > upper + 1e-12)
+    return {"available": np.ones(n, dtype=bool), "outside": outside}
+
+
 def _decision_curve(y: np.ndarray, prob: np.ndarray) -> list[dict[str, float]]:
     """Decision-curve net benefit across prespecified probability thresholds."""
     rows = []
@@ -763,6 +820,10 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
         lambda row: _feature_row_hash(row, required) in training_feature_hashes, axis=1
     )
     domain = _domain_diagnostics(features, required, artifact.get("training_domain"))
+    spatial_evidence = _spatial_evidence_diagnostics(
+        features, artifact.get("spatial_evidence_support")
+    )
+    combined_domain_flag = domain["flag"] | spatial_evidence["outside"]
     return pd.DataFrame({"patient_id": features.patient_id, "probability": probability,
                          "bootstrap_probability_median": bootstrap_median,
                          "probability_lower_95": lower, "probability_upper_95": upper,
@@ -783,7 +844,9 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
                          "domain_max_abs_robust_z": domain["max_abs_z"],
                          "domain_outside_range_fraction": domain["outside_fraction"],
                          "domain_missing_feature_fraction": domain["missing_fraction"],
-                         "domain_shift_flag": domain["flag"]})
+                         "spatial_evidence_check_available": spatial_evidence["available"],
+                         "spatial_evidence_outside_training_range": spatial_evidence["outside"],
+                         "domain_shift_flag": combined_domain_flag})
 
 
 def _prediction_uncertainty_contract(predictions: pd.DataFrame) -> dict:
@@ -1168,6 +1231,7 @@ def train_evaluate(
         "\n".join(training_feature_hashes).encode("utf-8")
     ).hexdigest()
     training_domain = _training_domain_reference(X, cols)
+    spatial_evidence_support = _spatial_evidence_reference(features)
     joblib.dump({"model": model, "features": cols, "threshold": 0.5,
                  "excluded_features": excluded,
                  "training_patients": int(len(data)), "selected_C": final_c,
@@ -1179,6 +1243,7 @@ def train_evaluate(
                  "training_feature_row_hashes": training_feature_hashes,
                  "training_feature_cohort_fingerprint": training_feature_cohort_fingerprint,
                  "training_domain": training_domain,
+                 "spatial_evidence_support": spatial_evidence_support,
                  "preprocessing_contracts": preprocessing_contracts,
                  "preprocessing_contract_sources": preprocessing_contract_sources,
                  "training_input_provenance": input_provenance,
