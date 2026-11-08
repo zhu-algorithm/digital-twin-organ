@@ -10,6 +10,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from .augmentation_audit import verify_augmentation_audit
 from .data import load_labels
 from .model import (ARTIFACT_VERSION, evaluate_external, predict_locked,
                     validate_uncertainty_bootstrap_contract)
@@ -102,6 +103,8 @@ def _mechanistic_feature_contract(derivation: dict) -> dict:
 
 def validate_prediction_feature_lineage(
     model_path: str | Path, features_path: str | Path,
+    augmentation_input_paths: dict[str, str | Path] | None = None,
+    require_derivation_replay: bool = False,
 ) -> dict:
     """Fail closed when a treatment-aware model receives untraceable semantics."""
     model_path, features_path = Path(model_path), Path(features_path)
@@ -144,6 +147,14 @@ def validate_prediction_feature_lineage(
         "feature_sha256": feature_sha,
         "compatible_augmentation_generation_contract": external_generation,
     }
+    if require_derivation_replay:
+        replay = verify_augmentation_audit(
+            audit_path, features_path, augmentation_input_paths or {},
+        )
+        common_result.update({
+            "augmentation_derivation_replayed": True,
+            "augmentation_verified_inputs": replay["verified_inputs"],
+        })
     if training_contract is None:
         return common_result
     derivation = audit.get("inputs", {}).get("features", {}).get("derivation_payload")
@@ -225,6 +236,7 @@ def write_prediction_audit(
     features_path: str | Path,
     predictions_path: str | Path,
     patient_count: int,
+    augmentation_input_paths: dict[str, str | Path] | None = None,
 ) -> Path:
     """Bind one locked artifact and feature table to its prediction file."""
     model_path, features_path = Path(model_path), Path(features_path)
@@ -238,7 +250,10 @@ def write_prediction_audit(
             or artifact["point_prediction_method"] != "full_cohort_locked_model"):
         raise ValueError("locked model lacks the version 10 point-prediction contract")
     uncertainty_contract = validate_uncertainty_bootstrap_contract(artifact)
-    lineage = validate_prediction_feature_lineage(model_path, features_path)
+    lineage = validate_prediction_feature_lineage(
+        model_path, features_path, augmentation_input_paths,
+        require_derivation_replay=True,
+    )
     payload = {
         "schema_version": 3,
         "stage": "locked_prediction",
@@ -279,6 +294,7 @@ def verify_prediction_audit(
     audit_path: str | Path | None = None,
     model_path: str | Path | None = None,
     features_path: str | Path | None = None,
+    augmentation_input_paths: dict[str, str | Path] | None = None,
 ) -> dict:
     """Re-run locked inference and fail if any bound input or output differs."""
     predictions_path = Path(predictions_path)
@@ -298,7 +314,10 @@ def verify_prediction_audit(
     if model_path is None or features_path is None:
         raise ValueError("prediction replay requires the locked model and feature table")
     model_path, features_path = Path(model_path), Path(features_path)
-    lineage = validate_prediction_feature_lineage(model_path, features_path)
+    lineage = validate_prediction_feature_lineage(
+        model_path, features_path, augmentation_input_paths,
+        require_derivation_replay=True,
+    )
     if payload.get("feature_lineage") != lineage:
         raise ValueError("prediction feature lineage does not match locked-prediction audit")
     for name, path in (("model", model_path), ("features", features_path)):
@@ -363,6 +382,7 @@ def verify_evaluation_audit(
     labels_path: str | Path,
     metrics_path: str | Path,
     prediction_audit_path: str | Path | None = None,
+    augmentation_input_paths: dict[str, str | Path] | None = None,
 ) -> dict:
     """Replay locked inference and evaluation, then verify the exact metric report."""
     audit_path = Path(audit_path)
@@ -378,6 +398,7 @@ def verify_evaluation_audit(
         raise ValueError("invalid locked-evaluation settings")
     verified_prediction = verify_prediction_audit(
         predictions_path, prediction_audit_path, model_path, features_path,
+        augmentation_input_paths,
     )
     source_inputs = payload.get("inputs", {})
     expected_inputs = {

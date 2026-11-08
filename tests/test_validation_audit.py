@@ -6,6 +6,8 @@ import joblib
 import pandas as pd
 import pytest
 
+from tdln_pd1.augmentation_audit import write_augmentation_audit
+from tdln_pd1.hybrid import augment_with_twin
 from tdln_pd1.validation_audit import (verify_evaluation_audit, verify_prediction_audit,
                                        write_evaluation_audit,
                                        write_prediction_audit,
@@ -136,6 +138,42 @@ def test_generic_mechanistic_model_requires_matching_augmentation_lineage(tmp_pa
         validate_prediction_feature_lineage(model, features)
 
 
+def test_prediction_lineage_can_require_exact_external_augmentation_replay(tmp_path: Path):
+    model, features, _ = _files(tmp_path)
+    raw = tmp_path / "raw.csv"
+    raw.write_text("patient_id,x\np1,1\n")
+    augment_with_twin(pd.read_csv(raw), days=1, dose_days=(0,)).to_csv(
+        features, index=False,
+    )
+    audit_path = write_augmentation_audit(
+        features,
+        inputs={"features": {
+            "file": raw.name, "sha256": hashlib.sha256(raw.read_bytes()).hexdigest(),
+        }},
+        settings={
+            "days": 1, "dose": 1, "dose_days": [0], "uncertainty_samples": 0,
+            "uncertainty_seed": 42, "labels_used": False,
+            "cross_layer_sampling": (
+                "independent_systemic_spatial_mapping_no_joint_covariance"
+            ),
+            "spatial_missing_zone_policy": "feature_prior",
+        },
+    )
+    artifact = joblib.load(model)
+    artifact["training_input_provenance"] = {
+        "augmentation_audit": json.loads(audit_path.read_text()),
+    }
+    joblib.dump(artifact, model)
+    lineage = validate_prediction_feature_lineage(
+        model, features, {"features": raw}, require_derivation_replay=True,
+    )
+    assert lineage["augmentation_derivation_replayed"] is True
+    assert lineage["augmentation_verified_inputs"] == ["features"]
+    raw.write_text(raw.read_text() + "\n")
+    with pytest.raises(ValueError, match="augmentation input SHA-256 mismatch"):
+        validate_prediction_feature_lineage(
+            model, features, {"features": raw}, require_derivation_replay=True,
+        )
 def test_treatment_aware_prediction_requires_compatible_feature_lineage(tmp_path: Path):
     model, features, _ = _files(tmp_path)
     payload = _add_treatment_lineage(model, features)

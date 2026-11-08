@@ -252,6 +252,7 @@ def main() -> None:
     predict.add_argument("--model", required=True)
     predict.add_argument("--features", required=True)
     predict.add_argument("--output", required=True)
+    _add_augmentation_replay_inputs(predict)
     evaluate = sub.add_parser("evaluate")
     evaluate.add_argument("--predictions", required=True)
     evaluate.add_argument("--model", required=True)
@@ -261,6 +262,7 @@ def main() -> None:
     evaluate.add_argument("--bootstrap", type=int, default=500)
     evaluate.add_argument("--prediction-audit",
                           help="defaults to <predictions>.audit.json")
+    _add_augmentation_replay_inputs(evaluate)
     verify_evaluation = sub.add_parser("verify-evaluation")
     verify_evaluation.add_argument("--audit", required=True)
     verify_evaluation.add_argument("--predictions", required=True)
@@ -269,6 +271,7 @@ def main() -> None:
     verify_evaluation.add_argument("--labels", required=True)
     verify_evaluation.add_argument("--metrics", required=True)
     verify_evaluation.add_argument("--prediction-audit")
+    _add_augmentation_replay_inputs(verify_evaluation)
     site_cv = sub.add_parser("site-cv")
     site_cv.add_argument("--features", required=True)
     site_cv.add_argument("--labels", required=True)
@@ -519,12 +522,18 @@ def main() -> None:
         print(json.dumps(metrics, indent=2))
     elif args.command == "predict":
         import pandas as pd
-        validate_prediction_feature_lineage(args.model, args.features)
+        augmentation_paths = (
+            _augmentation_input_paths(args) if args.augmentation_features else None
+        )
+        validate_prediction_feature_lineage(
+            args.model, args.features, augmentation_paths,
+            require_derivation_replay=True,
+        )
         predictions = predict_locked(args.model, pd.read_csv(args.features))
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         predictions.to_csv(args.output, index=False)
         audit_path = write_prediction_audit(
-            args.model, args.features, args.output, len(predictions),
+            args.model, args.features, args.output, len(predictions), augmentation_paths,
         )
         print(json.dumps({"n_patients": len(predictions), "output": args.output,
                           "model_refit": False, "audit": str(audit_path)}, indent=2))
@@ -532,6 +541,7 @@ def main() -> None:
         import pandas as pd
         prediction_audit = verify_prediction_audit(
             args.predictions, args.prediction_audit, args.model, args.features,
+            (_augmentation_input_paths(args) if args.augmentation_features else None),
         )
         metrics = evaluate_external(pd.read_csv(args.predictions), load_labels(args.labels), args.bootstrap)
         metrics["validation_chain"] = {
@@ -578,6 +588,7 @@ def main() -> None:
         report = verify_evaluation_audit(
             args.audit, args.predictions, args.model, args.features, args.labels,
             args.metrics, args.prediction_audit,
+            (_augmentation_input_paths(args) if args.augmentation_features else None),
         )
         print(json.dumps(report, indent=2))
     elif args.command == "simulate":
