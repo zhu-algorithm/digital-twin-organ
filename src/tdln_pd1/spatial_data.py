@@ -95,6 +95,14 @@ def aggregate_spatial_spots(
     observed_pairs = weighted[["patient_id", "zone"]].drop_duplicates()
     if sample_column:
         weighted[sample_column] = x[sample_column]
+        patient_sample_counts = (
+            weighted[["patient_id", sample_column]].drop_duplicates()
+            .groupby("patient_id").size().rename("sampling_units_total")
+        )
+        observed_sample_counts = (
+            weighted[["patient_id", sample_column, "zone"]].drop_duplicates()
+            .groupby(["patient_id", "zone"]).size().rename("sampling_units_observed")
+        )
         per_sample = weighted.groupby(
             ["patient_id", sample_column, "zone"], sort=True, as_index=False
         ).sum()
@@ -118,6 +126,11 @@ def aggregate_spatial_spots(
             )[list(SPECIES)].sum()
     else:
         observed = weighted.groupby(["patient_id", "zone"], sort=True, as_index=False).sum()
+        patient_sample_counts = pd.Series(1, index=observed.patient_id.unique(),
+                                          name="sampling_units_total")
+        observed_sample_counts = observed_pairs.set_index(["patient_id", "zone"]).assign(
+            sampling_units_observed=1
+        ).sampling_units_observed
     patients = sorted(observed.patient_id.unique())
     zones = [zone.name for zone in ZONES]
     complete_index = pd.MultiIndex.from_product(
@@ -130,7 +143,18 @@ def aggregate_spatial_spots(
     out["zone_observed"] = pd.MultiIndex.from_frame(
         out[["patient_id", "zone"]]
     ).isin(observed_index)
-    return out.melt(id_vars=["patient_id", "zone", "zone_observed"],
+    out["sampling_units_total"] = out.patient_id.map(patient_sample_counts).astype(int)
+    out["sampling_units_observed"] = (
+        pd.MultiIndex.from_frame(out[["patient_id", "zone"]]).map(observed_sample_counts)
+    )
+    out["sampling_units_observed"] = out.sampling_units_observed.fillna(0).astype(int)
+    out["sampling_unit_coverage"] = (
+        out.sampling_units_observed / out.sampling_units_total
+    )
+    return out.melt(id_vars=[
+        "patient_id", "zone", "zone_observed", "sampling_units_observed",
+        "sampling_units_total", "sampling_unit_coverage",
+    ],
                     value_vars=list(SPECIES), var_name="species", value_name="amount").sort_values(
         ["patient_id", "species", "zone"], ignore_index=True
     )

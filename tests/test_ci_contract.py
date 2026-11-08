@@ -53,6 +53,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "verify-spatial-features --audit /tmp/spatial_initial.csv.spatial-audit.json --spots examples/spatial_spots.csv",
         "spatial-featurize --spots examples/spatial_spots_partial.csv --weight-column area --sample-column section_id --sample-aggregation equal_observed_samples",
         "x.loc[('tpex','paracortex'),'amount'] == 80000.0",
+        "x.loc[('tpex','paracortex'),'sampling_unit_coverage'] == 0.5",
         "verify-spatial-features --audit /tmp/spatial_partial.csv.spatial-audit.json --spots examples/spatial_spots_partial.csv",
         "propagate-uncertainty --parameters /tmp/calibration/fitted_parameters.json",
         "verify-uncertainty --audit /tmp/uncertainty/uncertainty_provenance.json",

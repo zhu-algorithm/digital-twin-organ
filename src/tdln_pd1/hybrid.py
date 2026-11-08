@@ -280,6 +280,29 @@ def augment_with_twin(
             spatial_zone_coverage = float(observed_flag.mean())
         else:
             spatial_zone_coverage = np.nan
+        if measured_states is not None and "sampling_unit_coverage" in measured_spatial_initial:
+            sampling_audit = measured_spatial_initial[
+                ["zone", "sampling_unit_coverage"]
+            ].drop_duplicates()
+            if sampling_audit.zone.duplicated().any():
+                raise ValueError(
+                    "sampling_unit_coverage must be consistent across species within each zone"
+                )
+            sampling_audit["sampling_unit_coverage"] = pd.to_numeric(
+                sampling_audit.sampling_unit_coverage, errors="coerce"
+            )
+            if (not np.isfinite(sampling_audit.sampling_unit_coverage).all()
+                    or not sampling_audit.sampling_unit_coverage.between(0, 1).all()):
+                raise ValueError("sampling_unit_coverage must be finite and between zero and one")
+            spatial_sampling_coverage_mean = float(
+                sampling_audit.sampling_unit_coverage.mean()
+            )
+            spatial_sampling_coverage_min = float(
+                sampling_audit.sampling_unit_coverage.min()
+            )
+        else:
+            spatial_sampling_coverage_mean = np.nan
+            spatial_sampling_coverage_min = np.nan
         spatial_days = min(days, 14.0)
 
         def endpoint(frame: pd.DataFrame, species: str, zone: str) -> float:
@@ -332,6 +355,8 @@ def augment_with_twin(
             **point,
             "qc_spatial_initialization_measured": int(measured_states is not None),
             "qc_spatial_zone_coverage": spatial_zone_coverage,
+            "qc_spatial_sampling_coverage_mean": spatial_sampling_coverage_mean,
+            "qc_spatial_sampling_coverage_min": spatial_sampling_coverage_min,
             "qc_systemic_parameters_supplied": int(systemic_parameters is not None),
             "qc_spatial_parameters_supplied": int(spatial_parameters is not None),
             "qc_mechanistic_uncertainty_samples": uncertainty_samples,

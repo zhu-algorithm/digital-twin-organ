@@ -21,6 +21,13 @@ def test_spatial_spots_aggregate_to_auditable_zone_states():
     observed = states[["zone", "zone_observed"]].drop_duplicates().set_index("zone")
     assert observed.zone_observed.sum() == 2
     assert not observed.loc["medulla", "zone_observed"]
+    support = states[["zone", "sampling_units_observed", "sampling_units_total",
+                      "sampling_unit_coverage"]].drop_duplicates().set_index("zone")
+    assert support.loc["paracortex"].to_dict() == {
+        "sampling_units_observed": 1.0, "sampling_units_total": 1.0,
+        "sampling_unit_coverage": 1.0,
+    }
+    assert support.loc["medulla", "sampling_unit_coverage"] == 0.0
     amount = states.set_index(["species", "zone"]).amount
     assert amount[("antigen", "afferent_lymph")] == 1.0
     assert amount[("tpex", "paracortex")] == 11.0
@@ -123,10 +130,18 @@ def test_observed_sample_mean_does_not_treat_an_unsampled_zone_as_zero():
         partial_sections, "area", sample_column="section_id",
         sample_aggregation="equal_samples",
     ).set_index(["species", "zone"]).amount
-    observed_only = aggregate_spatial_spots(
+    observed_states = aggregate_spatial_spots(
         partial_sections, "area", sample_column="section_id",
         sample_aggregation="equal_observed_samples",
-    ).set_index(["species", "zone"]).amount
+    )
+    observed_only = observed_states.set_index(["species", "zone"]).amount
     assert zero_assumption[("tpex", "paracortex")] == 3.0
     assert observed_only[("tpex", "paracortex")] == 6.0
     assert observed_only[("mature_dc", "afferent_lymph")] == 2.0
+    support = observed_states[["zone", "sampling_units_observed",
+                               "sampling_units_total", "sampling_unit_coverage"]]
+    support = support.drop_duplicates().set_index("zone")
+    assert support.loc["paracortex", "sampling_units_observed"] == 1
+    assert support.loc["paracortex", "sampling_units_total"] == 2
+    assert support.loc["paracortex", "sampling_unit_coverage"] == 0.5
+    assert support.loc["medulla", "sampling_unit_coverage"] == 0.0

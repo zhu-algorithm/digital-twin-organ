@@ -181,12 +181,24 @@ def test_measured_spatial_states_drive_hybrid_endpoints_without_labels():
     )
     assert out.qc_spatial_initialization_measured.eq(1).all()
     assert out.qc_spatial_zone_coverage.eq(1 / 6).all()
+    assert out.qc_spatial_sampling_coverage_mean.isna().all()
     assert out.qc_systemic_parameters_supplied.eq(1).all()
     assert out.qc_spatial_parameters_supplied.eq(1).all()
     assert "response" not in out
     assert out.loc[out.patient_id.eq("b"), "twin_spatial_treated_paracortex_tpex"].item() > (
         out.loc[out.patient_id.eq("a"), "twin_spatial_treated_paracortex_tpex"].item()
     )
+
+
+def test_hybrid_reports_sampling_support_without_using_it_as_state():
+    features = pd.DataFrame({"patient_id": ["a"], "sig_tcf7_memory": [0.2]})
+    states = _complete_spatial_state("a", 1.0e4, 5.0e3)
+    coverage = {zone: (0.5 if zone == "paracortex" else 0.0)
+                for zone in states.zone.unique()}
+    states["sampling_unit_coverage"] = states.zone.map(coverage)
+    out = augment_with_twin(features, days=1, dose_days=(0,), spatial_states=states)
+    assert out.qc_spatial_sampling_coverage_mean.item() == pytest.approx(0.5 / 6)
+    assert out.qc_spatial_sampling_coverage_min.item() == 0.0
 
 
 def test_spatial_hybrid_fails_closed_on_patient_mismatch_or_outcome_column():

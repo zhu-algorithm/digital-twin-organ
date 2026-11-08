@@ -70,7 +70,7 @@
 实际核查结果、数据契约、运行方法与临床适用边界见 [`TDLN_PD1_README.md`](TDLN_PD1_README.md)。
 系统层的 Naive CD8 稳态、Tpex/耗竭细胞死亡、Treg 诱导/死亡，以及空间层的抗原半饱和常数均为显式参数；默认值仅用于保持参考轨迹，尚未构成生物学或临床标定。
 
-空间组学入口对多切片采样实行显式契约：出现 `sample_id`、`library_id`、`slide_id` 或 `section_id` 时，必须通过 `--sample-column` 指定采样单位，并用 `--sample-aggregation equal_samples`（完整切片等权且未覆盖区按零处理）、`equal_observed_samples`（每区仅在实际覆盖它的切片间等权）或 `sum_samples`（声明为物理总量）选择估计目标。该选择会进入可重放审计，避免切片数量或视野缺失在不知情时改变患者信号。
+空间组学入口对多切片采样实行显式契约：出现 `sample_id`、`library_id`、`slide_id` 或 `section_id` 时，必须通过 `--sample-column` 指定采样单位，并用 `--sample-aggregation equal_samples`（完整切片等权且未覆盖区按零处理）、`equal_observed_samples`（每区仅在实际覆盖它的切片间等权）或 `sum_samples`（声明为物理总量）选择估计目标。该选择会进入可重放审计，避免切片数量或视野缺失在不知情时改变患者信号。状态表同时保留每个患者—区域的 `sampling_units_observed`、`sampling_units_total` 与 `sampling_unit_coverage`；它们是采样支持度 QC，不是生物学置信度，也不参与动力学状态量。
 
 ## 肝脏肿瘤虚拟器官
 

@@ -77,7 +77,7 @@ jobs:
           python -c "import pandas as pd; x=pd.read_csv('/tmp/spatial_initial.csv').set_index(['species','zone']); assert x.loc[('tpex','paracortex'),'amount'] == 90000.0"
           tdln-pd1 verify-spatial-features --audit /tmp/spatial_initial.csv.spatial-audit.json --spots examples/spatial_spots.csv --output /tmp/spatial_initial.csv
           tdln-pd1 spatial-featurize --spots examples/spatial_spots_partial.csv --weight-column area --sample-column section_id --sample-aggregation equal_observed_samples --output /tmp/spatial_partial.csv
-          python -c "import pandas as pd; x=pd.read_csv('/tmp/spatial_partial.csv').set_index(['species','zone']); assert x.loc[('tpex','paracortex'),'amount'] == 80000.0"
+          python -c "import pandas as pd; x=pd.read_csv('/tmp/spatial_partial.csv').set_index(['species','zone']); assert x.loc[('tpex','paracortex'),'amount'] == 80000.0; assert x.loc[('tpex','paracortex'),'sampling_units_observed'] == 1; assert x.loc[('tpex','paracortex'),'sampling_units_total'] == 2; assert x.loc[('tpex','paracortex'),'sampling_unit_coverage'] == 0.5"
           tdln-pd1 verify-spatial-features --audit /tmp/spatial_partial.csv.spatial-audit.json --spots examples/spatial_spots_partial.csv --output /tmp/spatial_partial.csv
           tdln-pd1 simulate-spatial --initial-zones /tmp/spatial_initial.csv --patient-id example_patient --systemic-parameters /tmp/calibration/fitted_parameters.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --days 3 --dose-days 0 --paired-counterfactual --output /tmp/spatial_patient.csv
           tdln-pd1 sensitivity --parameters tumour_growth,killing_rate --days 3 --samples 8 --output /tmp/sensitivity
