@@ -549,7 +549,10 @@ def main() -> None:
         print(json.dumps(metrics, indent=2))
     elif args.command == "site-cv":
         import pandas as pd
-        _training_input_provenance(args.features)
+        _training_input_provenance(
+            args.features,
+            _augmentation_input_paths(args) if args.augmentation_features else None,
+        )
         metrics, predictions = leave_one_site_out(pd.read_csv(args.features), pd.read_csv(args.labels),
                                                   args.site_column, args.bootstrap)
         output = Path(args.output)
