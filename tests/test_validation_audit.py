@@ -20,7 +20,11 @@ def _files(tmp_path: Path):
         "training_feature_cohort_fingerprint": "b" * 64,
         "point_prediction_method": "full_cohort_locked_model",
         "uncertainty_method": "patient_bootstrap_refit",
-        "uncertainty_bootstrap_design": {"unit": "patient", "groups": 1, "seed": 42},
+        "training_patients": 1,
+        "bootstrap_models": [],
+        "uncertainty_bootstrap_design": {
+            "unit": "patient", "groups": 1, "members": 0, "seed": 42,
+        },
     }, model)
     features = tmp_path / "features.csv"
     features.write_text("patient_id,x\np1,1\n")
@@ -197,7 +201,8 @@ def test_prediction_and_evaluation_audits_bind_every_file(tmp_path: Path, monkey
     payload = json.loads(audit_path.read_text())
     assert payload["artifact_version"] == 10
     assert payload["uncertainty_bootstrap_contract"] == {
-        "method": "patient_bootstrap_refit", "unit": "patient", "groups": 1, "seed": 42,
+        "method": "patient_bootstrap_refit", "unit": "patient", "groups": 1,
+        "members": 0, "seed": 42,
     }
     verified = verify_prediction_audit(predictions, model_path=model, features_path=features)
     assert verified["payload"]["model_refit"] is False

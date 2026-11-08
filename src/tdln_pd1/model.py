@@ -211,13 +211,22 @@ def validate_uncertainty_bootstrap_contract(artifact: dict) -> dict:
     }.get(method)
     if expected_unit is None or not isinstance(design, dict):
         raise ValueError("locked model lacks the v10 uncertainty-bootstrap contract")
-    groups, seed = design.get("groups"), design.get("seed")
+    groups, seed, members = design.get("groups"), design.get("seed"), design.get("members")
+    models = artifact.get("bootstrap_models")
+    training_patients = artifact.get("training_patients")
     if (design.get("unit") != expected_unit
             or not isinstance(groups, (int, np.integer)) or isinstance(groups, bool)
             or groups < (2 if expected_unit == "centre" else 1)
-            or seed != 42):
+            or not isinstance(members, (int, np.integer)) or isinstance(members, bool)
+            or members < 0 or not isinstance(models, list) or len(models) != members
+            or seed != 42
+            or not isinstance(training_patients, (int, np.integer))
+            or isinstance(training_patients, bool) or training_patients < 1
+            or (expected_unit == "patient" and groups != training_patients)
+            or (expected_unit == "centre" and groups > training_patients)):
         raise ValueError("invalid v10 uncertainty-bootstrap contract")
-    return {"method": method, "unit": expected_unit, "groups": int(groups), "seed": 42}
+    return {"method": method, "unit": expected_unit, "groups": int(groups),
+            "members": int(members), "seed": 42}
 
 
 def _nested_oof_for_columns(
@@ -763,6 +772,7 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
                          "uncertainty_method": uncertainty_contract["method"],
                          "uncertainty_bootstrap_unit": uncertainty_contract["unit"],
                          "uncertainty_bootstrap_groups": uncertainty_contract["groups"],
+                         "uncertainty_bootstrap_members": uncertainty_contract["members"],
                          "predicted_response": (probability >= threshold).astype(int),
                          "decision_threshold": threshold,
                          "training_overlap": overlap,
@@ -1121,6 +1131,7 @@ def train_evaluate(
                          int(len(unique_ensemble_groups))
                          if unique_ensemble_groups is not None else int(len(data))
                      ),
+                     "members": int(ensemble_members),
                      "seed": 42,
                  },
                  "point_prediction_method": "full_cohort_locked_model",

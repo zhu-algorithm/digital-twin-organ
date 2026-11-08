@@ -35,7 +35,7 @@ def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     assert metrics["prediction_uncertainty"]["unit"] == "patient"
     assert artifact["uncertainty_method"] == "patient_bootstrap_refit"
     assert artifact["uncertainty_bootstrap_design"] == {
-        "unit": "patient", "groups": 8, "seed": 42,
+        "unit": "patient", "groups": 8, "members": 8, "seed": 42,
     }
     assert metrics["selection_metric"] == "negative_log_loss"
     assert metrics["probability_estimand"].startswith("unweighted_logistic_likelihood")
@@ -120,7 +120,7 @@ def test_training_and_fusion_ablation_bootstrap_whole_centres(tmp_path: Path):
     artifact = joblib.load(tmp_path / "model.joblib")
     assert artifact["uncertainty_method"] == "centre_cluster_bootstrap_refit"
     assert artifact["uncertainty_bootstrap_design"] == {
-        "unit": "centre", "groups": 3, "seed": 42,
+        "unit": "centre", "groups": 3, "members": 2, "seed": 42,
     }
     second_scaler = artifact["bootstrap_models"][1].named_steps["prep"].named_transformers_[
         "numeric"
@@ -262,6 +262,7 @@ def test_locked_prediction_and_external_evaluation(tmp_path: Path):
     assert predictions.uncertainty_method.eq("patient_bootstrap_refit").all()
     assert predictions.uncertainty_bootstrap_unit.eq("patient").all()
     assert predictions.uncertainty_bootstrap_groups.eq(8).all()
+    assert predictions.uncertainty_bootstrap_members.eq(8).all()
     artifact = joblib.load(tmp_path / "model.joblib")
     expected_point = artifact["model"].predict_proba(external_features[["x"]])[:, 1]
     assert predictions.probability.tolist() == pytest.approx(expected_point)
@@ -430,6 +431,14 @@ def test_locked_prediction_rejects_tampered_uncertainty_bootstrap_contract(tmp_p
     with pytest.raises(ValueError, match="invalid v10 uncertainty-bootstrap"):
         predict_locked(
             tmp_path / "tampered.joblib",
+            pd.DataFrame({"patient_id": ["external"], "x": [0.5]}),
+        )
+    artifact = joblib.load(tmp_path / "model.joblib")
+    artifact["bootstrap_models"] = artifact["bootstrap_models"][:-1]
+    joblib.dump(artifact, tmp_path / "missing_member.joblib")
+    with pytest.raises(ValueError, match="invalid v10 uncertainty-bootstrap"):
+        predict_locked(
+            tmp_path / "missing_member.joblib",
             pd.DataFrame({"patient_id": ["external"], "x": [0.5]}),
         )
 
