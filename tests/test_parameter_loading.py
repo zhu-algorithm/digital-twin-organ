@@ -93,3 +93,22 @@ def test_training_input_binds_and_checks_label_free_augmentation_audit(tmp_path)
     features.write_text("patient_id,x\np0,2\n")
     with pytest.raises(ValueError, match="mismatched feature augmentation audit"):
         _training_input_provenance(str(features))
+
+
+def test_mechanistic_training_features_require_augmentation_lineage(tmp_path):
+    features = tmp_path / "hybrid.csv"
+    features.write_text("patient_id,sig_x,twin_effector_gain\np0,1,2\n")
+    with pytest.raises(ValueError, match="mechanistic training features require"):
+        _training_input_provenance(str(features))
+
+    feature_sha = hashlib.sha256(features.read_bytes()).hexdigest()
+    audit = tmp_path / "hybrid.csv.twin-audit.json"
+    audit.write_text(json.dumps({
+        "schema_version": 1,
+        "stage": "label_free_twin_augmentation",
+        "labels_used": False,
+        "output": {"file": features.name, "sha256": feature_sha},
+        "inputs": {},
+    }))
+    provenance = _training_input_provenance(str(features))
+    assert provenance["mechanistic_feature_lineage_required"] is True

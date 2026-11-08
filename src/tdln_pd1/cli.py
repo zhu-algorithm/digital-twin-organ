@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 from dataclasses import asdict, fields, replace
 import hashlib
 import json
@@ -155,6 +156,21 @@ def _training_input_provenance(feature_path: str) -> dict:
         ).hexdigest()
     else:
         provenance["augmentation_audit"] = None
+    try:
+        with source.open(newline="") as handle:
+            columns = next(csv.reader(handle))
+    except (OSError, StopIteration) as error:
+        raise ValueError("training feature table has no readable header") from error
+    mechanistic = sorted(
+        column for column in columns
+        if column.startswith(("twin_", "liver_cf_"))
+    )
+    if mechanistic and provenance["augmentation_audit"] is None:
+        raise ValueError(
+            "mechanistic training features require a matching twin augmentation audit: "
+            f"{mechanistic[:10]}"
+        )
+    provenance["mechanistic_feature_lineage_required"] = bool(mechanistic)
     return provenance
 
 
@@ -489,6 +505,7 @@ def main() -> None:
         print(json.dumps(metrics, indent=2))
     elif args.command == "site-cv":
         import pandas as pd
+        _training_input_provenance(args.features)
         metrics, predictions = leave_one_site_out(pd.read_csv(args.features), pd.read_csv(args.labels),
                                                   args.site_column, args.bootstrap)
         output = Path(args.output)
