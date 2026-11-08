@@ -15,12 +15,14 @@ SETTINGS = {
     "days": 1.0, "dose_days": [0.0], "dose": 1.0, "labels_used": False,
     "uncertainty_samples": 0, "uncertainty_seed": 42,
     "cross_layer_sampling": "independent_systemic_spatial_mapping_no_joint_covariance",
+    "spatial_missing_zone_policy": "feature_prior",
 }
 
 
 def _spatial_states() -> pd.DataFrame:
     return pd.DataFrame([
-        {"patient_id": "p1", "species": species, "zone": zone, "amount": 0.0}
+        {"patient_id": "p1", "species": species, "zone": zone, "amount": 0.0,
+         "zone_observed": zone == "paracortex"}
         for species in SPECIES for zone in ZONE_NAMES
     ])
 
@@ -139,6 +141,15 @@ def test_augmentation_replay_detects_setting_tampering(tmp_path):
     _, _, output, audit, paths = _case(tmp_path)
     payload = json.loads(audit.read_text())
     payload["settings"]["dose"] = 0.0
+    audit.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="augmentation derivation replay mismatch"):
+        verify_augmentation_audit(audit, output, paths)
+
+
+def test_augmentation_replay_binds_missing_zone_fusion_policy(tmp_path):
+    _, _, output, audit, paths = _case(tmp_path, spatial=True)
+    payload = json.loads(audit.read_text())
+    payload["settings"]["spatial_missing_zone_policy"] = "explicit_zero"
     audit.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="augmentation derivation replay mismatch"):
         verify_augmentation_audit(audit, output, paths)

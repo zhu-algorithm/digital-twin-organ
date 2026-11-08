@@ -79,6 +79,10 @@ jobs:
           tdln-pd1 spatial-featurize --spots examples/spatial_spots_partial.csv --weight-column area --sample-column section_id --sample-aggregation equal_observed_samples --output /tmp/spatial_partial.csv
           python -c "import pandas as pd; x=pd.read_csv('/tmp/spatial_partial.csv').set_index(['species','zone']); assert x.loc[('tpex','paracortex'),'amount'] == 80000.0; assert x.loc[('tpex','paracortex'),'sampling_units_observed'] == 1; assert x.loc[('tpex','paracortex'),'sampling_units_total'] == 2; assert x.loc[('tpex','paracortex'),'sampling_unit_coverage'] == 0.5"
           tdln-pd1 verify-spatial-features --audit /tmp/spatial_partial.csv.spatial-audit.json --spots examples/spatial_spots_partial.csv --output /tmp/spatial_partial.csv
+          python -c "import pandas as pd; pd.DataFrame({'patient_id':['partial_patient'],'sig_tcf7_memory':[0.5],'sig_cytotoxic':[0.5]}).to_csv('/tmp/partial_features.csv',index=False)"
+          tdln-pd1 augment-twin --features /tmp/partial_features.csv --spatial-initial-zones /tmp/spatial_partial.csv --spatial-missing-zone-policy feature_prior --days 1 --dose-days 0 --output /tmp/partial_hybrid.csv
+          python -c "import pandas as pd; x=pd.read_csv('/tmp/partial_hybrid.csv').iloc[0]; assert x.qc_spatial_feature_prior_imputed_fraction == 4/6"
+          tdln-pd1 verify-augmentation --audit /tmp/partial_hybrid.csv.twin-audit.json --output /tmp/partial_hybrid.csv --features /tmp/partial_features.csv --spatial-initial-zones /tmp/spatial_partial.csv
           tdln-pd1 simulate-spatial --initial-zones /tmp/spatial_initial.csv --patient-id example_patient --systemic-parameters /tmp/calibration/fitted_parameters.json --spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json --days 3 --dose-days 0 --paired-counterfactual --output /tmp/spatial_patient.csv
           tdln-pd1 sensitivity --parameters tumour_growth,killing_rate --days 3 --samples 8 --output /tmp/sensitivity
           tdln-pd1 verify-sensitivity --audit /tmp/sensitivity/sensitivity_provenance.json

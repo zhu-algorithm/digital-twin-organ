@@ -9,7 +9,7 @@ import pandas as pd
 
 from .simulator import Dose, InitialState, TwinParameters, simulate
 from .spatial_dynamics import (SpatialInitialState, SpatialParameters,
-                               simulate_spatial_coupled)
+                               SPECIES, ZONE_NAMES, simulate_spatial_coupled)
 
 
 OUTCOME_TOKENS = (
@@ -206,6 +206,7 @@ def augment_with_twin(
     spatial_parameter_draws: tuple[SpatialParameters, ...] | None = None,
     feature_state_mapping: FeatureStateMapping | None = None,
     feature_state_mapping_draws: tuple[FeatureStateMapping, ...] | None = None,
+    spatial_missing_zone_policy: str = "feature_prior",
 ) -> pd.DataFrame:
     """Add label-free point and optional calibrated-uncertainty endpoints."""
     if "patient_id" not in features:
@@ -213,6 +214,10 @@ def augment_with_twin(
     features = features.copy()
     mapping = feature_state_mapping or FeatureStateMapping()
     _validate_mapping(mapping)
+    if spatial_missing_zone_policy not in {"feature_prior", "explicit_zero"}:
+        raise ValueError(
+            "spatial_missing_zone_policy must be feature_prior or explicit_zero"
+        )
     forbidden_features = _outcome_like_columns(features)
     if forbidden_features:
         raise ValueError(
@@ -278,8 +283,10 @@ def augment_with_twin(
                     raise ValueError("zone_observed must contain only true/false values")
                 observed_flag = normalized.eq("true")
             spatial_zone_coverage = float(observed_flag.mean())
+            observed_zones = set(zone_audit.loc[observed_flag, "zone"])
         else:
             spatial_zone_coverage = np.nan
+            observed_zones = set(ZONE_NAMES) if measured_states is not None else set()
         if measured_states is not None and "sampling_unit_coverage" in measured_spatial_initial:
             sampling_audit = measured_spatial_initial[
                 ["zone", "sampling_unit_coverage"]
@@ -315,12 +322,40 @@ def augment_with_twin(
             state_mapping: FeatureStateMapping,
         ) -> dict[str, float]:
             initial = initial_state_from_features(pd.Series(row), mapping=state_mapping)
-            spatial_initial = (
-                measured_spatial_initial if measured_spatial_initial is not None
-                else spatial_initial_state_from_features(
-                    pd.Series(row), mapping=state_mapping
-                )
+            feature_spatial_initial = spatial_initial_state_from_features(
+                pd.Series(row), mapping=state_mapping
             )
+            if measured_spatial_initial is None:
+                spatial_initial = feature_spatial_initial
+            elif (spatial_missing_zone_policy == "feature_prior"
+                  and observed_zones != set(ZONE_NAMES)):
+                prior_amounts = {
+                    (species, zone): 0.0
+                    for species in SPECIES for zone in ZONE_NAMES
+                }
+                prior_amounts[("antigen", "afferent_lymph")] = (
+                    feature_spatial_initial.afferent_antigen
+                )
+                prior_amounts[("mature_dc", "afferent_lymph")] = (
+                    feature_spatial_initial.afferent_dc
+                )
+                prior_amounts[("tpex", "paracortex")] = (
+                    feature_spatial_initial.paracortex_tpex
+                )
+                prior_amounts[("effector", "paracortex")] = (
+                    feature_spatial_initial.paracortex_effector
+                )
+                spatial_initial = measured_spatial_initial.copy()
+                unobserved = ~spatial_initial.zone.isin(observed_zones)
+                spatial_initial.loc[unobserved, "amount"] = [
+                    prior_amounts[(species, zone)]
+                    for species, zone in zip(
+                        spatial_initial.loc[unobserved, "species"],
+                        spatial_initial.loc[unobserved, "zone"],
+                    )
+                ]
+            else:
+                spatial_initial = measured_spatial_initial
             control = simulate(days=days, initial=initial, parameters=systemic)
             treated = simulate(days=days, doses=doses, initial=initial, parameters=systemic)
             spatial_control = simulate_spatial_coupled(
@@ -355,6 +390,13 @@ def augment_with_twin(
             **point,
             "qc_spatial_initialization_measured": int(measured_states is not None),
             "qc_spatial_zone_coverage": spatial_zone_coverage,
+            "qc_spatial_feature_prior_imputed_fraction": (
+                1.0 - spatial_zone_coverage
+                if measured_states is not None
+                and spatial_missing_zone_policy == "feature_prior"
+                and np.isfinite(spatial_zone_coverage)
+                else 0.0
+            ),
             "qc_spatial_sampling_coverage_mean": spatial_sampling_coverage_mean,
             "qc_spatial_sampling_coverage_min": spatial_sampling_coverage_min,
             "qc_systemic_parameters_supplied": int(systemic_parameters is not None),

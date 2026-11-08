@@ -201,6 +201,33 @@ def test_hybrid_reports_sampling_support_without_using_it_as_state():
     assert out.qc_spatial_sampling_coverage_min.item() == 0.0
 
 
+def test_unobserved_spatial_zones_use_patient_prior_not_false_zero():
+    features = pd.DataFrame({"patient_id": ["a"], "tumour_antigen_proxy": [1.0]})
+    states = _complete_spatial_state("a", 1.0e4, 5.0e3)
+    # The afferent zone was outside the field of view; its zeros are not measurements.
+    prior = augment_with_twin(
+        features, days=1, dose_days=(0,), spatial_states=states,
+        spatial_missing_zone_policy="feature_prior",
+    )
+    zero = augment_with_twin(
+        features, days=1, dose_days=(0,), spatial_states=states,
+        spatial_missing_zone_policy="explicit_zero",
+    )
+    assert prior.qc_spatial_feature_prior_imputed_fraction.item() == pytest.approx(5 / 6)
+    assert zero.qc_spatial_feature_prior_imputed_fraction.item() == 0.0
+    assert prior.twin_spatial_treated_paracortex_tpex.item() != (
+        zero.twin_spatial_treated_paracortex_tpex.item()
+    )
+
+
+def test_spatial_missing_zone_policy_fails_closed():
+    with pytest.raises(ValueError, match="spatial_missing_zone_policy"):
+        augment_with_twin(
+            pd.DataFrame({"patient_id": ["a"]}), days=1, dose_days=(0,),
+            spatial_missing_zone_policy="guess",
+        )
+
+
 def test_spatial_hybrid_fails_closed_on_patient_mismatch_or_outcome_column():
     features = pd.DataFrame({"patient_id": ["a", "b"]})
     states = pd.DataFrame({"patient_id": ["a"], "species": ["tpex"],

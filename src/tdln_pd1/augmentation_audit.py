@@ -128,6 +128,9 @@ def verify_augmentation_audit(
             or settings.get("cross_layer_sampling")
             != "independent_systemic_spatial_mapping_no_joint_covariance"):
         raise ValueError("invalid augmentation replay settings")
+    missing_zone_policy = settings.get("spatial_missing_zone_policy", "explicit_zero")
+    if missing_zone_policy not in {"feature_prior", "explicit_zero"}:
+        raise ValueError("invalid spatial missing-zone replay policy")
     try:
         days, dose = float(settings["days"]), float(settings["dose"])
         dose_days = tuple(float(value) for value in settings["dose_days"])
@@ -173,6 +176,7 @@ def verify_augmentation_audit(
         spatial_parameter_draws=spatial_draws,
         feature_state_mapping=mapping,
         feature_state_mapping_draws=mapping_draws,
+        spatial_missing_zone_policy=missing_zone_policy,
     )
     replayed_sha = hashlib.sha256(
         replayed.to_csv(index=False).encode("utf-8")

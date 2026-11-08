@@ -72,6 +72,8 @@
 
 空间组学入口对多切片采样实行显式契约：出现 `sample_id`、`library_id`、`slide_id` 或 `section_id` 时，必须通过 `--sample-column` 指定采样单位，并用 `--sample-aggregation equal_samples`（完整切片等权且未覆盖区按零处理）、`equal_observed_samples`（每区仅在实际覆盖它的切片间等权）或 `sum_samples`（声明为物理总量）选择估计目标。该选择会进入可重放审计，避免切片数量或视野缺失在不知情时改变患者信号。状态表同时保留每个患者—区域的 `sampling_units_observed`、`sampling_units_total` 与 `sampling_unit_coverage`；它们是采样支持度 QC，不是生物学置信度，也不参与动力学状态量。
 
+当空间视野没有覆盖全部六个区域时，`augment-twin` 默认用同一患者的单细胞特征—状态映射补齐未观察区域，同时原样保留已观察区域；`--spatial-missing-zone-policy explicit_zero` 可运行“未观察即为零”的敏感性对照。策略及补齐比例进入输出 QC 和可重放审计，避免把缺失解剖区域静默解释为真实零生物量。
+
 ## 肝脏肿瘤虚拟器官
 
 新增的肝脏肿瘤病理层把门静脉／肝动脉灌注、氧供、正常肝细胞、肿瘤活性边缘、缺氧核心和坏死区连接为可运行的机制模型，并导出到可播放的交互页面。模型入口、方程边界与验证说明见 [`docs/LIVER_TUMOR_MODEL_CARD.md`](docs/LIVER_TUMOR_MODEL_CARD.md)；这是研究原型，不是临床预测工具。

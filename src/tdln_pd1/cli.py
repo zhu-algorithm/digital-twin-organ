@@ -290,6 +290,12 @@ def main() -> None:
     aug.add_argument("--dose", type=float, default=1.0)
     aug.add_argument("--spatial-initial-zones",
                      help="patient-zone-species states from spatial-featurize")
+    aug.add_argument(
+        "--spatial-missing-zone-policy",
+        choices=("feature_prior", "explicit_zero"), default="feature_prior",
+        help=("feature_prior fills unobserved zones from the patient single-cell mapping; "
+              "explicit_zero retains the spatial state table's declared zeros"),
+    )
     aug.add_argument("--systemic-parameters", help="fitted TwinParameters JSON")
     aug.add_argument("--spatial-parameters", help="fitted SpatialParameters JSON")
     aug.add_argument("--feature-state-mapping",
@@ -792,7 +798,9 @@ def main() -> None:
                                       systemic_parameter_draws=systemic_draws,
                                       spatial_parameter_draws=spatial_draws,
                                       feature_state_mapping=feature_state_mapping,
-                                      feature_state_mapping_draws=mapping_draws)
+                                      feature_state_mapping_draws=mapping_draws,
+                                      spatial_missing_zone_policy=(
+                                          args.spatial_missing_zone_policy))
         Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         augmented.to_csv(args.output, index=False)
         _write_parameter_provenance(args.output, {
@@ -864,6 +872,7 @@ def main() -> None:
                 "uncertainty_samples": args.uncertainty_samples,
                 "uncertainty_seed": args.uncertainty_seed,
                 "cross_layer_sampling": "independent_systemic_spatial_mapping_no_joint_covariance",
+                "spatial_missing_zone_policy": args.spatial_missing_zone_policy,
             },
         )
         print(json.dumps({"n_patients": len(augmented), "n_features": len(augmented.columns) - 1,
