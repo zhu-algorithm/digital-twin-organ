@@ -598,6 +598,8 @@ def test_external_primary_analysis_keeps_domain_shifted_patients():
         "feature_reuse_check_available": [True] * 6,
         "domain_check_available": [True] * 6,
         "domain_shift_flag": [True, False, False, False, False, False],
+        "spatial_evidence_check_available": [True] * 6,
+        "spatial_evidence_outside_training_range": [True, False, False, False, False, False],
         "decision_threshold": [0.5] * 6,
         "point_prediction_method": ["full_cohort_locked_model"] * 6,
     })
@@ -607,11 +609,33 @@ def test_external_primary_analysis_keeps_domain_shifted_patients():
     metrics = evaluate_external(predictions, labels, bootstrap=0)
     assert metrics["n_patients"] == 6
     assert metrics["domain_shift_count"] == 1
+    assert metrics["spatial_evidence_applicability"] == {
+        "checked": True, "outside_count": 1, "outside_fraction": pytest.approx(1 / 6),
+        "role": "evidence_support_not_fitted_biological_predictor",
+    }
     sensitivity = metrics["in_domain_sensitivity_analysis"]
     assert sensitivity["role"] == "prespecified_sensitivity_analysis_not_primary"
     assert sensitivity["status"] == "evaluated"
     assert sensitivity["n_patients"] == 5
     assert sensitivity["coverage"] == pytest.approx(5 / 6)
+
+
+def test_external_evaluation_rejects_spatial_domain_flag_contradiction():
+    predictions = pd.DataFrame({
+        "patient_id": ["a", "b"], "probability": [0.2, 0.8],
+        "training_overlap": [False, False], "overlap_check_available": [True, True],
+        "training_feature_reuse": [False, False],
+        "feature_reuse_check_available": [True, True],
+        "domain_check_available": [True, True], "domain_shift_flag": [False, False],
+        "spatial_evidence_check_available": [True, True],
+        "spatial_evidence_outside_training_range": [True, False],
+        "decision_threshold": [0.5, 0.5],
+        "point_prediction_method": ["full_cohort_locked_model"] * 2,
+    })
+    predictions = _zero_member_uncertainty(predictions)
+    labels = pd.DataFrame({"patient_id": ["a", "b"], "response": [0, 1]})
+    with pytest.raises(ValueError, match="conflict with domain-shift"):
+        evaluate_external(predictions, labels, bootstrap=0)
 
 
 def test_external_evaluation_uses_the_locked_decision_threshold():

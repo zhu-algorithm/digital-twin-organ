@@ -942,6 +942,31 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     if not domain_available.all() or "domain_shift_flag" not in predictions:
         raise ValueError("external evaluation requires locked-model applicability diagnostics")
     domain_flags = _boolean_audit_column(predictions.domain_shift_flag, "domain_shift_flag")
+    spatial_columns = {
+        "spatial_evidence_check_available",
+        "spatial_evidence_outside_training_range",
+    }
+    supplied_spatial_columns = spatial_columns.intersection(predictions.columns)
+    if supplied_spatial_columns and supplied_spatial_columns != spatial_columns:
+        raise ValueError("external evaluation has incomplete spatial evidence diagnostics")
+    if supplied_spatial_columns:
+        spatial_available = _boolean_audit_column(
+            predictions.spatial_evidence_check_available,
+            "spatial_evidence_check_available",
+        )
+        spatial_outside = _boolean_audit_column(
+            predictions.spatial_evidence_outside_training_range,
+            "spatial_evidence_outside_training_range",
+        )
+        if spatial_available.nunique() != 1:
+            raise ValueError("external evaluation requires one spatial evidence audit mode")
+        spatial_checked = bool(spatial_available.iloc[0])
+        if ((~spatial_available & spatial_outside).any()
+                or (spatial_outside & ~domain_flags).any()):
+            raise ValueError("spatial evidence diagnostics conflict with domain-shift flags")
+    else:
+        spatial_checked = False
+        spatial_outside = pd.Series(False, index=predictions.index)
     if "decision_threshold" not in predictions:
         raise ValueError("locked predictions need decision_threshold")
     thresholds = pd.to_numeric(predictions.decision_threshold, errors="coerce")
@@ -976,6 +1001,14 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
                     "domain_shift_count": int(domain_flags.sum()),
                     "domain_shift_fraction": float(domain_flags.mean()),
                     "in_domain_fraction": float((~domain_flags).mean()),
+                    "spatial_evidence_applicability": {
+                        "checked": spatial_checked,
+                        "outside_count": (int(spatial_outside.sum())
+                                          if spatial_checked else None),
+                        "outside_fraction": (float(spatial_outside.mean())
+                                             if spatial_checked else None),
+                        "role": "evidence_support_not_fitted_biological_predictor",
+                    },
                     "note": "External only if this cohort was never used for fitting, tuning, or feature design."})
     in_domain = data[~data._domain_shift_flag]
     class_counts = in_domain.response.value_counts()
