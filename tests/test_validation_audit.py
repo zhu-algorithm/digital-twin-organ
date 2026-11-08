@@ -88,6 +88,54 @@ def _add_mechanistic_contract(model: Path, payload: dict):
     return external
 
 
+def _add_generic_augmentation_lineage(model: Path, features: Path):
+    settings = {
+        "days": 14.0, "dose_days": [0.0], "dose": 1.0,
+        "uncertainty_samples": 0, "uncertainty_seed": 42,
+        "cross_layer_sampling": "independent_systemic_spatial_mapping_no_joint_covariance",
+        "spatial_missing_zone_policy": "feature_prior",
+    }
+    inputs = {
+        "features": {"file": "raw.csv", "sha256": "a" * 64},
+        "systemic_parameters": {"file": "systemic.json", "sha256": "b" * 64},
+        "spatial_parameters": None, "feature_state_mapping": None,
+        "systemic_diagnostics": None, "spatial_diagnostics": None,
+        "mapping_diagnostics": None,
+    }
+    training_audit = {"settings": settings, "inputs": inputs}
+    artifact = joblib.load(model)
+    artifact["training_input_provenance"] = {"augmentation_audit": training_audit}
+    joblib.dump(artifact, model)
+    external_audit = {
+        "schema_version": 1, "stage": "label_free_twin_augmentation",
+        "labels_used": False, "settings": json.loads(json.dumps(settings)),
+        "inputs": json.loads(json.dumps(inputs)),
+        "output": {"file": features.name,
+                   "sha256": hashlib.sha256(features.read_bytes()).hexdigest()},
+    }
+    Path(f"{features}.twin-audit.json").write_text(json.dumps(external_audit))
+    return external_audit
+
+
+def test_generic_mechanistic_model_requires_matching_augmentation_lineage(tmp_path: Path):
+    model, features, _ = _files(tmp_path)
+    payload = _add_generic_augmentation_lineage(model, features)
+    result = validate_prediction_feature_lineage(model, features)
+    assert result["required"] is result["verified"] is True
+    assert result["compatible_augmentation_generation_contract"]["settings"][
+        "spatial_missing_zone_policy"
+    ] == "feature_prior"
+
+    audit = Path(f"{features}.twin-audit.json")
+    audit.unlink()
+    with pytest.raises(ValueError, match="requires a feature twin audit"):
+        validate_prediction_feature_lineage(model, features)
+    payload["settings"]["days"] = 21.0
+    audit.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="augmentation-generation contract mismatch"):
+        validate_prediction_feature_lineage(model, features)
+
+
 def test_treatment_aware_prediction_requires_compatible_feature_lineage(tmp_path: Path):
     model, features, _ = _files(tmp_path)
     payload = _add_treatment_lineage(model, features)

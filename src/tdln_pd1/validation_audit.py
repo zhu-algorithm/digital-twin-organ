@@ -43,6 +43,37 @@ def _training_derivation(artifact: dict) -> dict | None:
     return derivation
 
 
+def _training_augmentation_audit(artifact: dict) -> dict | None:
+    provenance = artifact.get("training_input_provenance")
+    if not isinstance(provenance, dict):
+        return None
+    audit = provenance.get("augmentation_audit")
+    return audit if isinstance(audit, dict) else None
+
+
+def _augmentation_generation_contract(audit: dict) -> dict:
+    """Extract cohort-invariant mechanics from one twin augmentation audit."""
+    contract = {}
+    settings = audit.get("settings")
+    if isinstance(settings, dict):
+        names = (
+            "days", "dose_days", "dose", "uncertainty_samples", "uncertainty_seed",
+            "cross_layer_sampling", "spatial_missing_zone_policy",
+        )
+        contract["settings"] = {name: settings[name] for name in names if name in settings}
+    inputs = audit.get("inputs")
+    if isinstance(inputs, dict):
+        source_names = (
+            "systemic_parameters", "spatial_parameters", "feature_state_mapping",
+            "systemic_diagnostics", "spatial_diagnostics", "mapping_diagnostics",
+        )
+        contract["input_sha256"] = {
+            name: (inputs[name].get("sha256") if isinstance(inputs.get(name), dict) else None)
+            for name in source_names
+        }
+    return contract
+
+
 def _mechanistic_feature_contract(derivation: dict) -> dict:
     """Extract only semantics that must remain fixed for locked model features."""
     contract = {}
@@ -75,14 +106,16 @@ def validate_prediction_feature_lineage(
     """Fail closed when a treatment-aware model receives untraceable semantics."""
     model_path, features_path = Path(model_path), Path(features_path)
     artifact = joblib.load(model_path)
+    training_audit = (_training_augmentation_audit(artifact)
+                      if isinstance(artifact, dict) else None)
     training_derivation = _training_derivation(artifact) if isinstance(artifact, dict) else None
     training_contract = (training_derivation.get("treatment_contract")
                          if isinstance(training_derivation, dict) else None)
-    if training_contract is None:
+    if training_audit is None:
         return {"required": False, "verified": False}
     audit_path = Path(f"{features_path}.twin-audit.json")
     if not audit_path.is_file():
-        raise ValueError("treatment-aware model requires a feature twin audit")
+        raise ValueError("mechanistically augmented model requires a feature twin audit")
     audit = _load_json(audit_path)
     feature_sha = sha256_file(features_path)
     output = audit.get("output", {})
@@ -92,6 +125,27 @@ def validate_prediction_feature_lineage(
             or output.get("file") != features_path.name
             or output.get("sha256") != feature_sha):
         raise ValueError("invalid or mismatched prediction feature twin audit")
+    training_generation = _augmentation_generation_contract(training_audit)
+    external_generation = _augmentation_generation_contract(audit)
+    generation_mismatches = [
+        name for name, expected in training_generation.items()
+        if external_generation.get(name) != expected
+    ]
+    if generation_mismatches:
+        raise ValueError(
+            "prediction augmentation-generation contract mismatch: "
+            + ", ".join(generation_mismatches)
+        )
+    common_result = {
+        "required": True,
+        "verified": True,
+        "audit_file": audit_path.name,
+        "audit_sha256": sha256_file(audit_path),
+        "feature_sha256": feature_sha,
+        "compatible_augmentation_generation_contract": external_generation,
+    }
+    if training_contract is None:
+        return common_result
     derivation = audit.get("inputs", {}).get("features", {}).get("derivation_payload")
     if (not isinstance(derivation, dict)
             or derivation.get("stage")
@@ -156,11 +210,7 @@ def validate_prediction_feature_lineage(
             "prediction mechanistic feature contract mismatch: "
             + ", ".join(mechanistic_mismatches))
     return {
-        "required": True,
-        "verified": True,
-        "audit_file": audit_path.name,
-        "audit_sha256": sha256_file(audit_path),
-        "feature_sha256": feature_sha,
+        **common_result,
         "compatible_semantics": {field: external_contract[field]
                                  for field in semantic_fields},
         "external_regimen_ids": external_contract.get("regimen_ids", []),
