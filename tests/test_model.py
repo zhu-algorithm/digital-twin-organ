@@ -7,6 +7,21 @@ from tdln_pd1.model import (evaluate_external, evaluate_probabilities,
                             build_model, _safe_group_splits)
 
 
+def _zero_member_uncertainty(predictions: pd.DataFrame) -> pd.DataFrame:
+    """Attach a valid explicit v10 no-ensemble contract to hand-built predictions."""
+    return predictions.assign(
+        uncertainty_method="patient_bootstrap_refit",
+        uncertainty_bootstrap_unit="patient",
+        uncertainty_bootstrap_groups=1,
+        uncertainty_bootstrap_members=0,
+        uncertainty_available=False,
+        bootstrap_probability_median=float("nan"),
+        probability_lower_95=float("nan"),
+        probability_upper_95=float("nan"),
+        probability_interval_width=float("nan"),
+    )
+
+
 def test_train_evaluate_writes_reproducible_artifacts(tmp_path: Path):
     features = pd.DataFrame({
         "patient_id": [f"p{i}" for i in range(8)],
@@ -384,6 +399,7 @@ def test_external_audit_parses_csv_boole_but_rejects_ambiguous_values():
         "decision_threshold": [0.5, 0.5],
         "point_prediction_method": ["full_cohort_locked_model"] * 2,
     })
+    predictions = _zero_member_uncertainty(predictions)
     labels = pd.DataFrame({"patient_id": ["a", "b"], "response": [0, 1]})
     assert evaluate_external(predictions, labels, bootstrap=0)["training_overlap_count"] == 0
     predictions.loc[0, "training_overlap"] = "unknown"
@@ -443,6 +459,30 @@ def test_locked_prediction_rejects_tampered_uncertainty_bootstrap_contract(tmp_p
         )
 
 
+def test_external_evaluation_rejects_tampered_v10_uncertainty_rows(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    features = pd.DataFrame({"patient_id": patients, "x": range(8)})
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=2)
+    external = pd.DataFrame({
+        "patient_id": [f"q{i}" for i in range(8)],
+        "x": [value + 0.1 for value in range(8)],
+    })
+    external_labels = labels.assign(patient_id=external.patient_id)
+    predictions = predict_locked(tmp_path / "model.joblib", external)
+    mixed = predictions.copy()
+    mixed.loc[0, "uncertainty_method"] = "centre_cluster_bootstrap_refit"
+    with pytest.raises(ValueError, match="one valid v10 uncertainty method"):
+        evaluate_external(mixed, external_labels, bootstrap=0)
+    unavailable = predictions.assign(uncertainty_available=False)
+    with pytest.raises(ValueError, match="availability conflicts"):
+        evaluate_external(unavailable, external_labels, bootstrap=0)
+    inverted = predictions.copy()
+    inverted.loc[0, "probability_lower_95"] = 1.0
+    with pytest.raises(ValueError, match="invalid locked-model bootstrap"):
+        evaluate_external(inverted, external_labels, bootstrap=0)
+
+
 def test_external_evaluation_rejects_missing_domain_audit():
     predictions = pd.DataFrame({
         "patient_id": ["a", "b"], "probability": [0.2, 0.8],
@@ -482,6 +522,7 @@ def test_external_primary_analysis_keeps_domain_shifted_patients():
         "decision_threshold": [0.5] * 6,
         "point_prediction_method": ["full_cohort_locked_model"] * 6,
     })
+    predictions = _zero_member_uncertainty(predictions)
     labels = pd.DataFrame({"patient_id": predictions.patient_id,
                            "response": [0, 0, 0, 1, 1, 1]})
     metrics = evaluate_external(predictions, labels, bootstrap=0)
@@ -507,6 +548,7 @@ def test_external_evaluation_uses_the_locked_decision_threshold():
         "decision_threshold": [0.7] * 6,
         "point_prediction_method": ["full_cohort_locked_model"] * 6,
     })
+    predictions = _zero_member_uncertainty(predictions)
     labels = pd.DataFrame({"patient_id": predictions.patient_id,
                            "response": [0, 0, 0, 1, 1, 1]})
     metrics = evaluate_external(predictions, labels, bootstrap=0)
@@ -550,6 +592,7 @@ def test_external_evaluation_exposes_center_heterogeneity_without_dropping_sites
         "decision_threshold": [0.5] * 10,
         "point_prediction_method": ["full_cohort_locked_model"] * 10,
     })
+    predictions = _zero_member_uncertainty(predictions)
     labels = pd.DataFrame({
         "patient_id": predictions.patient_id,
         "response": [0, 1, 0, 1, 0, 1, 0, 1, 0, 0],

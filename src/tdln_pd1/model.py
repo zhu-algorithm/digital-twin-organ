@@ -786,6 +786,63 @@ def predict_locked(model_path: str | Path, features: pd.DataFrame) -> pd.DataFra
                          "domain_shift_flag": domain["flag"]})
 
 
+def _prediction_uncertainty_contract(predictions: pd.DataFrame) -> dict:
+    """Validate one v10 uncertainty contract and its row-level interval semantics."""
+    required = {
+        "uncertainty_method", "uncertainty_bootstrap_unit",
+        "uncertainty_bootstrap_groups", "uncertainty_bootstrap_members",
+        "uncertainty_available", "bootstrap_probability_median",
+        "probability_lower_95", "probability_upper_95", "probability_interval_width",
+    }
+    missing = required.difference(predictions.columns)
+    if missing:
+        raise ValueError(f"external evaluation missing v10 uncertainty columns: {sorted(missing)}")
+    methods = predictions.uncertainty_method.astype(str).str.strip().unique().tolist()
+    units = predictions.uncertainty_bootstrap_unit.astype(str).str.strip().unique().tolist()
+    expected = {"patient_bootstrap_refit": "patient",
+                "centre_cluster_bootstrap_refit": "centre"}
+    if len(methods) != 1 or len(units) != 1 or expected.get(methods[0]) != units[0]:
+        raise ValueError("external evaluation requires one valid v10 uncertainty method and unit")
+    numeric = {}
+    for column in ("uncertainty_bootstrap_groups", "uncertainty_bootstrap_members"):
+        values = pd.to_numeric(predictions[column], errors="coerce")
+        if (not np.isfinite(values).all() or values.nunique() != 1
+                or not float(values.iloc[0]).is_integer()):
+            raise ValueError("external evaluation requires one integer v10 uncertainty design")
+        numeric[column] = int(values.iloc[0])
+    groups, members = (numeric["uncertainty_bootstrap_groups"],
+                       numeric["uncertainty_bootstrap_members"])
+    if groups < (2 if units[0] == "centre" else 1) or members < 0:
+        raise ValueError("external evaluation requires a valid v10 uncertainty design")
+    available = _boolean_audit_column(
+        predictions.uncertainty_available, "uncertainty_available"
+    )
+    if available.nunique() != 1 or bool(available.iloc[0]) != (members > 0):
+        raise ValueError("uncertainty availability conflicts with bootstrap member count")
+    interval_columns = ["bootstrap_probability_median", "probability_lower_95",
+                        "probability_upper_95", "probability_interval_width"]
+    interval = predictions[interval_columns].apply(pd.to_numeric, errors="coerce")
+    if members:
+        if (not np.isfinite(interval.to_numpy()).all()
+                or not interval.bootstrap_probability_median.between(0, 1).all()
+                or not interval.probability_lower_95.between(0, 1).all()
+                or not interval.probability_upper_95.between(0, 1).all()
+                or (interval.probability_lower_95
+                    > interval.bootstrap_probability_median).any()
+                or (interval.bootstrap_probability_median
+                    > interval.probability_upper_95).any()
+                or not np.allclose(
+                    interval.probability_interval_width,
+                    interval.probability_upper_95 - interval.probability_lower_95,
+                    rtol=1e-10, atol=1e-12,
+                )):
+            raise ValueError("invalid locked-model bootstrap probability intervals")
+    elif not interval.isna().all().all():
+        raise ValueError("zero-member uncertainty intervals must be unavailable")
+    return {"method": methods[0], "unit": units[0], "groups": groups,
+            "members": members}
+
+
 def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap: int = 500) -> dict:
     predictions, labels = _align_patients(predictions, labels)
     if "overlap_check_available" not in predictions:
@@ -837,6 +894,7 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
         raise ValueError(
             "external evaluation requires point_prediction_method=full_cohort_locked_model"
         )
+    uncertainty_contract = _prediction_uncertainty_contract(predictions)
     audited_predictions = predictions.copy()
     audited_predictions["_domain_shift_flag"] = domain_flags.to_numpy(dtype=bool)
     data = audited_predictions.merge(labels, on="patient_id", validate="one_to_one")
@@ -848,6 +906,7 @@ def evaluate_external(predictions: pd.DataFrame, labels: pd.DataFrame, bootstrap
     )
     metrics.update({"n_patients": int(len(data)), "evaluation_type": "external_locked_model",
                     "training_overlap_checked": True, "training_overlap_count": 0,
+                    "uncertainty_bootstrap_contract": uncertainty_contract,
                     "training_feature_reuse_checked": True,
                     "training_feature_reuse_count": 0,
                     "applicability_checked": True,
