@@ -2,11 +2,38 @@ from dataclasses import asdict
 import hashlib
 import json
 
+import pandas as pd
 import pytest
 
+from tdln_pd1.augmentation_audit import write_augmentation_audit
 from tdln_pd1.cli import _load_parameter_file, _training_input_provenance
-from tdln_pd1.hybrid import FeatureStateMapping
+from tdln_pd1.hybrid import FeatureStateMapping, augment_with_twin
 from tdln_pd1.simulator import TwinParameters
+
+
+def _audited_twin_features(tmp_path):
+    raw = tmp_path / "raw.csv"
+    features = tmp_path / "hybrid.csv"
+    pd.DataFrame({"patient_id": ["p0"], "x": [1.0]}).to_csv(raw, index=False)
+    augment_with_twin(pd.read_csv(raw), days=1, dose_days=(0,)).to_csv(
+        features, index=False,
+    )
+    write_augmentation_audit(
+        features,
+        inputs={"features": {
+            "file": raw.name,
+            "sha256": hashlib.sha256(raw.read_bytes()).hexdigest(),
+        }},
+        settings={
+            "days": 1, "dose": 1, "dose_days": [0], "uncertainty_samples": 0,
+            "uncertainty_seed": 42, "labels_used": False,
+            "cross_layer_sampling": (
+                "independent_systemic_spatial_mapping_no_joint_covariance"
+            ),
+            "spatial_missing_zone_policy": "feature_prior",
+        },
+    )
+    return features, raw, {"features": raw}
 
 
 def test_parameter_file_loading_is_exact_and_fingerprinted(tmp_path):
@@ -75,24 +102,16 @@ def test_training_input_accepts_and_validates_mapping_provenance(tmp_path):
 
 
 def test_training_input_binds_and_checks_label_free_augmentation_audit(tmp_path):
-    features = tmp_path / "hybrid.csv"
-    features.write_text("patient_id,x\np0,1\n")
-    feature_sha = hashlib.sha256(features.read_bytes()).hexdigest()
-    audit = tmp_path / "hybrid.csv.twin-audit.json"
-    audit.write_text(json.dumps({
-        "schema_version": 1,
-        "stage": "label_free_twin_augmentation",
-        "labels_used": False,
-        "output": {"file": features.name, "sha256": feature_sha},
-        "inputs": {},
-    }))
-    provenance = _training_input_provenance(str(features))
+    features, _, inputs = _audited_twin_features(tmp_path)
+    provenance = _training_input_provenance(str(features), inputs)
     assert provenance["augmentation_audit"]["labels_used"] is False
     assert len(provenance["augmentation_audit_sha256"]) == 64
+    assert provenance["augmentation_derivation_replayed"] is True
+    assert provenance["augmentation_verified_inputs"] == ["features"]
 
-    features.write_text("patient_id,x\np0,2\n")
+    features.write_text(features.read_text() + "\n")
     with pytest.raises(ValueError, match="mismatched feature augmentation audit"):
-        _training_input_provenance(str(features))
+        _training_input_provenance(str(features), inputs)
 
 
 def test_mechanistic_training_features_require_augmentation_lineage(tmp_path):
@@ -101,14 +120,12 @@ def test_mechanistic_training_features_require_augmentation_lineage(tmp_path):
     with pytest.raises(ValueError, match="mechanistic training features require"):
         _training_input_provenance(str(features))
 
-    feature_sha = hashlib.sha256(features.read_bytes()).hexdigest()
-    audit = tmp_path / "hybrid.csv.twin-audit.json"
-    audit.write_text(json.dumps({
-        "schema_version": 1,
-        "stage": "label_free_twin_augmentation",
-        "labels_used": False,
-        "output": {"file": features.name, "sha256": feature_sha},
-        "inputs": {},
-    }))
-    provenance = _training_input_provenance(str(features))
+    features, _, inputs = _audited_twin_features(tmp_path)
+    provenance = _training_input_provenance(str(features), inputs)
     assert provenance["mechanistic_feature_lineage_required"] is True
+
+
+def test_training_rejects_claimed_augmentation_without_replay_inputs(tmp_path):
+    features, _, _ = _audited_twin_features(tmp_path)
+    with pytest.raises(ValueError, match="requires input path: features"):
+        _training_input_provenance(str(features))

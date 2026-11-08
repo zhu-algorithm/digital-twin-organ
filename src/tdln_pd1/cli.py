@@ -112,7 +112,10 @@ def _source_record(path: str) -> dict:
             "sha256": hashlib.sha256(source.read_bytes()).hexdigest()}
 
 
-def _training_input_provenance(feature_path: str) -> dict:
+def _training_input_provenance(
+    feature_path: str,
+    augmentation_input_paths: dict[str, str | Path] | None = None,
+) -> dict:
     source = Path(feature_path)
     provenance = {
         "feature_file": source.name,
@@ -154,8 +157,15 @@ def _training_input_provenance(feature_path: str) -> dict:
         provenance["augmentation_audit_sha256"] = hashlib.sha256(
             augmentation_audit.read_bytes()
         ).hexdigest()
+        replay = verify_augmentation_audit(
+            augmentation_audit, source, augmentation_input_paths or {},
+        )
+        provenance["augmentation_derivation_replayed"] = True
+        provenance["augmentation_verified_inputs"] = replay["verified_inputs"]
     else:
         provenance["augmentation_audit"] = None
+        provenance["augmentation_derivation_replayed"] = False
+        provenance["augmentation_verified_inputs"] = []
     try:
         with source.open(newline="") as handle:
             columns = next(csv.reader(handle))
@@ -188,7 +198,7 @@ def _augmentation_input_paths(args) -> dict[str, str]:
     return paths
 
 
-def _add_site_cv_augmentation_inputs(parser) -> None:
+def _add_augmentation_replay_inputs(parser) -> None:
     parser.add_argument(
         "--augmentation-features",
         help="pre-augmentation feature CSV; required when --features has a twin audit",
@@ -237,6 +247,7 @@ def main() -> None:
     train.add_argument("--output", required=True)
     train.add_argument("--folds", type=int, default=5)
     train.add_argument("--ensemble-members", type=int, default=50)
+    _add_augmentation_replay_inputs(train)
     predict = sub.add_parser("predict")
     predict.add_argument("--model", required=True)
     predict.add_argument("--features", required=True)
@@ -264,14 +275,14 @@ def main() -> None:
     site_cv.add_argument("--site-column", default="center")
     site_cv.add_argument("--bootstrap", type=int, default=500)
     site_cv.add_argument("--output", required=True)
-    _add_site_cv_augmentation_inputs(site_cv)
+    _add_augmentation_replay_inputs(site_cv)
     verify_site_cv = sub.add_parser("verify-site-cv")
     verify_site_cv.add_argument("--audit", required=True)
     verify_site_cv.add_argument("--features", required=True)
     verify_site_cv.add_argument("--labels", required=True)
     verify_site_cv.add_argument("--metrics", required=True)
     verify_site_cv.add_argument("--predictions", required=True)
-    _add_site_cv_augmentation_inputs(verify_site_cv)
+    _add_augmentation_replay_inputs(verify_site_cv)
     sim = sub.add_parser("simulate")
     sim.add_argument("--days", type=float, default=42.0)
     sim.add_argument("--dose-days", default="0,14,28")
@@ -499,7 +510,11 @@ def main() -> None:
         import pandas as pd
         metrics = train_evaluate(
             pd.read_csv(args.features), load_labels(args.labels), Path(args.output),
-            args.folds, args.ensemble_members, _training_input_provenance(args.features),
+            args.folds, args.ensemble_members,
+            _training_input_provenance(
+                args.features,
+                _augmentation_input_paths(args) if args.augmentation_features else None,
+            ),
         )
         print(json.dumps(metrics, indent=2))
     elif args.command == "predict":
