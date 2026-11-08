@@ -55,7 +55,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "x.loc[('tpex','paracortex'),'amount'] == 80000.0",
         "x.loc[('tpex','paracortex'),'sampling_unit_coverage'] == 0.5",
         "--spatial-missing-zone-policy feature_prior",
-        "x.qc_spatial_feature_prior_imputed_fraction == 4/6",
+        "abs(x.qc_spatial_feature_prior_imputed_fraction - 4/6) < 1e-12",
         "verify-augmentation --audit /tmp/partial_hybrid.csv.twin-audit.json",
         "verify-spatial-features --audit /tmp/spatial_partial.csv.spatial-audit.json --spots examples/spatial_spots_partial.csv",
         "propagate-uncertainty --parameters /tmp/calibration/fitted_parameters.json",
