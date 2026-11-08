@@ -244,6 +244,38 @@ def test_spatial_fusion_contract_distinguishes_measured_and_feature_only_states(
     )
 
 
+def test_systemic_and_spatial_endpoints_use_the_same_requested_horizon(monkeypatch):
+    captured_days = []
+
+    def fake_spatial(systemic, days, initial, parameters):
+        captured_days.append(days)
+        return pd.DataFrame({
+            "day": [days, days],
+            "species": ["effector", "tpex"],
+            "zone": ["efferent_lymph", "paracortex"],
+            "amount": [days, days],
+        })
+
+    monkeypatch.setattr("tdln_pd1.hybrid.simulate_spatial_coupled", fake_spatial)
+    out = augment_with_twin(
+        pd.DataFrame({"patient_id": ["a"]}), days=21, dose_days=(0,),
+    )
+    assert captured_days == [21, 21]
+    assert out.qc_systemic_endpoint_day.item() == 21
+    assert out.qc_spatial_endpoint_day.item() == 21
+    assert out.twin_spatial_treated_paracortex_tpex.item() == 21
+
+
+def test_simulation_contract_locks_horizon_and_dose_semantics():
+    features = pd.DataFrame({"patient_id": ["a"]})
+    day_14 = augment_with_twin(features, days=14, dose_days=(0,), dose=1.0)
+    day_21 = augment_with_twin(features, days=21, dose_days=(0,), dose=1.0)
+    assert len(day_14.qc_mechanistic_simulation_contract_sha256.item()) == 64
+    assert day_14.qc_mechanistic_simulation_contract_sha256.item() != (
+        day_21.qc_mechanistic_simulation_contract_sha256.item()
+    )
+
+
 def test_spatial_hybrid_fails_closed_on_patient_mismatch_or_outcome_column():
     features = pd.DataFrame({"patient_id": ["a", "b"]})
     states = pd.DataFrame({"patient_id": ["a"], "species": ["tpex"],

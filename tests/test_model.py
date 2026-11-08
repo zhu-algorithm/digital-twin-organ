@@ -217,6 +217,11 @@ def test_locked_prediction_rejects_spatial_fusion_semantic_drift(tmp_path: Path)
     )
     with pytest.raises(ValueError, match="qc_spatial_fusion_contract_sha256"):
         predict_locked(tmp_path / "model.joblib", external)
+    different_horizon = augment_with_twin(
+        external_base, days=2, dose_days=(0,),
+    )
+    with pytest.raises(ValueError, match="qc_mechanistic_simulation_contract_sha256"):
+        predict_locked(tmp_path / "model.joblib", different_horizon)
 
 
 def test_spatial_evidence_support_marks_lower_coverage_as_domain_shift(tmp_path: Path):

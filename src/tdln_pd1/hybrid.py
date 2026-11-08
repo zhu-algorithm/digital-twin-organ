@@ -284,6 +284,20 @@ def augment_with_twin(
         ).encode("utf-8")
     ).hexdigest()
     doses = tuple(Dose(day, dose) for day in dose_days)
+    simulation_contract = {
+        "schema_version": 1,
+        "systemic_endpoint_day": float(days),
+        "spatial_endpoint_day": float(days),
+        "spatial_horizon_rule": "same_as_systemic_endpoint",
+        "dose_days": [float(day) for day in dose_days],
+        "dose_amount": float(dose),
+        "counterfactual_design": "paired_same_patient_initial_state",
+    }
+    mechanistic_simulation_contract_sha256 = hashlib.sha256(
+        json.dumps(
+            simulation_contract, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
     rows = []
     for row in features.to_dict(orient="records"):
         measured_spatial_initial = (
@@ -330,8 +344,6 @@ def augment_with_twin(
         else:
             spatial_sampling_coverage_mean = np.nan
             spatial_sampling_coverage_min = np.nan
-        spatial_days = min(days, 14.0)
-
         def endpoint(frame: pd.DataFrame, species: str, zone: str) -> float:
             selected = frame[(frame.species == species) & (frame.zone == zone)]
             return float(selected.amount.iloc[-1])
@@ -379,10 +391,10 @@ def augment_with_twin(
             control = simulate(days=days, initial=initial, parameters=systemic)
             treated = simulate(days=days, doses=doses, initial=initial, parameters=systemic)
             spatial_control = simulate_spatial_coupled(
-                control, days=spatial_days, initial=spatial_initial, parameters=spatial,
+                control, days=days, initial=spatial_initial, parameters=spatial,
             )
             spatial_treated = simulate_spatial_coupled(
-                treated, days=spatial_days, initial=spatial_initial, parameters=spatial,
+                treated, days=days, initial=spatial_initial, parameters=spatial,
             )
             c, t = control.iloc[-1], treated.iloc[-1]
             control_exit = endpoint(spatial_control, "effector", "efferent_lymph")
@@ -410,6 +422,11 @@ def augment_with_twin(
             **point,
             "qc_spatial_initialization_measured": int(measured_states is not None),
             "qc_spatial_fusion_contract_sha256": spatial_fusion_contract_sha256,
+            "qc_mechanistic_simulation_contract_sha256": (
+                mechanistic_simulation_contract_sha256
+            ),
+            "qc_systemic_endpoint_day": float(days),
+            "qc_spatial_endpoint_day": float(days),
             "qc_spatial_zone_coverage": spatial_zone_coverage,
             "qc_spatial_feature_prior_imputed_fraction": (
                 1.0 - spatial_zone_coverage
