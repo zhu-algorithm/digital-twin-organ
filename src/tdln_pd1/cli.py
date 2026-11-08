@@ -174,6 +174,33 @@ def _training_input_provenance(feature_path: str) -> dict:
     return provenance
 
 
+def _augmentation_input_paths(args) -> dict[str, str]:
+    """Collect the source files required for an exact twin-augmentation replay."""
+    paths = {"features": args.augmentation_features}
+    for name in (
+        "spatial_initial_zones", "systemic_parameters", "spatial_parameters",
+        "feature_state_mapping", "systemic_diagnostics", "spatial_diagnostics",
+        "mapping_diagnostics",
+    ):
+        value = getattr(args, f"augmentation_{name}", None)
+        if value:
+            paths[name] = value
+    return paths
+
+
+def _add_site_cv_augmentation_inputs(parser) -> None:
+    parser.add_argument(
+        "--augmentation-features",
+        help="pre-augmentation feature CSV; required when --features has a twin audit",
+    )
+    for option in (
+        "spatial-initial-zones", "systemic-parameters", "spatial-parameters",
+        "feature-state-mapping", "systemic-diagnostics", "spatial-diagnostics",
+        "mapping-diagnostics",
+    ):
+        parser.add_argument(f"--augmentation-{option}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="TDLN PD-1 response baseline")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -237,12 +264,14 @@ def main() -> None:
     site_cv.add_argument("--site-column", default="center")
     site_cv.add_argument("--bootstrap", type=int, default=500)
     site_cv.add_argument("--output", required=True)
+    _add_site_cv_augmentation_inputs(site_cv)
     verify_site_cv = sub.add_parser("verify-site-cv")
     verify_site_cv.add_argument("--audit", required=True)
     verify_site_cv.add_argument("--features", required=True)
     verify_site_cv.add_argument("--labels", required=True)
     verify_site_cv.add_argument("--metrics", required=True)
     verify_site_cv.add_argument("--predictions", required=True)
+    _add_site_cv_augmentation_inputs(verify_site_cv)
     sim = sub.add_parser("simulate")
     sim.add_argument("--days", type=float, default=42.0)
     sim.add_argument("--dose-days", default="0,14,28")
@@ -515,12 +544,16 @@ def main() -> None:
         audit = write_site_cv_audit(
             args.features, args.labels, output,
             site_column=args.site_column, bootstrap=args.bootstrap,
+            augmentation_input_paths=(
+                _augmentation_input_paths(args) if args.augmentation_features else None
+            ),
         )
         metrics["audit"] = str(audit)
         print(json.dumps(metrics, indent=2))
     elif args.command == "verify-site-cv":
         report = verify_site_cv_audit(
             args.audit, args.features, args.labels, args.metrics, args.predictions,
+            (_augmentation_input_paths(args) if args.augmentation_features else None),
         )
         print(json.dumps(report, indent=2))
     elif args.command == "verify-evaluation":
