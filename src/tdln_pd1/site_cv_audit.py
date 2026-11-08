@@ -45,6 +45,7 @@ def write_site_cv_audit(
             "sha256": sha256_file(twin_audit_path),
             "derivation_replayed": True,
             "verified_inputs": replay["verified_inputs"],
+            "nested_derivations_replayed": replay["nested_derivations_replayed"],
         }
     payload = {
         "schema_version": 1,
@@ -118,7 +119,9 @@ def verify_site_cv_audit(
             twin_audit_path, features_path, augmentation_input_paths or {},
         )
         if (twin_record.get("derivation_replayed") is not True
-                or twin_record.get("verified_inputs") != replay["verified_inputs"]):
+                or twin_record.get("verified_inputs") != replay["verified_inputs"]
+                or twin_record.get("nested_derivations_replayed")
+                != replay["nested_derivations_replayed"]):
             raise ValueError("site-CV augmentation replay contract mismatch")
     elif mechanistic:
         raise ValueError("mechanistic site-CV replay requires a bound augmentation audit")

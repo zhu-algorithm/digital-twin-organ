@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 from tdln_pd1.augmentation_audit import write_augmentation_audit
-from tdln_pd1.cli import _load_parameter_file, _training_input_provenance
+from tdln_pd1.cli import (_load_liver_replay_manifest, _load_parameter_file,
+                          _training_input_provenance)
 from tdln_pd1.hybrid import FeatureStateMapping, augment_with_twin
 from tdln_pd1.simulator import TwinParameters
 
@@ -43,6 +44,20 @@ def test_parameter_file_loading_is_exact_and_fingerprinted(tmp_path):
     assert parameters == TwinParameters()
     assert len(provenance["sha256"]) == 64
     assert provenance["parameter_class"] == "TwinParameters"
+
+
+def test_liver_replay_manifest_resolves_relative_paths_and_rejects_unknown_keys(tmp_path):
+    manifest = tmp_path / "replay.json"
+    manifest.write_text(json.dumps({
+        "features": "raw/features.csv",
+        "treatment_manifest": "/locked/treatment.csv",
+    }))
+    loaded = _load_liver_replay_manifest(manifest)
+    assert loaded["features"] == str(tmp_path / "raw/features.csv")
+    assert loaded["treatment_manifest"] == "/locked/treatment.csv"
+    manifest.write_text(json.dumps({"features": "raw.csv", "labels": "labels.csv"}))
+    with pytest.raises(ValueError, match="manifest schema"):
+        _load_liver_replay_manifest(manifest)
 
 
 def test_parameter_file_rejects_schema_drift_and_nonpositive_values(tmp_path):

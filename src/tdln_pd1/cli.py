@@ -162,10 +162,14 @@ def _training_input_provenance(
         )
         provenance["augmentation_derivation_replayed"] = True
         provenance["augmentation_verified_inputs"] = replay["verified_inputs"]
+        provenance["nested_derivations_replayed"] = replay[
+            "nested_derivations_replayed"
+        ]
     else:
         provenance["augmentation_audit"] = None
         provenance["augmentation_derivation_replayed"] = False
         provenance["augmentation_verified_inputs"] = []
+        provenance["nested_derivations_replayed"] = []
     try:
         with source.open(newline="") as handle:
             columns = next(csv.reader(handle))
@@ -184,7 +188,7 @@ def _training_input_provenance(
     return provenance
 
 
-def _augmentation_input_paths(args) -> dict[str, str]:
+def _augmentation_input_paths(args) -> dict[str, object]:
     """Collect the source files required for an exact twin-augmentation replay."""
     paths = {"features": args.augmentation_features}
     for name in (
@@ -195,13 +199,52 @@ def _augmentation_input_paths(args) -> dict[str, str]:
         value = getattr(args, f"augmentation_{name}", None)
         if value:
             paths[name] = value
+    manifest_value = getattr(args, "augmentation_liver_replay_manifest", None)
+    if manifest_value:
+        paths["liver_counterfactual_replay"] = _load_liver_replay_manifest(
+            manifest_value
+        )
     return paths
+
+
+def _load_liver_replay_manifest(path: str | Path) -> dict[str, str]:
+    manifest_path = Path(path)
+    try:
+        payload = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("invalid liver counterfactual replay manifest") from error
+    allowed = {
+        "features", "bridge_parameters", "bridge_diagnostics",
+        "treatment_manifest", "perfusion_manifest", "feature_bridge_mapping",
+        "feature_bridge_diagnostics", "systemic_parameters",
+        "systemic_diagnostics", "spatial_parameters", "spatial_diagnostics",
+        "feature_state_mapping", "feature_state_diagnostics",
+    }
+    if (not isinstance(payload, dict) or "features" not in payload
+            or not set(payload).issubset(allowed)
+            or any(not isinstance(value, str) or not value.strip()
+                   for value in payload.values())):
+        raise ValueError("invalid liver counterfactual replay manifest schema")
+    return {
+        name: str(
+            Path(value) if Path(value).is_absolute()
+            else manifest_path.parent / value
+        )
+        for name, value in payload.items()
+    }
 
 
 def _add_augmentation_replay_inputs(parser) -> None:
     parser.add_argument(
         "--augmentation-features",
         help="pre-augmentation feature CSV; required when --features has a twin audit",
+    )
+    parser.add_argument(
+        "--augmentation-liver-replay-manifest",
+        help=(
+            "JSON path map for replaying a nested liver_cf_ derivation; relative paths "
+            "resolve beside the manifest"
+        ),
     )
     for option in (
         "spatial-initial-zones", "systemic-parameters", "spatial-parameters",
@@ -458,6 +501,7 @@ def main() -> None:
     verify_augmentation.add_argument("--systemic-diagnostics")
     verify_augmentation.add_argument("--spatial-diagnostics")
     verify_augmentation.add_argument("--mapping-diagnostics")
+    verify_augmentation.add_argument("--liver-replay-manifest")
     verify_features = sub.add_parser("verify-features")
     verify_features.add_argument("--audit", required=True)
     verify_features.add_argument("--cells", required=True)
@@ -1189,6 +1233,10 @@ def main() -> None:
         ):
             if value:
                 input_paths[key] = value
+        if args.liver_replay_manifest:
+            input_paths["liver_counterfactual_replay"] = _load_liver_replay_manifest(
+                args.liver_replay_manifest
+            )
         report = verify_sensitivity_audit(args.audit, input_paths)
         print(json.dumps({
             "valid": report["valid"], "stage": report["stage"],

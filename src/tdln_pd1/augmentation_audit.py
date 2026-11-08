@@ -62,7 +62,7 @@ def write_augmentation_audit(
 def verify_augmentation_audit(
     audit_path: str | Path,
     output_path: str | Path,
-    input_paths: dict[str, str | Path],
+    input_paths: dict[str, object],
 ) -> dict:
     audit = Path(audit_path)
     try:
@@ -83,6 +83,7 @@ def verify_augmentation_audit(
     if not isinstance(inputs, dict):
         raise ValueError("augmentation audit has no input records")
     verified_inputs = []
+    nested_derivations_replayed = []
     for name, record in inputs.items():
         if record is None:
             continue
@@ -122,6 +123,29 @@ def verify_augmentation_audit(
                     raise ValueError(f"{name} derivation audit payload is invalid") from error
                 if embedded != observed_payload:
                     raise ValueError(f"{name} embedded derivation payload mismatch")
+            if stage == "label_free_liver_tdln_counterfactual_augmentation":
+                nested = input_paths.get("liver_counterfactual_replay")
+                if not isinstance(nested, dict):
+                    raise ValueError(
+                        "liver counterfactual derivation requires a nested replay manifest"
+                    )
+                from .liver_bridge_features import verify_liver_counterfactual_augmentation
+                verify_liver_counterfactual_augmentation(
+                    derived_audit, nested.get("features"), target,
+                    nested.get("bridge_parameters"),
+                    nested.get("bridge_diagnostics"),
+                    nested.get("treatment_manifest"),
+                    nested.get("perfusion_manifest"),
+                    nested.get("feature_bridge_mapping"),
+                    nested.get("feature_bridge_diagnostics"),
+                    nested.get("systemic_parameters"),
+                    nested.get("systemic_diagnostics"),
+                    nested.get("spatial_parameters"),
+                    nested.get("spatial_diagnostics"),
+                    nested.get("feature_state_mapping"),
+                    nested.get("feature_state_diagnostics"),
+                )
+                nested_derivations_replayed.append(stage)
         verified_inputs.append(name)
     settings = payload.get("settings")
     if (not isinstance(settings, dict) or settings.get("labels_used") is not False
@@ -186,6 +210,7 @@ def verify_augmentation_audit(
     return {
         "valid": True,
         "verified_inputs": sorted(verified_inputs),
+        "nested_derivations_replayed": sorted(nested_derivations_replayed),
         "output_sha256": recorded_output["sha256"],
         "audit_sha256": sha256_file(audit),
         "derivation_replayed": True,

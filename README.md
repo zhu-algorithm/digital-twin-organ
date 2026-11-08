@@ -80,6 +80,8 @@
 
 另一个机制参数契约 SHA-256 覆盖系统免疫/药代参数、六区域空间参数、单细胞到状态的映射，以及实际传播的全部不确定性参数抽样。锁定模型因此会拒绝由不同校准结果、默认参数或抽样集合生成的同名机制特征。
 
+当 `augment-twin` 的输入含有上游 `liver-counterfactual-audit` 时，所有训练、留中心验证和外部预测命令还要求 `--augmentation-liver-replay-manifest`。该 JSON 以 `features` 为必填键，并可列出 `treatment_manifest`、`perfusion_manifest`、桥接/系统/空间/状态映射的参数与诊断文件；相对路径按清单所在目录解析。验证器会先完整重跑肝肿瘤—TDLN 患者反事实，再重跑外层六区 TDLN 增强，任一嵌套层无法复现都会停止拟合或预测。
+
 ## 肝脏肿瘤虚拟器官
 
 新增的肝脏肿瘤病理层把门静脉／肝动脉灌注、氧供、正常肝细胞、肿瘤活性边缘、缺氧核心和坏死区连接为可运行的机制模型，并导出到可播放的交互页面。模型入口、方程边界与验证说明见 [`docs/LIVER_TUMOR_MODEL_CARD.md`](docs/LIVER_TUMOR_MODEL_CARD.md)；这是研究原型，不是临床预测工具。

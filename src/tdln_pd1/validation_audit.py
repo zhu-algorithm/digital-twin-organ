@@ -154,6 +154,7 @@ def validate_prediction_feature_lineage(
         common_result.update({
             "augmentation_derivation_replayed": True,
             "augmentation_verified_inputs": replay["verified_inputs"],
+            "nested_derivations_replayed": replay["nested_derivations_replayed"],
         })
     if training_contract is None:
         return common_result

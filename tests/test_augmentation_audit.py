@@ -110,7 +110,9 @@ def test_augmentation_audit_binds_upstream_spatial_derivation_audit(tmp_path):
         verify_augmentation_audit(audit, output, paths)
 
 
-def test_augmentation_audit_embeds_liver_counterfactual_lineage(tmp_path):
+def test_augmentation_audit_replays_embedded_liver_counterfactual_lineage(
+    tmp_path, monkeypatch,
+):
     features, _, output, audit, paths = _case(tmp_path)
     liver_audit = tmp_path / "features.csv.liver-counterfactual-audit.json"
     liver_payload = {
@@ -130,7 +132,18 @@ def test_augmentation_audit_embeds_liver_counterfactual_lineage(tmp_path):
     }
     payload["inputs"]["features"]["derivation_payload"] = liver_payload
     audit.write_text(json.dumps(payload))
-    assert verify_augmentation_audit(audit, output, paths)["valid"] is True
+    with pytest.raises(ValueError, match="requires a nested replay manifest"):
+        verify_augmentation_audit(audit, output, paths)
+    calls = []
+    monkeypatch.setattr(
+        "tdln_pd1.liver_bridge_features.verify_liver_counterfactual_augmentation",
+        lambda *args: calls.append(args) or liver_payload,
+    )
+    paths["liver_counterfactual_replay"] = {"features": tmp_path / "raw.csv"}
+    report = verify_augmentation_audit(audit, output, paths)
+    assert report["valid"] is True
+    assert report["nested_derivations_replayed"] == [liver_payload["stage"]]
+    assert len(calls) == 1
     payload["inputs"]["features"]["derivation_payload"]["labels_used"] = True
     audit.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="embedded derivation payload mismatch"):
