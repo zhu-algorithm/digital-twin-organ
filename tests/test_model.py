@@ -2,9 +2,11 @@ from pathlib import Path
 import joblib
 import pandas as pd
 import pytest
+from tdln_pd1.hybrid import augment_with_twin
 from tdln_pd1.model import (evaluate_external, evaluate_probabilities,
                             leave_one_site_out, predict_locked, train_evaluate,
                             build_model, _safe_group_splits)
+from tdln_pd1.spatial_dynamics import SPECIES, ZONE_NAMES
 
 
 def _zero_member_uncertainty(predictions: pd.DataFrame) -> pd.DataFrame:
@@ -184,6 +186,37 @@ def test_locked_prediction_enforces_embedded_preprocessing_contract(tmp_path: Pa
             tmp_path / "model.joblib",
             external.drop(columns="qc_cell_type_vocabulary_sha256"),
         )
+
+
+def test_locked_prediction_rejects_spatial_fusion_semantic_drift(tmp_path: Path):
+    base = pd.DataFrame({
+        "patient_id": [f"p{i}" for i in range(8)],
+        "sig_tcf7_memory": [0.1, 0.2, 0.3, 0.4, 0.7, 0.8, 0.9, 1.0],
+    })
+    training = augment_with_twin(base, days=1, dose_days=(0,))
+    labels = pd.DataFrame({
+        "patient_id": base.patient_id, "response": [0] * 4 + [1] * 4,
+    })
+    train_evaluate(training, labels, tmp_path, folds=2, ensemble_members=0)
+    artifact = joblib.load(tmp_path / "model.joblib")
+    contract = training.qc_spatial_fusion_contract_sha256.unique().tolist()
+    assert artifact["preprocessing_contracts"][
+        "qc_spatial_fusion_contract_sha256"
+    ] == contract[0]
+
+    external_base = pd.DataFrame({
+        "patient_id": ["external"], "sig_tcf7_memory": [0.5],
+    })
+    measured_states = pd.DataFrame([
+        {"patient_id": "external", "species": species, "zone": zone,
+         "amount": 0.0, "zone_observed": zone == "paracortex"}
+        for species in SPECIES for zone in ZONE_NAMES
+    ])
+    external = augment_with_twin(
+        external_base, days=1, dose_days=(0,), spatial_states=measured_states,
+    )
+    with pytest.raises(ValueError, match="qc_spatial_fusion_contract_sha256"):
+        predict_locked(tmp_path / "model.joblib", external)
 
 
 def test_locked_prediction_rejects_unreviewed_model_features_but_allows_audit_columns(

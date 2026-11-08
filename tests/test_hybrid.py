@@ -215,6 +215,10 @@ def test_unobserved_spatial_zones_use_patient_prior_not_false_zero():
     )
     assert prior.qc_spatial_feature_prior_imputed_fraction.item() == pytest.approx(5 / 6)
     assert zero.qc_spatial_feature_prior_imputed_fraction.item() == 0.0
+    assert len(prior.qc_spatial_fusion_contract_sha256.item()) == 64
+    assert prior.qc_spatial_fusion_contract_sha256.item() != (
+        zero.qc_spatial_fusion_contract_sha256.item()
+    )
     assert prior.twin_spatial_treated_paracortex_tpex.item() != (
         zero.twin_spatial_treated_paracortex_tpex.item()
     )
@@ -226,6 +230,18 @@ def test_spatial_missing_zone_policy_fails_closed():
             pd.DataFrame({"patient_id": ["a"]}), days=1, dose_days=(0,),
             spatial_missing_zone_policy="guess",
         )
+
+
+def test_spatial_fusion_contract_distinguishes_measured_and_feature_only_states():
+    features = pd.DataFrame({"patient_id": ["a"], "sig_tcf7_memory": [0.2]})
+    feature_only = augment_with_twin(features, days=1, dose_days=(0,))
+    measured = augment_with_twin(
+        features, days=1, dose_days=(0,),
+        spatial_states=_complete_spatial_state("a", 1.0e4, 5.0e3),
+    )
+    assert feature_only.qc_spatial_fusion_contract_sha256.item() != (
+        measured.qc_spatial_fusion_contract_sha256.item()
+    )
 
 
 def test_spatial_hybrid_fails_closed_on_patient_mismatch_or_outcome_column():

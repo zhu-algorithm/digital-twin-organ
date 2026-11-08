@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
+import hashlib
+import json
 import re
 import numpy as np
 import pandas as pd
@@ -263,6 +265,24 @@ def augment_with_twin(
                 f"missing_spatial={sorted(feature_ids - spatial_ids)[:10]}, "
                 f"extra_spatial={sorted(spatial_ids - feature_ids)[:10]}"
             )
+    spatial_fusion_contract = {
+        "schema_version": 1,
+        "spatial_initialization_source": (
+            "measured_spatial_with_patient_feature_prior"
+            if measured_states is not None else "patient_feature_prior_only"
+        ),
+        "missing_zone_policy": spatial_missing_zone_policy,
+        "observed_zone_rule": "retain_measured_amounts",
+        "unobserved_zone_rule": (
+            "patient_feature_state_mapping"
+            if spatial_missing_zone_policy == "feature_prior" else "explicit_zero"
+        ),
+    }
+    spatial_fusion_contract_sha256 = hashlib.sha256(
+        json.dumps(
+            spatial_fusion_contract, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
     doses = tuple(Dose(day, dose) for day in dose_days)
     rows = []
     for row in features.to_dict(orient="records"):
@@ -389,6 +409,7 @@ def augment_with_twin(
             "patient_id": row["patient_id"],
             **point,
             "qc_spatial_initialization_measured": int(measured_states is not None),
+            "qc_spatial_fusion_contract_sha256": spatial_fusion_contract_sha256,
             "qc_spatial_zone_coverage": spatial_zone_coverage,
             "qc_spatial_feature_prior_imputed_fraction": (
                 1.0 - spatial_zone_coverage
