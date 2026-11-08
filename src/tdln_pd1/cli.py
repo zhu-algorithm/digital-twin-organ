@@ -320,8 +320,10 @@ def main() -> None:
     spatial_features.add_argument("--baseline-values", default="")
     spatial_features.add_argument("--sample-column")
     spatial_features.add_argument(
-        "--sample-aggregation", choices=("equal_samples", "sum_samples"),
-        help="required with --sample-column; equal_samples prevents slide-count weighting",
+        "--sample-aggregation",
+        choices=("equal_samples", "equal_observed_samples", "sum_samples"),
+        help=("required with --sample-column; equal_samples uses zeros for unobserved "
+              "sample-zones, equal_observed_samples does not"),
     )
     spatial_features.add_argument("--output", required=True)
     sens = sub.add_parser("sensitivity")

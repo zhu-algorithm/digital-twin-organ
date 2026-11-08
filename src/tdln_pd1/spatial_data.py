@@ -10,7 +10,9 @@ from .spatial_dynamics import SPECIES
 from .features import select_baseline_cells
 
 SPATIAL_SAMPLE_COLUMNS = ("sample_id", "library_id", "slide_id", "section_id")
-SPATIAL_SAMPLE_AGGREGATIONS = ("equal_samples", "sum_samples")
+SPATIAL_SAMPLE_AGGREGATIONS = (
+    "equal_samples", "equal_observed_samples", "sum_samples",
+)
 
 
 def aggregate_spatial_spots(
@@ -103,6 +105,10 @@ def aggregate_spatial_spots(
             per_sample = grid.merge(
                 per_sample, on=["patient_id", sample_column, "zone"], how="left"
             ).fillna({species: 0.0 for species in SPECIES})
+            observed = per_sample.groupby(
+                ["patient_id", "zone"], sort=True, as_index=False
+            )[list(SPECIES)].mean()
+        elif sample_aggregation == "equal_observed_samples":
             observed = per_sample.groupby(
                 ["patient_id", "zone"], sort=True, as_index=False
             )[list(SPECIES)].mean()

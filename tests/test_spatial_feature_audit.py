@@ -90,3 +90,26 @@ def test_spatial_feature_audit_binds_sample_estimand(tmp_path):
     verified = verify_spatial_feature_audit(audit, spots, output)
     assert verified["payload"]["settings"]["sample_column"] == "section_id"
     assert verified["payload"]["settings"]["sample_aggregation"] == "equal_samples"
+
+
+def test_spatial_feature_audit_replays_observed_sample_estimand(tmp_path):
+    spots, output = tmp_path / "partial_spots.csv", tmp_path / "states.csv"
+    frame = pd.DataFrame({
+        "patient_id": ["p1", "p1"], "spot_id": ["s1", "s2"],
+        "section_id": ["a", "b"], "zone": ["paracortex", "afferent_lymph"],
+        "area": [1.0, 1.0], "antigen": [0.0, 2.0], "mature_dc": [1.0, 3.0],
+        "tpex": [4.0, 0.0], "effector": [5.0, 0.0],
+    })
+    frame.to_csv(spots, index=False)
+    aggregate_spatial_spots(
+        frame, "area", sample_column="section_id",
+        sample_aggregation="equal_observed_samples",
+    ).to_csv(output, index=False)
+    audit = write_spatial_feature_audit(
+        spots, output, "area", sample_column="section_id",
+        sample_aggregation="equal_observed_samples",
+    )
+    verified = verify_spatial_feature_audit(audit, spots, output)
+    assert verified["payload"]["settings"]["sample_aggregation"] == (
+        "equal_observed_samples"
+    )

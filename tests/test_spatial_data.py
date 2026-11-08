@@ -113,3 +113,20 @@ def test_spatial_sample_column_must_be_a_distinct_sampling_identifier():
         aggregate_spatial_spots(
             _spots(), "area", sample_column="zone", sample_aggregation="equal_samples"
         )
+
+
+def test_observed_sample_mean_does_not_treat_an_unsampled_zone_as_zero():
+    first = _spots().iloc[[0]].assign(section_id="a", spot_id="a1")
+    second = _spots().iloc[[2]].assign(section_id="b", spot_id="b1")
+    partial_sections = pd.concat([first, second], ignore_index=True)
+    zero_assumption = aggregate_spatial_spots(
+        partial_sections, "area", sample_column="section_id",
+        sample_aggregation="equal_samples",
+    ).set_index(["species", "zone"]).amount
+    observed_only = aggregate_spatial_spots(
+        partial_sections, "area", sample_column="section_id",
+        sample_aggregation="equal_observed_samples",
+    ).set_index(["species", "zone"]).amount
+    assert zero_assumption[("tpex", "paracortex")] == 3.0
+    assert observed_only[("tpex", "paracortex")] == 6.0
+    assert observed_only[("mature_dc", "afferent_lymph")] == 2.0
