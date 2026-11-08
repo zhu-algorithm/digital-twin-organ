@@ -32,6 +32,13 @@ def write_site_cv_audit(
     features_path, labels_path, output = Path(features_path), Path(labels_path), Path(output)
     metrics_path = output / METRICS_FILENAME
     predictions_path = output / PREDICTIONS_FILENAME
+    twin_audit_path = Path(f"{features_path}.twin-audit.json")
+    twin_audit_record = None
+    if twin_audit_path.is_file():
+        twin_audit_record = {
+            "file": twin_audit_path.name,
+            "sha256": sha256_file(twin_audit_path),
+        }
     payload = {
         "schema_version": 1,
         "stage": "leave_one_site_out_validation",
@@ -40,6 +47,7 @@ def write_site_cv_audit(
         "inputs": {
             "features": {"file": features_path.name, "sha256": sha256_file(features_path)},
             "labels": {"file": labels_path.name, "sha256": sha256_file(labels_path)},
+            "augmentation_audit": twin_audit_record,
         },
         "outputs": {
             "metrics": {"file": metrics_path.name, "sha256": sha256_file(metrics_path)},
@@ -86,6 +94,31 @@ def verify_site_cv_audit(
         if (record.get("file") != path.name or not path.is_file()
                 or record.get("sha256") != sha256_file(path)):
             raise ValueError(f"site-CV {name} SHA-256 mismatch")
+    twin_record = payload.get("inputs", {}).get("augmentation_audit")
+    twin_audit_path = Path(f"{features_path}.twin-audit.json")
+    feature_columns = pd.read_csv(features_path, nrows=0).columns
+    mechanistic = any(
+        column.startswith(("twin_", "liver_cf_")) for column in feature_columns
+    )
+    if twin_record is not None:
+        if (not isinstance(twin_record, dict)
+                or twin_record.get("file") != twin_audit_path.name
+                or not twin_audit_path.is_file()
+                or twin_record.get("sha256") != sha256_file(twin_audit_path)):
+            raise ValueError("site-CV augmentation audit SHA-256 mismatch")
+        try:
+            twin_payload = json.loads(twin_audit_path.read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            raise ValueError("invalid site-CV augmentation audit") from error
+        twin_output = twin_payload.get("output", {})
+        if (twin_payload.get("schema_version") != 1
+                or twin_payload.get("stage") != "label_free_twin_augmentation"
+                or twin_payload.get("labels_used") is not False
+                or twin_output.get("file") != features_path.name
+                or twin_output.get("sha256") != sha256_file(features_path)):
+            raise ValueError("invalid or mismatched site-CV augmentation audit")
+    elif mechanistic:
+        raise ValueError("mechanistic site-CV replay requires a bound augmentation audit")
     for name, path in (("metrics", metrics_path), ("predictions", predictions_path)):
         record = payload.get("outputs", {}).get(name, {})
         if (record.get("file") != path.name or not path.is_file()
@@ -105,6 +138,7 @@ def verify_site_cv_audit(
         "site_column": site_column,
         "bootstrap_draws": bootstrap,
         "patients_replayed": int(len(replayed_predictions)),
+        "augmentation_audit_verified": twin_record is not None,
         "derivation_replayed": True,
         "audit_sha256": sha256_file(audit_path),
     }

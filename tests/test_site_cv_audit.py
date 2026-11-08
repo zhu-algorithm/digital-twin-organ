@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 import pandas as pd
@@ -64,4 +65,43 @@ def test_site_cv_audit_rejects_forged_output_even_with_updated_hash(tmp_path):
     payload["outputs"]["metrics"]["sha256"] = sha256_file(metrics)
     audit.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     with pytest.raises(ValueError, match="metric derivation replay"):
+        verify_site_cv_audit(audit, features, labels, metrics, predictions)
+
+
+def test_mechanistic_site_cv_audit_binds_twin_augmentation_audit(tmp_path):
+    features, labels, metrics, predictions, _ = _run(tmp_path)
+    frame = pd.read_csv(features)
+    frame["twin_effector_gain"] = frame.x * 2
+    frame.to_csv(features, index=False)
+    twin_audit = features.with_name(features.name + ".twin-audit.json")
+    twin_audit.write_text(json.dumps({
+        "schema_version": 1, "stage": "label_free_twin_augmentation",
+        "labels_used": False,
+        "output": {"file": features.name,
+                   "sha256": hashlib.sha256(features.read_bytes()).hexdigest()},
+    }))
+    output = metrics.parent
+    replayed_metrics, replayed_predictions = leave_one_site_out(
+        pd.read_csv(features), pd.read_csv(labels), bootstrap=10,
+    )
+    predictions.write_text(replayed_predictions.to_csv(index=False))
+    metrics.write_text(json.dumps(replayed_metrics, indent=2) + "\n")
+    audit = write_site_cv_audit(
+        features, labels, output, site_column="center", bootstrap=10,
+    )
+    report = verify_site_cv_audit(audit, features, labels, metrics, predictions)
+    assert report["augmentation_audit_verified"] is True
+    twin_audit.unlink()
+    with pytest.raises(ValueError, match="augmentation audit SHA-256 mismatch"):
+        verify_site_cv_audit(audit, features, labels, metrics, predictions)
+    twin_audit.write_text(json.dumps({
+        "schema_version": 1, "stage": "label_free_twin_augmentation",
+        "labels_used": False,
+        "output": {"file": features.name,
+                   "sha256": hashlib.sha256(features.read_bytes()).hexdigest()},
+    }))
+    payload = json.loads(audit.read_text())
+    payload["inputs"]["augmentation_audit"] = None
+    audit.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    with pytest.raises(ValueError, match="requires a bound augmentation audit"):
         verify_site_cv_audit(audit, features, labels, metrics, predictions)
