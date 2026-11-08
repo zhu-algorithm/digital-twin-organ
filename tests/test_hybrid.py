@@ -276,6 +276,29 @@ def test_simulation_contract_locks_horizon_and_dose_semantics():
     )
 
 
+def test_parameter_contract_locks_point_parameters_and_uncertainty_draws():
+    features = pd.DataFrame({"patient_id": ["a"]})
+    default = augment_with_twin(features, days=1, dose_days=(0,))
+    fitted = augment_with_twin(
+        features, days=1, dose_days=(0,),
+        systemic_parameters=TwinParameters(tumour_growth=0.2),
+    )
+    draws = augment_with_twin(
+        features, days=1, dose_days=(0,),
+        systemic_parameter_draws=(
+            TwinParameters(tumour_growth=0.15),
+            TwinParameters(tumour_growth=0.25),
+        ),
+    )
+    hashes = {
+        default.qc_mechanistic_parameter_contract_sha256.item(),
+        fitted.qc_mechanistic_parameter_contract_sha256.item(),
+        draws.qc_mechanistic_parameter_contract_sha256.item(),
+    }
+    assert len(hashes) == 3
+    assert all(len(value) == 64 for value in hashes)
+
+
 def test_spatial_hybrid_fails_closed_on_patient_mismatch_or_outcome_column():
     features = pd.DataFrame({"patient_id": ["a", "b"]})
     states = pd.DataFrame({"patient_id": ["a"], "species": ["tpex"],

@@ -7,6 +7,7 @@ from tdln_pd1.model import (evaluate_external, evaluate_probabilities,
                             leave_one_site_out, predict_locked, train_evaluate,
                             build_model, _safe_group_splits)
 from tdln_pd1.spatial_dynamics import SPECIES, ZONE_NAMES
+from tdln_pd1.simulator import TwinParameters
 
 
 def _zero_member_uncertainty(predictions: pd.DataFrame) -> pd.DataFrame:
@@ -222,6 +223,12 @@ def test_locked_prediction_rejects_spatial_fusion_semantic_drift(tmp_path: Path)
     )
     with pytest.raises(ValueError, match="qc_mechanistic_simulation_contract_sha256"):
         predict_locked(tmp_path / "model.joblib", different_horizon)
+    different_parameters = augment_with_twin(
+        external_base, days=1, dose_days=(0,),
+        systemic_parameters=TwinParameters(tumour_growth=0.2),
+    )
+    with pytest.raises(ValueError, match="qc_mechanistic_parameter_contract_sha256"):
+        predict_locked(tmp_path / "model.joblib", different_parameters)
 
 
 def test_spatial_evidence_support_marks_lower_coverage_as_domain_shift(tmp_path: Path):

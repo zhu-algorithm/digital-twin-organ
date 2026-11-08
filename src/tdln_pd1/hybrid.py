@@ -245,6 +245,34 @@ def augment_with_twin(
     if len(supplied_draw_counts) > 1:
         raise ValueError("systemic, spatial and mapping parameter draw counts must match")
     uncertainty_samples = next(iter(supplied_draw_counts), 0)
+    parameter_contract = {
+        "schema_version": 1,
+        "systemic_point": asdict(systemic_parameters or TwinParameters()),
+        "spatial_point": asdict(spatial_parameters or SpatialParameters()),
+        "feature_state_mapping_point": asdict(mapping),
+        "systemic_draws": (
+            [asdict(draw) for draw in systemic_parameter_draws]
+            if systemic_parameter_draws is not None else None
+        ),
+        "spatial_draws": (
+            [asdict(draw) for draw in spatial_parameter_draws]
+            if spatial_parameter_draws is not None else None
+        ),
+        "feature_state_mapping_draws": (
+            [asdict(draw) for draw in feature_state_mapping_draws]
+            if feature_state_mapping_draws is not None else None
+        ),
+        "cross_layer_draw_coupling": (
+            "index_paired_independent_calibration_streams"
+            if uncertainty_samples else "point_estimates_only"
+        ),
+    }
+    mechanistic_parameter_contract_sha256 = hashlib.sha256(
+        json.dumps(
+            parameter_contract, sort_keys=True, separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
     measured_states = None
     if spatial_states is not None:
         if "patient_id" not in spatial_states:
@@ -424,6 +452,9 @@ def augment_with_twin(
             "qc_spatial_fusion_contract_sha256": spatial_fusion_contract_sha256,
             "qc_mechanistic_simulation_contract_sha256": (
                 mechanistic_simulation_contract_sha256
+            ),
+            "qc_mechanistic_parameter_contract_sha256": (
+                mechanistic_parameter_contract_sha256
             ),
             "qc_systemic_endpoint_day": float(days),
             "qc_spatial_endpoint_day": float(days),
