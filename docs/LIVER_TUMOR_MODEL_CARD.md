@@ -117,6 +117,19 @@ python scripts/simulate_patient_liver_tdln.py \
 
 队列训练前可运行 `scripts/augment_liver_tdln_counterfactual.py`。它逐患者生成 20 个 `liver_cf_*` 机制特征，并保留原始单细胞特征。除肿瘤负荷、效应 T 细胞、PD-1 占有率和输出淋巴效应细胞外，特征还显式包含两臂最终正常肝细胞、正常细胞保存量、最终灌注及相对变化、正常组织最低氧供及其变化；这些是模型内部宿主组织/灌注端点，不是临床肝毒性分级。`--bridge-parameters` 可读取 `calibrate_liver_tdln_bridge.py` 产生的拟合参数；文件必须明确标记 `research_only=true`，内容及 SHA-256 会写入增强审计。验证时会重新模拟整个队列并比较确定性输出哈希。CI 按“桥接校准 → 队列反事实 → 预测训练”的顺序实际使用这张增强表，因此这些反事实不是仅供展示的旁路结果。
 
+## 患者级 PD-1 方案扫描
+
+```bash
+python scripts/sweep_patient_pd1_regimens.py \
+  --features artifacts/features.csv --patient-id p0 \
+  --dose-amounts 0.5,1,2 --intervals 7,14 --days 28 \
+  --output artifacts/p0_regimen_sweep.csv
+```
+
+每个网格点都从同一个患者初态运行未治疗与抗 PD-1 配对臂。输出同时包含肿瘤相对下降、正常肝细胞保存、最低正常组织氧供变化、灌注变化、峰值 PD-1 占有率、效应细胞 AUC 与淋巴输出，并以“最大化四个器官端点、最小化总模型暴露”的固定规则标记 Pareto 前沿。相邻的 `.audit.json` 绑定患者特征、完整基础参数、网格、血流设置和结果文件；验证器会重新运行全部方案，而不是只相信文件哈希。
+
+这里的剂量是无量纲模型暴露单位，未与任何药物、mg/kg、给药途径或临床毒性等级建立等价关系。扫描器不会选择一个“最佳”方案，Pareto 成员也不是临床推荐；其用途是提出下一轮体外、动物或前瞻实验应区分的机制假设。
+
 提供至少 2 个 `--uncertainty-samples` 时，增强器可从 `--systemic-diagnostics`、`--spatial-diagnostics`、`--bridge-diagnostics`、`--feature-bridge-diagnostics`、`--feature-state-diagnostics` 中任意一种或多种局部对数参数协方差进行相关抽样。系统免疫/PK、六区空间动力学、肝桥接、单细胞到肝桥接映射和单细胞到免疫初态映射五组校准来自不同实验、没有联合协方差，因此使用五个不同但可重放的随机流独立抽样，再按样本序号成对运行，避免笛卡尔积爆炸；这不虚构跨层相关性。涉及 HABR 时采用联合拒绝抽样，将整体相关分布截断在同一套可执行生理边界内（缓冲比例 0–1、动脉扩张上限至少为 1），而不是逐参数裁剪；若协方差在合理尝试次数内无法产生足量合法样本则失败并要求检查边界接触与可辨识性。每个点估计特征增加 `_q025`、`_q50`、`_q975` 列；种子、样本数和五类诊断文件哈希都进入可重放审计。区间仅传播这些局部参数的不确定性，不包含模型结构误差、患者抽样误差、域偏移或临床结局误差。
 
 真实队列应以 `--treatment-manifest` 取代一个全队列共用的 `--dose-days`。CSV 必须逐患者给出 `regimen_id,agent_class,dose_days,model_dose_amount,dose_scale,response_definition`；患者集合必须与特征表完全一致，当前机制只接受 `agent_class=anti_pd1` 和明确的 `arbitrary_model_exposure` 尺度，同一训练队列必须共享一种应答定义。每位患者可有不同的给药日与模型暴露量。该清单及解析后的治疗契约进入增强审计，防止在标签治疗背景与模拟方案不一致时静默训练。
