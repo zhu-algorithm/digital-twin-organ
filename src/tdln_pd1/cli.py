@@ -1233,10 +1233,6 @@ def main() -> None:
         ):
             if value:
                 input_paths[key] = value
-        if args.liver_replay_manifest:
-            input_paths["liver_counterfactual_replay"] = _load_liver_replay_manifest(
-                args.liver_replay_manifest
-            )
         report = verify_sensitivity_audit(args.audit, input_paths)
         print(json.dumps({
             "valid": report["valid"], "stage": report["stage"],
@@ -1270,6 +1266,10 @@ def main() -> None:
         ):
             if value:
                 input_paths[key] = value
+        if args.liver_replay_manifest:
+            input_paths["liver_counterfactual_replay"] = _load_liver_replay_manifest(
+                args.liver_replay_manifest
+            )
         report = verify_augmentation_audit(
             args.audit, args.output, input_paths,
         )
