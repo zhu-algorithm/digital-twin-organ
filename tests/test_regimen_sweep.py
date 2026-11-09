@@ -78,3 +78,34 @@ def test_regimen_sweep_audit_rejects_forged_hash_with_wrong_derivation(tmp_path)
     audit.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="derivation replay mismatch"):
         verify_regimen_sweep_audit(audit, features, output)
+
+
+def test_regimen_sweep_binds_parameter_source_and_loaded_content(tmp_path):
+    from tdln_pd1.hybrid import FeatureStateMapping
+
+    features = tmp_path / "features.csv"
+    output = tmp_path / "sweep.csv"
+    audit = tmp_path / "sweep.audit.json"
+    mapping = tmp_path / "mapping.json"
+    pd.DataFrame({"patient_id": ["p0"], "sig_cytotoxic": [0.5]}).to_csv(
+        features, index=False)
+    mapping.write_text(json.dumps(FeatureStateMapping().__dict__))
+    settings = {"dose_amounts": [1.0], "intervals": [2.0], "days": 3.0,
+                "step": 1.0, "portal_flow_multiplier": None,
+                "arterial_flow_multiplier": None}
+    sweep_patient_regimens(pd.read_csv(features).iloc[0], dose_amounts=(1,),
+                           intervals=(2,), days=3, step=1).to_csv(output, index=False)
+    write_regimen_sweep_audit(
+        audit, features_path=features, output_path=output, patient_id="p0",
+        settings=settings, source_paths={"feature_state_mapping": mapping})
+    assert verify_regimen_sweep_audit(
+        audit, features, output,
+        source_paths={"feature_state_mapping": mapping})["research_only"] is True
+    with pytest.raises(ValueError, match="source paths"):
+        verify_regimen_sweep_audit(audit, features, output)
+    mapping.write_text(json.dumps({**FeatureStateMapping().__dict__,
+                                   "tcf7_tpex_coefficient": 1.1}))
+    with pytest.raises(ValueError, match="source mismatch"):
+        verify_regimen_sweep_audit(
+            audit, features, output,
+            source_paths={"feature_state_mapping": mapping})

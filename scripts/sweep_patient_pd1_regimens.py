@@ -80,8 +80,24 @@ def main() -> None:
         patient_id=args.patient_id, settings=settings, mapping=mapping,
         base_coupling=coupling, base_bridge=bridge, base_spatial=spatial,
         base_liver=liver, base_immune=immune, feature_state_mapping=state_mapping,
+        source_paths={
+            "systemic_parameters": args.systemic_parameters,
+            "spatial_parameters": args.spatial_parameters,
+            "liver_bridge_parameters": args.liver_bridge_parameters,
+            "feature_bridge_mapping": args.feature_bridge_mapping,
+            "feature_state_mapping": args.feature_state_mapping,
+        },
     )
-    verify_regimen_sweep_audit(audit, args.features, args.output)
+    verify_regimen_sweep_audit(
+        audit, args.features, args.output,
+        source_paths={
+            "systemic_parameters": args.systemic_parameters,
+            "spatial_parameters": args.spatial_parameters,
+            "liver_bridge_parameters": args.liver_bridge_parameters,
+            "feature_bridge_mapping": args.feature_bridge_mapping,
+            "feature_state_mapping": args.feature_state_mapping,
+        },
+    )
     print(json.dumps({"regimens": len(result),
                       "pareto_regimens": int(result.pareto_front.sum()),
                       "labels_used": False, "research_only": True}, indent=2))

@@ -10,8 +10,12 @@ import numpy as np
 import pandas as pd
 
 from .hybrid import FeatureStateMapping
-from .liver_bridge_features import (FeatureBridgeMapping,
+from .liver_bridge_features import (FeatureBridgeMapping, load_feature_state_mapping,
+                                    load_liver_bridge_parameters,
+                                    load_spatial_parameters,
+                                    load_systemic_parameters,
                                     simulate_patient_liver_tdln_counterfactual)
+from .liver_mapping_assimilation import load_feature_bridge_mapping
 from .liver_tdln_coupling import LiverTDLNCouplingParameters
 from .liver_tdln_spatial import LiverTDLNSpatialBridge
 from .liver_tumor import LiverTumourParameters
@@ -133,7 +137,12 @@ def write_regimen_sweep_audit(
     base_liver: LiverTumourParameters | None = None,
     base_immune: TwinParameters | None = None,
     feature_state_mapping: FeatureStateMapping | None = None,
+    source_paths: dict[str, str | Path | None] | None = None,
 ) -> Path:
+    sources = {
+        name: {"file": Path(source).name, "sha256": sha256_file(source)}
+        for name, source in (source_paths or {}).items() if source is not None
+    }
     audit = {
         "schema_version": 1,
         "stage": "label_free_patient_pd1_regimen_sweep",
@@ -155,6 +164,7 @@ def write_regimen_sweep_audit(
             "feature_state_mapping": asdict(
                 feature_state_mapping or FeatureStateMapping()),
         },
+        "parameter_sources": sources,
         "pareto_contract": {
             "maximise": list(ENDPOINT_COLUMNS),
             "minimise": ["total_model_exposure"],
@@ -172,6 +182,7 @@ def write_regimen_sweep_audit(
 
 def verify_regimen_sweep_audit(
     audit_path: str | Path, features_path: str | Path, output_path: str | Path,
+    source_paths: dict[str, str | Path | None] | None = None,
 ) -> dict:
     audit = json.loads(Path(audit_path).read_text())
     if (audit.get("schema_version") != 1
@@ -183,12 +194,46 @@ def verify_regimen_sweep_audit(
         raise ValueError("regimen sweep input hash mismatch")
     if audit.get("output", {}).get("sha256") != sha256_file(output_path):
         raise ValueError("regimen sweep output hash mismatch")
+    declared_sources = audit.get("parameter_sources")
+    if not isinstance(declared_sources, dict):
+        raise ValueError("regimen sweep audit lacks parameter source contract")
+    supplied_sources = {
+        name: Path(source) for name, source in (source_paths or {}).items()
+        if source is not None
+    }
+    if set(supplied_sources) != set(declared_sources):
+        raise ValueError("regimen sweep parameter source paths do not match audit")
+    for name, record in declared_sources.items():
+        source = supplied_sources[name]
+        if (not isinstance(record, dict) or record.get("file") != source.name
+                or record.get("sha256") != sha256_file(source)):
+            raise ValueError(f"regimen sweep parameter source mismatch: {name}")
     features = pd.read_csv(features_path)
     selected = features[features.patient_id.astype(str).eq(str(audit["patient_id"]))]
     if len(selected) != 1:
         raise ValueError("regimen sweep patient must select exactly one feature row")
     try:
         p, s = audit["base_parameters"], audit["settings"]
+        loaded = {}
+        if "systemic_parameters" in supplied_sources:
+            loaded["immune"] = asdict(load_systemic_parameters(
+                supplied_sources["systemic_parameters"]))
+        if "spatial_parameters" in supplied_sources:
+            loaded["spatial"] = asdict(load_spatial_parameters(
+                supplied_sources["spatial_parameters"]))
+        if "liver_bridge_parameters" in supplied_sources:
+            liver, coupling, bridge = load_liver_bridge_parameters(
+                supplied_sources["liver_bridge_parameters"])
+            loaded.update({"liver": asdict(liver), "coupling": asdict(coupling),
+                           "spatial_bridge": asdict(bridge)})
+        if "feature_bridge_mapping" in supplied_sources:
+            loaded["mapping"] = asdict(load_feature_bridge_mapping(
+                supplied_sources["feature_bridge_mapping"]))
+        if "feature_state_mapping" in supplied_sources:
+            loaded["feature_state_mapping"] = asdict(load_feature_state_mapping(
+                supplied_sources["feature_state_mapping"]))
+        if any(p.get(name) != values for name, values in loaded.items()):
+            raise ValueError("parameter source content differs from replay parameters")
         replay = sweep_patient_regimens(
             selected.iloc[0], dose_amounts=s["dose_amounts"], intervals=s["intervals"],
             days=float(s["days"]), step=float(s["step"]),
