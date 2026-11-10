@@ -17,6 +17,7 @@ from tdln_pd1.liver_bridge_features import (load_feature_state_mapping,
                                              load_systemic_parameters)
 from tdln_pd1.liver_mapping_assimilation import load_feature_bridge_mapping
 from tdln_pd1.regimen_sweep import (sweep_patient_regimens,
+                                    regimen_uncertainty_scenarios,
                                     verify_regimen_sweep_audit,
                                     write_regimen_sweep_audit)
 
@@ -41,6 +42,13 @@ def main() -> None:
     parser.add_argument("--liver-bridge-parameters", type=Path)
     parser.add_argument("--feature-bridge-mapping", type=Path)
     parser.add_argument("--feature-state-mapping", type=Path)
+    parser.add_argument("--systemic-diagnostics", type=Path)
+    parser.add_argument("--spatial-diagnostics", type=Path)
+    parser.add_argument("--liver-bridge-diagnostics", type=Path)
+    parser.add_argument("--feature-bridge-diagnostics", type=Path)
+    parser.add_argument("--feature-state-diagnostics", type=Path)
+    parser.add_argument("--uncertainty-samples", type=int, default=0)
+    parser.add_argument("--uncertainty-seed", type=int, default=42)
     args = parser.parse_args()
     features = pd.read_csv(args.features)
     if "patient_id" not in features:
@@ -62,7 +70,30 @@ def main() -> None:
         "days": args.days, "step": args.step,
         "portal_flow_multiplier": args.portal_flow_multiplier,
         "arterial_flow_multiplier": args.arterial_flow_multiplier,
+        "uncertainty_samples": args.uncertainty_samples,
+        "uncertainty_seed": args.uncertainty_seed,
     }
+    diagnostics = {
+        "bridge_diagnostics": args.liver_bridge_diagnostics,
+        "mapping_diagnostics": args.feature_bridge_diagnostics,
+        "systemic_diagnostics": args.systemic_diagnostics,
+        "spatial_diagnostics": args.spatial_diagnostics,
+        "state_mapping_diagnostics": args.feature_state_diagnostics,
+    }
+    loaded_diagnostics = {
+        name: json.loads(path.read_text()) for name, path in diagnostics.items()
+        if path is not None
+    }
+    if args.uncertainty_samples:
+        scenarios = regimen_uncertainty_scenarios(
+            n=args.uncertainty_samples, seed=args.uncertainty_seed,
+            mapping=mapping, base_coupling=coupling, base_bridge=bridge,
+            base_spatial=spatial, base_liver=liver, base_immune=immune,
+            feature_state_mapping=state_mapping, **loaded_diagnostics)
+    else:
+        if loaded_diagnostics:
+            raise ValueError("diagnostics require positive --uncertainty-samples")
+        scenarios = None
     result = sweep_patient_regimens(
         selected.iloc[0], dose_amounts=settings["dose_amounts"],
         intervals=settings["intervals"], days=args.days, step=args.step,
@@ -71,6 +102,7 @@ def main() -> None:
         feature_state_mapping=state_mapping,
         portal_flow_multiplier=args.portal_flow_multiplier,
         arterial_flow_multiplier=args.arterial_flow_multiplier,
+        uncertainty_scenarios=scenarios,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(args.output, index=False)
@@ -86,6 +118,11 @@ def main() -> None:
             "liver_bridge_parameters": args.liver_bridge_parameters,
             "feature_bridge_mapping": args.feature_bridge_mapping,
             "feature_state_mapping": args.feature_state_mapping,
+            "systemic_diagnostics": args.systemic_diagnostics,
+            "spatial_diagnostics": args.spatial_diagnostics,
+            "bridge_diagnostics": args.liver_bridge_diagnostics,
+            "feature_bridge_diagnostics": args.feature_bridge_diagnostics,
+            "feature_state_diagnostics": args.feature_state_diagnostics,
         },
     )
     verify_regimen_sweep_audit(
@@ -96,6 +133,11 @@ def main() -> None:
             "liver_bridge_parameters": args.liver_bridge_parameters,
             "feature_bridge_mapping": args.feature_bridge_mapping,
             "feature_state_mapping": args.feature_state_mapping,
+            "systemic_diagnostics": args.systemic_diagnostics,
+            "spatial_diagnostics": args.spatial_diagnostics,
+            "bridge_diagnostics": args.liver_bridge_diagnostics,
+            "feature_bridge_diagnostics": args.feature_bridge_diagnostics,
+            "feature_state_diagnostics": args.feature_state_diagnostics,
         },
     )
     print(json.dumps({"regimens": len(result),

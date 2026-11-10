@@ -45,6 +45,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "calibrated_patient_liver_tdln/patient_liver_tdln_audit.json",
         "sweep_patient_pd1_regimens.py --features /tmp/features.csv --patient-id p0",
         "--dose-amounts 0.5,1 --intervals 1,2",
+        "--uncertainty-samples 2 --uncertainty-seed 42",
         "patient_regimen_sweep.csv.audit.json",
         "patient_liver_tdln/patient_liver_tdln_audit.json",
         "featurize --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg'",

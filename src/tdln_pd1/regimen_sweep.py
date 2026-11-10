@@ -10,12 +10,17 @@ import numpy as np
 import pandas as pd
 
 from .hybrid import FeatureStateMapping
-from .liver_bridge_features import (FeatureBridgeMapping, load_feature_state_mapping,
+from .liver_bridge_features import (FeatureBridgeMapping, feature_state_mapping_draws,
+                                    liver_bridge_parameter_draws,
+                                    load_feature_state_mapping,
                                     load_liver_bridge_parameters,
                                     load_spatial_parameters,
                                     load_systemic_parameters,
+                                    spatial_parameter_draws,
+                                    systemic_parameter_draws,
                                     simulate_patient_liver_tdln_counterfactual)
-from .liver_mapping_assimilation import load_feature_bridge_mapping
+from .liver_mapping_assimilation import (feature_bridge_mapping_draws,
+                                         load_feature_bridge_mapping)
 from .liver_tdln_coupling import LiverTDLNCouplingParameters
 from .liver_tdln_spatial import LiverTDLNSpatialBridge
 from .liver_tumor import LiverTumourParameters
@@ -72,6 +77,7 @@ def sweep_patient_regimens(
     feature_state_mapping: FeatureStateMapping | None = None,
     portal_flow_multiplier: float | None = None,
     arterial_flow_multiplier: float | None = None,
+    uncertainty_scenarios: tuple[dict, ...] | None = None,
 ) -> pd.DataFrame:
     """Evaluate a prespecified regimen grid without using response labels.
 
@@ -122,10 +128,97 @@ def sweep_patient_regimens(
     if not np.isfinite(result.drop(columns="dose_days").to_numpy(dtype=float)).all():
         raise RuntimeError("regimen sweep produced non-finite endpoints")
     result["pareto_front"] = _pareto_front(result)
+    if uncertainty_scenarios:
+        sampled = []
+        for scenario in uncertainty_scenarios:
+            if not isinstance(scenario, dict):
+                raise ValueError("uncertainty scenarios must be parameter dictionaries")
+            sampled.append(sweep_patient_regimens(
+                row, dose_amounts=amounts, intervals=gaps, days=days, step=step,
+                mapping=scenario.get("mapping", mapping),
+                base_coupling=scenario.get("base_coupling", base_coupling),
+                base_bridge=scenario.get("base_bridge", base_bridge),
+                base_spatial=scenario.get("base_spatial", base_spatial),
+                base_liver=scenario.get("base_liver", base_liver),
+                base_immune=scenario.get("base_immune", base_immune),
+                feature_state_mapping=scenario.get(
+                    "feature_state_mapping", feature_state_mapping),
+                portal_flow_multiplier=portal_flow_multiplier,
+                arterial_flow_multiplier=arterial_flow_multiplier,
+            ))
+        for column in ENDPOINT_COLUMNS:
+            values = np.stack([frame[column].to_numpy(dtype=float) for frame in sampled])
+            result[f"{column}_lower_95"] = np.quantile(values, 0.025, axis=0)
+            result[f"{column}_median"] = np.quantile(values, 0.5, axis=0)
+            result[f"{column}_upper_95"] = np.quantile(values, 0.975, axis=0)
+        result["pareto_frequency"] = np.mean(np.stack([
+            frame.pareto_front.to_numpy(dtype=float) for frame in sampled
+        ]), axis=0)
+        result["uncertainty_samples"] = len(sampled)
+        result["uncertainty_interpretation"] = (
+            "calibration_covariance_propagation_not_predictive_coverage"
+        )
     result["interpretation"] = (
         "mechanistic_research_grid_not_clinical_dose_recommendation"
     )
     return result
+
+
+def regimen_uncertainty_scenarios(
+    *, n: int, seed: int,
+    mapping: FeatureBridgeMapping | None = None,
+    base_coupling: LiverTDLNCouplingParameters | None = None,
+    base_bridge: LiverTDLNSpatialBridge | None = None,
+    base_spatial: SpatialParameters | None = None,
+    base_liver: LiverTumourParameters | None = None,
+    base_immune: TwinParameters | None = None,
+    feature_state_mapping: FeatureStateMapping | None = None,
+    bridge_diagnostics: dict | None = None,
+    mapping_diagnostics: dict | None = None,
+    systemic_diagnostics: dict | None = None,
+    spatial_diagnostics: dict | None = None,
+    state_mapping_diagnostics: dict | None = None,
+) -> tuple[dict, ...]:
+    """Build aligned deterministic draws from independent calibration layers."""
+    if not isinstance(n, int) or isinstance(n, bool) or n < 1:
+        raise ValueError("uncertainty sample count must be a positive integer")
+    if not isinstance(seed, int) or isinstance(seed, bool) or seed < 0:
+        raise ValueError("uncertainty seed must be a non-negative integer")
+    diagnostics = (bridge_diagnostics, mapping_diagnostics, systemic_diagnostics,
+                   spatial_diagnostics, state_mapping_diagnostics)
+    if not any(item is not None for item in diagnostics):
+        raise ValueError("uncertainty propagation requires calibration diagnostics")
+    liver, coupling, bridge = (base_liver or LiverTumourParameters(),
+                               base_coupling or LiverTDLNCouplingParameters(),
+                               base_bridge or LiverTDLNSpatialBridge())
+    mapping = mapping or FeatureBridgeMapping()
+    spatial = base_spatial or SpatialParameters()
+    immune = base_immune or TwinParameters()
+    state_mapping = feature_state_mapping or FeatureStateMapping()
+    bridge_draws = (liver_bridge_parameter_draws(
+        liver, coupling, bridge, bridge_diagnostics, n, seed)
+        if bridge_diagnostics is not None else ((liver, coupling, bridge),) * n)
+    mapping_draws = (feature_bridge_mapping_draws(
+        mapping, mapping_diagnostics, n, seed + 1_000_003)
+        if mapping_diagnostics is not None else (mapping,) * n)
+    immune_draws = (systemic_parameter_draws(
+        immune, systemic_diagnostics, n, seed + 2_000_003)
+        if systemic_diagnostics is not None else (immune,) * n)
+    spatial_draws = (spatial_parameter_draws(
+        spatial, spatial_diagnostics, n, seed + 3_000_017)
+        if spatial_diagnostics is not None else (spatial,) * n)
+    state_draws = (feature_state_mapping_draws(
+        state_mapping, state_mapping_diagnostics, n, seed + 4_000_037)
+        if state_mapping_diagnostics is not None else (state_mapping,) * n)
+    return tuple({
+        "base_liver": bridge_draws[index][0],
+        "base_coupling": bridge_draws[index][1],
+        "base_bridge": bridge_draws[index][2],
+        "mapping": mapping_draws[index],
+        "base_immune": immune_draws[index],
+        "base_spatial": spatial_draws[index],
+        "feature_state_mapping": state_draws[index],
+    } for index in range(n))
 
 
 def write_regimen_sweep_audit(
@@ -234,6 +327,35 @@ def verify_regimen_sweep_audit(
                 supplied_sources["feature_state_mapping"]))
         if any(p.get(name) != values for name, values in loaded.items()):
             raise ValueError("parameter source content differs from replay parameters")
+        diagnostic_keys = {
+            "bridge_diagnostics": "bridge_diagnostics",
+            "feature_bridge_diagnostics": "mapping_diagnostics",
+            "systemic_diagnostics": "systemic_diagnostics",
+            "spatial_diagnostics": "spatial_diagnostics",
+            "feature_state_diagnostics": "state_mapping_diagnostics",
+        }
+        diagnostic_payloads = {
+            argument: json.loads(supplied_sources[source].read_text())
+            for source, argument in diagnostic_keys.items()
+            if source in supplied_sources
+        }
+        samples = int(s.get("uncertainty_samples", 0))
+        if samples:
+            scenarios = regimen_uncertainty_scenarios(
+                n=samples, seed=int(s.get("uncertainty_seed", 42)),
+                mapping=FeatureBridgeMapping(**p["mapping"]),
+                base_coupling=LiverTDLNCouplingParameters(**p["coupling"]),
+                base_bridge=LiverTDLNSpatialBridge(**p["spatial_bridge"]),
+                base_spatial=SpatialParameters(**p["spatial"]),
+                base_liver=LiverTumourParameters(**p["liver"]),
+                base_immune=TwinParameters(**p["immune"]),
+                feature_state_mapping=FeatureStateMapping(**p["feature_state_mapping"]),
+                **diagnostic_payloads,
+            )
+        else:
+            if diagnostic_payloads:
+                raise ValueError("diagnostics supplied without uncertainty samples")
+            scenarios = None
         replay = sweep_patient_regimens(
             selected.iloc[0], dose_amounts=s["dose_amounts"], intervals=s["intervals"],
             days=float(s["days"]), step=float(s["step"]),
@@ -246,6 +368,7 @@ def verify_regimen_sweep_audit(
             feature_state_mapping=FeatureStateMapping(**p["feature_state_mapping"]),
             portal_flow_multiplier=s.get("portal_flow_multiplier"),
             arterial_flow_multiplier=s.get("arterial_flow_multiplier"),
+            uncertainty_scenarios=scenarios,
         )
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("invalid regimen sweep replay settings") from error

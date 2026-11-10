@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 
 import pandas as pd
 import pytest
@@ -6,6 +7,7 @@ import pytest
 from tdln_pd1.regimen_sweep import (sweep_patient_regimens,
                                     verify_regimen_sweep_audit,
                                     write_regimen_sweep_audit)
+from tdln_pd1.simulator import TwinParameters
 
 
 def test_regimen_sweep_is_label_free_finite_and_marks_pareto_front():
@@ -29,6 +31,25 @@ def test_regimen_sweep_validates_grid():
         sweep_patient_regimens(row, dose_amounts=(0,), intervals=(2,), days=3)
     with pytest.raises(ValueError, match="intervals"):
         sweep_patient_regimens(row, dose_amounts=(1,), intervals=(2, 2), days=3)
+
+
+def test_regimen_sweep_propagates_parameter_draws_and_pareto_stability():
+    row = pd.Series({"patient_id": "p0", "sig_cytotoxic": 0.5})
+    base = TwinParameters()
+    scenarios = tuple({"base_immune": replace(
+        base, killing_rate=base.killing_rate * multiplier)}
+        for multiplier in (0.5, 1.0, 2.0, 3.0))
+    result = sweep_patient_regimens(
+        row, dose_amounts=(0.5, 1.0), intervals=(2,), days=3, step=1,
+        uncertainty_scenarios=scenarios)
+    assert (result.uncertainty_samples == 4).all()
+    assert result.pareto_frequency.between(0, 1).all()
+    for endpoint in ("tumour_relative_reduction", "normal_cell_preservation",
+                     "normal_oxygen_change", "perfusion_relative_change"):
+        assert (result[f"{endpoint}_lower_95"]
+                <= result[f"{endpoint}_median"]).all()
+        assert (result[f"{endpoint}_median"]
+                <= result[f"{endpoint}_upper_95"]).all()
 
 
 def test_regimen_sweep_audit_replays_and_detects_tampering(tmp_path):
