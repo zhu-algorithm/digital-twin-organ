@@ -244,6 +244,9 @@ def aggregate_cells(
     """
     quality_summary = cells.attrs.get("cell_quality_summary", {})
     quality_policy = cells.attrs.get("cell_quality_policy", {})
+    quality_policy_sha256 = hashlib.sha256(json.dumps(
+        quality_policy, sort_keys=True, separators=(",", ":"),
+    ).encode("utf-8")).hexdigest()
     min_signature_gene_coverage = _validate_signature_coverage_threshold(
         min_signature_gene_coverage
     )
@@ -323,6 +326,7 @@ def aggregate_cells(
                 int(feature_group[sample_column].nunique()) if sample_column else 1
             ),
             "qc_cell_quality_policy_applied": int(bool(quality_policy)),
+            "qc_cell_quality_policy_sha256": quality_policy_sha256,
         }
         quality = quality_summary.get(str(patient))
         if quality is not None:

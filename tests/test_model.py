@@ -189,6 +189,25 @@ def test_locked_prediction_enforces_embedded_preprocessing_contract(tmp_path: Pa
         )
 
 
+def test_locked_prediction_rejects_cell_quality_policy_drift(tmp_path: Path):
+    patients = [f"p{i}" for i in range(8)]
+    features = pd.DataFrame({
+        "patient_id": patients,
+        "sig_cytotoxic": [0.2, 0.3, 0.25, 0.35, 0.6, 0.7, 0.65, 0.75],
+        "qc_cell_quality_policy_sha256": ["a" * 64] * 8,
+    })
+    labels = pd.DataFrame({"patient_id": patients, "response": [0] * 4 + [1] * 4})
+    train_evaluate(features, labels, tmp_path, folds=2, ensemble_members=0)
+    artifact = joblib.load(tmp_path / "model.joblib")
+    assert artifact["preprocessing_contracts"][
+        "qc_cell_quality_policy_sha256"] == "a" * 64
+    external = features.iloc[[0]].copy()
+    external["patient_id"] = "external"
+    external["qc_cell_quality_policy_sha256"] = "b" * 64
+    with pytest.raises(ValueError, match="preprocessing contract mismatch"):
+        predict_locked(tmp_path / "model.joblib", external)
+
+
 def test_locked_prediction_rejects_spatial_fusion_semantic_drift(tmp_path: Path):
     base = pd.DataFrame({
         "patient_id": [f"p{i}" for i in range(8)],

@@ -157,6 +157,11 @@ def test_explicit_cell_quality_policy_filters_and_audits_retention():
     assert features.loc["p1", "qc_n_cells_retained_quality"] == 1
     assert features.loc["p1", "qc_cell_quality_retained_fraction"] == pytest.approx(0.25)
     assert features.qc_cell_quality_policy_applied.eq(1).all()
+    assert features.qc_cell_quality_policy_sha256.str.len().eq(64).all()
+    changed = aggregate_cells(filter_cells_by_quality(
+        cells, {**policy, "min_genes": 50}), feature_tissue_pattern="all")
+    assert changed.qc_cell_quality_policy_sha256.iloc[0] != (
+        features.qc_cell_quality_policy_sha256.iloc[0])
 
 
 def test_cell_quality_policy_fails_closed_on_units_and_patient_loss():
