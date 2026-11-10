@@ -242,6 +242,8 @@ def aggregate_cells(
     Required columns are patient_id and cell_type. Gene columns are optional;
     absent signatures are retained as NaN for downstream imputation.
     """
+    quality_summary = cells.attrs.get("cell_quality_summary", {})
+    quality_policy = cells.attrs.get("cell_quality_policy", {})
     min_signature_gene_coverage = _validate_signature_coverage_threshold(
         min_signature_gene_coverage
     )
@@ -320,7 +322,14 @@ def aggregate_cells(
             "qc_n_feature_samples": (
                 int(feature_group[sample_column].nunique()) if sample_column else 1
             ),
+            "qc_cell_quality_policy_applied": int(bool(quality_policy)),
         }
+        quality = quality_summary.get(str(patient))
+        if quality is not None:
+            row["qc_n_cells_input_quality"] = quality["input"]
+            row["qc_n_cells_retained_quality"] = quality["retained"]
+            row["qc_cell_quality_retained_fraction"] = (
+                quality["retained"] / quality["input"])
         for cell_type in vocabulary:
             row[f"frac_{cell_type_names[cell_type]}"] = 0.0
         if sample_column:

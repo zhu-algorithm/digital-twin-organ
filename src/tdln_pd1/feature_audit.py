@@ -6,7 +6,7 @@ import json
 import hashlib
 from pathlib import Path
 
-from .data import load_cells
+from .data import filter_cells_by_quality, load_cells
 from .features import aggregate_cells, load_cell_type_mapping
 from .provenance import sha256_file
 
@@ -93,6 +93,9 @@ def verify_feature_audit(
     gene_symbol_column = settings.get("gene_symbol_column")
     expression_layer = settings.get("expression_layer")
     sample_column = settings.get("sample_column")
+    quality_policy = settings.get("cell_quality_policy", {})
+    if not isinstance(quality_policy, dict):
+        raise ValueError("invalid single-cell cell-quality policy")
     for name, value in (("gene_symbol_column", gene_symbol_column),
                         ("expression_layer", expression_layer)):
         if value is not None and (not isinstance(value, str) or not value.strip()):
@@ -104,10 +107,14 @@ def verify_feature_audit(
             or any(not isinstance(value, str) or not value.strip() for value in vocabulary)
             or len(set(vocabulary)) != len(vocabulary)):
         raise ValueError("invalid single-cell cell-type vocabulary")
+    quality_columns = tuple(quality_policy.get(name) for name in (
+        "n_genes_column", "total_counts_column",
+        "mitochondrial_fraction_column", "doublet_column",
+    ) if quality_policy.get(name))
     replayed = aggregate_cells(
-        load_cells(cells, tuple(dict.fromkeys(
-            value for value in (time_column, sample_column) if value)),
-                   gene_symbol_column, expression_layer),
+        filter_cells_by_quality(load_cells(cells, tuple(dict.fromkeys(
+            value for value in (time_column, sample_column, *quality_columns) if value)),
+                   gene_symbol_column, expression_layer), quality_policy or None),
         time_column,
         tuple(str(value) for value in settings["baseline_values"]) or None,
         pattern,

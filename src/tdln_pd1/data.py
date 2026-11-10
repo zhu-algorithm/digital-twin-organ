@@ -10,6 +10,92 @@ from scipy import sparse
 from .features import SAMPLE_COLUMNS, TEMPORAL_COLUMNS
 
 
+def _finite_nonnegative_column(frame: pd.DataFrame, column: str) -> pd.Series:
+    if column not in frame:
+        raise ValueError(f"cell-quality column not found: {column}")
+    values = pd.to_numeric(frame[column], errors="coerce")
+    if (values.isna().any() or not np.isfinite(values).all() or (values < 0).any()):
+        raise ValueError(f"cell-quality column must be complete, finite and non-negative: {column}")
+    return values
+
+
+def filter_cells_by_quality(cells: pd.DataFrame, policy: dict | None = None) -> pd.DataFrame:
+    """Apply an explicit, assay-unit-aware cell QC policy without guessing columns."""
+    if policy is None:
+        return cells
+    if not isinstance(policy, dict):
+        raise ValueError("cell-quality policy must be a mapping")
+    allowed = {
+        "n_genes_column", "min_genes", "max_genes",
+        "total_counts_column", "min_total_counts", "max_total_counts",
+        "mitochondrial_fraction_column", "max_mitochondrial_fraction",
+        "doublet_column",
+    }
+    unknown = set(policy) - allowed
+    if unknown:
+        raise ValueError(f"unknown cell-quality policy fields: {sorted(unknown)}")
+    normalized = {key: value for key, value in policy.items() if value is not None}
+    if not normalized:
+        return cells
+    mask = pd.Series(True, index=cells.index)
+    for prefix, lower_name, upper_name in (
+        ("n_genes", "min_genes", "max_genes"),
+        ("total_counts", "min_total_counts", "max_total_counts"),
+    ):
+        column = normalized.get(f"{prefix}_column")
+        lower, upper = normalized.get(lower_name), normalized.get(upper_name)
+        if (lower is not None or upper is not None) and column is None:
+            raise ValueError(f"{prefix}_column is required when its bounds are supplied")
+        if column is not None and lower is None and upper is None:
+            raise ValueError(f"{prefix} column requires at least one bound")
+        if column is not None:
+            values = _finite_nonnegative_column(cells, str(column))
+            for name, bound in ((lower_name, lower), (upper_name, upper)):
+                if bound is not None and (not np.isfinite(float(bound)) or float(bound) < 0):
+                    raise ValueError(f"{name} must be finite and non-negative")
+            if lower is not None and upper is not None and float(lower) > float(upper):
+                raise ValueError(f"{lower_name} cannot exceed {upper_name}")
+            if lower is not None:
+                mask &= values >= float(lower)
+            if upper is not None:
+                mask &= values <= float(upper)
+    mito_column = normalized.get("mitochondrial_fraction_column")
+    mito_max = normalized.get("max_mitochondrial_fraction")
+    if (mito_column is None) != (mito_max is None):
+        raise ValueError("mitochondrial fraction column and maximum must be supplied together")
+    if mito_column is not None:
+        values = _finite_nonnegative_column(cells, str(mito_column))
+        maximum = float(mito_max)
+        if not np.isfinite(maximum) or not 0 <= maximum <= 1:
+            raise ValueError("max_mitochondrial_fraction must lie in [0, 1]")
+        if (values > 1).any():
+            raise ValueError("mitochondrial fraction values must use the [0, 1] scale")
+        mask &= values <= maximum
+    doublet_column = normalized.get("doublet_column")
+    if doublet_column is not None:
+        if doublet_column not in cells:
+            raise ValueError(f"cell-quality column not found: {doublet_column}")
+        raw = cells[doublet_column]
+        if raw.isna().any():
+            raise ValueError("doublet indicator must be complete")
+        text = raw.astype(str).str.strip().str.lower()
+        if not text.isin({"true", "false", "1", "0"}).all():
+            raise ValueError("doublet indicator must contain only true/false or 1/0")
+        mask &= text.isin({"false", "0"})
+    retained = cells.loc[mask].copy()
+    original_counts = cells.groupby(cells.patient_id.astype(str)).size()
+    retained_counts = retained.groupby(retained.patient_id.astype(str)).size()
+    removed_patients = sorted(set(original_counts.index) - set(retained_counts.index))
+    if removed_patients:
+        raise ValueError(f"cell-quality filtering removed all cells for patients: {removed_patients[:10]}")
+    retained.attrs["cell_quality_summary"] = {
+        patient: {"input": int(count), "retained": int(retained_counts.get(patient, 0))}
+        for patient, count in original_counts.items()
+    }
+    retained.attrs["cell_quality_policy"] = normalized
+    return retained
+
+
 def _validate_cell_identifiers(frame: pd.DataFrame) -> pd.DataFrame:
     required = {"patient_id", "cell_type"}
     if not required.issubset(frame.columns):

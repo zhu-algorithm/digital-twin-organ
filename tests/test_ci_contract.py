@@ -8,6 +8,9 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
     workflow = (ROOT / ".github/workflows/tdln-ci.yml").read_text()
     required = (
         "tdln-pd1 spatial-sensitivity",
+        "--qc-n-genes-column n_genes_by_counts --qc-min-genes 200",
+        "--qc-mitochondrial-fraction-column mitochondrial_fraction --qc-max-mitochondrial-fraction 0.2",
+        "--qc-doublet-column is_doublet",
         "--spatial-parameters /tmp/spatial_calibration/fitted_spatial_parameters.json",
         "--systemic-parameters /tmp/calibration/fitted_parameters.json",
         "--initial-zones /tmp/spatial_initial.csv",
@@ -37,7 +40,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--feature-state-mapping /tmp/mapping_calibration/fitted_feature_state_mapping.json",
         "--mapping-diagnostics /tmp/mapping_calibration/mapping_calibration_diagnostics.json",
         "evaluate --predictions /tmp/predictions.csv --model /tmp/model/model.joblib --features /tmp/external_smoke.csv",
-        "verify-features --audit /tmp/features.csv.feature-audit.json --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv",
+        "verify-features --audit /tmp/features.csv.feature-audit.json --cells /tmp/cells_qc.csv --cell-type-map examples/cell_type_map.csv",
         "simulate_patient_liver_tdln.py --features /tmp/features.csv --patient-id p0",
         "--liver-bridge-parameters /tmp/liver_bridge_calibration/fitted_liver_tdln_bridge.json",
         "--feature-bridge-mapping /tmp/liver_feature_bridge_calibration/fitted_liver_feature_bridge_mapping.json",
@@ -48,7 +51,7 @@ def test_ci_exercises_calibrated_patient_spatial_sensitivity_and_integrity():
         "--uncertainty-samples 2 --uncertainty-seed 42",
         "patient_regimen_sweep.csv.audit.json",
         "patient_liver_tdln/patient_liver_tdln_audit.json",
-        "featurize --cells examples/cells.csv --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg'",
+        "featurize --cells /tmp/cells_qc.csv --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg'",
         "qc --cells examples/cells.csv --labels examples/labels.csv --manifest examples/cohort_manifest.json --cell-type-map examples/cell_type_map.csv --cell-type-vocabulary 'CD8 T,DC,Treg'",
         "verify-spatial-features --audit /tmp/spatial_cohort_initial.csv.spatial-audit.json --spots examples/spatial_spots_cohort.csv",
         "spatial-featurize --spots examples/spatial_spots_cohort.csv --weight-column area --time-column sampling_day --baseline-values 0",

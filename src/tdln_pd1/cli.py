@@ -7,7 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import numpy as np
-from .data import load_cells, load_labels
+from .data import filter_cells_by_quality, load_cells, load_labels
 from .features import aggregate_cells, load_cell_type_mapping
 from .model import evaluate_external, leave_one_site_out, predict_locked, train_evaluate
 from .simulator import Dose, TwinParameters, simulate
@@ -71,6 +71,42 @@ def _write_parameter_provenance(output: str, sources: dict) -> None:
         Path(f"{output}.parameters.json").write_text(json.dumps({
             "schema_version": 1, "sources": used, "research_only": True,
         }, indent=2) + "\n")
+
+
+def _add_cell_quality_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--qc-n-genes-column")
+    parser.add_argument("--qc-min-genes", type=float)
+    parser.add_argument("--qc-max-genes", type=float)
+    parser.add_argument("--qc-total-counts-column")
+    parser.add_argument("--qc-min-total-counts", type=float)
+    parser.add_argument("--qc-max-total-counts", type=float)
+    parser.add_argument("--qc-mitochondrial-fraction-column")
+    parser.add_argument("--qc-max-mitochondrial-fraction", type=float)
+    parser.add_argument("--qc-doublet-column")
+
+
+def _cell_quality_policy(args) -> dict | None:
+    policy = {
+        "n_genes_column": args.qc_n_genes_column,
+        "min_genes": args.qc_min_genes,
+        "max_genes": args.qc_max_genes,
+        "total_counts_column": args.qc_total_counts_column,
+        "min_total_counts": args.qc_min_total_counts,
+        "max_total_counts": args.qc_max_total_counts,
+        "mitochondrial_fraction_column": args.qc_mitochondrial_fraction_column,
+        "max_mitochondrial_fraction": args.qc_max_mitochondrial_fraction,
+        "doublet_column": args.qc_doublet_column,
+    }
+    return policy if any(value is not None for value in policy.values()) else None
+
+
+def _cell_metadata_columns(args) -> tuple[str, ...]:
+    policy = _cell_quality_policy(args) or {}
+    return tuple(dict.fromkeys(value for value in (
+        args.time_column, args.sample_column, policy.get("n_genes_column"),
+        policy.get("total_counts_column"),
+        policy.get("mitochondrial_fraction_column"), policy.get("doublet_column"),
+    ) if value))
 
 
 def _load_patient_spatial_initial(path: str | None, patient_id: str | None):
@@ -284,6 +320,7 @@ def main() -> None:
         "--cell-type-map",
         help="CSV with unique raw_label,harmonized_label; every selected label must map",
     )
+    _add_cell_quality_args(featurize)
     train = sub.add_parser("train")
     train.add_argument("--features", required=True)
     train.add_argument("--labels", required=True)
@@ -477,6 +514,7 @@ def main() -> None:
         "--cell-type-vocabulary", default="",
         help="comma-separated harmonized labels; must match featurize",
     )
+    _add_cell_quality_args(qc)
     verify = sub.add_parser("verify")
     verify.add_argument("--output", required=True)
     verify_sensitivity = sub.add_parser("verify-sensitivity")
@@ -530,11 +568,11 @@ def main() -> None:
         cell_type_mapping = (
             load_cell_type_mapping(args.cell_type_map) if args.cell_type_map else None
         )
-        aggregate_cells(load_cells(
-                            args.cells, tuple(dict.fromkeys(
-                                value for value in (args.time_column, args.sample_column)
-                                if value)),
+        quality_policy = _cell_quality_policy(args)
+        aggregate_cells(filter_cells_by_quality(load_cells(
+                            args.cells, _cell_metadata_columns(args),
                             args.gene_symbol_column, args.expression_layer),
+                            quality_policy),
                         args.time_column, baseline_values or None,
                         args.feature_tissue_pattern,
                         args.min_signature_gene_coverage,
@@ -551,6 +589,7 @@ def main() -> None:
             "expression_layer": args.expression_layer,
             "sample_column": args.sample_column,
             "cell_type_mapping_applied": cell_type_mapping is not None,
+            "cell_quality_policy": quality_policy or {},
             "labels_used": False,
         }, args.cell_type_map)
     elif args.command == "train":
@@ -1204,11 +1243,11 @@ def main() -> None:
         cell_type_vocabulary = tuple(
             value.strip() for value in args.cell_type_vocabulary.split(",") if value.strip()
         )
-        report = cohort_qc(load_cells(
-            args.cells, tuple(dict.fromkeys(
-                value for value in (args.time_column, args.sample_column) if value)),
+        quality_policy = _cell_quality_policy(args)
+        report = cohort_qc(filter_cells_by_quality(load_cells(
+            args.cells, _cell_metadata_columns(args),
             args.gene_symbol_column, args.expression_layer,
-        ), pd.read_csv(args.labels),
+        ), quality_policy), pd.read_csv(args.labels),
                            args.time_column, baseline_values or None,
                            args.feature_tissue_pattern,
                            args.min_signature_gene_coverage,
@@ -1216,6 +1255,7 @@ def main() -> None:
                            (load_cell_type_mapping(args.cell_type_map)
                             if args.cell_type_map else None),
                            cell_type_vocabulary or None)
+        report["cell_quality_policy"] = quality_policy or {}
         if args.manifest:
             report["provenance"] = verify_manifest(args.manifest)
             report["passed"] = report["passed"] and report["provenance"]["valid"]

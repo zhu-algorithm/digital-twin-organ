@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from scipy import sparse
 
-from tdln_pd1.data import load_cells, load_labels
+from tdln_pd1.data import filter_cells_by_quality, load_cells, load_labels
 from tdln_pd1.features import aggregate_cells
 
 
@@ -133,3 +133,41 @@ def test_label_loader_requires_complete_binary_outcomes_and_unique_patients(tmp_
     )
     with pytest.raises(ValueError, match="unique"):
         load_labels(duplicate)
+
+
+def test_explicit_cell_quality_policy_filters_and_audits_retention():
+    cells = pd.DataFrame({
+        "patient_id": ["p1"] * 4 + ["p2"] * 2,
+        "cell_type": ["CD8 T"] * 6,
+        "n_genes": [100, 500, 500, 500, 500, 500],
+        "counts": [1000, 1000, 1000, 1000, 1000, 1000],
+        "mito_fraction": [0.05, 0.05, 0.4, 0.05, 0.05, 0.05],
+        "is_doublet": [False, False, False, True, False, False],
+        "NKG7": [1, 2, 3, 4, 5, 7], "GZMB": [1, 2, 3, 4, 5, 7],
+    })
+    policy = {"n_genes_column": "n_genes", "min_genes": 200,
+              "total_counts_column": "counts", "min_total_counts": 500,
+              "mitochondrial_fraction_column": "mito_fraction",
+              "max_mitochondrial_fraction": 0.2,
+              "doublet_column": "is_doublet"}
+    filtered = filter_cells_by_quality(cells, policy)
+    assert filtered.groupby("patient_id").size().to_dict() == {"p1": 1, "p2": 2}
+    features = aggregate_cells(filtered, feature_tissue_pattern="all").set_index("patient_id")
+    assert features.loc["p1", "qc_n_cells_input_quality"] == 4
+    assert features.loc["p1", "qc_n_cells_retained_quality"] == 1
+    assert features.loc["p1", "qc_cell_quality_retained_fraction"] == pytest.approx(0.25)
+    assert features.qc_cell_quality_policy_applied.eq(1).all()
+
+
+def test_cell_quality_policy_fails_closed_on_units_and_patient_loss():
+    cells = pd.DataFrame({"patient_id": ["p1", "p2"], "cell_type": ["T", "T"],
+                          "n_genes": [100, 500], "mito": [5.0, 0.1]})
+    with pytest.raises(ValueError, match=r"\[0, 1\] scale"):
+        filter_cells_by_quality(cells, {
+            "mitochondrial_fraction_column": "mito",
+            "max_mitochondrial_fraction": 0.2})
+    with pytest.raises(ValueError, match="removed all cells"):
+        filter_cells_by_quality(cells, {
+            "n_genes_column": "n_genes", "min_genes": 200})
+    with pytest.raises(ValueError, match="requires at least one bound"):
+        filter_cells_by_quality(cells, {"n_genes_column": "n_genes"})

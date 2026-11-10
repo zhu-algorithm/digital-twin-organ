@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from tdln_pd1.feature_audit import verify_feature_audit, write_feature_audit
+from tdln_pd1.data import filter_cells_by_quality
 from tdln_pd1.features import aggregate_cells
 
 
@@ -110,3 +111,21 @@ def test_feature_audit_binds_and_replays_cell_type_mapping(tmp_path):
     mapping.write_text("raw_label,harmonized_label\nCTL,T cell\n")
     with pytest.raises(ValueError, match="map SHA-256 mismatch"):
         verify_feature_audit(audit, cells, output, mapping)
+
+
+def test_feature_audit_replays_explicit_cell_quality_filter(tmp_path):
+    cells, output = tmp_path / "cells.csv", tmp_path / "features.csv"
+    frame = pd.DataFrame({"patient_id": ["p1", "p1"], "cell_type": ["T", "T"],
+                          "n_genes": [100, 500], "NKG7": [100.0, 2.0],
+                          "GZMB": [100.0, 2.0]})
+    frame.to_csv(cells, index=False)
+    policy = {"n_genes_column": "n_genes", "min_genes": 200}
+    aggregate_cells(filter_cells_by_quality(frame, policy)).to_csv(output, index=False)
+    settings = {**DEFAULT_SETTINGS, "cell_quality_policy": policy}
+    audit = write_feature_audit(cells, output, settings)
+    assert verify_feature_audit(audit, cells, output)["derivation_replayed"] is True
+    payload = json.loads(audit.read_text())
+    payload["settings"]["cell_quality_policy"]["min_genes"] = 50
+    audit.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="derivation replay mismatch"):
+        verify_feature_audit(audit, cells, output)
