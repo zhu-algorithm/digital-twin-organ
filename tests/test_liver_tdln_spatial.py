@@ -4,7 +4,7 @@ import pytest
 from tdln_pd1.liver_tdln_spatial import (LiverTDLNSpatialBridge,
                                          liver_tdln_spatial_counterfactual,
                                          simulate_liver_tdln_spatial)
-from tdln_pd1.simulator import Dose
+from tdln_pd1.simulator import Dose, TwinParameters
 
 
 def _series(frame, species, zone):
@@ -42,6 +42,34 @@ def test_soluble_antigen_and_migratory_dc_routes_are_independently_executable():
     assert _series(dc_only, "mature_dc", "paracortex").max() > 0
     assert _series(antigen_only, "antigen", "subcapsular_sinus").max() > 0
     assert _series(antigen_only, "mature_dc", "paracortex").max() > 0
+
+
+def test_dc_source_uses_explicit_systemic_migration_flux_and_perfusion():
+    immune = TwinParameters(dc_migration=0.2)
+    systemic, spatial = simulate_liver_tdln_spatial(
+        days=3, step=0.5, immune_parameters=immune)
+    source_rows = spatial[spatial.species.eq("antigen") &
+                          spatial.zone.eq("afferent_lymph")]
+    expected_flux = immune.dc_migration * np.interp(
+        source_rows.day, systemic.day, systemic.tumour_antigen)
+    assert source_rows.systemic_dc_migration_flux.to_numpy() == pytest.approx(expected_flux)
+    expected_source = (LiverTDLNSpatialBridge().dc_migration_gain
+                       * expected_flux
+                       * source_rows.liver_perfusion_delivery_factor)
+    assert source_rows.afferent_dc_source.to_numpy() == pytest.approx(expected_source)
+
+
+def test_lower_portal_flow_reduces_both_tdln_delivery_routes():
+    _, nominal = simulate_liver_tdln_spatial(days=3, step=0.5)
+    _, low_flow = simulate_liver_tdln_spatial(
+        days=3, step=0.5, portal_flow_multiplier=0.5)
+    nominal_source = nominal[nominal.species.eq("antigen") &
+                             nominal.zone.eq("afferent_lymph")].iloc[0]
+    low_source = low_flow[low_flow.species.eq("antigen") &
+                          low_flow.zone.eq("afferent_lymph")].iloc[0]
+    assert low_source.liver_perfusion_delivery_factor < nominal_source.liver_perfusion_delivery_factor
+    assert low_source.afferent_antigen_source < nominal_source.afferent_antigen_source
+    assert low_source.afferent_dc_source < nominal_source.afferent_dc_source
 
 
 def test_anti_pd1_increases_efferent_effector_output_in_matched_closed_loop():

@@ -13,7 +13,7 @@ def test_liver_tumour_dashboard_export_is_current():
     expected = EXPORTER.build_dashboard_data()
     committed = json.loads((ROOT / "docs/data/liver_tumor_dashboard.json").read_text())
     assert committed == expected
-    assert expected["schema_version"] == 3
+    assert expected["schema_version"] == 4
     assert expected["research_only"] is True
     assert set(expected["scenarios"]) == {"untreated", "antiangiogenic", "low_perfusion",
                                           "portal_restriction", "arterial_restriction"}

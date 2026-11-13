@@ -20,7 +20,7 @@ from tdln_pd1.liver_tdln_spatial import (LiverTDLNSpatialBridge,
 from tdln_pd1.simulator import Dose
 from tdln_pd1.spatial import ZONES
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
            "functional_vessels", "oxygen_normal", "oxygen_rim", "oxygen_core",
            "perfusion", "portal_flow", "arterial_flow", "arterial_buffer_flow",
@@ -112,7 +112,7 @@ def build_dashboard_data() -> dict:
     )
     return {
         "schema_version": SCHEMA_VERSION,
-        "model_version": "liver-tumour/0.3.0",
+        "model_version": "liver-tumour/0.4.0",
         "research_only": True,
         "time_unit": "day",
         "state_units": "normalised fraction",
