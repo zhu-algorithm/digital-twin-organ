@@ -215,6 +215,42 @@ def verify_twin() -> dict:
         "minimum_spatial_amount": float(liver_spatial_values.min()),
     })
 
+    no_spatial_feedback, no_spatial_field = simulate_liver_tdln_spatial(
+        days=14, step=0.25,
+        bridge=LiverTDLNSpatialBridge(efferent_effector_killing_gain=0.0))
+    systemic_reference = simulate_liver_tdln(days=14, step=0.25)
+    recovery_columns = (
+        "liver_tumour_rim", "liver_tumour_core", "tumour_antigen",
+        "effector_tumour", "pd1_occupancy",
+    )
+    recovery_errors = {
+        column: float(np.max(
+            np.abs(no_spatial_feedback[column] - systemic_reference[column])
+            / np.maximum(np.abs(systemic_reference[column]), 1.0)))
+        for column in recovery_columns
+    }
+    max_recovery_error = max(recovery_errors.values())
+    checks.append({
+        "name": "spatial_efferent_feedback_closes_and_zero_gain_recovers",
+        "passed": bool(
+            liver_system.spatial_efferent_effector.iloc[-1] > 0
+            and liver_system.spatial_effector_killing_flux.max() > 0
+            and liver_system.tumour_cells.iloc[-1]
+            < no_spatial_feedback.tumour_cells.iloc[-1]
+            and max_recovery_error <= 1e-5),
+        "connected_final_tumour_cells": float(liver_system.tumour_cells.iloc[-1]),
+        "zero_feedback_final_tumour_cells": float(
+            no_spatial_feedback.tumour_cells.iloc[-1]),
+        "final_efferent_effector": endpoint(
+            no_spatial_field, "effector", "efferent_lymph"),
+        "maximum_zero_gain_scaled_relative_error": max_recovery_error,
+        "zero_gain_scaled_relative_errors": recovery_errors,
+        "tolerance": 1e-5,
+        "expected": (
+            "efferent effectors add viable-rim killing; zero spatial-feedback gain "
+            "recovers the standalone systemic liver–TDLN trajectory"),
+    })
+
     liver_rejected = []
     for layer, call in (
         ("liver", lambda: simulate_liver_tdln(
@@ -316,5 +352,5 @@ def verify_twin() -> dict:
             "can reach paracortex without creating soluble antigen"),
     })
 
-    return {"schema_version": 3, "research_only": True,
+    return {"schema_version": 4, "research_only": True,
             "passed": all(check["passed"] for check in checks), "checks": checks}

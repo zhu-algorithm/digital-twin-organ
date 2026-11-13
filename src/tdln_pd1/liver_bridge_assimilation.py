@@ -32,6 +32,7 @@ FIT_PARAMETERS = {
     "coupling.hypoxic_antigen_gain",
     "bridge.antigen_drainage_gain",
     "bridge.dc_migration_gain",
+    "bridge.efferent_effector_killing_gain",
     "liver.arterial_buffer_fraction",
     "liver.arterial_buffer_max_multiplier",
     "liver.portal_oxygen_content",

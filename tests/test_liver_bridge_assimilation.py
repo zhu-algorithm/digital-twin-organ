@@ -70,6 +70,31 @@ def test_calibration_recovers_independent_migratory_dc_gain():
     assert diagnostics["success"] is True
 
 
+def test_calibration_recovers_spatial_effector_feedback_gain():
+    truth = LiverTDLNSpatialBridge(efferent_effector_killing_gain=1.0e-5)
+    systemic, _ = simulate_liver_tdln_spatial(days=28, step=0.5, bridge=truth)
+    observations = pd.DataFrame([
+        {
+            "day": day,
+            "target": "liver_tumour_fraction",
+            "value": float(np.interp(
+                day, systemic.day, systemic.liver_tumour_fraction)),
+            "sd": 1.0e-4,
+        }
+        for day in (7.0, 14.0, 21.0, 28.0)
+    ])
+    _, _, fitted, diagnostics, _ = calibrate_liver_bridge(
+        observations,
+        fit_parameters=("bridge.efferent_effector_killing_gain",),
+        base_bridge=LiverTDLNSpatialBridge(efferent_effector_killing_gain=2.0e-6),
+        step=0.5,
+        max_nfev=40,
+    )
+    assert fitted.efferent_effector_killing_gain == pytest.approx(1.0e-5, rel=2e-3)
+    assert diagnostics["success"] is True
+    assert diagnostics["jacobian_rank"] == 1
+
+
 def test_bundled_demo_jointly_recovers_both_afferent_route_gains():
     observations = pd.read_csv(ROOT / "examples/liver_tdln_bridge_observations.csv")
     _, _, fitted, diagnostics, residuals = calibrate_liver_bridge(

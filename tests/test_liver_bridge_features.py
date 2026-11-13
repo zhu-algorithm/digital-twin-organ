@@ -351,11 +351,16 @@ def test_calibrated_systemic_parameters_drive_liver_counterfactuals(tmp_path):
     loaded = load_systemic_parameters(parameter_path)
     assert loaded == calibrated_parameters
     features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
+    # Isolate the systemic killing-rate calibration from the independently
+    # calibrated spatial-effector feedback route.
+    no_spatial_feedback = LiverTDLNSpatialBridge(
+        efferent_effector_killing_gain=0.0)
     default = augment_with_liver_tdln_counterfactuals(
-        features, doses=(Dose(0, 1),), days=5, step=0.5)
+        features, doses=(Dose(0, 1),), days=5, step=0.5,
+        base_bridge=no_spatial_feedback)
     calibrated = augment_with_liver_tdln_counterfactuals(
         features, doses=(Dose(0, 1),), days=5, step=0.5,
-        base_immune=loaded)
+        base_immune=loaded, base_bridge=no_spatial_feedback)
     assert calibrated.liver_cf_tumour_relative_reduction.item() > 10 * default[
         "liver_cf_tumour_relative_reduction"].item()
     payload = calibrated_parameters.__dict__.copy()

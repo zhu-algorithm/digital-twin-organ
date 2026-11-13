@@ -108,6 +108,32 @@ def _validated_combined_states(values: np.ndarray, rtol: float, atol: float) -> 
     return states
 
 
+def _decorate_coupled_output(out: pd.DataFrame,
+                             cp: LiverTDLNCouplingParameters,
+                             lp: LiverTumourParameters,
+                             flow_multiplier: float,
+                             portal_flow_multiplier: float | None,
+                             arterial_flow_multiplier: float | None) -> pd.DataFrame:
+    """Add the shared physical observables to a coupled state trajectory."""
+    out["tumour_cells"] = ((out.liver_tumour_rim + out.liver_tumour_core)
+                           * cp.tumour_cells_per_fraction)
+    out["liver_total_tumour"] = (out.liver_tumour_rim + out.liver_tumour_core
+                                  + out.liver_necrotic_tumour)
+    out["liver_tumour_fraction"] = out.liver_total_tumour / (
+        out.liver_normal_cells + out.liver_total_tumour).clip(lower=1e-12)
+    portal, arterial, buffer_flow, oxygenated = _liver_inflow(
+        lp, flow_multiplier, portal_flow_multiplier, arterial_flow_multiplier)
+    out["liver_perfusion"] = ((portal + arterial)
+                               * out.liver_functional_vessels
+                               / (1.0 + lp.vessel_compression
+                                  * (out.liver_tumour_rim + out.liver_tumour_core)))
+    out["liver_portal_flow"] = portal * out.liver_functional_vessels
+    out["liver_arterial_flow"] = arterial * out.liver_functional_vessels
+    out["liver_arterial_buffer_flow"] = buffer_flow * out.liver_functional_vessels
+    out["liver_oxygenated_inflow"] = oxygenated * out.liver_functional_vessels
+    return out
+
+
 def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
                         doses: tuple[Dose, ...] = (),
                         liver_parameters: LiverTumourParameters | None = None,
@@ -177,21 +203,7 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
         y = values[-1]
     out = pd.concat(frames, ignore_index=True)
     out.insert(1, "administered_dose", out.day.map(events).fillna(0.0))
-    out["tumour_cells"] = ((out.liver_tumour_rim + out.liver_tumour_core)
-                           * cp.tumour_cells_per_fraction)
-    out["liver_total_tumour"] = (out.liver_tumour_rim + out.liver_tumour_core
-                                  + out.liver_necrotic_tumour)
-    out["liver_tumour_fraction"] = out.liver_total_tumour / (
-        out.liver_normal_cells + out.liver_total_tumour).clip(lower=1e-12)
-    portal, arterial, buffer_flow, oxygenated = _liver_inflow(
-        lp, flow_multiplier, portal_flow_multiplier, arterial_flow_multiplier)
-    out["liver_perfusion"] = ((portal + arterial)
-                               * out.liver_functional_vessels
-                               / (1.0 + lp.vessel_compression
-                                  * (out.liver_tumour_rim + out.liver_tumour_core)))
-    out["liver_portal_flow"] = portal * out.liver_functional_vessels
-    out["liver_arterial_flow"] = arterial * out.liver_functional_vessels
-    out["liver_arterial_buffer_flow"] = buffer_flow * out.liver_functional_vessels
-    out["liver_oxygenated_inflow"] = oxygenated * out.liver_functional_vessels
-    return out
+    return _decorate_coupled_output(
+        out, cp, lp, flow_multiplier, portal_flow_multiplier,
+        arterial_flow_multiplier)
 

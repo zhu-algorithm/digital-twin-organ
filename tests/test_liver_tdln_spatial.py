@@ -5,6 +5,7 @@ from tdln_pd1.liver_tdln_spatial import (LiverTDLNSpatialBridge,
                                          liver_tdln_spatial_counterfactual,
                                          simulate_liver_tdln_spatial)
 from tdln_pd1.simulator import Dose, TwinParameters
+from tdln_pd1.liver_tdln_coupling import simulate_liver_tdln
 
 
 def _series(frame, species, zone):
@@ -70,6 +71,28 @@ def test_lower_portal_flow_reduces_both_tdln_delivery_routes():
     assert low_source.liver_perfusion_delivery_factor < nominal_source.liver_perfusion_delivery_factor
     assert low_source.afferent_antigen_source < nominal_source.afferent_antigen_source
     assert low_source.afferent_dc_source < nominal_source.afferent_dc_source
+
+
+def test_efferent_effectors_feed_back_to_reduce_viable_liver_tumour():
+    connected_systemic, _ = simulate_liver_tdln_spatial(days=28, step=0.5)
+    disconnected_systemic, _ = simulate_liver_tdln_spatial(
+        days=28, step=0.5,
+        bridge=LiverTDLNSpatialBridge(efferent_effector_killing_gain=0.0))
+    assert connected_systemic.spatial_efferent_effector.iloc[-1] > 0
+    assert connected_systemic.spatial_effector_killing_flux.max() > 0
+    assert connected_systemic.tumour_cells.iloc[-1] < disconnected_systemic.tumour_cells.iloc[-1]
+
+
+def test_zero_spatial_feedback_recovers_systemic_closed_loop():
+    systemic, _ = simulate_liver_tdln_spatial(
+        days=8, step=0.5,
+        bridge=LiverTDLNSpatialBridge(efferent_effector_killing_gain=0.0))
+    baseline = simulate_liver_tdln(days=8, step=0.5)
+    assert systemic.day.to_numpy() == pytest.approx(baseline.day)
+    for column in ("liver_tumour_rim", "liver_tumour_core", "tumour_antigen",
+                   "effector_tumour", "pd1_occupancy"):
+        assert systemic[column].to_numpy() == pytest.approx(
+            baseline[column], rel=2e-6, abs=1e-8)
 
 
 def test_anti_pd1_increases_efferent_effector_output_in_matched_closed_loop():

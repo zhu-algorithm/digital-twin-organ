@@ -16,7 +16,7 @@
 
 `liver_tdln_coupling.py` 将肝肿瘤活性负荷映射为引流抗原，驱动 TDLN 中的成熟 DC、Tpex 与效应 T 细胞；由 TDLN 产生并回流肿瘤的效应细胞再作用于肿瘤活性边缘。抗 PD-1 的血浆／TDLN 暴露和受体占有率沿用 TDLN 模型。细胞量尺度、免疫杀伤增益、坏死及缺氧抗原增益均为显式桥接参数，默认值是可审计假设，不是临床标定值。
 
-闭环反事实检查分别验证受体占有率、肿瘤内效应细胞时间积分和最终活肿瘤负荷；模型并不假定每个晚期时间点的效应细胞数都随治疗单调增加。
+闭环反事实检查分别验证受体占有率、肿瘤内效应细胞时间积分和最终活肿瘤负荷；模型并不假定每个晚期时间点的效应细胞数都随治疗单调增加。肝状态、系统免疫状态和 24 个空间 TDLN 状态由同一联合 ODE 求解；输出淋巴的效应细胞通过 `bridge.efferent_effector_killing_gain` 直接增加活性肿瘤边缘杀伤，并转入坏死肿瘤状态。将该增益设为零必须数值上恢复原系统闭环，以防空间模块在未声明时改变肿瘤轨迹。
 
 肝来源信号通过两条独立、非负、时间变化的路径进入六区 TDLN 网络：游离抗原由 `bridge.antigen_drainage_gain` 驱动，迁移性成熟 DC 由系统模型的 `dc_migration × tumour_antigen` 显式通量再乘 `bridge.dc_migration_gain` 驱动。两路均乘以相对于 `bridge.perfusion_reference` 的肝灌注交付因子；因此门脉低流量会同时减少抗原与 DC 到达，不再把游离抗原数值直接充当 DC 细胞源。两者均从传入淋巴进入，但可分别关闭和校准。游离抗原在被膜下窦被摄取并产生额外成熟 DC，迁移 DC 则沿窦–旁皮质通路携带细胞性抗原呈递信号；旁皮质内发生 Tpex 扩增和分化，效应细胞经髓质进入输出淋巴。机器验证要求“仅游离抗原”和“仅迁移 DC”两种极限均可执行，且 DC-only 路径不得凭空生成游离抗原。默认增益和灌注参考值是量纲桥接假设，不是人类迁移率测量。
 
@@ -35,13 +35,13 @@
 ## 已知限制
 
 - 使用归一化细胞量和氧供，而非影像体积、绝对细胞数或 mmHg。
-- 没有空间网格、肿瘤克隆异质性、免疫浸润或药代动力学。
+- 没有肿瘤内空间网格或克隆异质性；免疫浸润仍是聚合状态，药代动力学也是简化的区室表示。
 - 页面上的细胞点是状态量的可视编码，不是一细胞一测序记录；正常肝脏页面中的单细胞层仍是本仓库的实测数据入口。
 - 参数用于产生稳定、可审计的参考轨迹；需要以纵向影像、灌注和病理数据进行外部标定后，才可讨论预测性能。
 
 ## 纵向校准输入
 
-校准器接受长表 CSV：`day,target,value,sd`。系统目标包括 `liver_tumour_fraction`、`tumour_antigen`、`effector_tumour`、`pd1_occupancy`，以及 `liver_portal_flow`、`liver_arterial_flow`、`liver_arterial_buffer_flow`、`liver_oxygenated_inflow` 和 `liver_perfusion`；空间目标写作 `species@zone`，例如 `antigen@subcapsular_sinus`、`mature_dc@afferent_lymph` 或 `mature_dc@paracortex`。每一行必须带正的测量标准差，时间–目标组合必须唯一。可拟合参数以命名空间区分，例如 `bridge.antigen_drainage_gain`、`bridge.dc_migration_gain`、`coupling.immune_killing_gain`、`liver.arterial_buffer_fraction`、`liver.arterial_buffer_max_multiplier` 和两路氧含量。
+校准器接受长表 CSV：`day,target,value,sd`。系统目标包括 `liver_tumour_fraction`、`tumour_antigen`、`effector_tumour`、`pd1_occupancy`，以及 `liver_portal_flow`、`liver_arterial_flow`、`liver_arterial_buffer_flow`、`liver_oxygenated_inflow` 和 `liver_perfusion`；空间目标写作 `species@zone`，例如 `antigen@subcapsular_sinus`、`mature_dc@afferent_lymph` 或 `mature_dc@paracortex`。每一行必须带正的测量标准差，时间–目标组合必须唯一。可拟合参数以命名空间区分，例如 `bridge.antigen_drainage_gain`、`bridge.dc_migration_gain`、`bridge.efferent_effector_killing_gain`、`coupling.immune_killing_gain`、`liver.arterial_buffer_fraction`、`liver.arterial_buffer_max_multiplier` 和两路氧含量。
 
 ```bash
 python scripts/calibrate_liver_tdln_bridge.py \
