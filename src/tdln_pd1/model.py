@@ -382,6 +382,94 @@ def _fusion_ablation(
             "utility, causality, or external transportability."
         ),
     }
+    spatial_features = [
+        column for column in mechanistic
+        if column.startswith("twin_spatial_")
+        or (column.startswith("liver_cf_")
+            and ("spatial_" in column or "efferent_" in column))
+    ]
+    without_spatial = [column for column in columns if column not in spatial_features]
+    if spatial_features and without_spatial:
+        reference_probability, reference_tuning = _nested_oof_for_columns(
+            data, y, without_spatial, outer_cv)
+        block_probabilities["without_spatial_mechanism"] = reference_probability
+        reference_metrics = evaluate_probabilities(
+            y, reference_probability, bootstrap=0)
+        spatial_differences = {
+            "roc_auc": float(hybrid_metrics["roc_auc"] - reference_metrics["roc_auc"]),
+            "average_precision": float(
+                hybrid_metrics["average_precision"]
+                - reference_metrics["average_precision"]),
+            "brier_score_improvement": float(
+                reference_metrics["brier_score"] - hybrid_metrics["brier_score"]),
+            "log_loss_improvement": float(
+                reference_metrics["log_loss"] - hybrid_metrics["log_loss"]),
+        }
+        spatial_draws = {name: [] for name in spatial_differences}
+        spatial_rng = np.random.default_rng(42)
+        for _ in range(FUSION_ABLATION_BOOTSTRAP_DRAWS):
+            if unique_groups is None:
+                index = spatial_rng.integers(0, len(outcome), len(outcome))
+            else:
+                sampled_groups = spatial_rng.choice(
+                    unique_groups, len(unique_groups), replace=True)
+                index = np.concatenate([
+                    np.flatnonzero(groups == group) for group in sampled_groups
+                ])
+            if len(np.unique(outcome[index])) < 2:
+                continue
+            sampled_y = outcome[index]
+            sampled_hybrid = hybrid_probability[index]
+            sampled_reference = reference_probability[index]
+            spatial_draws["roc_auc"].append(
+                roc_auc_score(sampled_y, sampled_hybrid)
+                - roc_auc_score(sampled_y, sampled_reference))
+            spatial_draws["average_precision"].append(
+                average_precision_score(sampled_y, sampled_hybrid)
+                - average_precision_score(sampled_y, sampled_reference))
+            spatial_draws["brier_score_improvement"].append(
+                brier_score_loss(sampled_y, sampled_reference)
+                - brier_score_loss(sampled_y, sampled_hybrid))
+            spatial_draws["log_loss_improvement"].append(
+                log_loss(sampled_y, sampled_reference, labels=[0, 1])
+                - log_loss(sampled_y, sampled_hybrid, labels=[0, 1]))
+        report["spatial_mechanism_increment"] = {
+            "status": "evaluated",
+            "design": "paired_nested_patient_level_cross_validation_same_outer_folds",
+            "spatial_features": spatial_features,
+            "without_spatial_mechanism": {
+                "features": without_spatial,
+                "metrics": reference_metrics,
+                "hyperparameter_selection": reference_tuning,
+            },
+            "hybrid_minus_without_spatial": spatial_differences,
+            "paired_bootstrap": {
+                "draws": FUSION_ABLATION_BOOTSTRAP_DRAWS,
+                "seed": 42,
+                "unit": "centre" if groups is not None else "patient",
+                "groups": (int(len(unique_groups)) if unique_groups is not None
+                           else int(len(outcome))),
+                "intervals": {
+                    name: {
+                        "lower_95": float(np.percentile(values, 2.5)),
+                        "upper_95": float(np.percentile(values, 97.5)),
+                        "valid_draws": len(values),
+                    }
+                    for name, values in spatial_draws.items()
+                },
+                "estimand": "paired_difference_of_fixed_out_of_fold_predictions",
+            },
+            "interpretation": (
+                "Exploratory spatial-mechanism increment on the development cohort; "
+                "not causal or external validation."
+            ),
+        }
+    else:
+        report["spatial_mechanism_increment"] = {
+            "status": "not_evaluable",
+            "reason": "requires at least one explicit spatial TDLN feature and one retained reference feature",
+            "spatial_features": spatial_features,
+        }
     return report, block_probabilities
 
 
@@ -1303,6 +1391,9 @@ def train_evaluate(
         prediction_columns["mechanism_only_probability"] = ablation_probabilities[
             "mechanism_only"
         ]
+        if "without_spatial_mechanism" in ablation_probabilities:
+            prediction_columns["without_spatial_mechanism_probability"] = (
+                ablation_probabilities["without_spatial_mechanism"])
     pd.DataFrame(prediction_columns).to_csv(
         output / "cv_predictions.csv", index=False
     )

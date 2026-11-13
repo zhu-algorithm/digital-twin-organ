@@ -81,9 +81,17 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
                            0.62, 0.73, 0.79, 0.91, 1.02, 1.08],
         "twin_effector_gain": [0.3, 0.8, 0.4, 0.9, 0.5, 1.0,
                                1.4, 1.1, 1.7, 1.3, 1.9, 1.5],
+        "twin_spatial_efferent_effector_gain": [
+            0.1, 0.3, 0.2, 0.4, 0.25, 0.5,
+            0.8, 0.6, 1.0, 0.7, 1.2, 0.9,
+        ],
         "liver_cf_tumour_relative_reduction": [
             0.01, 0.04, 0.02, 0.05, 0.03, 0.06,
             0.10, 0.08, 0.13, 0.09, 0.15, 0.12,
+        ],
+        "liver_cf_spatial_killing_auc_fold_change": [
+            1.01, 1.03, 1.02, 1.04, 1.025, 1.05,
+            1.08, 1.06, 1.10, 1.07, 1.12, 1.09,
         ],
     })
     labels = pd.DataFrame({
@@ -96,7 +104,9 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
     assert ablation["design"] == "paired_nested_patient_level_cross_validation_same_outer_folds"
     assert ablation["data_only"]["features"] == ["sig_exhaustion"]
     assert ablation["mechanism_only"]["features"] == [
-        "twin_effector_gain", "liver_cf_tumour_relative_reduction",
+        "twin_effector_gain", "twin_spatial_efferent_effector_gain",
+        "liver_cf_tumour_relative_reduction",
+        "liver_cf_spatial_killing_auc_fold_change",
     ]
     assert set(ablation["hybrid_minus_data_only"]) == {
         "roc_auc", "average_precision", "brier_score_improvement", "log_loss_improvement",
@@ -112,6 +122,21 @@ def test_training_reports_paired_mechanism_data_fusion_ablation(tmp_path: Path):
     predictions = pd.read_csv(tmp_path / "cv_predictions.csv")
     assert predictions.data_only_probability.notna().all()
     assert predictions.mechanism_only_probability.notna().all()
+    spatial = ablation["spatial_mechanism_increment"]
+    assert spatial["status"] == "evaluated"
+    assert spatial["spatial_features"] == [
+        "twin_spatial_efferent_effector_gain",
+        "liver_cf_spatial_killing_auc_fold_change",
+    ]
+    assert "twin_spatial_efferent_effector_gain" not in spatial[
+        "without_spatial_mechanism"]["features"]
+    assert set(spatial["hybrid_minus_without_spatial"]) == {
+        "roc_auc", "average_precision", "brier_score_improvement",
+        "log_loss_improvement",
+    }
+    assert all(item["valid_draws"] > 0
+               for item in spatial["paired_bootstrap"]["intervals"].values())
+    assert predictions.without_spatial_mechanism_probability.notna().all()
 
 
 def test_training_and_fusion_ablation_bootstrap_whole_centres(tmp_path: Path):
@@ -121,6 +146,10 @@ def test_training_and_fusion_ablation_bootstrap_whole_centres(tmp_path: Path):
                            0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
         "twin_effector_gain": [0.2, 0.4, 0.3, 0.5, 0.4, 0.6,
                                1.0, 0.8, 1.2, 0.9, 1.4, 1.1],
+        "twin_spatial_efferent_effector_gain": [
+            0.1, 0.2, 0.15, 0.25, 0.2, 0.3,
+            0.5, 0.4, 0.6, 0.45, 0.7, 0.55,
+        ],
     })
     labels = pd.DataFrame({
         "patient_id": features.patient_id,
@@ -133,6 +162,10 @@ def test_training_and_fusion_ablation_bootstrap_whole_centres(tmp_path: Path):
     paired = metrics["mechanism_data_fusion_ablation"]["paired_bootstrap"]
     assert paired["unit"] == "centre"
     assert paired["groups"] == 3
+    spatial_paired = metrics["mechanism_data_fusion_ablation"][
+        "spatial_mechanism_increment"]["paired_bootstrap"]
+    assert spatial_paired["unit"] == "centre"
+    assert spatial_paired["groups"] == 3
     assert metrics["prediction_uncertainty"]["method"] == "centre_cluster_bootstrap_refit"
     assert metrics["prediction_uncertainty"]["unit"] == "centre"
     artifact = joblib.load(tmp_path / "model.joblib")
