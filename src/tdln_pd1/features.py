@@ -334,6 +334,9 @@ def aggregate_cells(
             row["qc_n_cells_retained_quality"] = quality["retained"]
             row["qc_cell_quality_retained_fraction"] = (
                 quality["retained"] / quality["input"])
+            if "samples_input" in quality:
+                row["qc_n_samples_input_quality"] = quality["samples_input"]
+                row["qc_n_samples_retained_quality"] = quality["samples_retained"]
         for cell_type in vocabulary:
             row[f"frac_{cell_type_names[cell_type]}"] = 0.0
         if sample_column:

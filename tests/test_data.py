@@ -176,3 +176,29 @@ def test_cell_quality_policy_fails_closed_on_units_and_patient_loss():
             "n_genes_column": "n_genes", "min_genes": 200})
     with pytest.raises(ValueError, match="requires at least one bound"):
         filter_cells_by_quality(cells, {"n_genes_column": "n_genes"})
+
+
+def test_cell_quality_policy_protects_patient_and_sample_support():
+    cells = pd.DataFrame({
+        "patient_id": ["p1"] * 4 + ["p2"] * 2,
+        "sample_id": ["a", "a", "b", "b", "c", "c"],
+        "cell_type": ["T"] * 6,
+        "n_genes": [500, 500, 100, 500, 500, 500],
+    })
+    policy = {"n_genes_column": "n_genes", "min_genes": 200,
+              "min_cells_per_patient": 2, "sample_column": "sample_id",
+              "min_cells_per_sample": 1}
+    filtered = filter_cells_by_quality(cells, policy)
+    features = aggregate_cells(
+        filtered, feature_tissue_pattern="all", sample_column="sample_id",
+    ).set_index("patient_id")
+    assert features.loc["p1", "qc_n_samples_input_quality"] == 2
+    assert features.loc["p1", "qc_n_samples_retained_quality"] == 2
+    with pytest.raises(ValueError, match="min_cells_per_sample"):
+        filter_cells_by_quality(cells, {**policy, "min_cells_per_sample": 2})
+    with pytest.raises(ValueError, match="min_cells_per_patient"):
+        filter_cells_by_quality(cells, {**policy, "min_cells_per_patient": 4})
+    with pytest.raises(ValueError, match="must be supplied together"):
+        filter_cells_by_quality(cells, {
+            "n_genes_column": "n_genes", "min_genes": 200,
+            "min_cells_per_sample": 1})

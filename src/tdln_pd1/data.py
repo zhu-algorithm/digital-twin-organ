@@ -29,7 +29,8 @@ def filter_cells_by_quality(cells: pd.DataFrame, policy: dict | None = None) -> 
         "n_genes_column", "min_genes", "max_genes",
         "total_counts_column", "min_total_counts", "max_total_counts",
         "mitochondrial_fraction_column", "max_mitochondrial_fraction",
-        "doublet_column",
+        "doublet_column", "min_cells_per_patient", "sample_column",
+        "min_cells_per_sample",
     }
     unknown = set(policy) - allowed
     if unknown:
@@ -88,8 +89,54 @@ def filter_cells_by_quality(cells: pd.DataFrame, policy: dict | None = None) -> 
     removed_patients = sorted(set(original_counts.index) - set(retained_counts.index))
     if removed_patients:
         raise ValueError(f"cell-quality filtering removed all cells for patients: {removed_patients[:10]}")
+    minimum_patient = normalized.get("min_cells_per_patient")
+    if minimum_patient is not None:
+        if (not isinstance(minimum_patient, (int, np.integer))
+                or isinstance(minimum_patient, bool) or minimum_patient < 1):
+            raise ValueError("min_cells_per_patient must be a positive integer")
+        insufficient = retained_counts[retained_counts < minimum_patient]
+        if len(insufficient):
+            raise ValueError(
+                "cell-quality filtering retained fewer than min_cells_per_patient: "
+                f"{insufficient.to_dict()}"
+            )
+    sample_column = normalized.get("sample_column")
+    minimum_sample = normalized.get("min_cells_per_sample")
+    if (sample_column is None) != (minimum_sample is None):
+        raise ValueError("sample_column and min_cells_per_sample must be supplied together")
+    sample_summary = {}
+    if sample_column is not None:
+        if sample_column not in cells:
+            raise ValueError(f"cell-quality column not found: {sample_column}")
+        if (not isinstance(minimum_sample, (int, np.integer))
+                or isinstance(minimum_sample, bool) or minimum_sample < 1):
+            raise ValueError("min_cells_per_sample must be a positive integer")
+        sample_values = cells[sample_column]
+        if sample_values.isna().any() or sample_values.astype(str).str.strip().eq("").any():
+            raise ValueError("cell-quality sample identifiers must be complete and non-empty")
+        original_sample_counts = cells.groupby(
+            [cells.patient_id.astype(str), sample_values.astype(str)]).size()
+        retained_sample_counts = retained.groupby([
+            retained.patient_id.astype(str), retained[sample_column].astype(str),
+        ]).size().reindex(original_sample_counts.index, fill_value=0)
+        insufficient = retained_sample_counts[retained_sample_counts < minimum_sample]
+        if len(insufficient):
+            formatted = {f"{patient}/{sample}": int(count)
+                         for (patient, sample), count in insufficient.items()}
+            raise ValueError(
+                "cell-quality filtering retained fewer than min_cells_per_sample: "
+                f"{formatted}"
+            )
+        for patient in original_counts.index:
+            patient_original = original_sample_counts.loc[patient]
+            patient_retained = retained_sample_counts.loc[patient]
+            sample_summary[patient] = {
+                "samples_input": int(len(patient_original)),
+                "samples_retained": int((patient_retained > 0).sum()),
+            }
     retained.attrs["cell_quality_summary"] = {
-        patient: {"input": int(count), "retained": int(retained_counts.get(patient, 0))}
+        patient: {"input": int(count), "retained": int(retained_counts.get(patient, 0)),
+                  **sample_summary.get(patient, {})}
         for patient, count in original_counts.items()
     }
     retained.attrs["cell_quality_policy"] = normalized

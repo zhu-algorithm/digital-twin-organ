@@ -83,6 +83,8 @@ def _add_cell_quality_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--qc-mitochondrial-fraction-column")
     parser.add_argument("--qc-max-mitochondrial-fraction", type=float)
     parser.add_argument("--qc-doublet-column")
+    parser.add_argument("--qc-min-cells-per-patient", type=int)
+    parser.add_argument("--qc-min-cells-per-sample", type=int)
 
 
 def _cell_quality_policy(args) -> dict | None:
@@ -96,6 +98,10 @@ def _cell_quality_policy(args) -> dict | None:
         "mitochondrial_fraction_column": args.qc_mitochondrial_fraction_column,
         "max_mitochondrial_fraction": args.qc_max_mitochondrial_fraction,
         "doublet_column": args.qc_doublet_column,
+        "min_cells_per_patient": args.qc_min_cells_per_patient,
+        "sample_column": (
+            args.sample_column if args.qc_min_cells_per_sample is not None else None),
+        "min_cells_per_sample": args.qc_min_cells_per_sample,
     }
     return policy if any(value is not None for value in policy.values()) else None
 
