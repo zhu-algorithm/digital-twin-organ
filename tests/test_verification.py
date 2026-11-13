@@ -48,6 +48,9 @@ def test_formal_verification_report_passes_all_prespecified_checks():
     assert feedback["connected_final_tumour_cells"] < (
         feedback["zero_feedback_final_tumour_cells"])
     assert feedback["maximum_zero_gain_scaled_relative_error"] <= 1e-5
+    assert feedback["maximum_total_killing_flux_identity_error"] <= 1e-12
+    assert 0 <= feedback["spatial_killing_fraction_range"][0] <= 1
+    assert 0 <= feedback["spatial_killing_fraction_range"][1] <= 1
 
 
 def test_simulator_rejects_nonfinite_inputs_and_invalid_tolerances():

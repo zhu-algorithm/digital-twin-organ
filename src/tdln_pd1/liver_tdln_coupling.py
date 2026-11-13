@@ -42,6 +42,24 @@ def _validate_coupling(p: LiverTDLNCouplingParameters) -> None:
         raise ValueError("tumour_cells_per_fraction must be strictly positive")
 
 
+def _systemic_effector_killing_flux(
+    liver, full_immune, immune_p: TwinParameters,
+    coupling: LiverTDLNCouplingParameters,
+):
+    """Viable-rim fraction killed per day by the systemic immune route."""
+    rim = liver[LIVER_STATES.index("tumour_rim")]
+    occupancy = np.clip(
+        full_immune[IMMUNE_STATES.index("pd1_occupancy")], 0.0, 1.0)
+    effector = full_immune[IMMUNE_STATES.index("effector_tumour")]
+    viable_cells = ((rim + liver[LIVER_STATES.index("tumour_core")])
+                    * coupling.tumour_cells_per_fraction)
+    checkpoint_relief = 0.25 + 0.75 * occupancy
+    killed_cells = immune_p.killing_rate * effector * viable_cells * checkpoint_relief
+    killed_fraction = (coupling.immune_killing_gain * killed_cells
+                       / coupling.tumour_cells_per_fraction)
+    return np.minimum(killed_fraction, rim)
+
+
 def _combined_rhs(time: float, y: np.ndarray, liver_p: LiverTumourParameters,
                   immune_p: TwinParameters, coupling: LiverTDLNCouplingParameters,
                   flow_multiplier: float, angiogenesis_inhibition: float,
@@ -61,13 +79,10 @@ def _combined_rhs(time: float, y: np.ndarray, liver_p: LiverTumourParameters,
                             angiogenesis_inhibition, portal_flow_multiplier,
                             arterial_flow_multiplier)
 
-    occupancy = np.clip(full_immune[IMMUNE_STATES.index("pd1_occupancy")], 0.0, 1.0)
-    effector = full_immune[IMMUNE_STATES.index("effector_tumour")]
-    checkpoint_relief = 0.25 + 0.75 * occupancy
-    killed_cells = immune_p.killing_rate * effector * viable_cells * checkpoint_relief
-    killed_fraction = coupling.immune_killing_gain * killed_cells / coupling.tumour_cells_per_fraction
-    liver_dydt[LIVER_STATES.index("tumour_rim")] -= min(killed_fraction, rim)
-    liver_dydt[LIVER_STATES.index("necrotic_tumour")] += min(killed_fraction, rim)
+    killed_fraction = _systemic_effector_killing_flux(
+        liver, full_immune, immune_p, coupling)
+    liver_dydt[LIVER_STATES.index("tumour_rim")] -= killed_fraction
+    liver_dydt[LIVER_STATES.index("necrotic_tumour")] += killed_fraction
 
     # Damaged and hypoxic liver tumour contributes additional drainable antigen.
     antigen_index = IMMUNE_STATES.index("tumour_antigen") - 1
@@ -111,6 +126,7 @@ def _validated_combined_states(values: np.ndarray, rtol: float, atol: float) -> 
 def _decorate_coupled_output(out: pd.DataFrame,
                              cp: LiverTDLNCouplingParameters,
                              lp: LiverTumourParameters,
+                             ip: TwinParameters,
                              flow_multiplier: float,
                              portal_flow_multiplier: float | None,
                              arterial_flow_multiplier: float | None) -> pd.DataFrame:
@@ -131,6 +147,12 @@ def _decorate_coupled_output(out: pd.DataFrame,
     out["liver_arterial_flow"] = arterial * out.liver_functional_vessels
     out["liver_arterial_buffer_flow"] = buffer_flow * out.liver_functional_vessels
     out["liver_oxygenated_inflow"] = oxygenated * out.liver_functional_vessels
+    checkpoint_relief = 0.25 + 0.75 * out.pd1_occupancy.clip(0.0, 1.0)
+    killed_cells = (ip.killing_rate * out.effector_tumour * out.tumour_cells
+                    * checkpoint_relief)
+    out["systemic_effector_killing_flux"] = np.minimum(
+        cp.immune_killing_gain * killed_cells / cp.tumour_cells_per_fraction,
+        out.liver_tumour_rim)
     return out
 
 
@@ -204,6 +226,6 @@ def simulate_liver_tdln(*, days: float = 84.0, step: float = 0.25,
     out = pd.concat(frames, ignore_index=True)
     out.insert(1, "administered_dose", out.day.map(events).fillna(0.0))
     return _decorate_coupled_output(
-        out, cp, lp, flow_multiplier, portal_flow_multiplier,
+        out, cp, lp, ip, flow_multiplier, portal_flow_multiplier,
         arterial_flow_multiplier)
 

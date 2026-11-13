@@ -230,6 +230,10 @@ def verify_twin() -> dict:
         for column in recovery_columns
     }
     max_recovery_error = max(recovery_errors.values())
+    killing_flux_identity_error = float(np.max(np.abs(
+        liver_system.total_effector_killing_flux
+        - liver_system.systemic_effector_killing_flux
+        - liver_system.spatial_effector_killing_flux)))
     checks.append({
         "name": "spatial_efferent_feedback_closes_and_zero_gain_recovers",
         "passed": bool(
@@ -237,13 +241,20 @@ def verify_twin() -> dict:
             and liver_system.spatial_effector_killing_flux.max() > 0
             and liver_system.tumour_cells.iloc[-1]
             < no_spatial_feedback.tumour_cells.iloc[-1]
-            and max_recovery_error <= 1e-5),
+            and max_recovery_error <= 1e-5
+            and killing_flux_identity_error <= 1e-12
+            and liver_system.spatial_effector_killing_fraction.between(0, 1).all()),
         "connected_final_tumour_cells": float(liver_system.tumour_cells.iloc[-1]),
         "zero_feedback_final_tumour_cells": float(
             no_spatial_feedback.tumour_cells.iloc[-1]),
         "final_efferent_effector": endpoint(
             no_spatial_field, "effector", "efferent_lymph"),
         "maximum_zero_gain_scaled_relative_error": max_recovery_error,
+        "maximum_total_killing_flux_identity_error": killing_flux_identity_error,
+        "spatial_killing_fraction_range": [
+            float(liver_system.spatial_effector_killing_fraction.min()),
+            float(liver_system.spatial_effector_killing_fraction.max()),
+        ],
         "zero_gain_scaled_relative_errors": recovery_errors,
         "tolerance": 1e-5,
         "expected": (

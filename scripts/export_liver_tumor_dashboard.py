@@ -20,7 +20,7 @@ from tdln_pd1.liver_tdln_spatial import (LiverTDLNSpatialBridge,
 from tdln_pd1.simulator import Dose
 from tdln_pd1.spatial import ZONES
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 COLUMNS = ("normal_cells", "tumour_rim", "tumour_core", "necrotic_tumour",
            "functional_vessels", "oxygen_normal", "oxygen_rim", "oxygen_core",
            "perfusion", "portal_flow", "arterial_flow", "arterial_buffer_flow",
@@ -89,6 +89,10 @@ def _spatial_records(frame):
                 source_rows.liver_perfusion_delivery_factor.iloc[0])
             spatial_killing = float(
                 source_rows.spatial_effector_killing_flux.iloc[0])
+            systemic_killing = float(
+                source_rows.systemic_effector_killing_flux.iloc[0])
+            spatial_killing_fraction = float(
+                source_rows.spatial_effector_killing_fraction.iloc[0])
             arm_records.append({"day": float(day),
                                 "afferent_antigen_source": display(antigen_source, 3),
                                 "afferent_dc_source": display(dc_source, 3),
@@ -96,6 +100,10 @@ def _spatial_records(frame):
                                     perfusion_delivery, 4),
                                 "spatial_effector_killing_flux": display(
                                     spatial_killing, 4),
+                                "systemic_effector_killing_flux": display(
+                                    systemic_killing, 4),
+                                "spatial_effector_killing_fraction": display(
+                                    spatial_killing_fraction, 4),
                                 "values": values})
         records[arm] = arm_records
     return records
@@ -120,7 +128,7 @@ def build_dashboard_data() -> dict:
     )
     return {
         "schema_version": SCHEMA_VERSION,
-        "model_version": "liver-tumour/0.5.0",
+        "model_version": "liver-tumour/0.6.0",
         "research_only": True,
         "time_unit": "day",
         "state_units": "normalised fraction",

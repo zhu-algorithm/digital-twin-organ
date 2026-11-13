@@ -26,6 +26,20 @@ def test_liver_burden_drives_tdln_antigen_and_dendritic_response():
     assert frame.tumour_cells.iloc[-1] != pytest.approx(frame.tumour_cells.iloc[0])
 
 
+def test_reported_systemic_killing_flux_matches_the_integrated_equation():
+    parameters = coupling_module.TwinParameters()
+    coupling = LiverTDLNCouplingParameters()
+    frame = simulate_liver_tdln(days=4, step=0.5)
+    relief = 0.25 + 0.75 * frame.pd1_occupancy
+    expected = np.minimum(
+        coupling.immune_killing_gain * parameters.killing_rate
+        * frame.effector_tumour * frame.tumour_cells * relief
+        / coupling.tumour_cells_per_fraction,
+        frame.liver_tumour_rim,
+    )
+    assert frame.systemic_effector_killing_flux.to_numpy() == pytest.approx(expected)
+
+
 def test_anti_pd1_closes_the_loop_back_to_lower_viable_liver_tumour():
     control = simulate_liver_tdln(days=56)
     treated = simulate_liver_tdln(days=56, doses=(Dose(0, 1.0), Dose(21, 1.0), Dose(42, 1.0)))

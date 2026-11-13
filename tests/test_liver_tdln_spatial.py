@@ -80,6 +80,11 @@ def test_efferent_effectors_feed_back_to_reduce_viable_liver_tumour():
         bridge=LiverTDLNSpatialBridge(efferent_effector_killing_gain=0.0))
     assert connected_systemic.spatial_efferent_effector.iloc[-1] > 0
     assert connected_systemic.spatial_effector_killing_flux.max() > 0
+    assert connected_systemic.systemic_effector_killing_flux.max() > 0
+    assert connected_systemic.total_effector_killing_flux.to_numpy() == pytest.approx(
+        connected_systemic.systemic_effector_killing_flux
+        + connected_systemic.spatial_effector_killing_flux)
+    assert connected_systemic.spatial_effector_killing_fraction.between(0, 1).all()
     assert connected_systemic.tumour_cells.iloc[-1] < disconnected_systemic.tumour_cells.iloc[-1]
 
 

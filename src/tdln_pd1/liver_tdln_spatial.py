@@ -177,7 +177,7 @@ def simulate_liver_tdln_spatial(*, days: float = 28.0, step: float = 0.25,
     systemic.insert(0, "day", timeline)
     systemic.insert(1, "administered_dose", systemic.day.map(events).fillna(0.0))
     systemic = _decorate_coupled_output(
-        systemic, cp, lp, flow, portal_flow, arterial_flow)
+        systemic, cp, lp, ip, flow, portal_flow, arterial_flow)
 
     rows = []
     spatial_values = values[:, n_system:]
@@ -212,8 +212,23 @@ def simulate_liver_tdln_spatial(*, days: float = 28.0, step: float = 0.25,
         b.efferent_effector_killing_gain * systemic.spatial_efferent_effector
         * systemic.liver_tumour_rim,
         systemic.liver_tumour_rim)
+    systemic["total_effector_killing_flux"] = (
+        systemic.systemic_effector_killing_flux
+        + systemic.spatial_effector_killing_flux)
+    systemic["spatial_effector_killing_fraction"] = np.divide(
+        systemic.spatial_effector_killing_flux,
+        systemic.total_effector_killing_flux,
+        out=np.zeros(len(systemic), dtype=float),
+        where=systemic.total_effector_killing_flux.to_numpy() > 0,
+    )
     spatial["spatial_effector_killing_flux"] = np.interp(
         spatial.day, systemic.day, systemic.spatial_effector_killing_flux)
+    spatial["systemic_effector_killing_flux"] = np.interp(
+        spatial.day, systemic.day, systemic.systemic_effector_killing_flux)
+    spatial["total_effector_killing_flux"] = np.interp(
+        spatial.day, systemic.day, systemic.total_effector_killing_flux)
+    spatial["spatial_effector_killing_fraction"] = np.interp(
+        spatial.day, systemic.day, systemic.spatial_effector_killing_fraction)
     return systemic, spatial
 
 

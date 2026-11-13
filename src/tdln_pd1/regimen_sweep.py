@@ -118,8 +118,12 @@ def sweep_patient_regimens(
                 "peak_pd1_occupancy": effect["anti_pd1_peak_pd1_occupancy"],
                 "effector_tumour_auc_fold_change": effect[
                     "effector_tumour_auc_fold_change"],
+                "systemic_effector_killing_auc_fold_change": effect[
+                    "systemic_effector_killing_auc_fold_change"],
                 "spatial_effector_killing_auc_fold_change": effect[
                     "spatial_effector_killing_auc_fold_change"],
+                "spatial_killing_contribution_change": effect[
+                    "spatial_killing_contribution_change"],
                 "efferent_effector_endpoint_fold_change": effect[
                     "efferent_effector_endpoint_fold_change"],
             })

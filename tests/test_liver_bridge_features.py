@@ -172,10 +172,13 @@ def test_patient_counterfactual_is_matched_and_reports_mechanistic_effect():
     assert treated.pd1_occupancy.max() > 0
     assert effect["anti_pd1_final_liver_tumour_fraction"] < effect[
         "control_final_liver_tumour_fraction"]
-    assert effect["schema_version"] == 3
+    assert effect["schema_version"] == 4
     assert effect["anti_pd1_spatial_effector_killing_auc"] > (
         effect["control_spatial_effector_killing_auc"])
     assert effect["spatial_effector_killing_auc_fold_change"] > 1
+    assert effect["systemic_effector_killing_auc_fold_change"] > 1
+    assert 0 <= effect["control_spatial_killing_contribution"] <= 1
+    assert 0 <= effect["anti_pd1_spatial_killing_contribution"] <= 1
     assert effect["control_final_liver_normal_cells"] == pytest.approx(
         control.liver_normal_cells.iloc[-1])
     assert effect["anti_pd1_final_liver_normal_cells"] == pytest.approx(
@@ -244,6 +247,13 @@ def test_cohort_counterfactual_augmentation_is_aligned_and_outcome_free():
         "liver_cf_min_normal_oxygen_change",
         "liver_cf_control_spatial_killing_auc",
         "liver_cf_anti_pd1_spatial_killing_auc",
+        "liver_cf_control_systemic_killing_auc",
+        "liver_cf_anti_pd1_systemic_killing_auc",
+        "liver_cf_control_total_killing_auc",
+        "liver_cf_anti_pd1_total_killing_auc",
+        "liver_cf_control_spatial_killing_contribution",
+        "liver_cf_anti_pd1_spatial_killing_contribution",
+        "liver_cf_spatial_killing_contribution_change",
     ):
         assert column in out and out[column].map(pd.notna).all()
     with pytest.raises(ValueError, match="outcome-free"):
