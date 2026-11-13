@@ -19,6 +19,7 @@ def test_regimen_sweep_is_label_free_finite_and_marks_pareto_front():
     assert result.pareto_front.any()
     assert result.interpretation.nunique() == 1
     assert (result.dose_count > 0).all()
+    assert result.spatial_effector_killing_auc_fold_change.gt(1).all()
     assert result.drop(columns=["dose_days", "interpretation", "pareto_front"]).notna().all().all()
     with pytest.raises(ValueError, match="outcome-free"):
         sweep_patient_regimens(pd.Series({"response": 1}), dose_amounts=(1,),

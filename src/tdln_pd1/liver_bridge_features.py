@@ -223,7 +223,11 @@ def patient_liver_bridge_from_features(
     mapped_coupling = replace(
         coupling, immune_killing_gain=coupling.immune_killing_gain * killing_multiplier)
     mapped_bridge = replace(
-        bridge, antigen_drainage_gain=bridge.antigen_drainage_gain * drainage_multiplier)
+        bridge,
+        antigen_drainage_gain=bridge.antigen_drainage_gain * drainage_multiplier,
+        efferent_effector_killing_gain=(
+            bridge.efferent_effector_killing_gain * killing_multiplier),
+    )
     mapped_spatial = replace(spatial, dc_yield=spatial.dc_yield * dc_multiplier)
     audit = {
         "schema_version": 1,
@@ -232,7 +236,8 @@ def patient_liver_bridge_from_features(
         "fallback_features": sorted(set(missing)),
         "multipliers": {"antigen_drainage": drainage_multiplier,
                         "dc_yield": dc_multiplier,
-                        "immune_killing": killing_multiplier},
+                        "immune_killing": killing_multiplier,
+                        "spatial_effector_killing": killing_multiplier},
         "mapping": asdict(mapping),
         "research_only": True,
         "limitation": "Bounded feature-to-parameter hypothesis; coefficients require calibration.",
@@ -336,7 +341,7 @@ def simulate_patient_liver_tdln_counterfactual(
     relative_reduction = ((control_endpoint - treated_endpoint)
                           / max(control_endpoint, 1e-12))
     effect = {
-        "schema_version": 2,
+        "schema_version": 3,
         "interpretation": "mechanistic_matched_counterfactual_not_clinical_response",
         "control_final_liver_tumour_fraction": control_endpoint,
         "anti_pd1_final_liver_tumour_fraction": treated_endpoint,
@@ -356,6 +361,10 @@ def simulate_patient_liver_tdln_counterfactual(
             treated_normal_oxygen - control_normal_oxygen),
         "control_effector_tumour_auc": _time_integral(control, "effector_tumour"),
         "anti_pd1_effector_tumour_auc": _time_integral(treated, "effector_tumour"),
+        "control_spatial_effector_killing_auc": _time_integral(
+            control, "spatial_effector_killing_flux"),
+        "anti_pd1_spatial_effector_killing_auc": _time_integral(
+            treated, "spatial_effector_killing_flux"),
         "anti_pd1_peak_pd1_occupancy": float(treated.pd1_occupancy.max()),
         "control_efferent_effector_endpoint": _spatial_endpoint(
             control_spatial, "effector", "efferent_lymph"),
@@ -368,6 +377,9 @@ def simulate_patient_liver_tdln_counterfactual(
     effect["efferent_effector_endpoint_fold_change"] = (
         effect["anti_pd1_efferent_effector_endpoint"]
         / max(effect["control_efferent_effector_endpoint"], 1e-12))
+    effect["spatial_effector_killing_auc_fold_change"] = (
+        effect["anti_pd1_spatial_effector_killing_auc"]
+        / max(effect["control_spatial_effector_killing_auc"], 1e-12))
     return (pd.concat(frames_systemic, ignore_index=True),
             pd.concat(frames_spatial, ignore_index=True), effect, audit or {})
 
@@ -389,6 +401,9 @@ COUNTERFACTUAL_FEATURES = {
     "control_effector_tumour_auc": "liver_cf_control_effector_tumour_auc",
     "anti_pd1_effector_tumour_auc": "liver_cf_anti_pd1_effector_tumour_auc",
     "effector_tumour_auc_fold_change": "liver_cf_effector_tumour_auc_fold_change",
+    "control_spatial_effector_killing_auc": "liver_cf_control_spatial_killing_auc",
+    "anti_pd1_spatial_effector_killing_auc": "liver_cf_anti_pd1_spatial_killing_auc",
+    "spatial_effector_killing_auc_fold_change": "liver_cf_spatial_killing_auc_fold_change",
     "anti_pd1_peak_pd1_occupancy": "liver_cf_peak_pd1_occupancy",
     "control_efferent_effector_endpoint": "liver_cf_control_efferent_effector_endpoint",
     "anti_pd1_efferent_effector_endpoint": "liver_cf_anti_pd1_efferent_effector_endpoint",

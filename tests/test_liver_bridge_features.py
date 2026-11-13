@@ -44,6 +44,8 @@ def test_single_cell_states_change_only_linked_bridge_mechanisms():
     assert high.spatial_bridge.antigen_drainage_gain > low.spatial_bridge.antigen_drainage_gain
     assert high.spatial_parameters.dc_yield > low.spatial_parameters.dc_yield
     assert high.coupling.immune_killing_gain > low.coupling.immune_killing_gain
+    assert (high.spatial_bridge.efferent_effector_killing_gain
+            > low.spatial_bridge.efferent_effector_killing_gain)
     assert high.coupling.necrotic_antigen_gain == base_coupling.necrotic_antigen_gain
     assert high.spatial_parameters.antigen_decay == base_spatial.antigen_decay
     assert base_bridge.antigen_drainage_gain > 0
@@ -70,6 +72,8 @@ def test_patient_simulation_uses_feature_specific_bridge_and_states():
                                    & frame.zone.eq("paracortex")].amount.iloc[-1]
     assert selector(high_spatial) > selector(low_spatial)
     assert high_audit["multipliers"]["immune_killing"] > low_audit["multipliers"]["immune_killing"]
+    assert high_audit["multipliers"]["spatial_effector_killing"] == (
+        high_audit["multipliers"]["immune_killing"])
 
 
 def test_feature_bridge_rejects_outcomes_and_invalid_measurements():
@@ -168,7 +172,10 @@ def test_patient_counterfactual_is_matched_and_reports_mechanistic_effect():
     assert treated.pd1_occupancy.max() > 0
     assert effect["anti_pd1_final_liver_tumour_fraction"] < effect[
         "control_final_liver_tumour_fraction"]
-    assert effect["schema_version"] == 2
+    assert effect["schema_version"] == 3
+    assert effect["anti_pd1_spatial_effector_killing_auc"] > (
+        effect["control_spatial_effector_killing_auc"])
+    assert effect["spatial_effector_killing_auc_fold_change"] > 1
     assert effect["control_final_liver_normal_cells"] == pytest.approx(
         control.liver_normal_cells.iloc[-1])
     assert effect["anti_pd1_final_liver_normal_cells"] == pytest.approx(
@@ -223,6 +230,7 @@ def test_cohort_counterfactual_augmentation_is_aligned_and_outcome_free():
     assert "response" not in out
     assert out.liver_cf_peak_pd1_occupancy.gt(0).all()
     assert out.liver_cf_effector_tumour_auc_fold_change.gt(1).all()
+    assert out.liver_cf_spatial_killing_auc_fold_change.gt(1).all()
     assert out.liver_cf_tumour_relative_reduction.ge(0).all()
     for column in (
         "liver_cf_control_final_normal_cells",
@@ -234,6 +242,8 @@ def test_cohort_counterfactual_augmentation_is_aligned_and_outcome_free():
         "liver_cf_control_min_normal_oxygen",
         "liver_cf_anti_pd1_min_normal_oxygen",
         "liver_cf_min_normal_oxygen_change",
+        "liver_cf_control_spatial_killing_auc",
+        "liver_cf_anti_pd1_spatial_killing_auc",
     ):
         assert column in out and out[column].map(pd.notna).all()
     with pytest.raises(ValueError, match="outcome-free"):
@@ -375,10 +385,17 @@ def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals()
     coupling, bridge = LiverTDLNCouplingParameters(), LiverTDLNSpatialBridge()
     diagnostics = {
         "locally_identifiable": True,
-        "fit_parameters": {"bridge.antigen_drainage_gain": bridge.antigen_drainage_gain},
+        "fit_parameters": {
+            "bridge.antigen_drainage_gain": bridge.antigen_drainage_gain,
+            "bridge.efferent_effector_killing_gain": (
+                bridge.efferent_effector_killing_gain),
+        },
         "local_log_parameter_covariance": {
-            "parameter_order": ["bridge.antigen_drainage_gain"],
-            "log_scale_covariance": [[0.04]],
+            "parameter_order": [
+                "bridge.antigen_drainage_gain",
+                "bridge.efferent_effector_killing_gain",
+            ],
+            "log_scale_covariance": [[0.04, 0.0], [0.0, 0.09]],
         },
     }
     draws = liver_bridge_parameter_draws(liver, coupling, bridge, diagnostics, 8, 19)
@@ -386,16 +403,25 @@ def test_correlated_bridge_uncertainty_produces_ordered_reproducible_intervals()
     assert draws == repeated
     assert all(draw_bridge.antigen_drainage_gain > 0
                for _, _, draw_bridge in draws)
+    assert all(draw_bridge.efferent_effector_killing_gain > 0
+               for _, _, draw_bridge in draws)
     features = pd.DataFrame({"patient_id": ["p1"], "sig_cytotoxic": [0.5]})
     out = augment_with_liver_tdln_counterfactuals(
         features, doses=(Dose(0, 1),), days=3, step=0.5,
         base_coupling=coupling, base_bridge=bridge, parameter_draws=draws)
     for base in ("liver_cf_tumour_relative_reduction",
-                 "liver_cf_efferent_effector_fold_change"):
+                 "liver_cf_efferent_effector_fold_change",
+                 "liver_cf_spatial_killing_auc_fold_change"):
         assert out[f"{base}_q025"].item() <= out[f"{base}_q50"].item()
         assert out[f"{base}_q50"].item() <= out[f"{base}_q975"].item()
+    assert out.liver_cf_control_spatial_killing_auc_q025.item() < (
+        out.liver_cf_control_spatial_killing_auc_q975.item())
     assert out.qc_liver_cf_uncertainty_samples.item() == 8
-    bad = {**diagnostics, "fit_parameters": {"bridge.antigen_drainage_gain": 0.8}}
+    bad = {**diagnostics, "fit_parameters": {
+        "bridge.antigen_drainage_gain": 0.8,
+        "bridge.efferent_effector_killing_gain": (
+            bridge.efferent_effector_killing_gain),
+    }}
     with pytest.raises(ValueError, match="different centers"):
         liver_bridge_parameter_draws(liver, coupling, bridge, bad, 4, 1)
 
